@@ -1,3 +1,30 @@
+# CLI Commands
+
+## Jaspr CLI
+
+Install: `dart pub global activate jaspr_cli`
+
+### Project
+
+Create new project: `jaspr create`
+Serve with hot-reload: `jaspr serve`
+Build project: `jaspr build`
+
+### Service Commands
+
+Show environment info: `jaspr doctor`
+Clean build directories: `jaspr clean`
+Analyze and fix lint: `jaspr analyze`
+Update CLI: `jaspr update`
+
+### Build Modes
+
+- Static: Pre-renders pages as `.html` files
+- Server: Use `--target` for executable, AOT snapshot, or kernel
+- Client: Outputs files for static hosting
+
+---
+
 # Serverpod CLI Commands
 
 ## Project
