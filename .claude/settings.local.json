@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat:*)",
+      "Bash(ls:*)",
+      "Bash(serverpod *)",
+      "Bash(scloud *)",
+      "Bash(dart *)",
+      "Bash(flutter *)",
+      "Bash(docker compose *)",
+      "Bash(cd *)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(wc:*)",
+      "Bash(tree:*)",
+      "Bash(du:*)"
+    ]
+  }
+}
