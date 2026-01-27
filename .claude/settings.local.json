@@ -3,17 +3,23 @@
     "allow": [
       "Bash(cat:*)",
       "Bash(ls:*)",
-      "Bash(serverpod *)",
-      "Bash(scloud *)",
-      "Bash(dart *)",
-      "Bash(flutter *)",
-      "Bash(docker compose *)",
-      "Bash(cd *)",
+      "Bash(serverpod:*)",
+      "Bash(scloud:*)",
+      "Bash(dart:*)",
+      "Bash(flutter:*)",
+      "Bash(docker compose:*)",
+      "Bash(cd:*)",
       "Bash(grep:*)",
       "Bash(find:*)",
       "Bash(wc:*)",
       "Bash(tree:*)",
-      "Bash(du:*)"
+      "Bash(du:*)",
+      "Skill(serverpod-docs)",
+      "WebFetch(domain:pub.dev)",
+      "WebFetch(domain:rearch.gsconrad.com)",
+      "WebSearch",
+      "Skill(rearch)",
+      "Bash(curl:*)"
     ]
   }
 }
