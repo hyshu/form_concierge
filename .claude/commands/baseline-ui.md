@@ -18,68 +18,113 @@ Enforces an opinionated UI baseline to prevent AI-generated interface slop.
   - why it matters (1 short sentence)
   - a concrete fix (code-level suggestion)
 
-## Stack
+---
 
-- MUST use Tailwind CSS defaults unless custom values already exist or are explicitly requested
-- MUST use `motion/react` (formerly `framer-motion`) when JavaScript animation is required
-- SHOULD use `tw-animate-css` for entrance and micro-animations in Tailwind CSS
-- MUST use `cn` utility (`clsx` + `tailwind-merge`) for class logic
+## Flutter
 
-## Components
+### Stack
 
-- MUST use accessible component primitives for anything with keyboard or focus behavior (`Base UI`, `React Aria`, `Radix`)
-- MUST use the project’s existing component primitives first
-- NEVER mix primitive systems within the same interaction surface
-- SHOULD prefer [`Base UI`](https://base-ui.com/react/components) for new primitives if compatible with the stack
-- MUST add an `aria-label` to icon-only buttons
-- NEVER rebuild keyboard or focus behavior by hand unless explicitly requested
+- MUST use Flutter's Material 3 design system
+- MUST use theme tokens from `ThemeData` instead of hardcoded colors/sizes
+- SHOULD use `flutter_rearch` or `rearch` for state management if adopted by project
+- MUST follow Serverpod client patterns for API communication
 
-## Interaction
+### Components
 
-- MUST use an `AlertDialog` for destructive or irreversible actions
-- SHOULD use structural skeletons for loading states
-- NEVER use `h-screen`, use `h-dvh`
-- MUST respect `safe-area-inset` for fixed elements
-- MUST show errors next to where the action happens
-- NEVER block paste in `input` or `textarea` elements
+- MUST use Material widgets with proper `Semantics` for accessibility
+- MUST add `semanticLabel` or `Semantics` wrapper to icon-only buttons
+- MUST use `FocusNode` and `FocusScope` properly for keyboard navigation
+- NEVER rebuild focus/keyboard behavior by hand when Material widgets provide it
+- SHOULD use `Form` and `FormField` widgets for input validation
 
-## Animation
+### Interaction
 
-- NEVER add animation unless it is explicitly requested
-- MUST animate only compositor props (`transform`, `opacity`)
-- NEVER animate layout properties (`width`, `height`, `top`, `left`, `margin`, `padding`)
-- SHOULD avoid animating paint properties (`background`, `color`) except for small, local UI (text, icons)
-- SHOULD use `ease-out` on entrance
-- NEVER exceed `200ms` for interaction feedback
-- MUST pause looping animations when off-screen
-- SHOULD respect `prefers-reduced-motion`
-- NEVER introduce custom easing curves unless explicitly requested
-- SHOULD avoid animating large images or full-screen surfaces
+- MUST use `showDialog` with `AlertDialog` for destructive actions
+- MUST use `Shimmer` or skeleton widgets for loading states
+- MUST show `SnackBar` or inline errors next to the action that caused them
+- NEVER block paste in `TextField` or `TextFormField`
+- MUST handle back button and system gestures appropriately
 
-## Typography
+### Animation
 
-- MUST use `text-balance` for headings and `text-pretty` for body/paragraphs
-- MUST use `tabular-nums` for data
-- SHOULD use `truncate` or `line-clamp` for dense UI
-- NEVER modify `letter-spacing` (`tracking-*`) unless explicitly requested
+- NEVER add animation unless explicitly requested
+- MUST use `AnimatedContainer`, `AnimatedOpacity`, or `AnimatedBuilder` for simple animations
+- SHOULD keep animation duration under 200ms for interaction feedback
+- MUST respect `MediaQuery.disableAnimations` for reduced motion
+- NEVER animate during build phase or inside `setState` synchronously
+- SHOULD use `Curves.easeOut` for entrance animations
 
-## Layout
+### Typography
 
-- MUST use a fixed `z-index` scale (no arbitrary `z-*`)
-- SHOULD use `size-*` for square elements instead of `w-*` + `h-*`
+- MUST use `Theme.of(context).textTheme` for text styles
+- MUST use `TextOverflow.ellipsis` or `maxLines` for constrained text
+- SHOULD use `SelectableText` when users may need to copy content
 
-## Performance
+### Layout
 
-- NEVER animate large `blur()` or `backdrop-filter` surfaces
-- NEVER apply `will-change` outside an active animation
-- NEVER use `useEffect` for anything that can be expressed as render logic
+- MUST use `SafeArea` for screens with system UI overlap
+- MUST use `MediaQuery` for responsive layouts
+- SHOULD use `LayoutBuilder` or `Flex` widgets over fixed dimensions
+- NEVER use hardcoded pixel values for responsive elements
+- MUST use `Expanded` or `Flexible` instead of fixed sizes in flex layouts
 
-## Design
+### Performance
+
+- NEVER use `setState` in `build` method
+- MUST use `const` constructors where possible
+- SHOULD use `ListView.builder` for long lists instead of `ListView`
+- NEVER create widgets inside loops without keys
+- MUST avoid expensive operations in `build` method
+
+### Design
 
 - NEVER use gradients unless explicitly requested
-- NEVER use purple or multicolor gradients
-- NEVER use glow effects as primary affordances
-- SHOULD use Tailwind CSS default shadow scale unless explicitly requested
-- MUST give empty states one clear next action
-- SHOULD limit accent color usage to one per view
-- SHOULD use existing theme or Tailwind CSS color tokens before introducing new ones
+- MUST use `Theme.of(context).colorScheme` for colors
+- MUST give empty states one clear action (`ElevatedButton` or equivalent)
+- SHOULD limit accent color usage to one per screen
+- NEVER use custom shadows when Material elevation suffices
+
+---
+
+## Docusaurus / React (docs)
+
+### Stack
+
+- MUST use CSS Modules or Docusaurus's built-in styling
+- SHOULD use `clsx` for conditional class logic
+- MUST follow Docusaurus component patterns for custom components
+
+### Components
+
+- MUST use semantic HTML (`<nav>`, `<main>`, `<article>`, etc.)
+- MUST add `aria-label` to icon-only buttons
+- SHOULD use Docusaurus's built-in components (`Tabs`, `Admonitions`, etc.) first
+
+### Interaction
+
+- MUST use structural skeletons for async content loading
+- MUST show errors inline near the triggering action
+- NEVER block paste in input elements
+
+### Animation
+
+- NEVER add animation unless explicitly requested
+- SHOULD use CSS transitions over JavaScript animations
+- MUST respect `prefers-reduced-motion`
+- NEVER exceed 200ms for interaction feedback
+
+### Typography
+
+- SHOULD use Docusaurus's default typography scale
+- MUST use proper heading hierarchy (h1 > h2 > h3)
+
+### Performance
+
+- NEVER use `useEffect` for anything expressible as render logic
+- SHOULD lazy-load heavy components with `React.lazy`
+
+### Design
+
+- NEVER use gradients unless explicitly requested
+- MUST follow Docusaurus theming for light/dark mode
+- SHOULD use existing CSS variables before introducing new ones
