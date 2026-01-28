@@ -1,6 +1,10 @@
-import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_rearch/flutter_rearch.dart';
+import 'package:form_concierge_client/form_concierge_client.dart';
+import 'package:serverpod_auth_core_flutter/serverpod_auth_core_flutter.dart';
 import 'package:serverpod_flutter/serverpod_flutter.dart';
+
+import 'src/app.dart';
 
 late final Client client;
 
@@ -8,22 +12,11 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final serverUrl = await getServerUrl();
-  client = Client(serverUrl)..connectivityMonitor = FlutterConnectivityMonitor();
+  client = Client(serverUrl)
+    ..connectivityMonitor = FlutterConnectivityMonitor();
 
-  runApp(const MyApp());
-}
+  // Set up authentication session manager
+  client.authSessionManager = FlutterAuthSessionManager();
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Form Concierge',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: const Scaffold(
-        body: Center(child: Text('Form Concierge')),
-      ),
-    );
-  }
+  runApp(const RearchBootstrapper(child: App()));
 }

@@ -1,0 +1,22 @@
+### A complete survey response submission
+class: SurveyResponse
+table: survey_response
+fields:
+  ### Reference to the survey being responded to
+  surveyId: int, relation(parent=survey)
+  ### User identifier if authenticated response (from auth system)
+  userId: String?
+  ### Anonymous session identifier
+  anonymousId: String?
+  ### When the response was submitted
+  submittedAt: DateTime, default=now
+  ### IP address (for analytics/fraud prevention)
+  ipAddress: String?, scope=serverOnly
+  ### User agent string
+  userAgent: String?, scope=serverOnly
+
+indexes:
+  survey_submitted_index:
+    fields: surveyId, submittedAt
+  user_survey_index:
+    fields: userId, surveyId

@@ -1,0 +1,8 @@
+### Survey status enumeration
+enum: SurveyStatus
+serialized: byName
+values:
+  - draft
+  - published
+  - closed
+  - archived

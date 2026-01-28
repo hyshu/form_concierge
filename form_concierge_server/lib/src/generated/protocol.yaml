@@ -1,0 +1,52 @@
+refreshJwtTokens:
+  - refreshAccessToken:
+emailIdp:
+  - login:
+  - startRegistration:
+  - verifyRegistrationCode:
+  - finishRegistration:
+  - startPasswordReset:
+  - verifyPasswordResetCode:
+  - finishPasswordReset:
+config:
+  - getPublicConfig:
+questionAdmin:
+  - create:
+  - update:
+  - delete:
+  - reorder:
+  - getForSurvey:
+  - getById:
+  - getOptionsForQuestion:
+questionOptionAdmin:
+  - create:
+  - update:
+  - delete:
+  - reorder:
+  - getById:
+responseAnalytics:
+  - getResponses:
+  - getResponseCount:
+  - getAnswersForResponse:
+  - getAggregatedResults:
+  - getResponseTrends:
+  - deleteResponse:
+surveyAdmin:
+  - create:
+  - update:
+  - delete:
+  - list:
+  - getById:
+  - publish:
+  - close:
+  - reopen:
+survey:
+  - getBySlug:
+  - submitResponse:
+userAdmin:
+  - isFirstUser:
+  - registerFirstUser:
+  - listUsers:
+  - createUser:
+  - deleteUser:
+  - toggleUserBlocked:

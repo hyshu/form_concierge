@@ -1,0 +1,8 @@
+### Question type enumeration
+enum: QuestionType
+serialized: byName
+values:
+  - singleChoice
+  - multipleChoice
+  - textSingle
+  - textMultiLine

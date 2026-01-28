@@ -1,0 +1,31 @@
+### A survey/questionnaire form definition
+class: Survey
+table: survey
+fields:
+  ### Unique identifier for the survey (used in URLs)
+  slug: String
+  ### Title of the survey
+  title: String
+  ### Optional description of the survey
+  description: String?
+  ### Current status of the survey
+  status: SurveyStatus, default=draft
+  ### Whether responses require authentication
+  authRequirement: AuthRequirement, default=anonymous
+  ### Identifier of the admin user who created this survey (from auth system)
+  createdByUserId: String?
+  ### When the survey was created
+  createdAt: DateTime, default=now
+  ### When the survey was last updated
+  updatedAt: DateTime, default=now
+  ### Optional start date for accepting responses
+  startsAt: DateTime?
+  ### Optional end date for accepting responses
+  endsAt: DateTime?
+
+indexes:
+  slug_unique:
+    fields: slug
+    unique: true
+  status_index:
+    fields: status

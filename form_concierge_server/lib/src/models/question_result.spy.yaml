@@ -1,0 +1,10 @@
+### Aggregated results for a single question (non-persisted model)
+class: QuestionResult
+fields:
+  questionId: int
+  questionText: String
+  questionType: QuestionType
+  ### Option ID to count mapping (for choice questions)
+  optionCounts: Map<int, int>?
+  ### Text responses (for text questions)
+  textResponses: List<String>?
