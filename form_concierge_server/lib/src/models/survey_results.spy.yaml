@@ -1,0 +1,6 @@
+### Aggregated survey results (non-persisted model)
+class: SurveyResults
+fields:
+  surveyId: int
+  totalResponses: int
+  questionResults: List<QuestionResult>

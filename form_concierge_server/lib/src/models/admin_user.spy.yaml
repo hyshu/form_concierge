@@ -1,0 +1,19 @@
+### Extended admin user with roles
+class: AdminUser
+table: admin_user
+fields:
+  ### Reference to the auth user
+  userId: int
+  ### Admin display name
+  displayName: String
+  ### Whether user has admin access
+  isAdmin: bool, default=false
+  ### Whether user can create surveys
+  canCreateSurveys: bool, default=true
+  ### When the admin user was created
+  createdAt: DateTime, default=now
+
+indexes:
+  user_id_unique:
+    fields: userId
+    unique: true

@@ -1,0 +1,17 @@
+### An individual answer to a question
+class: Answer
+table: answer
+fields:
+  ### Reference to the survey response
+  surveyResponseId: int, relation(parent=survey_response)
+  ### Reference to the question being answered
+  questionId: int, relation(parent=question)
+  ### Text answer (for text-type questions)
+  textValue: String?
+  ### Selected option IDs (for choice questions)
+  selectedOptionIds: List<int>?
+
+indexes:
+  response_question_index:
+    fields: surveyResponseId, questionId
+    unique: true

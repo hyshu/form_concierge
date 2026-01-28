@@ -1,0 +1,24 @@
+### A question within a survey
+class: Question
+table: question
+fields:
+  ### Reference to the parent survey
+  surveyId: int, relation(parent=survey)
+  ### The question text
+  text: String
+  ### Type of question (single choice, multiple choice, text, etc.)
+  type: QuestionType
+  ### Display order within the survey
+  orderIndex: int
+  ### Whether this question is required
+  isRequired: bool, default=true
+  ### Optional placeholder text for text inputs
+  placeholder: String?
+  ### For text inputs: minimum character count
+  minLength: int?
+  ### For text inputs: maximum character count
+  maxLength: int?
+
+indexes:
+  survey_order_index:
+    fields: surveyId, orderIndex

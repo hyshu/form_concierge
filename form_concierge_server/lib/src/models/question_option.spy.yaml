@@ -1,0 +1,16 @@
+### An option for choice-type questions
+class: QuestionOption
+table: question_option
+fields:
+  ### Reference to the parent question
+  questionId: int, relation(parent=question)
+  ### The option text
+  text: String
+  ### Display order within the question
+  orderIndex: int
+  ### Optional value (if different from text)
+  value: String?
+
+indexes:
+  question_order_index:
+    fields: questionId, orderIndex
