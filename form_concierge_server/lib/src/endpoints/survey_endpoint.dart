@@ -111,9 +111,9 @@ class SurveyEndpoint extends Endpoint {
     );
   }
 
-  /// Get all options for a question.
-  /// Only returns options if the question belongs to a published survey.
-  Future<List<QuestionOption>> getOptionsForQuestion(
+  /// Get all choices for a question.
+  /// Only returns choices if the question belongs to a published survey.
+  Future<List<Choice>> getChoicesForQuestion(
     Session session,
     int questionId,
   ) async {
@@ -125,7 +125,7 @@ class SurveyEndpoint extends Endpoint {
       return [];
     }
 
-    return await QuestionOption.db.find(
+    return await Choice.db.find(
       session,
       where: (t) => t.questionId.equals(questionId),
       orderBy: (t) => t.orderIndex,

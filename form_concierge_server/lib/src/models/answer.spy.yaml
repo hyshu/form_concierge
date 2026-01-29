@@ -8,8 +8,8 @@ fields:
   questionId: int, relation(parent=question)
   ### Text answer (for text-type questions)
   textValue: String?
-  ### Selected option IDs (for choice questions)
-  selectedOptionIds: List<int>?
+  ### Selected choice IDs (for choice questions)
+  selectedChoiceIds: List<int>?
 
 indexes:
   response_question_index:

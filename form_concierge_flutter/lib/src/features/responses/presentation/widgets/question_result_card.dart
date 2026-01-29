@@ -6,13 +6,13 @@ const int _kMaxTextResponsesPreview = 10;
 /// Card displaying results for a single question.
 class QuestionResultCard extends StatelessWidget {
   final QuestionResult result;
-  final List<QuestionOption> options;
+  final List<Choice> choices;
   final int totalResponses;
 
   const QuestionResultCard({
     super.key,
     required this.result,
-    required this.options,
+    required this.choices,
     required this.totalResponses,
   });
 
@@ -44,8 +44,8 @@ class QuestionResultCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            if (result.optionCounts != null)
-              _buildOptionsTable(context)
+            if (result.choiceCounts != null)
+              _buildChoicesTable(context)
             else if (result.textResponses != null)
               _buildTextResponses(context),
           ],
@@ -54,11 +54,11 @@ class QuestionResultCard extends StatelessWidget {
     );
   }
 
-  Widget _buildOptionsTable(BuildContext context) {
+  Widget _buildChoicesTable(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    // Sort options by orderIndex
-    final sortedOptions = List<QuestionOption>.from(options)
+    // Sort choices by orderIndex
+    final sortedChoices = List<Choice>.from(choices)
       ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
 
     return Table(
@@ -79,7 +79,7 @@ class QuestionResultCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
               child: Text(
-                'Option',
+                'Choice',
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -107,8 +107,8 @@ class QuestionResultCard extends StatelessWidget {
             ),
           ],
         ),
-        ...sortedOptions.map((option) {
-          final count = result.optionCounts![option.id] ?? 0;
+        ...sortedChoices.map((choice) {
+          final count = result.choiceCounts![choice.id] ?? 0;
           final percentage = totalResponses > 0
               ? (count / totalResponses * 100).toStringAsFixed(1)
               : '0.0';
@@ -120,7 +120,7 @@ class QuestionResultCard extends StatelessWidget {
                   vertical: 12,
                   horizontal: 8,
                 ),
-                child: Text(option.text),
+                child: Text(choice.text),
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(

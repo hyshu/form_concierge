@@ -59,14 +59,14 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
         survey.id!,
       );
 
-      final optionsByQuestion = <int, List<QuestionOption>>{};
+      final choicesByQuestion = <int, List<Choice>>{};
       for (final question in questions) {
         if (question.type == QuestionType.singleChoice ||
             question.type == QuestionType.multipleChoice) {
-          final options = await widget.client.survey.getOptionsForQuestion(
+          final choices = await widget.client.survey.getChoicesForQuestion(
             question.id!,
           );
-          optionsByQuestion[question.id!] = options;
+          choicesByQuestion[question.id!] = choices;
         }
       }
 
@@ -86,7 +86,7 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
                 viewState: SurveyViewState.authRequired,
                 survey: survey,
                 questions: questions,
-                optionsByQuestion: optionsByQuestion,
+                choicesByQuestion: choicesByQuestion,
               );
             });
             return;
@@ -97,7 +97,7 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
               viewState: SurveyViewState.authRequired,
               survey: survey,
               questions: questions,
-              optionsByQuestion: optionsByQuestion,
+              choicesByQuestion: choicesByQuestion,
             );
           });
           return;
@@ -109,7 +109,7 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
           viewState: SurveyViewState.ready,
           survey: survey,
           questions: questions,
-          optionsByQuestion: optionsByQuestion,
+          choicesByQuestion: choicesByQuestion,
         );
       });
     } on Exception catch (e) {
@@ -155,7 +155,7 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
         }
 
         if (answer is List && answer.isEmpty) {
-          errors[question.id!] = 'Please select at least one option';
+          errors[question.id!] = 'Please select at least one choice';
           continue;
         }
       }
@@ -244,7 +244,7 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
       SurveyViewState.ready || SurveyViewState.submitting => SurveyContent(
         survey: _state.survey!,
         questions: _state.questions,
-        optionsByQuestion: _state.optionsByQuestion,
+        choicesByQuestion: _state.choicesByQuestion,
         answers: _state.answers,
         validationErrors: _state.validationErrors,
         errorMessage: _state.errorMessage,

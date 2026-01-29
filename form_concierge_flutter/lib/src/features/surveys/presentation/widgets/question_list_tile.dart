@@ -1,29 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 
-import 'option_editor.dart';
+import 'choice_editor.dart';
 
-/// List tile for displaying a question with its options.
+/// List tile for displaying a question with its choices.
 class QuestionListTile extends StatelessWidget {
   final Question question;
-  final List<QuestionOption> options;
+  final List<Choice> choices;
   final bool enabled;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
-  final void Function(String text) onAddOption;
-  final void Function(QuestionOption option, String newText) onUpdateOption;
-  final void Function(QuestionOption option) onDeleteOption;
+  final void Function(String text) onAddChoice;
+  final void Function(Choice choice, String newText) onUpdateChoice;
+  final void Function(Choice choice) onDeleteChoice;
 
   const QuestionListTile({
     super.key,
     required this.question,
-    required this.options,
+    required this.choices,
     required this.enabled,
     required this.onEdit,
     required this.onDelete,
-    required this.onAddOption,
-    required this.onUpdateOption,
-    required this.onDeleteOption,
+    required this.onAddChoice,
+    required this.onUpdateChoice,
+    required this.onDeleteChoice,
   });
 
   @override
@@ -100,12 +100,12 @@ class QuestionListTile extends StatelessWidget {
             ),
             if (isChoiceType) ...[
               const SizedBox(height: 16),
-              OptionEditor(
-                options: options,
+              ChoiceEditor(
+                choices: choices,
                 enabled: enabled,
-                onAdd: onAddOption,
-                onUpdate: onUpdateOption,
-                onDelete: onDeleteOption,
+                onAdd: onAddChoice,
+                onUpdate: onUpdateChoice,
+                onDelete: onDeleteChoice,
               ),
             ],
             if (!isChoiceType && question.placeholder != null) ...[

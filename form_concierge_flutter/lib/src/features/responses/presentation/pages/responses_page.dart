@@ -53,7 +53,7 @@ class ResponsesPage extends RearchConsumer {
               // Aggregated Results Tab
               AggregatedResultsView(
                 results: resultsState.results,
-                optionsByQuestion: resultsState.optionsByQuestion,
+                choicesByQuestion: resultsState.choicesByQuestion,
                 isLoading: resultsState.isLoading,
                 error: resultsState.error,
                 onRefresh: () => resultsManager.loadResults(surveyId),

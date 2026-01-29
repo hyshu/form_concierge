@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 
-/// Widget for editing question options.
-class OptionEditor extends StatelessWidget {
-  final List<QuestionOption> options;
+/// Widget for editing question choices.
+class ChoiceEditor extends StatelessWidget {
+  final List<Choice> choices;
   final bool enabled;
   final void Function(String text) onAdd;
-  final void Function(QuestionOption option, String newText) onUpdate;
-  final void Function(QuestionOption option) onDelete;
+  final void Function(Choice choice, String newText) onUpdate;
+  final void Function(Choice choice) onDelete;
 
-  const OptionEditor({
+  const ChoiceEditor({
     super.key,
-    required this.options,
+    required this.choices,
     required this.enabled,
     required this.onAdd,
     required this.onUpdate,
@@ -25,29 +25,24 @@ class OptionEditor extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Options',
-          style: Theme.of(context).textTheme.titleSmall,
-        ),
-        const SizedBox(height: 8),
-        ...options.map(
-          (option) => _OptionTile(
-            option: option,
+        ...choices.map(
+          (choice) => _ChoiceTile(
+            choice: choice,
             enabled: enabled,
-            onUpdate: (newText) => onUpdate(option, newText),
-            onDelete: () => onDelete(option),
+            onUpdate: (newText) => onUpdate(choice, newText),
+            onDelete: () => onDelete(choice),
           ),
         ),
         const SizedBox(height: 8),
         OutlinedButton.icon(
           onPressed: enabled ? () => _showAddDialog(context) : null,
           icon: const Icon(Icons.add),
-          label: const Text('Add Option'),
+          label: const Text('Add Choice'),
         ),
-        if (options.isEmpty) ...[
+        if (choices.isEmpty) ...[
           const SizedBox(height: 8),
           Text(
-            'Add at least one option for choice questions',
+            'Add at least one choice for choice questions',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: colorScheme.onSurfaceVariant,
             ),
@@ -62,11 +57,11 @@ class OptionEditor extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Add Option'),
+        title: const Text('Add Choice'),
         content: TextField(
           controller: controller,
           decoration: const InputDecoration(
-            labelText: 'Option text',
+            labelText: 'Choice text',
           ),
           autofocus: true,
           onSubmitted: (value) {
@@ -96,31 +91,31 @@ class OptionEditor extends StatelessWidget {
   }
 }
 
-class _OptionTile extends StatefulWidget {
-  final QuestionOption option;
+class _ChoiceTile extends StatefulWidget {
+  final Choice choice;
   final bool enabled;
   final void Function(String newText) onUpdate;
   final VoidCallback onDelete;
 
-  const _OptionTile({
-    required this.option,
+  const _ChoiceTile({
+    required this.choice,
     required this.enabled,
     required this.onUpdate,
     required this.onDelete,
   });
 
   @override
-  State<_OptionTile> createState() => _OptionTileState();
+  State<_ChoiceTile> createState() => _ChoiceTileState();
 }
 
-class _OptionTileState extends State<_OptionTile> {
+class _ChoiceTileState extends State<_ChoiceTile> {
   bool _isEditing = false;
   late TextEditingController _controller;
 
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(text: widget.option.text);
+    _controller = TextEditingController(text: widget.choice.text);
   }
 
   @override
@@ -162,7 +157,7 @@ class _OptionTileState extends State<_OptionTile> {
               onPressed: () {
                 setState(() {
                   _isEditing = false;
-                  _controller.text = widget.option.text;
+                  _controller.text = widget.choice.text;
                 });
               },
               visualDensity: VisualDensity.compact,
@@ -188,7 +183,20 @@ class _OptionTileState extends State<_OptionTile> {
           ),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(widget.option.text),
+            child: widget.enabled
+                ? InkWell(
+                    onTap: () {
+                      setState(() {
+                        _isEditing = true;
+                      });
+                    },
+                    borderRadius: BorderRadius.circular(4),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Text(widget.choice.text),
+                    ),
+                  )
+                : Text(widget.choice.text),
           ),
           if (widget.enabled) ...[
             IconButton(
@@ -216,7 +224,7 @@ class _OptionTileState extends State<_OptionTile> {
   }
 
   void _save(String value) {
-    if (value.trim().isNotEmpty && value.trim() != widget.option.text) {
+    if (value.trim().isNotEmpty && value.trim() != widget.choice.text) {
       widget.onUpdate(value.trim());
     }
     setState(() {

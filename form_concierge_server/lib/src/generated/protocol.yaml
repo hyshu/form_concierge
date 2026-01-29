@@ -8,6 +8,12 @@ emailIdp:
   - startPasswordReset:
   - verifyPasswordResetCode:
   - finishPasswordReset:
+choiceAdmin:
+  - create:
+  - update:
+  - delete:
+  - reorder:
+  - getById:
 config:
   - getPublicConfig:
 questionAdmin:
@@ -17,13 +23,7 @@ questionAdmin:
   - reorder:
   - getForSurvey:
   - getById:
-  - getOptionsForQuestion:
-questionOptionAdmin:
-  - create:
-  - update:
-  - delete:
-  - reorder:
-  - getById:
+  - getChoicesForQuestion:
 responseAnalytics:
   - getResponses:
   - getResponseCount:
@@ -44,7 +44,7 @@ survey:
   - getBySlug:
   - submitResponse:
   - getQuestionsForSurvey:
-  - getOptionsForQuestion:
+  - getChoicesForQuestion:
 userAdmin:
   - isFirstUser:
   - registerFirstUser:

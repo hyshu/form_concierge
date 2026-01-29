@@ -93,28 +93,28 @@ class ResponseAnalyticsEndpoint extends Endpoint {
       questionId: question.id!,
       questionText: question.text,
       questionType: question.type,
-      optionCounts: isChoiceQuestion
-          ? await _countOptions(session, question, answers)
+      choiceCounts: isChoiceQuestion
+          ? await _countChoices(session, question, answers)
           : null,
       textResponses: isChoiceQuestion ? null : _collectTextResponses(answers),
     );
   }
 
-  Future<Map<int, int>> _countOptions(
+  Future<Map<int, int>> _countChoices(
     Session session,
     Question question,
     List<Answer> answers,
   ) async {
-    final options = await QuestionOption.db.find(
+    final choices = await Choice.db.find(
       session,
       where: (t) => t.questionId.equals(question.id),
     );
 
-    final counts = {for (final option in options) option.id!: 0};
+    final counts = {for (final choice in choices) choice.id!: 0};
 
     for (final answer in answers) {
-      for (final optionId in answer.selectedOptionIds ?? <int>[]) {
-        counts[optionId] = (counts[optionId] ?? 0) + 1;
+      for (final choiceId in answer.selectedChoiceIds ?? <int>[]) {
+        counts[choiceId] = (counts[choiceId] ?? 0) + 1;
       }
     }
 

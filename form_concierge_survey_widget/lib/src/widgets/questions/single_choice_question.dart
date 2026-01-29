@@ -2,25 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 
 class SingleChoiceQuestion extends StatelessWidget {
-  final List<QuestionOption> options;
-  final int? selectedOptionId;
+  final List<Choice> choices;
+  final int? selectedChoiceId;
   final ValueChanged<int?> onChanged;
 
   const SingleChoiceQuestion({
     super.key,
-    required this.options,
-    required this.selectedOptionId,
+    required this.choices,
+    required this.selectedChoiceId,
     required this.onChanged,
   });
 
   @override
   Widget build(BuildContext context) {
     return Column(
-      children: options.map((option) {
+      children: choices.map((choice) {
         return RadioListTile<int>(
-          title: Text(option.text),
-          value: option.id!,
-          groupValue: selectedOptionId,
+          title: Text(choice.text),
+          value: choice.id!,
+          groupValue: selectedChoiceId,
           onChanged: onChanged,
           contentPadding: EdgeInsets.zero,
           visualDensity: VisualDensity.compact,

@@ -6,7 +6,7 @@ import 'questions/question_widget.dart';
 class SurveyContent extends StatelessWidget {
   final Survey survey;
   final List<Question> questions;
-  final Map<int, List<QuestionOption>> optionsByQuestion;
+  final Map<int, List<Choice>> choicesByQuestion;
   final Map<int, dynamic> answers;
   final Map<int, String> validationErrors;
   final String? errorMessage;
@@ -18,7 +18,7 @@ class SurveyContent extends StatelessWidget {
     super.key,
     required this.survey,
     required this.questions,
-    required this.optionsByQuestion,
+    required this.choicesByQuestion,
     required this.answers,
     required this.validationErrors,
     this.errorMessage,
@@ -60,14 +60,14 @@ class SurveyContent extends StatelessWidget {
             const SizedBox(height: 16),
           ],
           ...questions.map((question) {
-            final options = optionsByQuestion[question.id] ?? [];
+            final choices = choicesByQuestion[question.id] ?? [];
             final error = validationErrors[question.id];
 
             return Padding(
               padding: const EdgeInsets.only(bottom: 24),
               child: QuestionWidget(
                 question: question,
-                options: options,
+                choices: choices,
                 value: answers[question.id],
                 error: error,
                 onChanged: (value) => onAnswerChanged(question.id!, value),

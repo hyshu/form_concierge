@@ -1,10 +1,10 @@
-### An option for choice-type questions
-class: QuestionOption
-table: question_option
+### A choice option for choice-type questions
+class: Choice
+table: choice
 fields:
   ### Reference to the parent question
   questionId: int, relation(parent=question)
-  ### The option text
+  ### The choice text displayed to respondents
   text: String
   ### Display order within the question
   orderIndex: int

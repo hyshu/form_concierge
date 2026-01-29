@@ -52,11 +52,25 @@ CREATE TABLE "answer" (
     "surveyResponseId" bigint NOT NULL,
     "questionId" bigint NOT NULL,
     "textValue" text,
-    "selectedOptionIds" json
+    "selectedChoiceIds" json
 );
 
 -- Indexes
 CREATE UNIQUE INDEX "response_question_index" ON "answer" USING btree ("surveyResponseId", "questionId");
+
+--
+-- Class Choice as table choice
+--
+CREATE TABLE "choice" (
+    "id" bigserial PRIMARY KEY,
+    "questionId" bigint NOT NULL,
+    "text" text NOT NULL,
+    "orderIndex" bigint NOT NULL,
+    "value" text
+);
+
+-- Indexes
+CREATE INDEX "question_order_index" ON "choice" USING btree ("questionId", "orderIndex");
 
 --
 -- Class Question as table question
@@ -75,20 +89,6 @@ CREATE TABLE "question" (
 
 -- Indexes
 CREATE INDEX "survey_order_index" ON "question" USING btree ("surveyId", "orderIndex");
-
---
--- Class QuestionOption as table question_option
---
-CREATE TABLE "question_option" (
-    "id" bigserial PRIMARY KEY,
-    "questionId" bigint NOT NULL,
-    "text" text NOT NULL,
-    "orderIndex" bigint NOT NULL,
-    "value" text
-);
-
--- Indexes
-CREATE INDEX "question_order_index" ON "question_option" USING btree ("questionId", "orderIndex");
 
 --
 -- Class Survey as table survey
@@ -563,22 +563,22 @@ ALTER TABLE ONLY "answer"
     ON UPDATE NO ACTION;
 
 --
+-- Foreign relations for "choice" table
+--
+ALTER TABLE ONLY "choice"
+    ADD CONSTRAINT "choice_fk_0"
+    FOREIGN KEY("questionId")
+    REFERENCES "question"("id")
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION;
+
+--
 -- Foreign relations for "question" table
 --
 ALTER TABLE ONLY "question"
     ADD CONSTRAINT "question_fk_0"
     FOREIGN KEY("surveyId")
     REFERENCES "survey"("id")
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION;
-
---
--- Foreign relations for "question_option" table
---
-ALTER TABLE ONLY "question_option"
-    ADD CONSTRAINT "question_option_fk_0"
-    FOREIGN KEY("questionId")
-    REFERENCES "question"("id")
     ON DELETE NO ACTION
     ON UPDATE NO ACTION;
 
@@ -761,9 +761,9 @@ ALTER TABLE ONLY "serverpod_auth_core_session"
 -- MIGRATION VERSION FOR form_concierge
 --
 INSERT INTO "serverpod_migrations" ("module", "version", "timestamp")
-    VALUES ('form_concierge', '20260127135640347', now())
+    VALUES ('form_concierge', '20260129084220620', now())
     ON CONFLICT ("module")
-    DO UPDATE SET "version" = '20260127135640347', "timestamp" = now();
+    DO UPDATE SET "version" = '20260129084220620', "timestamp" = now();
 
 --
 -- MIGRATION VERSION FOR serverpod

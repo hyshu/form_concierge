@@ -11,6 +11,9 @@ class QuestionAdminEndpoint extends Endpoint {
   bool get requireLogin => true;
 
   /// Add a question to a survey.
+  ///
+  /// For choice-type questions (singleChoice, multipleChoice), two default
+  /// choices are automatically added: "Choice 1" and "Choice 2".
   Future<Question> create(Session session, Question question) async {
     // Verify survey exists
     throwIfNotFound(
@@ -32,7 +35,26 @@ class QuestionAdminEndpoint extends Endpoint {
       orderIndex: nextOrderIndex,
     );
 
-    return await Question.db.insertRow(session, newQuestion);
+    final createdQuestion = await Question.db.insertRow(session, newQuestion);
+
+    // For choice-type questions, add two default choices
+    if (createdQuestion.type == QuestionType.singleChoice ||
+        createdQuestion.type == QuestionType.multipleChoice) {
+      await Choice.db.insert(session, [
+        Choice(
+          questionId: createdQuestion.id!,
+          text: 'Choice 1',
+          orderIndex: 0,
+        ),
+        Choice(
+          questionId: createdQuestion.id!,
+          text: 'Choice 2',
+          orderIndex: 1,
+        ),
+      ]);
+    }
+
+    return createdQuestion;
   }
 
   /// Update a question.
@@ -65,8 +87,8 @@ class QuestionAdminEndpoint extends Endpoint {
         where: (t) => t.questionId.equals(questionId),
       );
 
-      // Delete all options for this question
-      await QuestionOption.db.deleteWhere(
+      // Delete all choices for this question
+      await Choice.db.deleteWhere(
         session,
         where: (t) => t.questionId.equals(questionId),
       );
@@ -148,12 +170,12 @@ class QuestionAdminEndpoint extends Endpoint {
     return await Question.db.findById(session, questionId);
   }
 
-  /// Get all options for a question.
-  Future<List<QuestionOption>> getOptionsForQuestion(
+  /// Get all choices for a question.
+  Future<List<Choice>> getChoicesForQuestion(
     Session session,
     int questionId,
   ) async {
-    return await QuestionOption.db.find(
+    return await Choice.db.find(
       session,
       where: (t) => t.questionId.equals(questionId),
       orderBy: (t) => t.orderIndex,

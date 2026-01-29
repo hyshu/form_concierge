@@ -4,7 +4,7 @@ fields:
   questionId: int
   questionText: String
   questionType: QuestionType
-  ### Option ID to count mapping (for choice questions)
-  optionCounts: Map<int, int>?
+  ### Choice ID to count mapping (for choice questions)
+  choiceCounts: Map<int, int>?
   ### Text responses (for text questions)
   textResponses: List<String>?

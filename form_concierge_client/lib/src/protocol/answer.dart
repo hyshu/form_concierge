@@ -20,7 +20,7 @@ abstract class Answer implements _i1.SerializableModel {
     required this.surveyResponseId,
     required this.questionId,
     this.textValue,
-    this.selectedOptionIds,
+    this.selectedChoiceIds,
   });
 
   factory Answer({
@@ -28,7 +28,7 @@ abstract class Answer implements _i1.SerializableModel {
     required int surveyResponseId,
     required int questionId,
     String? textValue,
-    List<int>? selectedOptionIds,
+    List<int>? selectedChoiceIds,
   }) = _AnswerImpl;
 
   factory Answer.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -37,10 +37,10 @@ abstract class Answer implements _i1.SerializableModel {
       surveyResponseId: jsonSerialization['surveyResponseId'] as int,
       questionId: jsonSerialization['questionId'] as int,
       textValue: jsonSerialization['textValue'] as String?,
-      selectedOptionIds: jsonSerialization['selectedOptionIds'] == null
+      selectedChoiceIds: jsonSerialization['selectedChoiceIds'] == null
           ? null
           : _i2.Protocol().deserialize<List<int>>(
-              jsonSerialization['selectedOptionIds'],
+              jsonSerialization['selectedChoiceIds'],
             ),
     );
   }
@@ -59,8 +59,8 @@ abstract class Answer implements _i1.SerializableModel {
   /// Text answer (for text-type questions)
   String? textValue;
 
-  /// Selected option IDs (for choice questions)
-  List<int>? selectedOptionIds;
+  /// Selected choice IDs (for choice questions)
+  List<int>? selectedChoiceIds;
 
   /// Returns a shallow copy of this [Answer]
   /// with some or all fields replaced by the given arguments.
@@ -70,7 +70,7 @@ abstract class Answer implements _i1.SerializableModel {
     int? surveyResponseId,
     int? questionId,
     String? textValue,
-    List<int>? selectedOptionIds,
+    List<int>? selectedChoiceIds,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -80,8 +80,8 @@ abstract class Answer implements _i1.SerializableModel {
       'surveyResponseId': surveyResponseId,
       'questionId': questionId,
       if (textValue != null) 'textValue': textValue,
-      if (selectedOptionIds != null)
-        'selectedOptionIds': selectedOptionIds?.toJson(),
+      if (selectedChoiceIds != null)
+        'selectedChoiceIds': selectedChoiceIds?.toJson(),
     };
   }
 
@@ -99,13 +99,13 @@ class _AnswerImpl extends Answer {
     required int surveyResponseId,
     required int questionId,
     String? textValue,
-    List<int>? selectedOptionIds,
+    List<int>? selectedChoiceIds,
   }) : super._(
          id: id,
          surveyResponseId: surveyResponseId,
          questionId: questionId,
          textValue: textValue,
-         selectedOptionIds: selectedOptionIds,
+         selectedChoiceIds: selectedChoiceIds,
        );
 
   /// Returns a shallow copy of this [Answer]
@@ -117,16 +117,16 @@ class _AnswerImpl extends Answer {
     int? surveyResponseId,
     int? questionId,
     Object? textValue = _Undefined,
-    Object? selectedOptionIds = _Undefined,
+    Object? selectedChoiceIds = _Undefined,
   }) {
     return Answer(
       id: id is int? ? id : this.id,
       surveyResponseId: surveyResponseId ?? this.surveyResponseId,
       questionId: questionId ?? this.questionId,
       textValue: textValue is String? ? textValue : this.textValue,
-      selectedOptionIds: selectedOptionIds is List<int>?
-          ? selectedOptionIds
-          : this.selectedOptionIds?.map((e0) => e0).toList(),
+      selectedChoiceIds: selectedChoiceIds is List<int>?
+          ? selectedChoiceIds
+          : this.selectedChoiceIds?.map((e0) => e0).toList(),
     );
   }
 }

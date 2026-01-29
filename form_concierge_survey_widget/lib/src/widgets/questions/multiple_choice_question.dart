@@ -2,32 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 
 class MultipleChoiceQuestion extends StatelessWidget {
-  final List<QuestionOption> options;
-  final List<int> selectedOptionIds;
+  final List<Choice> choices;
+  final List<int> selectedChoiceIds;
   final ValueChanged<List<int>> onChanged;
 
   const MultipleChoiceQuestion({
     super.key,
-    required this.options,
-    required this.selectedOptionIds,
+    required this.choices,
+    required this.selectedChoiceIds,
     required this.onChanged,
   });
 
   @override
   Widget build(BuildContext context) {
     return Column(
-      children: options.map((option) {
-        final isSelected = selectedOptionIds.contains(option.id);
+      children: choices.map((choice) {
+        final isSelected = selectedChoiceIds.contains(choice.id);
 
         return CheckboxListTile(
-          title: Text(option.text),
+          title: Text(choice.text),
           value: isSelected,
           onChanged: (checked) {
-            final newIds = List<int>.from(selectedOptionIds);
+            final newIds = List<int>.from(selectedChoiceIds);
             if (checked == true) {
-              newIds.add(option.id!);
+              newIds.add(choice.id!);
             } else {
-              newIds.remove(option.id);
+              newIds.remove(choice.id);
             }
             onChanged(newIds);
           },

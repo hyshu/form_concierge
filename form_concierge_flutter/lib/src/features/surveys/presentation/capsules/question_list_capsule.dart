@@ -7,13 +7,13 @@ import '../../../../core/capsules/keyed_state.dart';
 /// State for the question list.
 class QuestionListState {
   final List<Question> questions;
-  final Map<int, List<QuestionOption>> optionsByQuestion;
+  final Map<int, List<Choice>> choicesByQuestion;
   final bool isLoading;
   final String? error;
 
   const QuestionListState({
     this.questions = const [],
-    this.optionsByQuestion = const {},
+    this.choicesByQuestion = const {},
     this.isLoading = false,
     this.error,
   });
@@ -22,12 +22,12 @@ class QuestionListState {
 
   QuestionListState copyWith({
     List<Question>? questions,
-    Map<int, List<QuestionOption>>? optionsByQuestion,
+    Map<int, List<Choice>>? choicesByQuestion,
     bool? isLoading,
     String? error,
   }) => QuestionListState(
     questions: questions ?? this.questions,
-    optionsByQuestion: optionsByQuestion ?? this.optionsByQuestion,
+    choicesByQuestion: choicesByQuestion ?? this.choicesByQuestion,
     isLoading: isLoading ?? this.isLoading,
     error: error,
   );
@@ -74,13 +74,13 @@ class QuestionListManager {
     try {
       final questions = await _client.questionAdmin.getForSurvey(surveyId);
 
-      // Load options for choice questions
-      final optionsByQuestion = <int, List<QuestionOption>>{};
+      // Load choices for choice questions
+      final choicesByQuestion = <int, List<Choice>>{};
       for (final question in questions) {
         if (question.type == QuestionType.singleChoice ||
             question.type == QuestionType.multipleChoice) {
-          optionsByQuestion[question.id!] = await _client.questionAdmin
-              .getOptionsForQuestion(question.id!);
+          choicesByQuestion[question.id!] = await _client.questionAdmin
+              .getChoicesForQuestion(question.id!);
         }
       }
 
@@ -88,7 +88,7 @@ class QuestionListManager {
         surveyId,
         getState(surveyId).copyWith(
           questions: questions,
-          optionsByQuestion: optionsByQuestion,
+          choicesByQuestion: choicesByQuestion,
           isLoading: false,
         ),
       );
@@ -185,64 +185,64 @@ class QuestionListManager {
     }
   }
 
-  /// Create a new option for a question.
-  Future<QuestionOption?> createOption({
+  /// Create a new choice for a question.
+  Future<Choice?> createChoice({
     required int questionId,
     required int surveyId,
     required String text,
   }) async {
     try {
-      final option = QuestionOption(
+      final choice = Choice(
         questionId: questionId,
         text: text,
         orderIndex:
-            getState(surveyId).optionsByQuestion[questionId]?.length ?? 0,
+            getState(surveyId).choicesByQuestion[questionId]?.length ?? 0,
       );
-      final created = await _client.questionOptionAdmin.create(option);
+      final created = await _client.choiceAdmin.create(choice);
       await loadQuestions(surveyId);
       return created;
     } on Exception catch (e) {
       _setState(
         surveyId,
         getState(surveyId).copyWith(
-          error: 'Failed to create option: $e',
+          error: 'Failed to create choice: $e',
         ),
       );
       return null;
     }
   }
 
-  /// Update an option.
-  Future<QuestionOption?> updateOption(
-    QuestionOption option,
+  /// Update a choice.
+  Future<Choice?> updateChoice(
+    Choice choice,
     int surveyId,
   ) async {
     try {
-      final updated = await _client.questionOptionAdmin.update(option);
+      final updated = await _client.choiceAdmin.update(choice);
       await loadQuestions(surveyId);
       return updated;
     } on Exception catch (e) {
       _setState(
         surveyId,
         getState(surveyId).copyWith(
-          error: 'Failed to update option: $e',
+          error: 'Failed to update choice: $e',
         ),
       );
       return null;
     }
   }
 
-  /// Delete an option.
-  Future<bool> deleteOption(int optionId, int surveyId) async {
+  /// Delete a choice.
+  Future<bool> deleteChoice(int choiceId, int surveyId) async {
     try {
-      await _client.questionOptionAdmin.delete(optionId);
+      await _client.choiceAdmin.delete(choiceId);
       await loadQuestions(surveyId);
       return true;
     } on Exception catch (e) {
       _setState(
         surveyId,
         getState(surveyId).copyWith(
-          error: 'Failed to delete option: $e',
+          error: 'Failed to delete choice: $e',
         ),
       );
       return false;

@@ -9,7 +9,7 @@ class SurveyDeletionService {
   /// Deletes in the correct order to respect foreign key constraints:
   /// 1. Answers (references responses and questions)
   /// 2. Responses (references survey)
-  /// 3. Question options (references questions)
+  /// 3. Choices (references questions)
   /// 4. Questions (references survey)
   /// 5. Survey
   static Future<void> deleteSurvey(Session session, Survey survey) async {
@@ -23,7 +23,7 @@ class SurveyDeletionService {
 
       await _deleteAnswersForSurvey(session, surveyId);
       await _deleteResponses(session, surveyId);
-      await _deleteOptionsForQuestions(session, questions);
+      await _deleteChoicesForQuestions(session, questions);
       await _deleteQuestions(session, surveyId);
       await Survey.db.deleteRow(session, survey);
     });
@@ -52,14 +52,14 @@ class SurveyDeletionService {
     );
   }
 
-  static Future<void> _deleteOptionsForQuestions(
+  static Future<void> _deleteChoicesForQuestions(
     Session session,
     List<Question> questions,
   ) async {
     final questionIds = questions.map((q) => q.id!).toSet();
     if (questionIds.isEmpty) return;
 
-    await QuestionOption.db.deleteWhere(
+    await Choice.db.deleteWhere(
       session,
       where: (t) => t.questionId.inSet(questionIds),
     );

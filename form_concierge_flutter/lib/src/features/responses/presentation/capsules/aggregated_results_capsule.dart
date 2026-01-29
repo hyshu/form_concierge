@@ -7,13 +7,13 @@ import '../../../../core/capsules/keyed_state.dart';
 /// State for aggregated results.
 class AggregatedResultsState {
   final SurveyResults? results;
-  final Map<int, List<QuestionOption>> optionsByQuestion;
+  final Map<int, List<Choice>> choicesByQuestion;
   final bool isLoading;
   final String? error;
 
   const AggregatedResultsState({
     this.results,
-    this.optionsByQuestion = const {},
+    this.choicesByQuestion = const {},
     this.isLoading = false,
     this.error,
   });
@@ -22,12 +22,12 @@ class AggregatedResultsState {
 
   AggregatedResultsState copyWith({
     SurveyResults? results,
-    Map<int, List<QuestionOption>>? optionsByQuestion,
+    Map<int, List<Choice>>? choicesByQuestion,
     bool? isLoading,
     String? error,
   }) => AggregatedResultsState(
     results: results ?? this.results,
-    optionsByQuestion: optionsByQuestion ?? this.optionsByQuestion,
+    choicesByQuestion: choicesByQuestion ?? this.choicesByQuestion,
     isLoading: isLoading ?? this.isLoading,
     error: error,
   );
@@ -77,14 +77,14 @@ class AggregatedResultsManager {
         surveyId,
       );
 
-      // Load options to map IDs to text
-      final optionsByQuestion = <int, List<QuestionOption>>{};
+      // Load choices to map IDs to text
+      final choicesByQuestion = <int, List<Choice>>{};
       for (final questionResult in results.questionResults) {
-        if (questionResult.optionCounts != null) {
-          final options = await _client.questionAdmin.getOptionsForQuestion(
+        if (questionResult.choiceCounts != null) {
+          final choices = await _client.questionAdmin.getChoicesForQuestion(
             questionResult.questionId,
           );
-          optionsByQuestion[questionResult.questionId] = options;
+          choicesByQuestion[questionResult.questionId] = choices;
         }
       }
 
@@ -92,7 +92,7 @@ class AggregatedResultsManager {
         surveyId,
         getState(surveyId).copyWith(
           results: results,
-          optionsByQuestion: optionsByQuestion,
+          choicesByQuestion: choicesByQuestion,
           isLoading: false,
         ),
       );
