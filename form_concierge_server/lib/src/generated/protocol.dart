@@ -25,18 +25,21 @@ import 'public_config.dart' as _i10;
 import 'question.dart' as _i11;
 import 'question_result.dart' as _i12;
 import 'question_type.dart' as _i13;
-import 'survey.dart' as _i14;
-import 'survey_response.dart' as _i15;
-import 'survey_results.dart' as _i16;
-import 'survey_status.dart' as _i17;
-import 'package:form_concierge_server/src/generated/choice.dart' as _i18;
-import 'package:form_concierge_server/src/generated/question.dart' as _i19;
+import 'question_with_choices.dart' as _i14;
+import 'survey.dart' as _i15;
+import 'survey_response.dart' as _i16;
+import 'survey_results.dart' as _i17;
+import 'survey_status.dart' as _i18;
+import 'package:form_concierge_server/src/generated/choice.dart' as _i19;
+import 'package:form_concierge_server/src/generated/question.dart' as _i20;
 import 'package:form_concierge_server/src/generated/survey_response.dart'
-    as _i20;
-import 'package:form_concierge_server/src/generated/answer.dart' as _i21;
-import 'package:form_concierge_server/src/generated/survey.dart' as _i22;
-import 'package:form_concierge_server/src/generated/auth_user_info.dart'
+    as _i21;
+import 'package:form_concierge_server/src/generated/answer.dart' as _i22;
+import 'package:form_concierge_server/src/generated/question_with_choices.dart'
     as _i23;
+import 'package:form_concierge_server/src/generated/survey.dart' as _i24;
+import 'package:form_concierge_server/src/generated/auth_user_info.dart'
+    as _i25;
 export 'admin_user.dart';
 export 'answer.dart';
 export 'auth_requirement.dart';
@@ -46,6 +49,7 @@ export 'public_config.dart';
 export 'question.dart';
 export 'question_result.dart';
 export 'question_type.dart';
+export 'question_with_choices.dart';
 export 'survey.dart';
 export 'survey_response.dart';
 export 'survey_results.dart';
@@ -719,17 +723,20 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == _i13.QuestionType) {
       return _i13.QuestionType.fromJson(data) as T;
     }
-    if (t == _i14.Survey) {
-      return _i14.Survey.fromJson(data) as T;
+    if (t == _i14.QuestionWithChoices) {
+      return _i14.QuestionWithChoices.fromJson(data) as T;
     }
-    if (t == _i15.SurveyResponse) {
-      return _i15.SurveyResponse.fromJson(data) as T;
+    if (t == _i15.Survey) {
+      return _i15.Survey.fromJson(data) as T;
     }
-    if (t == _i16.SurveyResults) {
-      return _i16.SurveyResults.fromJson(data) as T;
+    if (t == _i16.SurveyResponse) {
+      return _i16.SurveyResponse.fromJson(data) as T;
     }
-    if (t == _i17.SurveyStatus) {
-      return _i17.SurveyStatus.fromJson(data) as T;
+    if (t == _i17.SurveyResults) {
+      return _i17.SurveyResults.fromJson(data) as T;
+    }
+    if (t == _i18.SurveyStatus) {
+      return _i18.SurveyStatus.fromJson(data) as T;
     }
     if (t == _i1.getType<_i5.AdminUser?>()) {
       return (data != null ? _i5.AdminUser.fromJson(data) : null) as T;
@@ -758,17 +765,21 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == _i1.getType<_i13.QuestionType?>()) {
       return (data != null ? _i13.QuestionType.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i14.Survey?>()) {
-      return (data != null ? _i14.Survey.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i14.QuestionWithChoices?>()) {
+      return (data != null ? _i14.QuestionWithChoices.fromJson(data) : null)
+          as T;
     }
-    if (t == _i1.getType<_i15.SurveyResponse?>()) {
-      return (data != null ? _i15.SurveyResponse.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i15.Survey?>()) {
+      return (data != null ? _i15.Survey.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i16.SurveyResults?>()) {
-      return (data != null ? _i16.SurveyResults.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i16.SurveyResponse?>()) {
+      return (data != null ? _i16.SurveyResponse.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i17.SurveyStatus?>()) {
-      return (data != null ? _i17.SurveyStatus.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i17.SurveyResults?>()) {
+      return (data != null ? _i17.SurveyResults.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i18.SurveyStatus?>()) {
+      return (data != null ? _i18.SurveyStatus.fromJson(data) : null) as T;
     }
     if (t == List<int>) {
       return (data as List).map((e) => deserialize<int>(e)).toList() as T;
@@ -816,25 +827,25 @@ class Protocol extends _i1.SerializationManagerServer {
               .toList()
           as T;
     }
-    if (t == List<_i18.Choice>) {
-      return (data as List).map((e) => deserialize<_i18.Choice>(e)).toList()
+    if (t == List<_i19.Choice>) {
+      return (data as List).map((e) => deserialize<_i19.Choice>(e)).toList()
           as T;
     }
     if (t == List<int>) {
       return (data as List).map((e) => deserialize<int>(e)).toList() as T;
     }
-    if (t == List<_i19.Question>) {
-      return (data as List).map((e) => deserialize<_i19.Question>(e)).toList()
+    if (t == List<_i20.Question>) {
+      return (data as List).map((e) => deserialize<_i20.Question>(e)).toList()
           as T;
     }
-    if (t == List<_i20.SurveyResponse>) {
+    if (t == List<_i21.SurveyResponse>) {
       return (data as List)
-              .map((e) => deserialize<_i20.SurveyResponse>(e))
+              .map((e) => deserialize<_i21.SurveyResponse>(e))
               .toList()
           as T;
     }
-    if (t == List<_i21.Answer>) {
-      return (data as List).map((e) => deserialize<_i21.Answer>(e)).toList()
+    if (t == List<_i22.Answer>) {
+      return (data as List).map((e) => deserialize<_i22.Answer>(e)).toList()
           as T;
     }
     if (t == Map<String, int>) {
@@ -843,13 +854,19 @@ class Protocol extends _i1.SerializationManagerServer {
           )
           as T;
     }
-    if (t == List<_i22.Survey>) {
-      return (data as List).map((e) => deserialize<_i22.Survey>(e)).toList()
+    if (t == List<_i23.QuestionWithChoices>) {
+      return (data as List)
+              .map((e) => deserialize<_i23.QuestionWithChoices>(e))
+              .toList()
           as T;
     }
-    if (t == List<_i23.AuthUserInfo>) {
+    if (t == List<_i24.Survey>) {
+      return (data as List).map((e) => deserialize<_i24.Survey>(e)).toList()
+          as T;
+    }
+    if (t == List<_i25.AuthUserInfo>) {
       return (data as List)
-              .map((e) => deserialize<_i23.AuthUserInfo>(e))
+              .map((e) => deserialize<_i25.AuthUserInfo>(e))
               .toList()
           as T;
     }
@@ -879,10 +896,11 @@ class Protocol extends _i1.SerializationManagerServer {
       _i11.Question => 'Question',
       _i12.QuestionResult => 'QuestionResult',
       _i13.QuestionType => 'QuestionType',
-      _i14.Survey => 'Survey',
-      _i15.SurveyResponse => 'SurveyResponse',
-      _i16.SurveyResults => 'SurveyResults',
-      _i17.SurveyStatus => 'SurveyStatus',
+      _i14.QuestionWithChoices => 'QuestionWithChoices',
+      _i15.Survey => 'Survey',
+      _i16.SurveyResponse => 'SurveyResponse',
+      _i17.SurveyResults => 'SurveyResults',
+      _i18.SurveyStatus => 'SurveyStatus',
       _ => null,
     };
   }
@@ -918,13 +936,15 @@ class Protocol extends _i1.SerializationManagerServer {
         return 'QuestionResult';
       case _i13.QuestionType():
         return 'QuestionType';
-      case _i14.Survey():
+      case _i14.QuestionWithChoices():
+        return 'QuestionWithChoices';
+      case _i15.Survey():
         return 'Survey';
-      case _i15.SurveyResponse():
+      case _i16.SurveyResponse():
         return 'SurveyResponse';
-      case _i16.SurveyResults():
+      case _i17.SurveyResults():
         return 'SurveyResults';
-      case _i17.SurveyStatus():
+      case _i18.SurveyStatus():
         return 'SurveyStatus';
     }
     className = _i2.Protocol().getClassNameForObject(data);
@@ -975,17 +995,20 @@ class Protocol extends _i1.SerializationManagerServer {
     if (dataClassName == 'QuestionType') {
       return deserialize<_i13.QuestionType>(data['data']);
     }
+    if (dataClassName == 'QuestionWithChoices') {
+      return deserialize<_i14.QuestionWithChoices>(data['data']);
+    }
     if (dataClassName == 'Survey') {
-      return deserialize<_i14.Survey>(data['data']);
+      return deserialize<_i15.Survey>(data['data']);
     }
     if (dataClassName == 'SurveyResponse') {
-      return deserialize<_i15.SurveyResponse>(data['data']);
+      return deserialize<_i16.SurveyResponse>(data['data']);
     }
     if (dataClassName == 'SurveyResults') {
-      return deserialize<_i16.SurveyResults>(data['data']);
+      return deserialize<_i17.SurveyResults>(data['data']);
     }
     if (dataClassName == 'SurveyStatus') {
-      return deserialize<_i17.SurveyStatus>(data['data']);
+      return deserialize<_i18.SurveyStatus>(data['data']);
     }
     if (dataClassName.startsWith('serverpod.')) {
       data['className'] = dataClassName.substring(10);
@@ -1031,10 +1054,10 @@ class Protocol extends _i1.SerializationManagerServer {
         return _i9.Choice.t;
       case _i11.Question:
         return _i11.Question.t;
-      case _i14.Survey:
-        return _i14.Survey.t;
-      case _i15.SurveyResponse:
-        return _i15.SurveyResponse.t;
+      case _i15.Survey:
+        return _i15.Survey.t;
+      case _i16.SurveyResponse:
+        return _i16.SurveyResponse.t;
     }
     return null;
   }

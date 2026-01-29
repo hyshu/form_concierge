@@ -35,6 +35,70 @@ class SurveyAdminEndpoint extends Endpoint {
     return await Survey.db.insertRow(session, newSurvey);
   }
 
+  /// Create a new survey with questions and choices in one transaction.
+  Future<Survey> createWithQuestions(
+    Session session,
+    Survey survey,
+    List<QuestionWithChoices> questions,
+  ) async {
+    final userId = session.authenticated?.userIdentifier;
+
+    // Check for duplicate slug
+    final existing = await Survey.db.findFirstRow(
+      session,
+      where: (t) => t.slug.equals(survey.slug),
+    );
+    if (existing != null) {
+      throw const ValidationException('A survey with this slug already exists');
+    }
+
+    return await session.db.transaction((transaction) async {
+      // Create the survey
+      final newSurvey = survey.copyWith(
+        createdByUserId: userId,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        status: SurveyStatus.draft,
+      );
+      final createdSurvey = await Survey.db.insertRow(session, newSurvey);
+
+      // Create questions with their choices
+      for (var i = 0; i < questions.length; i++) {
+        final q = questions[i];
+        final newQuestion = Question(
+          surveyId: createdSurvey.id!,
+          text: q.text,
+          type: q.type,
+          orderIndex: i,
+          isRequired: q.isRequired,
+          placeholder: q.placeholder,
+        );
+        final createdQuestion = await Question.db.insertRow(
+          session,
+          newQuestion,
+        );
+
+        // Add choices for choice-type questions
+        if (q.type == QuestionType.singleChoice ||
+            q.type == QuestionType.multipleChoice) {
+          final choices = <Choice>[];
+          for (var j = 0; j < q.choices.length; j++) {
+            choices.add(Choice(
+              questionId: createdQuestion.id!,
+              text: q.choices[j],
+              orderIndex: j,
+            ));
+          }
+          if (choices.isNotEmpty) {
+            await Choice.db.insert(session, choices);
+          }
+        }
+      }
+
+      return createdSurvey;
+    });
+  }
+
   /// Update an existing survey.
   Future<Survey> update(Session session, Survey survey) async {
     if (survey.id == null) {

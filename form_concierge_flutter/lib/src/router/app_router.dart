@@ -8,8 +8,7 @@ import '../features/auth/presentation/pages/reset_password_page.dart';
 import '../features/auth/presentation/pages/verify_reset_code_page.dart';
 import '../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../features/responses/presentation/pages/responses_page.dart';
-import '../features/surveys/presentation/pages/create_survey_page.dart';
-import '../features/surveys/presentation/pages/edit_survey_page.dart';
+import '../features/surveys/presentation/pages/survey_editor_page.dart';
 import '../features/users/presentation/pages/users_page.dart';
 
 /// Capsule that provides the GoRouter instance with auth guards.
@@ -72,7 +71,7 @@ GoRouter appRouterCapsule(CapsuleHandle use) {
           routes: [
             GoRoute(
               path: 'surveys/new',
-              builder: (context, state) => const CreateSurveyPage(),
+              builder: (context, state) => const SurveyEditorPage(),
             ),
             GoRoute(
               path: 'users',
@@ -82,7 +81,7 @@ GoRouter appRouterCapsule(CapsuleHandle use) {
               path: 'surveys/:id',
               builder: (context, state) {
                 final id = int.parse(state.pathParameters['id']!);
-                return EditSurveyPage(surveyId: id);
+                return SurveyEditorPage(surveyId: id);
               },
               routes: [
                 GoRoute(
