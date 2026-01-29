@@ -12,16 +12,15 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
 import '../endpoints/auth_endpoints.dart' as _i2;
-import '../endpoints/config_endpoint.dart' as _i3;
-import '../endpoints/question_admin_endpoint.dart' as _i4;
-import '../endpoints/question_option_admin_endpoint.dart' as _i5;
+import '../endpoints/choice_admin_endpoint.dart' as _i3;
+import '../endpoints/config_endpoint.dart' as _i4;
+import '../endpoints/question_admin_endpoint.dart' as _i5;
 import '../endpoints/response_analytics_endpoint.dart' as _i6;
 import '../endpoints/survey_admin_endpoint.dart' as _i7;
 import '../endpoints/survey_endpoint.dart' as _i8;
 import '../endpoints/user_admin_endpoint.dart' as _i9;
-import 'package:form_concierge_server/src/generated/question.dart' as _i10;
-import 'package:form_concierge_server/src/generated/question_option.dart'
-    as _i11;
+import 'package:form_concierge_server/src/generated/choice.dart' as _i10;
+import 'package:form_concierge_server/src/generated/question.dart' as _i11;
 import 'package:form_concierge_server/src/generated/survey.dart' as _i12;
 import 'package:form_concierge_server/src/generated/answer.dart' as _i13;
 import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
@@ -45,22 +44,22 @@ class Endpoints extends _i1.EndpointDispatch {
           'emailIdp',
           null,
         ),
-      'config': _i3.ConfigEndpoint()
+      'choiceAdmin': _i3.ChoiceAdminEndpoint()
+        ..initialize(
+          server,
+          'choiceAdmin',
+          null,
+        ),
+      'config': _i4.ConfigEndpoint()
         ..initialize(
           server,
           'config',
           null,
         ),
-      'questionAdmin': _i4.QuestionAdminEndpoint()
+      'questionAdmin': _i5.QuestionAdminEndpoint()
         ..initialize(
           server,
           'questionAdmin',
-          null,
-        ),
-      'questionOptionAdmin': _i5.QuestionOptionAdminEndpoint()
-        ..initialize(
-          server,
-          'questionOptionAdmin',
           null,
         ),
       'responseAnalytics': _i6.ResponseAnalyticsEndpoint()
@@ -284,6 +283,113 @@ class Endpoints extends _i1.EndpointDispatch {
         ),
       },
     );
+    connectors['choiceAdmin'] = _i1.EndpointConnector(
+      name: 'choiceAdmin',
+      endpoint: endpoints['choiceAdmin']!,
+      methodConnectors: {
+        'create': _i1.MethodConnector(
+          name: 'create',
+          params: {
+            'choice': _i1.ParameterDescription(
+              name: 'choice',
+              type: _i1.getType<_i10.Choice>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['choiceAdmin'] as _i3.ChoiceAdminEndpoint).create(
+                    session,
+                    params['choice'],
+                  ),
+        ),
+        'update': _i1.MethodConnector(
+          name: 'update',
+          params: {
+            'choice': _i1.ParameterDescription(
+              name: 'choice',
+              type: _i1.getType<_i10.Choice>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['choiceAdmin'] as _i3.ChoiceAdminEndpoint).update(
+                    session,
+                    params['choice'],
+                  ),
+        ),
+        'delete': _i1.MethodConnector(
+          name: 'delete',
+          params: {
+            'choiceId': _i1.ParameterDescription(
+              name: 'choiceId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['choiceAdmin'] as _i3.ChoiceAdminEndpoint).delete(
+                    session,
+                    params['choiceId'],
+                  ),
+        ),
+        'reorder': _i1.MethodConnector(
+          name: 'reorder',
+          params: {
+            'questionId': _i1.ParameterDescription(
+              name: 'questionId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'choiceIds': _i1.ParameterDescription(
+              name: 'choiceIds',
+              type: _i1.getType<List<int>>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['choiceAdmin'] as _i3.ChoiceAdminEndpoint).reorder(
+                    session,
+                    params['questionId'],
+                    params['choiceIds'],
+                  ),
+        ),
+        'getById': _i1.MethodConnector(
+          name: 'getById',
+          params: {
+            'choiceId': _i1.ParameterDescription(
+              name: 'choiceId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['choiceAdmin'] as _i3.ChoiceAdminEndpoint).getById(
+                    session,
+                    params['choiceId'],
+                  ),
+        ),
+      },
+    );
     connectors['config'] = _i1.EndpointConnector(
       name: 'config',
       endpoint: endpoints['config']!,
@@ -295,7 +401,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['config'] as _i3.ConfigEndpoint)
+              ) async => (endpoints['config'] as _i4.ConfigEndpoint)
                   .getPublicConfig(session),
         ),
       },
@@ -309,7 +415,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'question': _i1.ParameterDescription(
               name: 'question',
-              type: _i1.getType<_i10.Question>(),
+              type: _i1.getType<_i11.Question>(),
               nullable: false,
             ),
           },
@@ -318,7 +424,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['questionAdmin'] as _i4.QuestionAdminEndpoint)
+                  (endpoints['questionAdmin'] as _i5.QuestionAdminEndpoint)
                       .create(
                         session,
                         params['question'],
@@ -329,7 +435,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'question': _i1.ParameterDescription(
               name: 'question',
-              type: _i1.getType<_i10.Question>(),
+              type: _i1.getType<_i11.Question>(),
               nullable: false,
             ),
           },
@@ -338,7 +444,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['questionAdmin'] as _i4.QuestionAdminEndpoint)
+                  (endpoints['questionAdmin'] as _i5.QuestionAdminEndpoint)
                       .update(
                         session,
                         params['question'],
@@ -358,7 +464,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['questionAdmin'] as _i4.QuestionAdminEndpoint)
+                  (endpoints['questionAdmin'] as _i5.QuestionAdminEndpoint)
                       .delete(
                         session,
                         params['questionId'],
@@ -383,7 +489,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['questionAdmin'] as _i4.QuestionAdminEndpoint)
+                  (endpoints['questionAdmin'] as _i5.QuestionAdminEndpoint)
                       .reorder(
                         session,
                         params['surveyId'],
@@ -404,7 +510,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['questionAdmin'] as _i4.QuestionAdminEndpoint)
+                  (endpoints['questionAdmin'] as _i5.QuestionAdminEndpoint)
                       .getForSurvey(
                         session,
                         params['surveyId'],
@@ -424,14 +530,14 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['questionAdmin'] as _i4.QuestionAdminEndpoint)
+                  (endpoints['questionAdmin'] as _i5.QuestionAdminEndpoint)
                       .getById(
                         session,
                         params['questionId'],
                       ),
         ),
-        'getOptionsForQuestion': _i1.MethodConnector(
-          name: 'getOptionsForQuestion',
+        'getChoicesForQuestion': _i1.MethodConnector(
+          name: 'getChoicesForQuestion',
           params: {
             'questionId': _i1.ParameterDescription(
               name: 'questionId',
@@ -444,127 +550,10 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['questionAdmin'] as _i4.QuestionAdminEndpoint)
-                      .getOptionsForQuestion(
+                  (endpoints['questionAdmin'] as _i5.QuestionAdminEndpoint)
+                      .getChoicesForQuestion(
                         session,
                         params['questionId'],
-                      ),
-        ),
-      },
-    );
-    connectors['questionOptionAdmin'] = _i1.EndpointConnector(
-      name: 'questionOptionAdmin',
-      endpoint: endpoints['questionOptionAdmin']!,
-      methodConnectors: {
-        'create': _i1.MethodConnector(
-          name: 'create',
-          params: {
-            'option': _i1.ParameterDescription(
-              name: 'option',
-              type: _i1.getType<_i11.QuestionOption>(),
-              nullable: false,
-            ),
-          },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async =>
-                  (endpoints['questionOptionAdmin']
-                          as _i5.QuestionOptionAdminEndpoint)
-                      .create(
-                        session,
-                        params['option'],
-                      ),
-        ),
-        'update': _i1.MethodConnector(
-          name: 'update',
-          params: {
-            'option': _i1.ParameterDescription(
-              name: 'option',
-              type: _i1.getType<_i11.QuestionOption>(),
-              nullable: false,
-            ),
-          },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async =>
-                  (endpoints['questionOptionAdmin']
-                          as _i5.QuestionOptionAdminEndpoint)
-                      .update(
-                        session,
-                        params['option'],
-                      ),
-        ),
-        'delete': _i1.MethodConnector(
-          name: 'delete',
-          params: {
-            'optionId': _i1.ParameterDescription(
-              name: 'optionId',
-              type: _i1.getType<int>(),
-              nullable: false,
-            ),
-          },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async =>
-                  (endpoints['questionOptionAdmin']
-                          as _i5.QuestionOptionAdminEndpoint)
-                      .delete(
-                        session,
-                        params['optionId'],
-                      ),
-        ),
-        'reorder': _i1.MethodConnector(
-          name: 'reorder',
-          params: {
-            'questionId': _i1.ParameterDescription(
-              name: 'questionId',
-              type: _i1.getType<int>(),
-              nullable: false,
-            ),
-            'optionIds': _i1.ParameterDescription(
-              name: 'optionIds',
-              type: _i1.getType<List<int>>(),
-              nullable: false,
-            ),
-          },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async =>
-                  (endpoints['questionOptionAdmin']
-                          as _i5.QuestionOptionAdminEndpoint)
-                      .reorder(
-                        session,
-                        params['questionId'],
-                        params['optionIds'],
-                      ),
-        ),
-        'getById': _i1.MethodConnector(
-          name: 'getById',
-          params: {
-            'optionId': _i1.ParameterDescription(
-              name: 'optionId',
-              type: _i1.getType<int>(),
-              nullable: false,
-            ),
-          },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async =>
-                  (endpoints['questionOptionAdmin']
-                          as _i5.QuestionOptionAdminEndpoint)
-                      .getById(
-                        session,
-                        params['optionId'],
                       ),
         ),
       },
@@ -940,8 +929,8 @@ class Endpoints extends _i1.EndpointDispatch {
                     params['surveyId'],
                   ),
         ),
-        'getOptionsForQuestion': _i1.MethodConnector(
-          name: 'getOptionsForQuestion',
+        'getChoicesForQuestion': _i1.MethodConnector(
+          name: 'getChoicesForQuestion',
           params: {
             'questionId': _i1.ParameterDescription(
               name: 'questionId',
@@ -954,7 +943,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async => (endpoints['survey'] as _i8.SurveyEndpoint)
-                  .getOptionsForQuestion(
+                  .getChoicesForQuestion(
                     session,
                     params['questionId'],
                   ),

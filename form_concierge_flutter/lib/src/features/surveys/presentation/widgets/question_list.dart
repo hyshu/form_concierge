@@ -9,7 +9,7 @@ import 'question_list_tile.dart';
 class QuestionList extends StatelessWidget {
   final int surveyId;
   final List<Question> questions;
-  final Map<int, List<QuestionOption>> optionsByQuestion;
+  final Map<int, List<Choice>> choicesByQuestion;
   final bool isLoading;
   final bool enabled;
   final void Function({
@@ -28,23 +28,23 @@ class QuestionList extends StatelessWidget {
   })
   onEditQuestion;
   final void Function(Question question) onDeleteQuestion;
-  final void Function(int questionId, String text) onAddOption;
-  final void Function(QuestionOption option, String newText) onUpdateOption;
-  final void Function(QuestionOption option) onDeleteOption;
+  final void Function(int questionId, String text) onAddChoice;
+  final void Function(Choice choice, String newText) onUpdateChoice;
+  final void Function(Choice choice) onDeleteChoice;
 
   const QuestionList({
     super.key,
     required this.surveyId,
     required this.questions,
-    required this.optionsByQuestion,
+    required this.choicesByQuestion,
     required this.isLoading,
     required this.enabled,
     required this.onAddQuestion,
     required this.onEditQuestion,
     required this.onDeleteQuestion,
-    required this.onAddOption,
-    required this.onUpdateOption,
-    required this.onDeleteOption,
+    required this.onAddChoice,
+    required this.onUpdateChoice,
+    required this.onDeleteChoice,
   });
 
   @override
@@ -137,14 +137,14 @@ class QuestionList extends StatelessWidget {
                         Expanded(
                           child: QuestionListTile(
                             question: question,
-                            options: optionsByQuestion[question.id] ?? [],
+                            choices: choicesByQuestion[question.id] ?? [],
                             enabled: enabled,
                             onEdit: () => _showEditDialog(context, question),
                             onDelete: () => _confirmDelete(context, question),
-                            onAddOption: (text) =>
-                                onAddOption(question.id!, text),
-                            onUpdateOption: onUpdateOption,
-                            onDeleteOption: onDeleteOption,
+                            onAddChoice: (text) =>
+                                onAddChoice(question.id!, text),
+                            onUpdateChoice: onUpdateChoice,
+                            onDeleteChoice: onDeleteChoice,
                           ),
                         ),
                       ],

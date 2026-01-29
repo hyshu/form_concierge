@@ -14,7 +14,7 @@ List<Answer> buildAnswers(Map<int, dynamic> answers, List<Question> questions) {
             Answer(
               surveyResponseId: 0, // Set by server
               questionId: question.id!,
-              selectedOptionIds: [value],
+              selectedChoiceIds: [value],
             ),
           );
         }
@@ -24,7 +24,7 @@ List<Answer> buildAnswers(Map<int, dynamic> answers, List<Question> questions) {
             Answer(
               surveyResponseId: 0, // Set by server
               questionId: question.id!,
-              selectedOptionIds: value,
+              selectedChoiceIds: value,
             ),
           );
         }

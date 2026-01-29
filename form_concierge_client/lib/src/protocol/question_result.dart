@@ -20,7 +20,7 @@ abstract class QuestionResult implements _i1.SerializableModel {
     required this.questionId,
     required this.questionText,
     required this.questionType,
-    this.optionCounts,
+    this.choiceCounts,
     this.textResponses,
   });
 
@@ -28,7 +28,7 @@ abstract class QuestionResult implements _i1.SerializableModel {
     required int questionId,
     required String questionText,
     required _i2.QuestionType questionType,
-    Map<int, int>? optionCounts,
+    Map<int, int>? choiceCounts,
     List<String>? textResponses,
   }) = _QuestionResultImpl;
 
@@ -39,10 +39,10 @@ abstract class QuestionResult implements _i1.SerializableModel {
       questionType: _i2.QuestionType.fromJson(
         (jsonSerialization['questionType'] as String),
       ),
-      optionCounts: jsonSerialization['optionCounts'] == null
+      choiceCounts: jsonSerialization['choiceCounts'] == null
           ? null
           : _i3.Protocol().deserialize<Map<int, int>>(
-              jsonSerialization['optionCounts'],
+              jsonSerialization['choiceCounts'],
             ),
       textResponses: jsonSerialization['textResponses'] == null
           ? null
@@ -58,8 +58,8 @@ abstract class QuestionResult implements _i1.SerializableModel {
 
   _i2.QuestionType questionType;
 
-  /// Option ID to count mapping (for choice questions)
-  Map<int, int>? optionCounts;
+  /// Choice ID to count mapping (for choice questions)
+  Map<int, int>? choiceCounts;
 
   /// Text responses (for text questions)
   List<String>? textResponses;
@@ -71,7 +71,7 @@ abstract class QuestionResult implements _i1.SerializableModel {
     int? questionId,
     String? questionText,
     _i2.QuestionType? questionType,
-    Map<int, int>? optionCounts,
+    Map<int, int>? choiceCounts,
     List<String>? textResponses,
   });
   @override
@@ -81,7 +81,7 @@ abstract class QuestionResult implements _i1.SerializableModel {
       'questionId': questionId,
       'questionText': questionText,
       'questionType': questionType.toJson(),
-      if (optionCounts != null) 'optionCounts': optionCounts?.toJson(),
+      if (choiceCounts != null) 'choiceCounts': choiceCounts?.toJson(),
       if (textResponses != null) 'textResponses': textResponses?.toJson(),
     };
   }
@@ -99,13 +99,13 @@ class _QuestionResultImpl extends QuestionResult {
     required int questionId,
     required String questionText,
     required _i2.QuestionType questionType,
-    Map<int, int>? optionCounts,
+    Map<int, int>? choiceCounts,
     List<String>? textResponses,
   }) : super._(
          questionId: questionId,
          questionText: questionText,
          questionType: questionType,
-         optionCounts: optionCounts,
+         choiceCounts: choiceCounts,
          textResponses: textResponses,
        );
 
@@ -117,16 +117,16 @@ class _QuestionResultImpl extends QuestionResult {
     int? questionId,
     String? questionText,
     _i2.QuestionType? questionType,
-    Object? optionCounts = _Undefined,
+    Object? choiceCounts = _Undefined,
     Object? textResponses = _Undefined,
   }) {
     return QuestionResult(
       questionId: questionId ?? this.questionId,
       questionText: questionText ?? this.questionText,
       questionType: questionType ?? this.questionType,
-      optionCounts: optionCounts is Map<int, int>?
-          ? optionCounts
-          : this.optionCounts?.map(
+      choiceCounts: choiceCounts is Map<int, int>?
+          ? choiceCounts
+          : this.choiceCounts?.map(
               (
                 key0,
                 value0,

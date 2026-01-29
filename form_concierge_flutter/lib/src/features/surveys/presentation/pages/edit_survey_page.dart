@@ -82,9 +82,9 @@ class EditSurveyPage extends RearchConsumer {
         actions: [
           if (survey.status == SurveyStatus.draft)
             TextButton.icon(
-              onPressed: questionState.questions.isEmpty
-                  ? null
-                  : () => _publishSurvey(context, surveyListManager),
+              onPressed: _canPublish(questionState)
+                  ? () => _publishSurvey(context, surveyListManager)
+                  : null,
               icon: const Icon(Icons.publish),
               label: const Text('Publish'),
             ),
@@ -157,7 +157,7 @@ class EditSurveyPage extends RearchConsumer {
               QuestionList(
                 surveyId: surveyId,
                 questions: questionState.questions,
-                optionsByQuestion: questionState.optionsByQuestion,
+                choicesByQuestion: questionState.choicesByQuestion,
                 isLoading: questionState.isLoading,
                 enabled: canEdit,
                 onAddQuestion:
@@ -194,19 +194,19 @@ class EditSurveyPage extends RearchConsumer {
                 onDeleteQuestion: (question) {
                   questionManager.deleteQuestion(surveyId, question.id!);
                 },
-                onAddOption: (questionId, text) {
-                  questionManager.createOption(
+                onAddChoice: (questionId, text) {
+                  questionManager.createChoice(
                     questionId: questionId,
                     surveyId: surveyId,
                     text: text,
                   );
                 },
-                onUpdateOption: (option, newText) {
-                  final updated = option.copyWith(text: newText);
-                  questionManager.updateOption(updated, surveyId);
+                onUpdateChoice: (choice, newText) {
+                  final updated = choice.copyWith(text: newText);
+                  questionManager.updateChoice(updated, surveyId);
                 },
-                onDeleteOption: (option) {
-                  questionManager.deleteOption(option.id!, surveyId);
+                onDeleteChoice: (choice) {
+                  questionManager.deleteChoice(choice.id!, surveyId);
                 },
               ),
               if (questionState.error != null) ...[
@@ -221,6 +221,26 @@ class EditSurveyPage extends RearchConsumer {
         ),
       ),
     );
+  }
+
+  /// Returns true if the survey can be published.
+  ///
+  /// A survey can be published if:
+  /// - It has at least one question
+  /// - All choice-type questions have at least one choice
+  bool _canPublish(QuestionListState state) {
+    if (state.questions.isEmpty) return false;
+
+    // Check that all choice-type questions have at least one choice
+    for (final question in state.questions) {
+      if (question.type == QuestionType.singleChoice ||
+          question.type == QuestionType.multipleChoice) {
+        final choices = state.choicesByQuestion[question.id] ?? [];
+        if (choices.isEmpty) return false;
+      }
+    }
+
+    return true;
   }
 
   Future<void> _publishSurvey(

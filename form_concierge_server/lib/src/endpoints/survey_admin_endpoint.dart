@@ -101,14 +101,14 @@ class SurveyAdminEndpoint extends Endpoint {
       surveyId,
     );
 
-    final questionCount = await Question.db.count(
+    final questions = await Question.db.find(
       session,
       where: (t) => t.surveyId.equals(surveyId),
     );
 
     if (!SurveyRules.canPublish(
       status: survey.status,
-      questionCount: questionCount,
+      questionCount: questions.length,
     )) {
       if (survey.status != SurveyStatus.draft) {
         throw const InvalidStateTransitionException(
@@ -118,6 +118,25 @@ class SurveyAdminEndpoint extends Endpoint {
       throw const ValidationException(
         'Survey must have at least one question',
       );
+    }
+
+    // Check that all choice-type questions have at least one choice
+    final choiceQuestions = questions.where(
+      (q) =>
+          q.type == QuestionType.singleChoice ||
+          q.type == QuestionType.multipleChoice,
+    );
+
+    for (final question in choiceQuestions) {
+      final choiceCount = await Choice.db.count(
+        session,
+        where: (t) => t.questionId.equals(question.id!),
+      );
+      if (choiceCount == 0) {
+        throw ValidationException(
+          'Question "${question.text}" must have at least one choice',
+        );
+      }
     }
 
     final updatedSurvey = survey.copyWith(

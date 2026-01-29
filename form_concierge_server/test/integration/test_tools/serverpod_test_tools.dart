@@ -16,10 +16,9 @@ import 'package:serverpod/serverpod.dart' as _i2;
 import 'dart:async' as _i3;
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as _i4;
-import 'package:form_concierge_server/src/generated/public_config.dart' as _i5;
-import 'package:form_concierge_server/src/generated/question.dart' as _i6;
-import 'package:form_concierge_server/src/generated/question_option.dart'
-    as _i7;
+import 'package:form_concierge_server/src/generated/choice.dart' as _i5;
+import 'package:form_concierge_server/src/generated/public_config.dart' as _i6;
+import 'package:form_concierge_server/src/generated/question.dart' as _i7;
 import 'package:form_concierge_server/src/generated/survey_response.dart'
     as _i8;
 import 'package:form_concierge_server/src/generated/answer.dart' as _i9;
@@ -139,11 +138,11 @@ class TestEndpoints {
 
   late final _EmailIdpEndpoint emailIdp;
 
+  late final _ChoiceAdminEndpoint choiceAdmin;
+
   late final _ConfigEndpoint config;
 
   late final _QuestionAdminEndpoint questionAdmin;
-
-  late final _QuestionOptionAdminEndpoint questionOptionAdmin;
 
   late final _ResponseAnalyticsEndpoint responseAnalytics;
 
@@ -169,15 +168,15 @@ class _InternalTestEndpoints extends TestEndpoints
       endpoints,
       serializationManager,
     );
+    choiceAdmin = _ChoiceAdminEndpoint(
+      endpoints,
+      serializationManager,
+    );
     config = _ConfigEndpoint(
       endpoints,
       serializationManager,
     );
     questionAdmin = _QuestionAdminEndpoint(
-      endpoints,
-      serializationManager,
-    );
-    questionOptionAdmin = _QuestionOptionAdminEndpoint(
       endpoints,
       serializationManager,
     );
@@ -490,6 +489,176 @@ class _EmailIdpEndpoint {
   }
 }
 
+class _ChoiceAdminEndpoint {
+  _ChoiceAdminEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _i2.EndpointDispatch _endpointDispatch;
+
+  final _i2.SerializationManager _serializationManager;
+
+  _i3.Future<_i5.Choice> create(
+    _i1.TestSessionBuilder sessionBuilder,
+    _i5.Choice choice,
+  ) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'choiceAdmin',
+            method: 'create',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'choiceAdmin',
+          methodName: 'create',
+          parameters: _i1.testObjectToJson({'choice': choice}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<_i5.Choice>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _i3.Future<_i5.Choice> update(
+    _i1.TestSessionBuilder sessionBuilder,
+    _i5.Choice choice,
+  ) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'choiceAdmin',
+            method: 'update',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'choiceAdmin',
+          methodName: 'update',
+          parameters: _i1.testObjectToJson({'choice': choice}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<_i5.Choice>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _i3.Future<bool> delete(
+    _i1.TestSessionBuilder sessionBuilder,
+    int choiceId,
+  ) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'choiceAdmin',
+            method: 'delete',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'choiceAdmin',
+          methodName: 'delete',
+          parameters: _i1.testObjectToJson({'choiceId': choiceId}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<bool>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _i3.Future<List<_i5.Choice>> reorder(
+    _i1.TestSessionBuilder sessionBuilder,
+    int questionId,
+    List<int> choiceIds,
+  ) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'choiceAdmin',
+            method: 'reorder',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'choiceAdmin',
+          methodName: 'reorder',
+          parameters: _i1.testObjectToJson({
+            'questionId': questionId,
+            'choiceIds': choiceIds,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<List<_i5.Choice>>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _i3.Future<_i5.Choice?> getById(
+    _i1.TestSessionBuilder sessionBuilder,
+    int choiceId,
+  ) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'choiceAdmin',
+            method: 'getById',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'choiceAdmin',
+          methodName: 'getById',
+          parameters: _i1.testObjectToJson({'choiceId': choiceId}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<_i5.Choice?>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+}
+
 class _ConfigEndpoint {
   _ConfigEndpoint(
     this._endpointDispatch,
@@ -500,7 +669,7 @@ class _ConfigEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i5.PublicConfig> getPublicConfig(
+  _i3.Future<_i6.PublicConfig> getPublicConfig(
     _i1.TestSessionBuilder sessionBuilder,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -522,7 +691,7 @@ class _ConfigEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i5.PublicConfig>);
+                as _i3.Future<_i6.PublicConfig>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -541,9 +710,9 @@ class _QuestionAdminEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i6.Question> create(
+  _i3.Future<_i7.Question> create(
     _i1.TestSessionBuilder sessionBuilder,
-    _i6.Question question,
+    _i7.Question question,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -564,7 +733,7 @@ class _QuestionAdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i6.Question>);
+                as _i3.Future<_i7.Question>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -572,9 +741,9 @@ class _QuestionAdminEndpoint {
     });
   }
 
-  _i3.Future<_i6.Question> update(
+  _i3.Future<_i7.Question> update(
     _i1.TestSessionBuilder sessionBuilder,
-    _i6.Question question,
+    _i7.Question question,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -595,7 +764,7 @@ class _QuestionAdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i6.Question>);
+                as _i3.Future<_i7.Question>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -634,7 +803,7 @@ class _QuestionAdminEndpoint {
     });
   }
 
-  _i3.Future<List<_i6.Question>> reorder(
+  _i3.Future<List<_i7.Question>> reorder(
     _i1.TestSessionBuilder sessionBuilder,
     int surveyId,
     List<int> questionIds,
@@ -661,7 +830,7 @@ class _QuestionAdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i6.Question>>);
+                as _i3.Future<List<_i7.Question>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -669,7 +838,7 @@ class _QuestionAdminEndpoint {
     });
   }
 
-  _i3.Future<List<_i6.Question>> getForSurvey(
+  _i3.Future<List<_i7.Question>> getForSurvey(
     _i1.TestSessionBuilder sessionBuilder,
     int surveyId,
   ) async {
@@ -692,7 +861,7 @@ class _QuestionAdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i6.Question>>);
+                as _i3.Future<List<_i7.Question>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -700,7 +869,7 @@ class _QuestionAdminEndpoint {
     });
   }
 
-  _i3.Future<_i6.Question?> getById(
+  _i3.Future<_i7.Question?> getById(
     _i1.TestSessionBuilder sessionBuilder,
     int questionId,
   ) async {
@@ -723,7 +892,7 @@ class _QuestionAdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i6.Question?>);
+                as _i3.Future<_i7.Question?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -731,7 +900,7 @@ class _QuestionAdminEndpoint {
     });
   }
 
-  _i3.Future<List<_i7.QuestionOption>> getOptionsForQuestion(
+  _i3.Future<List<_i5.Choice>> getChoicesForQuestion(
     _i1.TestSessionBuilder sessionBuilder,
     int questionId,
   ) async {
@@ -739,13 +908,13 @@ class _QuestionAdminEndpoint {
       var _localUniqueSession =
           (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
             endpoint: 'questionAdmin',
-            method: 'getOptionsForQuestion',
+            method: 'getChoicesForQuestion',
           );
       try {
         var _localCallContext = await _endpointDispatch.getMethodCallContext(
           createSessionCallback: (_) => _localUniqueSession,
           endpointPath: 'questionAdmin',
-          methodName: 'getOptionsForQuestion',
+          methodName: 'getChoicesForQuestion',
           parameters: _i1.testObjectToJson({'questionId': questionId}),
           serializationManager: _serializationManager,
         );
@@ -754,177 +923,7 @@ class _QuestionAdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i7.QuestionOption>>);
-        return _localReturnValue;
-      } finally {
-        await _localUniqueSession.close();
-      }
-    });
-  }
-}
-
-class _QuestionOptionAdminEndpoint {
-  _QuestionOptionAdminEndpoint(
-    this._endpointDispatch,
-    this._serializationManager,
-  );
-
-  final _i2.EndpointDispatch _endpointDispatch;
-
-  final _i2.SerializationManager _serializationManager;
-
-  _i3.Future<_i7.QuestionOption> create(
-    _i1.TestSessionBuilder sessionBuilder,
-    _i7.QuestionOption option,
-  ) async {
-    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
-      var _localUniqueSession =
-          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
-            endpoint: 'questionOptionAdmin',
-            method: 'create',
-          );
-      try {
-        var _localCallContext = await _endpointDispatch.getMethodCallContext(
-          createSessionCallback: (_) => _localUniqueSession,
-          endpointPath: 'questionOptionAdmin',
-          methodName: 'create',
-          parameters: _i1.testObjectToJson({'option': option}),
-          serializationManager: _serializationManager,
-        );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _i3.Future<_i7.QuestionOption>);
-        return _localReturnValue;
-      } finally {
-        await _localUniqueSession.close();
-      }
-    });
-  }
-
-  _i3.Future<_i7.QuestionOption> update(
-    _i1.TestSessionBuilder sessionBuilder,
-    _i7.QuestionOption option,
-  ) async {
-    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
-      var _localUniqueSession =
-          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
-            endpoint: 'questionOptionAdmin',
-            method: 'update',
-          );
-      try {
-        var _localCallContext = await _endpointDispatch.getMethodCallContext(
-          createSessionCallback: (_) => _localUniqueSession,
-          endpointPath: 'questionOptionAdmin',
-          methodName: 'update',
-          parameters: _i1.testObjectToJson({'option': option}),
-          serializationManager: _serializationManager,
-        );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _i3.Future<_i7.QuestionOption>);
-        return _localReturnValue;
-      } finally {
-        await _localUniqueSession.close();
-      }
-    });
-  }
-
-  _i3.Future<bool> delete(
-    _i1.TestSessionBuilder sessionBuilder,
-    int optionId,
-  ) async {
-    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
-      var _localUniqueSession =
-          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
-            endpoint: 'questionOptionAdmin',
-            method: 'delete',
-          );
-      try {
-        var _localCallContext = await _endpointDispatch.getMethodCallContext(
-          createSessionCallback: (_) => _localUniqueSession,
-          endpointPath: 'questionOptionAdmin',
-          methodName: 'delete',
-          parameters: _i1.testObjectToJson({'optionId': optionId}),
-          serializationManager: _serializationManager,
-        );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _i3.Future<bool>);
-        return _localReturnValue;
-      } finally {
-        await _localUniqueSession.close();
-      }
-    });
-  }
-
-  _i3.Future<List<_i7.QuestionOption>> reorder(
-    _i1.TestSessionBuilder sessionBuilder,
-    int questionId,
-    List<int> optionIds,
-  ) async {
-    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
-      var _localUniqueSession =
-          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
-            endpoint: 'questionOptionAdmin',
-            method: 'reorder',
-          );
-      try {
-        var _localCallContext = await _endpointDispatch.getMethodCallContext(
-          createSessionCallback: (_) => _localUniqueSession,
-          endpointPath: 'questionOptionAdmin',
-          methodName: 'reorder',
-          parameters: _i1.testObjectToJson({
-            'questionId': questionId,
-            'optionIds': optionIds,
-          }),
-          serializationManager: _serializationManager,
-        );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _i3.Future<List<_i7.QuestionOption>>);
-        return _localReturnValue;
-      } finally {
-        await _localUniqueSession.close();
-      }
-    });
-  }
-
-  _i3.Future<_i7.QuestionOption?> getById(
-    _i1.TestSessionBuilder sessionBuilder,
-    int optionId,
-  ) async {
-    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
-      var _localUniqueSession =
-          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
-            endpoint: 'questionOptionAdmin',
-            method: 'getById',
-          );
-      try {
-        var _localCallContext = await _endpointDispatch.getMethodCallContext(
-          createSessionCallback: (_) => _localUniqueSession,
-          endpointPath: 'questionOptionAdmin',
-          methodName: 'getById',
-          parameters: _i1.testObjectToJson({'optionId': optionId}),
-          serializationManager: _serializationManager,
-        );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _i3.Future<_i7.QuestionOption?>);
+                as _i3.Future<List<_i5.Choice>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1476,7 +1475,7 @@ class _SurveyEndpoint {
     });
   }
 
-  _i3.Future<List<_i6.Question>> getQuestionsForSurvey(
+  _i3.Future<List<_i7.Question>> getQuestionsForSurvey(
     _i1.TestSessionBuilder sessionBuilder,
     int surveyId,
   ) async {
@@ -1499,7 +1498,7 @@ class _SurveyEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i6.Question>>);
+                as _i3.Future<List<_i7.Question>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1507,7 +1506,7 @@ class _SurveyEndpoint {
     });
   }
 
-  _i3.Future<List<_i7.QuestionOption>> getOptionsForQuestion(
+  _i3.Future<List<_i5.Choice>> getChoicesForQuestion(
     _i1.TestSessionBuilder sessionBuilder,
     int questionId,
   ) async {
@@ -1515,13 +1514,13 @@ class _SurveyEndpoint {
       var _localUniqueSession =
           (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
             endpoint: 'survey',
-            method: 'getOptionsForQuestion',
+            method: 'getChoicesForQuestion',
           );
       try {
         var _localCallContext = await _endpointDispatch.getMethodCallContext(
           createSessionCallback: (_) => _localUniqueSession,
           endpointPath: 'survey',
-          methodName: 'getOptionsForQuestion',
+          methodName: 'getChoicesForQuestion',
           parameters: _i1.testObjectToJson({'questionId': questionId}),
           serializationManager: _serializationManager,
         );
@@ -1530,7 +1529,7 @@ class _SurveyEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i7.QuestionOption>>);
+                as _i3.Future<List<_i5.Choice>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

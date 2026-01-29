@@ -15,18 +15,17 @@ import 'admin_user.dart' as _i2;
 import 'answer.dart' as _i3;
 import 'auth_requirement.dart' as _i4;
 import 'auth_user_info.dart' as _i5;
-import 'public_config.dart' as _i6;
-import 'question.dart' as _i7;
-import 'question_option.dart' as _i8;
+import 'choice.dart' as _i6;
+import 'public_config.dart' as _i7;
+import 'question.dart' as _i8;
 import 'question_result.dart' as _i9;
 import 'question_type.dart' as _i10;
 import 'survey.dart' as _i11;
 import 'survey_response.dart' as _i12;
 import 'survey_results.dart' as _i13;
 import 'survey_status.dart' as _i14;
-import 'package:form_concierge_client/src/protocol/question.dart' as _i15;
-import 'package:form_concierge_client/src/protocol/question_option.dart'
-    as _i16;
+import 'package:form_concierge_client/src/protocol/choice.dart' as _i15;
+import 'package:form_concierge_client/src/protocol/question.dart' as _i16;
 import 'package:form_concierge_client/src/protocol/survey_response.dart'
     as _i17;
 import 'package:form_concierge_client/src/protocol/answer.dart' as _i18;
@@ -40,9 +39,9 @@ export 'admin_user.dart';
 export 'answer.dart';
 export 'auth_requirement.dart';
 export 'auth_user_info.dart';
+export 'choice.dart';
 export 'public_config.dart';
 export 'question.dart';
-export 'question_option.dart';
 export 'question_result.dart';
 export 'question_type.dart';
 export 'survey.dart';
@@ -97,14 +96,14 @@ class Protocol extends _i1.SerializationManager {
     if (t == _i5.AuthUserInfo) {
       return _i5.AuthUserInfo.fromJson(data) as T;
     }
-    if (t == _i6.PublicConfig) {
-      return _i6.PublicConfig.fromJson(data) as T;
+    if (t == _i6.Choice) {
+      return _i6.Choice.fromJson(data) as T;
     }
-    if (t == _i7.Question) {
-      return _i7.Question.fromJson(data) as T;
+    if (t == _i7.PublicConfig) {
+      return _i7.PublicConfig.fromJson(data) as T;
     }
-    if (t == _i8.QuestionOption) {
-      return _i8.QuestionOption.fromJson(data) as T;
+    if (t == _i8.Question) {
+      return _i8.Question.fromJson(data) as T;
     }
     if (t == _i9.QuestionResult) {
       return _i9.QuestionResult.fromJson(data) as T;
@@ -136,14 +135,14 @@ class Protocol extends _i1.SerializationManager {
     if (t == _i1.getType<_i5.AuthUserInfo?>()) {
       return (data != null ? _i5.AuthUserInfo.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i6.PublicConfig?>()) {
-      return (data != null ? _i6.PublicConfig.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i6.Choice?>()) {
+      return (data != null ? _i6.Choice.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i7.Question?>()) {
-      return (data != null ? _i7.Question.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i7.PublicConfig?>()) {
+      return (data != null ? _i7.PublicConfig.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i8.QuestionOption?>()) {
-      return (data != null ? _i8.QuestionOption.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i8.Question?>()) {
+      return (data != null ? _i8.Question.fromJson(data) : null) as T;
     }
     if (t == _i1.getType<_i9.QuestionResult?>()) {
       return (data != null ? _i9.QuestionResult.fromJson(data) : null) as T;
@@ -209,17 +208,15 @@ class Protocol extends _i1.SerializationManager {
               .toList()
           as T;
     }
-    if (t == List<_i15.Question>) {
-      return (data as List).map((e) => deserialize<_i15.Question>(e)).toList()
+    if (t == List<_i15.Choice>) {
+      return (data as List).map((e) => deserialize<_i15.Choice>(e)).toList()
           as T;
     }
     if (t == List<int>) {
       return (data as List).map((e) => deserialize<int>(e)).toList() as T;
     }
-    if (t == List<_i16.QuestionOption>) {
-      return (data as List)
-              .map((e) => deserialize<_i16.QuestionOption>(e))
-              .toList()
+    if (t == List<_i16.Question>) {
+      return (data as List).map((e) => deserialize<_i16.Question>(e)).toList()
           as T;
     }
     if (t == List<_i17.SurveyResponse>) {
@@ -266,9 +263,9 @@ class Protocol extends _i1.SerializationManager {
       _i3.Answer => 'Answer',
       _i4.AuthRequirement => 'AuthRequirement',
       _i5.AuthUserInfo => 'AuthUserInfo',
-      _i6.PublicConfig => 'PublicConfig',
-      _i7.Question => 'Question',
-      _i8.QuestionOption => 'QuestionOption',
+      _i6.Choice => 'Choice',
+      _i7.PublicConfig => 'PublicConfig',
+      _i8.Question => 'Question',
       _i9.QuestionResult => 'QuestionResult',
       _i10.QuestionType => 'QuestionType',
       _i11.Survey => 'Survey',
@@ -300,12 +297,12 @@ class Protocol extends _i1.SerializationManager {
         return 'AuthRequirement';
       case _i5.AuthUserInfo():
         return 'AuthUserInfo';
-      case _i6.PublicConfig():
+      case _i6.Choice():
+        return 'Choice';
+      case _i7.PublicConfig():
         return 'PublicConfig';
-      case _i7.Question():
+      case _i8.Question():
         return 'Question';
-      case _i8.QuestionOption():
-        return 'QuestionOption';
       case _i9.QuestionResult():
         return 'QuestionResult';
       case _i10.QuestionType():
@@ -348,14 +345,14 @@ class Protocol extends _i1.SerializationManager {
     if (dataClassName == 'AuthUserInfo') {
       return deserialize<_i5.AuthUserInfo>(data['data']);
     }
+    if (dataClassName == 'Choice') {
+      return deserialize<_i6.Choice>(data['data']);
+    }
     if (dataClassName == 'PublicConfig') {
-      return deserialize<_i6.PublicConfig>(data['data']);
+      return deserialize<_i7.PublicConfig>(data['data']);
     }
     if (dataClassName == 'Question') {
-      return deserialize<_i7.Question>(data['data']);
-    }
-    if (dataClassName == 'QuestionOption') {
-      return deserialize<_i8.QuestionOption>(data['data']);
+      return deserialize<_i8.Question>(data['data']);
     }
     if (dataClassName == 'QuestionResult') {
       return deserialize<_i9.QuestionResult>(data['data']);

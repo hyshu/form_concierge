@@ -12,9 +12,9 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
 
-/// An option for choice-type questions
-abstract class QuestionOption implements _i1.SerializableModel {
-  QuestionOption._({
+/// A choice option for choice-type questions
+abstract class Choice implements _i1.SerializableModel {
+  Choice._({
     this.id,
     required this.questionId,
     required this.text,
@@ -22,16 +22,16 @@ abstract class QuestionOption implements _i1.SerializableModel {
     this.value,
   });
 
-  factory QuestionOption({
+  factory Choice({
     int? id,
     required int questionId,
     required String text,
     required int orderIndex,
     String? value,
-  }) = _QuestionOptionImpl;
+  }) = _ChoiceImpl;
 
-  factory QuestionOption.fromJson(Map<String, dynamic> jsonSerialization) {
-    return QuestionOption(
+  factory Choice.fromJson(Map<String, dynamic> jsonSerialization) {
+    return Choice(
       id: jsonSerialization['id'] as int?,
       questionId: jsonSerialization['questionId'] as int,
       text: jsonSerialization['text'] as String,
@@ -48,7 +48,7 @@ abstract class QuestionOption implements _i1.SerializableModel {
   /// Reference to the parent question
   int questionId;
 
-  /// The option text
+  /// The choice text displayed to respondents
   String text;
 
   /// Display order within the question
@@ -57,10 +57,10 @@ abstract class QuestionOption implements _i1.SerializableModel {
   /// Optional value (if different from text)
   String? value;
 
-  /// Returns a shallow copy of this [QuestionOption]
+  /// Returns a shallow copy of this [Choice]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
-  QuestionOption copyWith({
+  Choice copyWith({
     int? id,
     int? questionId,
     String? text,
@@ -70,7 +70,7 @@ abstract class QuestionOption implements _i1.SerializableModel {
   @override
   Map<String, dynamic> toJson() {
     return {
-      '__className__': 'QuestionOption',
+      '__className__': 'Choice',
       if (id != null) 'id': id,
       'questionId': questionId,
       'text': text,
@@ -87,8 +87,8 @@ abstract class QuestionOption implements _i1.SerializableModel {
 
 class _Undefined {}
 
-class _QuestionOptionImpl extends QuestionOption {
-  _QuestionOptionImpl({
+class _ChoiceImpl extends Choice {
+  _ChoiceImpl({
     int? id,
     required int questionId,
     required String text,
@@ -102,18 +102,18 @@ class _QuestionOptionImpl extends QuestionOption {
          value: value,
        );
 
-  /// Returns a shallow copy of this [QuestionOption]
+  /// Returns a shallow copy of this [Choice]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
   @override
-  QuestionOption copyWith({
+  Choice copyWith({
     Object? id = _Undefined,
     int? questionId,
     String? text,
     int? orderIndex,
     Object? value = _Undefined,
   }) {
-    return QuestionOption(
+    return Choice(
       id: id is int? ? id : this.id,
       questionId: questionId ?? this.questionId,
       text: text ?? this.text,

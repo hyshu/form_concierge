@@ -127,7 +127,7 @@
         },
         {
           "__className__": "serverpod.ColumnDefinition",
-          "name": "selectedOptionIds",
+          "name": "selectedChoiceIds",
           "columnType": 8,
           "isNullable": true,
           "dartType": "List<int>?"
@@ -195,6 +195,103 @@
           ],
           "type": "btree",
           "isUnique": true,
+          "isPrimary": false
+        }
+      ],
+      "managed": true
+    },
+    {
+      "__className__": "serverpod.TableDefinition",
+      "name": "choice",
+      "dartName": "Choice",
+      "module": "form_concierge",
+      "schema": "public",
+      "columns": [
+        {
+          "__className__": "serverpod.ColumnDefinition",
+          "name": "id",
+          "columnType": 6,
+          "isNullable": false,
+          "columnDefault": "nextval('choice_id_seq'::regclass)",
+          "dartType": "int?"
+        },
+        {
+          "__className__": "serverpod.ColumnDefinition",
+          "name": "questionId",
+          "columnType": 6,
+          "isNullable": false,
+          "dartType": "int"
+        },
+        {
+          "__className__": "serverpod.ColumnDefinition",
+          "name": "text",
+          "columnType": 0,
+          "isNullable": false,
+          "dartType": "String"
+        },
+        {
+          "__className__": "serverpod.ColumnDefinition",
+          "name": "orderIndex",
+          "columnType": 6,
+          "isNullable": false,
+          "dartType": "int"
+        },
+        {
+          "__className__": "serverpod.ColumnDefinition",
+          "name": "value",
+          "columnType": 0,
+          "isNullable": true,
+          "dartType": "String?"
+        }
+      ],
+      "foreignKeys": [
+        {
+          "__className__": "serverpod.ForeignKeyDefinition",
+          "constraintName": "choice_fk_0",
+          "columns": [
+            "questionId"
+          ],
+          "referenceTable": "question",
+          "referenceTableSchema": "public",
+          "referenceColumns": [
+            "id"
+          ],
+          "onUpdate": 3,
+          "onDelete": 3
+        }
+      ],
+      "indexes": [
+        {
+          "__className__": "serverpod.IndexDefinition",
+          "indexName": "choice_pkey",
+          "elements": [
+            {
+              "__className__": "serverpod.IndexElementDefinition",
+              "type": 0,
+              "definition": "id"
+            }
+          ],
+          "type": "btree",
+          "isUnique": true,
+          "isPrimary": true
+        },
+        {
+          "__className__": "serverpod.IndexDefinition",
+          "indexName": "question_order_index",
+          "elements": [
+            {
+              "__className__": "serverpod.IndexElementDefinition",
+              "type": 0,
+              "definition": "questionId"
+            },
+            {
+              "__className__": "serverpod.IndexElementDefinition",
+              "type": 0,
+              "definition": "orderIndex"
+            }
+          ],
+          "type": "btree",
+          "isUnique": false,
           "isPrimary": false
         }
       ],
@@ -312,103 +409,6 @@
               "__className__": "serverpod.IndexElementDefinition",
               "type": 0,
               "definition": "surveyId"
-            },
-            {
-              "__className__": "serverpod.IndexElementDefinition",
-              "type": 0,
-              "definition": "orderIndex"
-            }
-          ],
-          "type": "btree",
-          "isUnique": false,
-          "isPrimary": false
-        }
-      ],
-      "managed": true
-    },
-    {
-      "__className__": "serverpod.TableDefinition",
-      "name": "question_option",
-      "dartName": "QuestionOption",
-      "module": "form_concierge",
-      "schema": "public",
-      "columns": [
-        {
-          "__className__": "serverpod.ColumnDefinition",
-          "name": "id",
-          "columnType": 6,
-          "isNullable": false,
-          "columnDefault": "nextval('question_option_id_seq'::regclass)",
-          "dartType": "int?"
-        },
-        {
-          "__className__": "serverpod.ColumnDefinition",
-          "name": "questionId",
-          "columnType": 6,
-          "isNullable": false,
-          "dartType": "int"
-        },
-        {
-          "__className__": "serverpod.ColumnDefinition",
-          "name": "text",
-          "columnType": 0,
-          "isNullable": false,
-          "dartType": "String"
-        },
-        {
-          "__className__": "serverpod.ColumnDefinition",
-          "name": "orderIndex",
-          "columnType": 6,
-          "isNullable": false,
-          "dartType": "int"
-        },
-        {
-          "__className__": "serverpod.ColumnDefinition",
-          "name": "value",
-          "columnType": 0,
-          "isNullable": true,
-          "dartType": "String?"
-        }
-      ],
-      "foreignKeys": [
-        {
-          "__className__": "serverpod.ForeignKeyDefinition",
-          "constraintName": "question_option_fk_0",
-          "columns": [
-            "questionId"
-          ],
-          "referenceTable": "question",
-          "referenceTableSchema": "public",
-          "referenceColumns": [
-            "id"
-          ],
-          "onUpdate": 3,
-          "onDelete": 3
-        }
-      ],
-      "indexes": [
-        {
-          "__className__": "serverpod.IndexDefinition",
-          "indexName": "question_option_pkey",
-          "elements": [
-            {
-              "__className__": "serverpod.IndexElementDefinition",
-              "type": 0,
-              "definition": "id"
-            }
-          ],
-          "type": "btree",
-          "isUnique": true,
-          "isPrimary": true
-        },
-        {
-          "__className__": "serverpod.IndexDefinition",
-          "indexName": "question_order_index",
-          "elements": [
-            {
-              "__className__": "serverpod.IndexElementDefinition",
-              "type": 0,
-              "definition": "questionId"
             },
             {
               "__className__": "serverpod.IndexElementDefinition",

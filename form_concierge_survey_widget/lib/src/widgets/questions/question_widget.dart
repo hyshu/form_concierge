@@ -8,7 +8,7 @@ import 'text_multi_line_question.dart';
 
 class QuestionWidget extends StatelessWidget {
   final Question question;
-  final List<QuestionOption> options;
+  final List<Choice> choices;
   final dynamic value;
   final String? error;
   final ValueChanged<dynamic> onChanged;
@@ -16,7 +16,7 @@ class QuestionWidget extends StatelessWidget {
   const QuestionWidget({
     super.key,
     required this.question,
-    required this.options,
+    required this.choices,
     required this.value,
     this.error,
     required this.onChanged,
@@ -64,13 +64,13 @@ class QuestionWidget extends StatelessWidget {
   Widget _buildQuestionInput() {
     return switch (question.type) {
       QuestionType.singleChoice => SingleChoiceQuestion(
-        options: options,
-        selectedOptionId: value as int?,
+        choices: choices,
+        selectedChoiceId: value as int?,
         onChanged: onChanged,
       ),
       QuestionType.multipleChoice => MultipleChoiceQuestion(
-        options: options,
-        selectedOptionIds: (value as List<int>?) ?? [],
+        choices: choices,
+        selectedChoiceIds: (value as List<int>?) ?? [],
         onChanged: onChanged,
       ),
       QuestionType.textSingle => TextSingleQuestion(

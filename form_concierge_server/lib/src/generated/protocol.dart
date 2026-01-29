@@ -20,18 +20,17 @@ import 'admin_user.dart' as _i5;
 import 'answer.dart' as _i6;
 import 'auth_requirement.dart' as _i7;
 import 'auth_user_info.dart' as _i8;
-import 'public_config.dart' as _i9;
-import 'question.dart' as _i10;
-import 'question_option.dart' as _i11;
+import 'choice.dart' as _i9;
+import 'public_config.dart' as _i10;
+import 'question.dart' as _i11;
 import 'question_result.dart' as _i12;
 import 'question_type.dart' as _i13;
 import 'survey.dart' as _i14;
 import 'survey_response.dart' as _i15;
 import 'survey_results.dart' as _i16;
 import 'survey_status.dart' as _i17;
-import 'package:form_concierge_server/src/generated/question.dart' as _i18;
-import 'package:form_concierge_server/src/generated/question_option.dart'
-    as _i19;
+import 'package:form_concierge_server/src/generated/choice.dart' as _i18;
+import 'package:form_concierge_server/src/generated/question.dart' as _i19;
 import 'package:form_concierge_server/src/generated/survey_response.dart'
     as _i20;
 import 'package:form_concierge_server/src/generated/answer.dart' as _i21;
@@ -42,9 +41,9 @@ export 'admin_user.dart';
 export 'answer.dart';
 export 'auth_requirement.dart';
 export 'auth_user_info.dart';
+export 'choice.dart';
 export 'public_config.dart';
 export 'question.dart';
-export 'question_option.dart';
 export 'question_result.dart';
 export 'question_type.dart';
 export 'survey.dart';
@@ -170,7 +169,7 @@ class Protocol extends _i1.SerializationManagerServer {
           dartType: 'String?',
         ),
         _i2.ColumnDefinition(
-          name: 'selectedOptionIds',
+          name: 'selectedChoiceIds',
           columnType: _i2.ColumnType.json,
           isNullable: true,
           dartType: 'List<int>?',
@@ -227,6 +226,90 @@ class Protocol extends _i1.SerializationManagerServer {
           ],
           type: 'btree',
           isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _i2.TableDefinition(
+      name: 'choice',
+      dartName: 'Choice',
+      schema: 'public',
+      module: 'form_concierge',
+      columns: [
+        _i2.ColumnDefinition(
+          name: 'id',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'nextval(\'choice_id_seq\'::regclass)',
+        ),
+        _i2.ColumnDefinition(
+          name: 'questionId',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _i2.ColumnDefinition(
+          name: 'text',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'orderIndex',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _i2.ColumnDefinition(
+          name: 'value',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+      ],
+      foreignKeys: [
+        _i2.ForeignKeyDefinition(
+          constraintName: 'choice_fk_0',
+          columns: ['questionId'],
+          referenceTable: 'question',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _i2.ForeignKeyAction.noAction,
+          onDelete: _i2.ForeignKeyAction.noAction,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _i2.IndexDefinition(
+          indexName: 'choice_pkey',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'id',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: true,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'question_order_index',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'questionId',
+            ),
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'orderIndex',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
           isPrimary: false,
         ),
       ],
@@ -328,90 +411,6 @@ class Protocol extends _i1.SerializationManagerServer {
             _i2.IndexElementDefinition(
               type: _i2.IndexElementDefinitionType.column,
               definition: 'surveyId',
-            ),
-            _i2.IndexElementDefinition(
-              type: _i2.IndexElementDefinitionType.column,
-              definition: 'orderIndex',
-            ),
-          ],
-          type: 'btree',
-          isUnique: false,
-          isPrimary: false,
-        ),
-      ],
-      managed: true,
-    ),
-    _i2.TableDefinition(
-      name: 'question_option',
-      dartName: 'QuestionOption',
-      schema: 'public',
-      module: 'form_concierge',
-      columns: [
-        _i2.ColumnDefinition(
-          name: 'id',
-          columnType: _i2.ColumnType.bigint,
-          isNullable: false,
-          dartType: 'int?',
-          columnDefault: 'nextval(\'question_option_id_seq\'::regclass)',
-        ),
-        _i2.ColumnDefinition(
-          name: 'questionId',
-          columnType: _i2.ColumnType.bigint,
-          isNullable: false,
-          dartType: 'int',
-        ),
-        _i2.ColumnDefinition(
-          name: 'text',
-          columnType: _i2.ColumnType.text,
-          isNullable: false,
-          dartType: 'String',
-        ),
-        _i2.ColumnDefinition(
-          name: 'orderIndex',
-          columnType: _i2.ColumnType.bigint,
-          isNullable: false,
-          dartType: 'int',
-        ),
-        _i2.ColumnDefinition(
-          name: 'value',
-          columnType: _i2.ColumnType.text,
-          isNullable: true,
-          dartType: 'String?',
-        ),
-      ],
-      foreignKeys: [
-        _i2.ForeignKeyDefinition(
-          constraintName: 'question_option_fk_0',
-          columns: ['questionId'],
-          referenceTable: 'question',
-          referenceTableSchema: 'public',
-          referenceColumns: ['id'],
-          onUpdate: _i2.ForeignKeyAction.noAction,
-          onDelete: _i2.ForeignKeyAction.noAction,
-          matchType: null,
-        ),
-      ],
-      indexes: [
-        _i2.IndexDefinition(
-          indexName: 'question_option_pkey',
-          tableSpace: null,
-          elements: [
-            _i2.IndexElementDefinition(
-              type: _i2.IndexElementDefinitionType.column,
-              definition: 'id',
-            ),
-          ],
-          type: 'btree',
-          isUnique: true,
-          isPrimary: true,
-        ),
-        _i2.IndexDefinition(
-          indexName: 'question_order_index',
-          tableSpace: null,
-          elements: [
-            _i2.IndexElementDefinition(
-              type: _i2.IndexElementDefinitionType.column,
-              definition: 'questionId',
             ),
             _i2.IndexElementDefinition(
               type: _i2.IndexElementDefinitionType.column,
@@ -705,14 +704,14 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == _i8.AuthUserInfo) {
       return _i8.AuthUserInfo.fromJson(data) as T;
     }
-    if (t == _i9.PublicConfig) {
-      return _i9.PublicConfig.fromJson(data) as T;
+    if (t == _i9.Choice) {
+      return _i9.Choice.fromJson(data) as T;
     }
-    if (t == _i10.Question) {
-      return _i10.Question.fromJson(data) as T;
+    if (t == _i10.PublicConfig) {
+      return _i10.PublicConfig.fromJson(data) as T;
     }
-    if (t == _i11.QuestionOption) {
-      return _i11.QuestionOption.fromJson(data) as T;
+    if (t == _i11.Question) {
+      return _i11.Question.fromJson(data) as T;
     }
     if (t == _i12.QuestionResult) {
       return _i12.QuestionResult.fromJson(data) as T;
@@ -744,14 +743,14 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == _i1.getType<_i8.AuthUserInfo?>()) {
       return (data != null ? _i8.AuthUserInfo.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i9.PublicConfig?>()) {
-      return (data != null ? _i9.PublicConfig.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i9.Choice?>()) {
+      return (data != null ? _i9.Choice.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i10.Question?>()) {
-      return (data != null ? _i10.Question.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i10.PublicConfig?>()) {
+      return (data != null ? _i10.PublicConfig.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i11.QuestionOption?>()) {
-      return (data != null ? _i11.QuestionOption.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i11.Question?>()) {
+      return (data != null ? _i11.Question.fromJson(data) : null) as T;
     }
     if (t == _i1.getType<_i12.QuestionResult?>()) {
       return (data != null ? _i12.QuestionResult.fromJson(data) : null) as T;
@@ -817,17 +816,15 @@ class Protocol extends _i1.SerializationManagerServer {
               .toList()
           as T;
     }
-    if (t == List<_i18.Question>) {
-      return (data as List).map((e) => deserialize<_i18.Question>(e)).toList()
+    if (t == List<_i18.Choice>) {
+      return (data as List).map((e) => deserialize<_i18.Choice>(e)).toList()
           as T;
     }
     if (t == List<int>) {
       return (data as List).map((e) => deserialize<int>(e)).toList() as T;
     }
-    if (t == List<_i19.QuestionOption>) {
-      return (data as List)
-              .map((e) => deserialize<_i19.QuestionOption>(e))
-              .toList()
+    if (t == List<_i19.Question>) {
+      return (data as List).map((e) => deserialize<_i19.Question>(e)).toList()
           as T;
     }
     if (t == List<_i20.SurveyResponse>) {
@@ -877,9 +874,9 @@ class Protocol extends _i1.SerializationManagerServer {
       _i6.Answer => 'Answer',
       _i7.AuthRequirement => 'AuthRequirement',
       _i8.AuthUserInfo => 'AuthUserInfo',
-      _i9.PublicConfig => 'PublicConfig',
-      _i10.Question => 'Question',
-      _i11.QuestionOption => 'QuestionOption',
+      _i9.Choice => 'Choice',
+      _i10.PublicConfig => 'PublicConfig',
+      _i11.Question => 'Question',
       _i12.QuestionResult => 'QuestionResult',
       _i13.QuestionType => 'QuestionType',
       _i14.Survey => 'Survey',
@@ -911,12 +908,12 @@ class Protocol extends _i1.SerializationManagerServer {
         return 'AuthRequirement';
       case _i8.AuthUserInfo():
         return 'AuthUserInfo';
-      case _i9.PublicConfig():
+      case _i9.Choice():
+        return 'Choice';
+      case _i10.PublicConfig():
         return 'PublicConfig';
-      case _i10.Question():
+      case _i11.Question():
         return 'Question';
-      case _i11.QuestionOption():
-        return 'QuestionOption';
       case _i12.QuestionResult():
         return 'QuestionResult';
       case _i13.QuestionType():
@@ -963,14 +960,14 @@ class Protocol extends _i1.SerializationManagerServer {
     if (dataClassName == 'AuthUserInfo') {
       return deserialize<_i8.AuthUserInfo>(data['data']);
     }
+    if (dataClassName == 'Choice') {
+      return deserialize<_i9.Choice>(data['data']);
+    }
     if (dataClassName == 'PublicConfig') {
-      return deserialize<_i9.PublicConfig>(data['data']);
+      return deserialize<_i10.PublicConfig>(data['data']);
     }
     if (dataClassName == 'Question') {
-      return deserialize<_i10.Question>(data['data']);
-    }
-    if (dataClassName == 'QuestionOption') {
-      return deserialize<_i11.QuestionOption>(data['data']);
+      return deserialize<_i11.Question>(data['data']);
     }
     if (dataClassName == 'QuestionResult') {
       return deserialize<_i12.QuestionResult>(data['data']);
@@ -1030,10 +1027,10 @@ class Protocol extends _i1.SerializationManagerServer {
         return _i5.AdminUser.t;
       case _i6.Answer:
         return _i6.Answer.t;
-      case _i10.Question:
-        return _i10.Question.t;
-      case _i11.QuestionOption:
-        return _i11.QuestionOption.t;
+      case _i9.Choice:
+        return _i9.Choice.t;
+      case _i11.Question:
+        return _i11.Question.t;
       case _i14.Survey:
         return _i14.Survey.t;
       case _i15.SurveyResponse:

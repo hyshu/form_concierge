@@ -16,9 +16,9 @@ import 'package:serverpod_client/serverpod_client.dart' as _i2;
 import 'dart:async' as _i3;
 import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
     as _i4;
-import 'package:form_concierge_client/src/protocol/public_config.dart' as _i5;
-import 'package:form_concierge_client/src/protocol/question.dart' as _i6;
-import 'package:form_concierge_client/src/protocol/question_option.dart' as _i7;
+import 'package:form_concierge_client/src/protocol/choice.dart' as _i5;
+import 'package:form_concierge_client/src/protocol/public_config.dart' as _i6;
+import 'package:form_concierge_client/src/protocol/question.dart' as _i7;
 import 'package:form_concierge_client/src/protocol/survey_response.dart' as _i8;
 import 'package:form_concierge_client/src/protocol/answer.dart' as _i9;
 import 'package:form_concierge_client/src/protocol/survey_results.dart' as _i10;
@@ -237,6 +237,61 @@ class EndpointEmailIdp extends _i4.EndpointEmailIdpBase {
   );
 }
 
+/// Admin endpoint for managing question choices.
+/// All methods require authentication.
+/// {@category Endpoint}
+class EndpointChoiceAdmin extends _i2.EndpointRef {
+  EndpointChoiceAdmin(_i2.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'choiceAdmin';
+
+  /// Add a choice to a question.
+  _i3.Future<_i5.Choice> create(_i5.Choice choice) =>
+      caller.callServerEndpoint<_i5.Choice>(
+        'choiceAdmin',
+        'create',
+        {'choice': choice},
+      );
+
+  /// Update a choice.
+  _i3.Future<_i5.Choice> update(_i5.Choice choice) =>
+      caller.callServerEndpoint<_i5.Choice>(
+        'choiceAdmin',
+        'update',
+        {'choice': choice},
+      );
+
+  /// Delete a choice.
+  _i3.Future<bool> delete(int choiceId) => caller.callServerEndpoint<bool>(
+    'choiceAdmin',
+    'delete',
+    {'choiceId': choiceId},
+  );
+
+  /// Reorder choices within a question.
+  /// Pass the choice IDs in the desired order.
+  _i3.Future<List<_i5.Choice>> reorder(
+    int questionId,
+    List<int> choiceIds,
+  ) => caller.callServerEndpoint<List<_i5.Choice>>(
+    'choiceAdmin',
+    'reorder',
+    {
+      'questionId': questionId,
+      'choiceIds': choiceIds,
+    },
+  );
+
+  /// Get a choice by ID.
+  _i3.Future<_i5.Choice?> getById(int choiceId) =>
+      caller.callServerEndpoint<_i5.Choice?>(
+        'choiceAdmin',
+        'getById',
+        {'choiceId': choiceId},
+      );
+}
+
 /// Endpoint for retrieving public server configuration.
 /// All methods are public - no authentication required.
 /// {@category Endpoint}
@@ -250,8 +305,8 @@ class EndpointConfig extends _i2.EndpointRef {
   ///
   /// This endpoint is unauthenticated so clients can check
   /// feature availability before login.
-  _i3.Future<_i5.PublicConfig> getPublicConfig() =>
-      caller.callServerEndpoint<_i5.PublicConfig>(
+  _i3.Future<_i6.PublicConfig> getPublicConfig() =>
+      caller.callServerEndpoint<_i6.PublicConfig>(
         'config',
         'getPublicConfig',
         {},
@@ -268,16 +323,19 @@ class EndpointQuestionAdmin extends _i2.EndpointRef {
   String get name => 'questionAdmin';
 
   /// Add a question to a survey.
-  _i3.Future<_i6.Question> create(_i6.Question question) =>
-      caller.callServerEndpoint<_i6.Question>(
+  ///
+  /// For choice-type questions (singleChoice, multipleChoice), two default
+  /// choices are automatically added: "Choice 1" and "Choice 2".
+  _i3.Future<_i7.Question> create(_i7.Question question) =>
+      caller.callServerEndpoint<_i7.Question>(
         'questionAdmin',
         'create',
         {'question': question},
       );
 
   /// Update a question.
-  _i3.Future<_i6.Question> update(_i6.Question question) =>
-      caller.callServerEndpoint<_i6.Question>(
+  _i3.Future<_i7.Question> update(_i7.Question question) =>
+      caller.callServerEndpoint<_i7.Question>(
         'questionAdmin',
         'update',
         {'question': question},
@@ -292,10 +350,10 @@ class EndpointQuestionAdmin extends _i2.EndpointRef {
 
   /// Reorder questions within a survey.
   /// Pass the question IDs in the desired order.
-  _i3.Future<List<_i6.Question>> reorder(
+  _i3.Future<List<_i7.Question>> reorder(
     int surveyId,
     List<int> questionIds,
-  ) => caller.callServerEndpoint<List<_i6.Question>>(
+  ) => caller.callServerEndpoint<List<_i7.Question>>(
     'questionAdmin',
     'reorder',
     {
@@ -305,82 +363,27 @@ class EndpointQuestionAdmin extends _i2.EndpointRef {
   );
 
   /// Get all questions for a survey.
-  _i3.Future<List<_i6.Question>> getForSurvey(int surveyId) =>
-      caller.callServerEndpoint<List<_i6.Question>>(
+  _i3.Future<List<_i7.Question>> getForSurvey(int surveyId) =>
+      caller.callServerEndpoint<List<_i7.Question>>(
         'questionAdmin',
         'getForSurvey',
         {'surveyId': surveyId},
       );
 
   /// Get a question by ID.
-  _i3.Future<_i6.Question?> getById(int questionId) =>
-      caller.callServerEndpoint<_i6.Question?>(
+  _i3.Future<_i7.Question?> getById(int questionId) =>
+      caller.callServerEndpoint<_i7.Question?>(
         'questionAdmin',
         'getById',
         {'questionId': questionId},
       );
 
-  /// Get all options for a question.
-  _i3.Future<List<_i7.QuestionOption>> getOptionsForQuestion(int questionId) =>
-      caller.callServerEndpoint<List<_i7.QuestionOption>>(
+  /// Get all choices for a question.
+  _i3.Future<List<_i5.Choice>> getChoicesForQuestion(int questionId) =>
+      caller.callServerEndpoint<List<_i5.Choice>>(
         'questionAdmin',
-        'getOptionsForQuestion',
+        'getChoicesForQuestion',
         {'questionId': questionId},
-      );
-}
-
-/// Admin endpoint for managing question options.
-/// All methods require authentication.
-/// {@category Endpoint}
-class EndpointQuestionOptionAdmin extends _i2.EndpointRef {
-  EndpointQuestionOptionAdmin(_i2.EndpointCaller caller) : super(caller);
-
-  @override
-  String get name => 'questionOptionAdmin';
-
-  /// Add an option to a question.
-  _i3.Future<_i7.QuestionOption> create(_i7.QuestionOption option) =>
-      caller.callServerEndpoint<_i7.QuestionOption>(
-        'questionOptionAdmin',
-        'create',
-        {'option': option},
-      );
-
-  /// Update an option.
-  _i3.Future<_i7.QuestionOption> update(_i7.QuestionOption option) =>
-      caller.callServerEndpoint<_i7.QuestionOption>(
-        'questionOptionAdmin',
-        'update',
-        {'option': option},
-      );
-
-  /// Delete an option.
-  _i3.Future<bool> delete(int optionId) => caller.callServerEndpoint<bool>(
-    'questionOptionAdmin',
-    'delete',
-    {'optionId': optionId},
-  );
-
-  /// Reorder options within a question.
-  /// Pass the option IDs in the desired order.
-  _i3.Future<List<_i7.QuestionOption>> reorder(
-    int questionId,
-    List<int> optionIds,
-  ) => caller.callServerEndpoint<List<_i7.QuestionOption>>(
-    'questionOptionAdmin',
-    'reorder',
-    {
-      'questionId': questionId,
-      'optionIds': optionIds,
-    },
-  );
-
-  /// Get an option by ID.
-  _i3.Future<_i7.QuestionOption?> getById(int optionId) =>
-      caller.callServerEndpoint<_i7.QuestionOption?>(
-        'questionOptionAdmin',
-        'getById',
-        {'optionId': optionId},
       );
 }
 
@@ -564,19 +567,19 @@ class EndpointSurvey extends _i2.EndpointRef {
 
   /// Get all questions for a published survey.
   /// Returns empty list if survey is not found or not published.
-  _i3.Future<List<_i6.Question>> getQuestionsForSurvey(int surveyId) =>
-      caller.callServerEndpoint<List<_i6.Question>>(
+  _i3.Future<List<_i7.Question>> getQuestionsForSurvey(int surveyId) =>
+      caller.callServerEndpoint<List<_i7.Question>>(
         'survey',
         'getQuestionsForSurvey',
         {'surveyId': surveyId},
       );
 
-  /// Get all options for a question.
-  /// Only returns options if the question belongs to a published survey.
-  _i3.Future<List<_i7.QuestionOption>> getOptionsForQuestion(int questionId) =>
-      caller.callServerEndpoint<List<_i7.QuestionOption>>(
+  /// Get all choices for a question.
+  /// Only returns choices if the question belongs to a published survey.
+  _i3.Future<List<_i5.Choice>> getChoicesForQuestion(int questionId) =>
+      caller.callServerEndpoint<List<_i5.Choice>>(
         'survey',
-        'getOptionsForQuestion',
+        'getChoicesForQuestion',
         {'questionId': questionId},
       );
 }
@@ -697,9 +700,9 @@ class Client extends _i2.ServerpodClientShared {
        ) {
     refreshJwtTokens = EndpointRefreshJwtTokens(this);
     emailIdp = EndpointEmailIdp(this);
+    choiceAdmin = EndpointChoiceAdmin(this);
     config = EndpointConfig(this);
     questionAdmin = EndpointQuestionAdmin(this);
-    questionOptionAdmin = EndpointQuestionOptionAdmin(this);
     responseAnalytics = EndpointResponseAnalytics(this);
     surveyAdmin = EndpointSurveyAdmin(this);
     survey = EndpointSurvey(this);
@@ -711,11 +714,11 @@ class Client extends _i2.ServerpodClientShared {
 
   late final EndpointEmailIdp emailIdp;
 
+  late final EndpointChoiceAdmin choiceAdmin;
+
   late final EndpointConfig config;
 
   late final EndpointQuestionAdmin questionAdmin;
-
-  late final EndpointQuestionOptionAdmin questionOptionAdmin;
 
   late final EndpointResponseAnalytics responseAnalytics;
 
@@ -731,9 +734,9 @@ class Client extends _i2.ServerpodClientShared {
   Map<String, _i2.EndpointRef> get endpointRefLookup => {
     'refreshJwtTokens': refreshJwtTokens,
     'emailIdp': emailIdp,
+    'choiceAdmin': choiceAdmin,
     'config': config,
     'questionAdmin': questionAdmin,
-    'questionOptionAdmin': questionOptionAdmin,
     'responseAnalytics': responseAnalytics,
     'surveyAdmin': surveyAdmin,
     'survey': survey,
