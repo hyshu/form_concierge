@@ -1,0 +1,13 @@
+### DTO for creating a question with its choices in one request
+class: QuestionWithChoices
+fields:
+  ### The question text
+  text: String
+  ### Type of question (single choice, multiple choice, text, etc.)
+  type: QuestionType
+  ### Whether this question is required
+  isRequired: bool
+  ### Optional placeholder text for text inputs
+  placeholder: String?
+  ### List of choice texts (for single/multiple choice questions)
+  choices: List<String>

@@ -33,6 +33,7 @@ responseAnalytics:
   - deleteResponse:
 surveyAdmin:
   - create:
+  - createWithQuestions:
   - update:
   - delete:
   - list:

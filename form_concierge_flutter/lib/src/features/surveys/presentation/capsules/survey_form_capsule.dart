@@ -4,6 +4,7 @@ import 'package:rearch/rearch.dart';
 
 import '../../../../core/capsules/client_capsule.dart';
 import '../../../../core/capsules/keyed_state.dart';
+import '../models/draft_question.dart';
 
 /// State for the survey form.
 class SurveyFormState {
@@ -11,12 +12,14 @@ class SurveyFormState {
   final bool isLoading;
   final bool isSaving;
   final String? error;
+  final List<DraftQuestion> draftQuestions;
 
   const SurveyFormState({
     this.survey,
     this.isLoading = false,
     this.isSaving = false,
     this.error,
+    this.draftQuestions = const [],
   });
 
   factory SurveyFormState.initial() => const SurveyFormState();
@@ -26,11 +29,13 @@ class SurveyFormState {
     bool? isLoading,
     bool? isSaving,
     String? error,
+    List<DraftQuestion>? draftQuestions,
   }) => SurveyFormState(
     survey: survey ?? this.survey,
     isLoading: isLoading ?? this.isLoading,
     isSaving: isSaving ?? this.isSaving,
     error: error,
+    draftQuestions: draftQuestions ?? this.draftQuestions,
   );
 }
 
@@ -195,5 +200,165 @@ class SurveyFormManager {
   /// Clear error for a survey.
   void clearError(int? surveyId) {
     _setState(surveyId, getState(surveyId).copyWith(error: null));
+  }
+
+  // Draft Questions Management (for create survey page)
+
+  /// Add a draft question.
+  void addDraftQuestion({
+    required String text,
+    required QuestionType type,
+    required bool isRequired,
+    String? placeholder,
+  }) {
+    final state = getState(null);
+    final newQuestion = DraftQuestion.create(
+      text: text,
+      type: type,
+      isRequired: isRequired,
+      placeholder: placeholder,
+    );
+    _setState(
+      null,
+      state.copyWith(
+        draftQuestions: [...state.draftQuestions, newQuestion],
+      ),
+    );
+  }
+
+  /// Update a draft question.
+  void updateDraftQuestion({
+    required String tempId,
+    required String text,
+    required QuestionType type,
+    required bool isRequired,
+    String? placeholder,
+  }) {
+    final state = getState(null);
+    final updatedQuestions = state.draftQuestions.map((q) {
+      if (q.tempId == tempId) {
+        return q.copyWith(
+          text: text,
+          type: type,
+          isRequired: isRequired,
+          placeholder: placeholder,
+        );
+      }
+      return q;
+    }).toList();
+    _setState(null, state.copyWith(draftQuestions: updatedQuestions));
+  }
+
+  /// Delete a draft question.
+  void deleteDraftQuestion(String tempId) {
+    final state = getState(null);
+    final updatedQuestions =
+        state.draftQuestions.where((q) => q.tempId != tempId).toList();
+    _setState(null, state.copyWith(draftQuestions: updatedQuestions));
+  }
+
+  /// Reorder draft questions.
+  void reorderDraftQuestions(int oldIndex, int newIndex) {
+    final state = getState(null);
+    final questions = List<DraftQuestion>.from(state.draftQuestions);
+    if (newIndex > oldIndex) {
+      newIndex -= 1;
+    }
+    final item = questions.removeAt(oldIndex);
+    questions.insert(newIndex, item);
+    _setState(null, state.copyWith(draftQuestions: questions));
+  }
+
+  /// Add a choice to a draft question.
+  void addChoiceToDraftQuestion(String questionTempId, String choiceText) {
+    final state = getState(null);
+    final updatedQuestions = state.draftQuestions.map((q) {
+      if (q.tempId == questionTempId) {
+        return q.copyWith(
+          choices: [...q.choices, DraftChoice.create(text: choiceText)],
+        );
+      }
+      return q;
+    }).toList();
+    _setState(null, state.copyWith(draftQuestions: updatedQuestions));
+  }
+
+  /// Update a choice in a draft question.
+  void updateDraftChoice(
+    String questionTempId,
+    String choiceTempId,
+    String newText,
+  ) {
+    final state = getState(null);
+    final updatedQuestions = state.draftQuestions.map((q) {
+      if (q.tempId == questionTempId) {
+        final updatedChoices = q.choices.map((c) {
+          if (c.tempId == choiceTempId) {
+            return c.copyWith(text: newText);
+          }
+          return c;
+        }).toList();
+        return q.copyWith(choices: updatedChoices);
+      }
+      return q;
+    }).toList();
+    _setState(null, state.copyWith(draftQuestions: updatedQuestions));
+  }
+
+  /// Delete a choice from a draft question.
+  void deleteDraftChoice(String questionTempId, String choiceTempId) {
+    final state = getState(null);
+    final updatedQuestions = state.draftQuestions.map((q) {
+      if (q.tempId == questionTempId) {
+        final updatedChoices =
+            q.choices.where((c) => c.tempId != choiceTempId).toList();
+        return q.copyWith(choices: updatedChoices);
+      }
+      return q;
+    }).toList();
+    _setState(null, state.copyWith(draftQuestions: updatedQuestions));
+  }
+
+  /// Create a new survey with questions.
+  Future<Survey?> createSurveyWithQuestions({
+    required String title,
+    required String slug,
+    String? description,
+    required AuthRequirement authRequirement,
+  }) async {
+    final state = getState(null);
+    _setState(null, state.copyWith(isSaving: true, error: null));
+    try {
+      final survey = Survey(
+        slug: slug,
+        title: title,
+        description: description,
+        status: SurveyStatus.draft,
+        authRequirement: authRequirement,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+      final questions =
+          state.draftQuestions.map((q) => q.toQuestionWithChoices()).toList();
+
+      final created = await _client.surveyAdmin.createWithQuestions(
+        survey,
+        questions,
+      );
+      _setState(
+        null,
+        SurveyFormState.initial().copyWith(isSaving: false),
+      );
+      return created;
+    } on Exception catch (e) {
+      _setState(
+        null,
+        getState(null).copyWith(
+          isSaving: false,
+          error: 'Failed to create survey: $e',
+        ),
+      );
+      return null;
+    }
   }
 }

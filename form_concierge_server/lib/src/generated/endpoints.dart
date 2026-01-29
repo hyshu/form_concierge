@@ -22,11 +22,13 @@ import '../endpoints/user_admin_endpoint.dart' as _i9;
 import 'package:form_concierge_server/src/generated/choice.dart' as _i10;
 import 'package:form_concierge_server/src/generated/question.dart' as _i11;
 import 'package:form_concierge_server/src/generated/survey.dart' as _i12;
-import 'package:form_concierge_server/src/generated/answer.dart' as _i13;
+import 'package:form_concierge_server/src/generated/question_with_choices.dart'
+    as _i13;
+import 'package:form_concierge_server/src/generated/answer.dart' as _i14;
 import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
-    as _i14;
-import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as _i15;
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
+    as _i16;
 
 class Endpoints extends _i1.EndpointDispatch {
   @override
@@ -731,6 +733,31 @@ class Endpoints extends _i1.EndpointDispatch {
                     params['survey'],
                   ),
         ),
+        'createWithQuestions': _i1.MethodConnector(
+          name: 'createWithQuestions',
+          params: {
+            'survey': _i1.ParameterDescription(
+              name: 'survey',
+              type: _i1.getType<_i12.Survey>(),
+              nullable: false,
+            ),
+            'questions': _i1.ParameterDescription(
+              name: 'questions',
+              type: _i1.getType<List<_i13.QuestionWithChoices>>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['surveyAdmin'] as _i7.SurveyAdminEndpoint)
+                  .createWithQuestions(
+                    session,
+                    params['survey'],
+                    params['questions'],
+                  ),
+        ),
         'update': _i1.MethodConnector(
           name: 'update',
           params: {
@@ -889,7 +916,7 @@ class Endpoints extends _i1.EndpointDispatch {
             ),
             'answers': _i1.ParameterDescription(
               name: 'answers',
-              type: _i1.getType<List<_i13.Answer>>(),
+              type: _i1.getType<List<_i14.Answer>>(),
               nullable: false,
             ),
             'anonymousId': _i1.ParameterDescription(
@@ -1070,9 +1097,9 @@ class Endpoints extends _i1.EndpointDispatch {
         ),
       },
     );
-    modules['serverpod_auth_idp'] = _i14.Endpoints()
+    modules['serverpod_auth_idp'] = _i15.Endpoints()
       ..initializeEndpoints(server);
-    modules['serverpod_auth_core'] = _i15.Endpoints()
+    modules['serverpod_auth_core'] = _i16.Endpoints()
       ..initializeEndpoints(server);
   }
 }

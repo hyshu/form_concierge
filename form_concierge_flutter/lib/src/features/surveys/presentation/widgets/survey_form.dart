@@ -3,7 +3,7 @@ import 'package:form_concierge_client/form_concierge_client.dart';
 
 import '../capsules/survey_form_capsule.dart';
 
-/// Form widget for creating/editing surveys.
+/// Form widget for creating/editing survey basic info (title, slug, etc.).
 class SurveyForm extends StatefulWidget {
   final SurveyFormControllers controllers;
   final Survey? existingSurvey;
@@ -14,8 +14,7 @@ class SurveyForm extends StatefulWidget {
     required String slug,
     String? description,
     required AuthRequirement authRequirement,
-  })
-  onSave;
+  }) onSave;
 
   const SurveyForm({
     super.key,

@@ -25,8 +25,10 @@ import 'package:form_concierge_server/src/generated/answer.dart' as _i9;
 import 'package:form_concierge_server/src/generated/survey_results.dart'
     as _i10;
 import 'package:form_concierge_server/src/generated/survey.dart' as _i11;
-import 'package:form_concierge_server/src/generated/auth_user_info.dart'
+import 'package:form_concierge_server/src/generated/question_with_choices.dart'
     as _i12;
+import 'package:form_concierge_server/src/generated/auth_user_info.dart'
+    as _i13;
 import 'package:form_concierge_server/src/generated/protocol.dart';
 import 'package:form_concierge_server/src/generated/endpoints.dart';
 export 'package:serverpod_test/serverpod_test_public_exports.dart';
@@ -1180,6 +1182,41 @@ class _SurveyAdminEndpoint {
     });
   }
 
+  _i3.Future<_i11.Survey> createWithQuestions(
+    _i1.TestSessionBuilder sessionBuilder,
+    _i11.Survey survey,
+    List<_i12.QuestionWithChoices> questions,
+  ) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'surveyAdmin',
+            method: 'createWithQuestions',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'surveyAdmin',
+          methodName: 'createWithQuestions',
+          parameters: _i1.testObjectToJson({
+            'survey': survey,
+            'questions': questions,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<_i11.Survey>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
   _i3.Future<_i11.Survey> update(
     _i1.TestSessionBuilder sessionBuilder,
     _i11.Survey survey,
@@ -1611,7 +1648,7 @@ class _UserAdminEndpoint {
     });
   }
 
-  _i3.Future<List<_i12.AuthUserInfo>> listUsers(
+  _i3.Future<List<_i13.AuthUserInfo>> listUsers(
     _i1.TestSessionBuilder sessionBuilder,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -1633,7 +1670,7 @@ class _UserAdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i12.AuthUserInfo>>);
+                as _i3.Future<List<_i13.AuthUserInfo>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1641,7 +1678,7 @@ class _UserAdminEndpoint {
     });
   }
 
-  _i3.Future<_i12.AuthUserInfo> createUser(
+  _i3.Future<_i13.AuthUserInfo> createUser(
     _i1.TestSessionBuilder sessionBuilder, {
     required String email,
     required String password,
@@ -1670,7 +1707,7 @@ class _UserAdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i12.AuthUserInfo>);
+                as _i3.Future<_i13.AuthUserInfo>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

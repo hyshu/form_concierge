@@ -23,8 +23,10 @@ import 'package:form_concierge_client/src/protocol/survey_response.dart' as _i8;
 import 'package:form_concierge_client/src/protocol/answer.dart' as _i9;
 import 'package:form_concierge_client/src/protocol/survey_results.dart' as _i10;
 import 'package:form_concierge_client/src/protocol/survey.dart' as _i11;
-import 'package:form_concierge_client/src/protocol/auth_user_info.dart' as _i12;
-import 'protocol.dart' as _i13;
+import 'package:form_concierge_client/src/protocol/question_with_choices.dart'
+    as _i12;
+import 'package:form_concierge_client/src/protocol/auth_user_info.dart' as _i13;
+import 'protocol.dart' as _i14;
 
 /// Endpoint for refreshing JWT tokens
 /// {@category Endpoint}
@@ -474,6 +476,19 @@ class EndpointSurveyAdmin extends _i2.EndpointRef {
         {'survey': survey},
       );
 
+  /// Create a new survey with questions and choices in one transaction.
+  _i3.Future<_i11.Survey> createWithQuestions(
+    _i11.Survey survey,
+    List<_i12.QuestionWithChoices> questions,
+  ) => caller.callServerEndpoint<_i11.Survey>(
+    'surveyAdmin',
+    'createWithQuestions',
+    {
+      'survey': survey,
+      'questions': questions,
+    },
+  );
+
   /// Update an existing survey.
   _i3.Future<_i11.Survey> update(_i11.Survey survey) =>
       caller.callServerEndpoint<_i11.Survey>(
@@ -616,19 +631,19 @@ class EndpointUserAdmin extends _i2.EndpointRef {
   );
 
   /// Get all users. Requires admin scope.
-  _i3.Future<List<_i12.AuthUserInfo>> listUsers() =>
-      caller.callServerEndpoint<List<_i12.AuthUserInfo>>(
+  _i3.Future<List<_i13.AuthUserInfo>> listUsers() =>
+      caller.callServerEndpoint<List<_i13.AuthUserInfo>>(
         'userAdmin',
         'listUsers',
         {},
       );
 
   /// Create a new user. Requires admin scope.
-  _i3.Future<_i12.AuthUserInfo> createUser({
+  _i3.Future<_i13.AuthUserInfo> createUser({
     required String email,
     required String password,
     required List<String> scopes,
-  }) => caller.callServerEndpoint<_i12.AuthUserInfo>(
+  }) => caller.callServerEndpoint<_i13.AuthUserInfo>(
     'userAdmin',
     'createUser',
     {
@@ -689,7 +704,7 @@ class Client extends _i2.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
          host,
-         _i13.Protocol(),
+         _i14.Protocol(),
          securityContext: securityContext,
          streamingConnectionTimeout: streamingConnectionTimeout,
          connectionTimeout: connectionTimeout,
