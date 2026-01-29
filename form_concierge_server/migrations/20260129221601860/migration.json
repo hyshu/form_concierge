@@ -382,6 +382,14 @@
             "columnType": 6,
             "isNullable": true,
             "dartType": "int?"
+          },
+          {
+            "__className__": "serverpod.ColumnDefinition",
+            "name": "isDeleted",
+            "columnType": 1,
+            "isNullable": false,
+            "columnDefault": "false",
+            "dartType": "bool"
           }
         ],
         "foreignKeys": [

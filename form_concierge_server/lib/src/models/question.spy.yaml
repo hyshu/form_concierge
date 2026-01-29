@@ -18,6 +18,8 @@ fields:
   minLength: int?
   ### For text inputs: maximum character count
   maxLength: int?
+  ### Soft delete flag (deleted questions are hidden but preserved for existing answers)
+  isDeleted: bool, default=false
 
 indexes:
   survey_order_index:

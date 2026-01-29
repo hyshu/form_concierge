@@ -72,7 +72,13 @@ class QuestionAdminEndpoint extends Endpoint {
     return await Question.db.updateRow(session, question);
   }
 
-  /// Delete a question and its options.
+  /// Delete a question.
+  ///
+  /// If the question has no answers, it is permanently deleted along with its
+  /// choices (cascade delete). If the question has answers, it is soft-deleted
+  /// (isDeleted = true) to preserve existing answer data.
+  ///
+  /// Returns `true` if hard-deleted, `false` if soft-deleted.
   Future<bool> delete(Session session, int questionId) async {
     final question = throwIfNotFound(
       await Question.db.findById(session, questionId),
@@ -80,13 +86,23 @@ class QuestionAdminEndpoint extends Endpoint {
       questionId,
     );
 
-    await session.db.transaction((transaction) async {
-      // Delete answers referencing this question
-      await Answer.db.deleteWhere(
-        session,
-        where: (t) => t.questionId.equals(questionId),
-      );
+    // Check if any answers exist for this question
+    final answerCount = await Answer.db.count(
+      session,
+      where: (t) => t.questionId.equals(questionId),
+    );
 
+    if (answerCount > 0) {
+      // Soft delete: mark as deleted but preserve for existing answers
+      await Question.db.updateRow(
+        session,
+        question.copyWith(isDeleted: true),
+      );
+      return false;
+    }
+
+    // Hard delete: no answers exist, safe to remove completely
+    await session.db.transaction((transaction) async {
       // Delete all choices for this question
       await Choice.db.deleteWhere(
         session,
@@ -99,7 +115,8 @@ class QuestionAdminEndpoint extends Endpoint {
       // Re-order remaining questions
       final remainingQuestions = await Question.db.find(
         session,
-        where: (t) => t.surveyId.equals(question.surveyId),
+        where: (t) =>
+            t.surveyId.equals(question.surveyId) & t.isDeleted.equals(false),
         orderBy: (t) => t.orderIndex,
       );
 
@@ -156,11 +173,11 @@ class QuestionAdminEndpoint extends Endpoint {
     return updatedQuestions;
   }
 
-  /// Get all questions for a survey.
+  /// Get all active (non-deleted) questions for a survey.
   Future<List<Question>> getForSurvey(Session session, int surveyId) async {
     return await Question.db.find(
       session,
-      where: (t) => t.surveyId.equals(surveyId),
+      where: (t) => t.surveyId.equals(surveyId) & t.isDeleted.equals(false),
       orderBy: (t) => t.orderIndex,
     );
   }

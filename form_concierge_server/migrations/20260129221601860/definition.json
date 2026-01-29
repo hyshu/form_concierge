@@ -368,6 +368,14 @@
           "columnType": 6,
           "isNullable": true,
           "dartType": "int?"
+        },
+        {
+          "__className__": "serverpod.ColumnDefinition",
+          "name": "isDeleted",
+          "columnType": 1,
+          "isNullable": false,
+          "columnDefault": "false",
+          "dartType": "bool"
         }
       ],
       "foreignKeys": [
@@ -3462,7 +3470,7 @@
     {
       "__className__": "serverpod.DatabaseMigrationVersion",
       "module": "form_concierge",
-      "version": "20260129084220620"
+      "version": "20260129221601860"
     },
     {
       "__className__": "serverpod.DatabaseMigrationVersion",
