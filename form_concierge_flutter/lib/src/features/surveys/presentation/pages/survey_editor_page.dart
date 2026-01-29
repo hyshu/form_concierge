@@ -78,7 +78,7 @@ class SurveyEditorPage extends RearchConsumer {
       );
     }
 
-    final canEdit = isNewSurvey || survey!.status == SurveyStatus.draft;
+    final canEdit = isNewSurvey || survey!.status != SurveyStatus.archived;
 
     return Scaffold(
       appBar: AppBar(
@@ -121,7 +121,7 @@ class SurveyEditorPage extends RearchConsumer {
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'This survey is ${survey.status.name}. You cannot edit the questions.',
+                              'This survey is archived. You cannot edit the questions.',
                               style: TextStyle(
                                 color: Theme.of(
                                   context,

@@ -25,7 +25,9 @@ abstract class Question implements _i1.SerializableModel {
     this.placeholder,
     this.minLength,
     this.maxLength,
-  }) : isRequired = isRequired ?? true;
+    bool? isDeleted,
+  }) : isRequired = isRequired ?? true,
+       isDeleted = isDeleted ?? false;
 
   factory Question({
     int? id,
@@ -37,6 +39,7 @@ abstract class Question implements _i1.SerializableModel {
     String? placeholder,
     int? minLength,
     int? maxLength,
+    bool? isDeleted,
   }) = _QuestionImpl;
 
   factory Question.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -50,6 +53,7 @@ abstract class Question implements _i1.SerializableModel {
       placeholder: jsonSerialization['placeholder'] as String?,
       minLength: jsonSerialization['minLength'] as int?,
       maxLength: jsonSerialization['maxLength'] as int?,
+      isDeleted: jsonSerialization['isDeleted'] as bool?,
     );
   }
 
@@ -82,6 +86,9 @@ abstract class Question implements _i1.SerializableModel {
   /// For text inputs: maximum character count
   int? maxLength;
 
+  /// Soft delete flag (deleted questions are hidden but preserved for existing answers)
+  bool isDeleted;
+
   /// Returns a shallow copy of this [Question]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
@@ -95,6 +102,7 @@ abstract class Question implements _i1.SerializableModel {
     String? placeholder,
     int? minLength,
     int? maxLength,
+    bool? isDeleted,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -109,6 +117,7 @@ abstract class Question implements _i1.SerializableModel {
       if (placeholder != null) 'placeholder': placeholder,
       if (minLength != null) 'minLength': minLength,
       if (maxLength != null) 'maxLength': maxLength,
+      'isDeleted': isDeleted,
     };
   }
 
@@ -131,6 +140,7 @@ class _QuestionImpl extends Question {
     String? placeholder,
     int? minLength,
     int? maxLength,
+    bool? isDeleted,
   }) : super._(
          id: id,
          surveyId: surveyId,
@@ -141,6 +151,7 @@ class _QuestionImpl extends Question {
          placeholder: placeholder,
          minLength: minLength,
          maxLength: maxLength,
+         isDeleted: isDeleted,
        );
 
   /// Returns a shallow copy of this [Question]
@@ -157,6 +168,7 @@ class _QuestionImpl extends Question {
     Object? placeholder = _Undefined,
     Object? minLength = _Undefined,
     Object? maxLength = _Undefined,
+    bool? isDeleted,
   }) {
     return Question(
       id: id is int? ? id : this.id,
@@ -168,6 +180,7 @@ class _QuestionImpl extends Question {
       placeholder: placeholder is String? ? placeholder : this.placeholder,
       minLength: minLength is int? ? minLength : this.minLength,
       maxLength: maxLength is int? ? maxLength : this.maxLength,
+      isDeleted: isDeleted ?? this.isDeleted,
     );
   }
 }

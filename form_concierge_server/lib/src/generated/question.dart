@@ -26,7 +26,9 @@ abstract class Question
     this.placeholder,
     this.minLength,
     this.maxLength,
-  }) : isRequired = isRequired ?? true;
+    bool? isDeleted,
+  }) : isRequired = isRequired ?? true,
+       isDeleted = isDeleted ?? false;
 
   factory Question({
     int? id,
@@ -38,6 +40,7 @@ abstract class Question
     String? placeholder,
     int? minLength,
     int? maxLength,
+    bool? isDeleted,
   }) = _QuestionImpl;
 
   factory Question.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -51,6 +54,7 @@ abstract class Question
       placeholder: jsonSerialization['placeholder'] as String?,
       minLength: jsonSerialization['minLength'] as int?,
       maxLength: jsonSerialization['maxLength'] as int?,
+      isDeleted: jsonSerialization['isDeleted'] as bool?,
     );
   }
 
@@ -85,6 +89,9 @@ abstract class Question
   /// For text inputs: maximum character count
   int? maxLength;
 
+  /// Soft delete flag (deleted questions are hidden but preserved for existing answers)
+  bool isDeleted;
+
   @override
   _i1.Table<int?> get table => t;
 
@@ -101,6 +108,7 @@ abstract class Question
     String? placeholder,
     int? minLength,
     int? maxLength,
+    bool? isDeleted,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -115,6 +123,7 @@ abstract class Question
       if (placeholder != null) 'placeholder': placeholder,
       if (minLength != null) 'minLength': minLength,
       if (maxLength != null) 'maxLength': maxLength,
+      'isDeleted': isDeleted,
     };
   }
 
@@ -131,6 +140,7 @@ abstract class Question
       if (placeholder != null) 'placeholder': placeholder,
       if (minLength != null) 'minLength': minLength,
       if (maxLength != null) 'maxLength': maxLength,
+      'isDeleted': isDeleted,
     };
   }
 
@@ -177,6 +187,7 @@ class _QuestionImpl extends Question {
     String? placeholder,
     int? minLength,
     int? maxLength,
+    bool? isDeleted,
   }) : super._(
          id: id,
          surveyId: surveyId,
@@ -187,6 +198,7 @@ class _QuestionImpl extends Question {
          placeholder: placeholder,
          minLength: minLength,
          maxLength: maxLength,
+         isDeleted: isDeleted,
        );
 
   /// Returns a shallow copy of this [Question]
@@ -203,6 +215,7 @@ class _QuestionImpl extends Question {
     Object? placeholder = _Undefined,
     Object? minLength = _Undefined,
     Object? maxLength = _Undefined,
+    bool? isDeleted,
   }) {
     return Question(
       id: id is int? ? id : this.id,
@@ -214,6 +227,7 @@ class _QuestionImpl extends Question {
       placeholder: placeholder is String? ? placeholder : this.placeholder,
       minLength: minLength is int? ? minLength : this.minLength,
       maxLength: maxLength is int? ? maxLength : this.maxLength,
+      isDeleted: isDeleted ?? this.isDeleted,
     );
   }
 }
@@ -262,6 +276,11 @@ class QuestionUpdateTable extends _i1.UpdateTable<QuestionTable> {
     table.maxLength,
     value,
   );
+
+  _i1.ColumnValue<bool, bool> isDeleted(bool value) => _i1.ColumnValue(
+    table.isDeleted,
+    value,
+  );
 }
 
 class QuestionTable extends _i1.Table<int?> {
@@ -301,6 +320,11 @@ class QuestionTable extends _i1.Table<int?> {
       'maxLength',
       this,
     );
+    isDeleted = _i1.ColumnBool(
+      'isDeleted',
+      this,
+      hasDefault: true,
+    );
   }
 
   late final QuestionUpdateTable updateTable;
@@ -329,6 +353,9 @@ class QuestionTable extends _i1.Table<int?> {
   /// For text inputs: maximum character count
   late final _i1.ColumnInt maxLength;
 
+  /// Soft delete flag (deleted questions are hidden but preserved for existing answers)
+  late final _i1.ColumnBool isDeleted;
+
   @override
   List<_i1.Column> get columns => [
     id,
@@ -340,6 +367,7 @@ class QuestionTable extends _i1.Table<int?> {
     placeholder,
     minLength,
     maxLength,
+    isDeleted,
   ];
 }
 
