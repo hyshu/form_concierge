@@ -19,11 +19,15 @@ class LoginPage extends RearchConsumer {
     final controllers = use(loginFormControllersCapsule);
     final colorScheme = Theme.of(context).colorScheme;
 
-    // Check for first user and load config on first build
-    if (use.isFirstBuild()) {
-      authManager.checkFirstUser();
-      configManager.loadConfig();
-    }
+    // Check for first user and load config on mount
+    use.effect(
+      () {
+        authManager.checkFirstUser();
+        configManager.loadConfig();
+        return null;
+      },
+      [],
+    );
 
     final isFirstUser = authManager.state.isFirstUser == true;
     final hasCheckedFirstUser = authManager.state.hasCheckedFirstUser;
