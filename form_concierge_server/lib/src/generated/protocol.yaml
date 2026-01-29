@@ -43,6 +43,8 @@ surveyAdmin:
 survey:
   - getBySlug:
   - submitResponse:
+  - getQuestionsForSurvey:
+  - getOptionsForQuestion:
 userAdmin:
   - isFirstUser:
   - registerFirstUser:

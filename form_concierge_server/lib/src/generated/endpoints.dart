@@ -921,6 +921,44 @@ class Endpoints extends _i1.EndpointDispatch {
                     anonymousId: params['anonymousId'],
                   ),
         ),
+        'getQuestionsForSurvey': _i1.MethodConnector(
+          name: 'getQuestionsForSurvey',
+          params: {
+            'surveyId': _i1.ParameterDescription(
+              name: 'surveyId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['survey'] as _i8.SurveyEndpoint)
+                  .getQuestionsForSurvey(
+                    session,
+                    params['surveyId'],
+                  ),
+        ),
+        'getOptionsForQuestion': _i1.MethodConnector(
+          name: 'getOptionsForQuestion',
+          params: {
+            'questionId': _i1.ParameterDescription(
+              name: 'questionId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['survey'] as _i8.SurveyEndpoint)
+                  .getOptionsForQuestion(
+                    session,
+                    params['questionId'],
+                  ),
+        ),
       },
     );
     connectors['userAdmin'] = _i1.EndpointConnector(

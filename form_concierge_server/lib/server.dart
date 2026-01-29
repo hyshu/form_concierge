@@ -23,6 +23,9 @@ void run(List<String> args) async {
     pod.logVerbose('Email service disabled - SMTP not configured');
   }
 
+  // Use fixed verification code when email is disabled for easier development
+  const devVerificationCode = '00000000';
+
   // Initialize authentication services
   pod.initializeAuthServices(
     tokenManagerBuilders: [
@@ -35,6 +38,10 @@ void run(List<String> args) async {
             'development-pepper-minimum-32-chars',
         sendRegistrationVerificationCode: _sendRegistrationCode,
         sendPasswordResetVerificationCode: _sendPasswordResetCode,
+        // Use fixed code when email is disabled so clients can auto-verify
+        registrationVerificationCodeGenerator: smtpConfig.enabled
+            ? defaultVerificationCodeGenerator
+            : () => devVerificationCode,
       ),
     ],
   );

@@ -92,4 +92,43 @@ class SurveyEndpoint extends Endpoint {
       return savedResponse;
     });
   }
+
+  /// Get all questions for a published survey.
+  /// Returns empty list if survey is not found or not published.
+  Future<List<Question>> getQuestionsForSurvey(
+    Session session,
+    int surveyId,
+  ) async {
+    final survey = await Survey.db.findById(session, surveyId);
+    if (survey == null || survey.status != SurveyStatus.published) {
+      return [];
+    }
+
+    return await Question.db.find(
+      session,
+      where: (t) => t.surveyId.equals(surveyId),
+      orderBy: (t) => t.orderIndex,
+    );
+  }
+
+  /// Get all options for a question.
+  /// Only returns options if the question belongs to a published survey.
+  Future<List<QuestionOption>> getOptionsForQuestion(
+    Session session,
+    int questionId,
+  ) async {
+    final question = await Question.db.findById(session, questionId);
+    if (question == null) return [];
+
+    final survey = await Survey.db.findById(session, question.surveyId);
+    if (survey == null || survey.status != SurveyStatus.published) {
+      return [];
+    }
+
+    return await QuestionOption.db.find(
+      session,
+      where: (t) => t.questionId.equals(questionId),
+      orderBy: (t) => t.orderIndex,
+    );
+  }
 }
