@@ -13,28 +13,41 @@
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
 
 abstract class PublicConfig implements _i1.SerializableModel {
-  PublicConfig._({required this.passwordResetEnabled});
+  PublicConfig._({
+    required this.passwordResetEnabled,
+    required this.requireEmailVerification,
+  });
 
-  factory PublicConfig({required bool passwordResetEnabled}) =
-      _PublicConfigImpl;
+  factory PublicConfig({
+    required bool passwordResetEnabled,
+    required bool requireEmailVerification,
+  }) = _PublicConfigImpl;
 
   factory PublicConfig.fromJson(Map<String, dynamic> jsonSerialization) {
     return PublicConfig(
       passwordResetEnabled: jsonSerialization['passwordResetEnabled'] as bool,
+      requireEmailVerification:
+          jsonSerialization['requireEmailVerification'] as bool,
     );
   }
 
   bool passwordResetEnabled;
 
+  bool requireEmailVerification;
+
   /// Returns a shallow copy of this [PublicConfig]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
-  PublicConfig copyWith({bool? passwordResetEnabled});
+  PublicConfig copyWith({
+    bool? passwordResetEnabled,
+    bool? requireEmailVerification,
+  });
   @override
   Map<String, dynamic> toJson() {
     return {
       '__className__': 'PublicConfig',
       'passwordResetEnabled': passwordResetEnabled,
+      'requireEmailVerification': requireEmailVerification,
     };
   }
 
@@ -45,16 +58,26 @@ abstract class PublicConfig implements _i1.SerializableModel {
 }
 
 class _PublicConfigImpl extends PublicConfig {
-  _PublicConfigImpl({required bool passwordResetEnabled})
-    : super._(passwordResetEnabled: passwordResetEnabled);
+  _PublicConfigImpl({
+    required bool passwordResetEnabled,
+    required bool requireEmailVerification,
+  }) : super._(
+         passwordResetEnabled: passwordResetEnabled,
+         requireEmailVerification: requireEmailVerification,
+       );
 
   /// Returns a shallow copy of this [PublicConfig]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
   @override
-  PublicConfig copyWith({bool? passwordResetEnabled}) {
+  PublicConfig copyWith({
+    bool? passwordResetEnabled,
+    bool? requireEmailVerification,
+  }) {
     return PublicConfig(
       passwordResetEnabled: passwordResetEnabled ?? this.passwordResetEnabled,
+      requireEmailVerification:
+          requireEmailVerification ?? this.requireEmailVerification,
     );
   }
 }

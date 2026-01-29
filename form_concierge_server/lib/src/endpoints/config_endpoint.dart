@@ -13,6 +13,7 @@ class ConfigEndpoint extends Endpoint {
   Future<PublicConfig> getPublicConfig(Session session) async {
     return PublicConfig(
       passwordResetEnabled: EmailService.isConfigured,
+      requireEmailVerification: EmailService.isConfigured,
     );
   }
 }

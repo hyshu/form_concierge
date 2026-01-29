@@ -561,6 +561,24 @@ class EndpointSurvey extends _i2.EndpointRef {
       'anonymousId': anonymousId,
     },
   );
+
+  /// Get all questions for a published survey.
+  /// Returns empty list if survey is not found or not published.
+  _i3.Future<List<_i6.Question>> getQuestionsForSurvey(int surveyId) =>
+      caller.callServerEndpoint<List<_i6.Question>>(
+        'survey',
+        'getQuestionsForSurvey',
+        {'surveyId': surveyId},
+      );
+
+  /// Get all options for a question.
+  /// Only returns options if the question belongs to a published survey.
+  _i3.Future<List<_i7.QuestionOption>> getOptionsForQuestion(int questionId) =>
+      caller.callServerEndpoint<List<_i7.QuestionOption>>(
+        'survey',
+        'getOptionsForQuestion',
+        {'questionId': questionId},
+      );
 }
 
 /// Admin endpoint for managing users.
@@ -618,7 +636,9 @@ class EndpointUserAdmin extends _i2.EndpointRef {
   );
 
   /// Delete a user. Requires admin scope.
-  /// Returns true if the deleted user was the current user (self-deletion).
+  ///
+  /// Returns `true` if the deleted user was the current user (self-deletion),
+  /// `false` otherwise (including when the user was not found).
   _i3.Future<bool> deleteUser(_i2.UuidValue userId) =>
       caller.callServerEndpoint<bool>(
         'userAdmin',
