@@ -14,15 +14,11 @@ class App extends StatelessComponent {
     return Router(
       routes: [
         Route(
-          path: '/s/:slug',
+          path: '/:slug',
           builder: (context, state) => SurveyPage(
             slug: state.params['slug']!,
             serverUrl: serverUrl,
           ),
-        ),
-        Route(
-          path: '/:path(.*)',
-          builder: (context, state) => const NotFoundPage(),
         ),
       ],
     );

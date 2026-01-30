@@ -73,7 +73,7 @@ class _SurveyFormState extends State<SurveyForm> {
             decoration: InputDecoration(
               labelText: 'URL Slug',
               hintText: 'my-survey',
-              prefixText: '/s/',
+              prefixText: '/',
               prefixStyle: TextStyle(color: colorScheme.onSurfaceVariant),
             ),
             enabled: !widget.isSaving,

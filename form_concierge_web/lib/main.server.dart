@@ -15,6 +15,7 @@ void main() {
   runApp(Document(
     title: 'Form Concierge',
     lang: 'ja',
+    base: '/',
     meta: {
       'description': 'Web Survey Form',
       'viewport': 'width=device-width, initial-scale=1.0',
