@@ -61,7 +61,7 @@ void run(List<String> args) async {
   // Admin Dashboard (Flutter Web)
   final adminAppDir = Directory('web/admin');
   if (adminAppDir.existsSync()) {
-    pod.webServer.addRoute(FlutterRoute(adminAppDir), '/admin/*');
+    pod.webServer.addRoute(FlutterRoute(adminAppDir), '/admin');
   }
 
   // Survey Form (Jaspr)
