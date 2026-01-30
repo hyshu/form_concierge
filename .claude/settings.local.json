@@ -19,7 +19,12 @@
       "WebFetch(domain:rearch.gsconrad.com)",
       "WebSearch",
       "Skill(rearch)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Skill(jaspr-docs)",
+      "Bash(pkill:*)",
+      "Bash(lsof:*)",
+      "Bash(xargs kill:*)",
+      "Bash(jaspr build:*)"
     ]
   }
 }
