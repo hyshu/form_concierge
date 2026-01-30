@@ -101,6 +101,8 @@ This interactive command will guide you through project setup and initial deploy
 scloud deploy
 ```
 
+Default Admin dashboard URL is `https://<project-name>.serverpod.space/admin`
+
 ### Environment Variables & Secrets
 
 Set environment variables:
