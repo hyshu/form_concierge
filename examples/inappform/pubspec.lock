@@ -163,14 +163,14 @@ packages:
   form_concierge_client:
     dependency: "direct main"
     description:
-      path: "../../form_concierge_client"
+      path: "../../client"
       relative: true
     source: path
     version: "0.0.0"
   form_concierge_survey_widget:
     dependency: "direct main"
     description:
-      path: "../../form_concierge_survey_widget"
+      path: "../../widget"
       relative: true
     source: path
     version: "0.1.0"

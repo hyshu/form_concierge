@@ -212,7 +212,7 @@ packages:
   form_concierge_client:
     dependency: "direct main"
     description:
-      path: "../form_concierge_client"
+      path: "../client"
       relative: true
     source: path
     version: "0.0.0"

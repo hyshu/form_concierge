@@ -10,9 +10,9 @@ dependencies:
   flutter:
     sdk: flutter
   form_concierge_survey_widget:
-    path: ../../form_concierge_survey_widget
+    path: ../../widget
   form_concierge_client:
-    path: ../../form_concierge_client
+    path: ../../client
   serverpod_auth_core_flutter: ^3.2.3
 
 dev_dependencies:
