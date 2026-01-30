@@ -54,8 +54,8 @@ class AiQuestionPreviewDialog extends StatelessWidget {
             Text(
               '${questions.length} questions generated. Review and apply to your survey.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                color: colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: 16),
             Expanded(
@@ -147,8 +147,8 @@ class _QuestionPreviewTile extends StatelessWidget {
                     Text(
                       _labelForType(question.type),
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
+                        color: colorScheme.onSurfaceVariant,
+                      ),
                     ),
                     if (question.isRequired) ...[
                       const SizedBox(width: 8),

@@ -83,11 +83,13 @@ class SurveyAdminEndpoint extends Endpoint {
             q.type == QuestionType.multipleChoice) {
           final choices = <Choice>[];
           for (var j = 0; j < q.choices.length; j++) {
-            choices.add(Choice(
-              questionId: createdQuestion.id!,
-              text: q.choices[j],
-              orderIndex: j,
-            ));
+            choices.add(
+              Choice(
+                questionId: createdQuestion.id!,
+                text: q.choices[j],
+                orderIndex: j,
+              ),
+            );
           }
           if (choices.isNotEmpty) {
             await Choice.db.insert(session, choices);

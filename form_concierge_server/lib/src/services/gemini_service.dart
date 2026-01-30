@@ -85,7 +85,8 @@ class GeminiService {
       throw Exception('Gemini service is not configured');
     }
 
-    final systemPrompt = '''
+    final systemPrompt =
+        '''
 You are a survey question generator. Generate survey questions based on the user's description.
 
 Output format: JSON array of question objects with this structure:
@@ -111,7 +112,9 @@ User description: $prompt
 ''';
 
     try {
-      final response = await _model.generateContent([Content.text(systemPrompt)]);
+      final response = await _model.generateContent([
+        Content.text(systemPrompt),
+      ]);
       final responseText = response.text;
 
       if (responseText == null || responseText.isEmpty) {
@@ -176,6 +179,68 @@ User description: $prompt
         return QuestionType.textMultiLine;
       default:
         return QuestionType.textSingle;
+    }
+  }
+
+  /// Generates a summary of survey responses.
+  ///
+  /// Returns null if generation fails (logs error but doesn't throw).
+  Future<String?> generateResponseSummary({
+    required Session session,
+    required String responseData,
+  }) async {
+    if (!config.enabled) {
+      return null;
+    }
+
+    final prompt =
+        '''
+Analyze the following survey responses and provide a concise summary.
+
+Focus on:
+- Key themes and patterns in the responses
+- Notable or unusual answers
+- Overall sentiment if applicable
+- Any actionable insights
+
+Keep the summary under 200 words. Write in a professional tone suitable for email.
+
+$responseData
+
+Respond with plain text summary only, no JSON or markdown formatting.
+''';
+
+    try {
+      // Create a model without JSON response format for plain text
+      final textModel = GenerativeModel(
+        model: 'gemini-flash-latest',
+        apiKey: config.apiKey,
+      );
+
+      final response = await textModel.generateContent([Content.text(prompt)]);
+      final responseText = response.text;
+
+      if (responseText == null || responseText.isEmpty) {
+        session.log(
+          'Empty response from Gemini for summary generation',
+          level: LogLevel.warning,
+        );
+        return null;
+      }
+
+      return responseText.trim();
+    } on GenerativeAIException catch (e) {
+      session.log(
+        'Gemini summary generation failed: ${e.message}',
+        level: LogLevel.warning,
+      );
+      return null;
+    } catch (e) {
+      session.log(
+        'Unexpected error during summary generation: $e',
+        level: LogLevel.warning,
+      );
+      return null;
     }
   }
 }

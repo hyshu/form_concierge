@@ -21,30 +21,32 @@ import 'answer.dart' as _i6;
 import 'auth_requirement.dart' as _i7;
 import 'auth_user_info.dart' as _i8;
 import 'choice.dart' as _i9;
-import 'public_config.dart' as _i10;
-import 'question.dart' as _i11;
-import 'question_result.dart' as _i12;
-import 'question_type.dart' as _i13;
-import 'question_with_choices.dart' as _i14;
-import 'survey.dart' as _i15;
-import 'survey_response.dart' as _i16;
-import 'survey_results.dart' as _i17;
-import 'survey_status.dart' as _i18;
+import 'notification_settings.dart' as _i10;
+import 'public_config.dart' as _i11;
+import 'question.dart' as _i12;
+import 'question_result.dart' as _i13;
+import 'question_type.dart' as _i14;
+import 'question_with_choices.dart' as _i15;
+import 'survey.dart' as _i16;
+import 'survey_response.dart' as _i17;
+import 'survey_results.dart' as _i18;
+import 'survey_status.dart' as _i19;
 import 'package:form_concierge_server/src/generated/question_with_choices.dart'
-    as _i19;
-import 'package:form_concierge_server/src/generated/choice.dart' as _i20;
-import 'package:form_concierge_server/src/generated/question.dart' as _i21;
+    as _i20;
+import 'package:form_concierge_server/src/generated/choice.dart' as _i21;
+import 'package:form_concierge_server/src/generated/question.dart' as _i22;
 import 'package:form_concierge_server/src/generated/survey_response.dart'
-    as _i22;
-import 'package:form_concierge_server/src/generated/answer.dart' as _i23;
-import 'package:form_concierge_server/src/generated/survey.dart' as _i24;
+    as _i23;
+import 'package:form_concierge_server/src/generated/answer.dart' as _i24;
+import 'package:form_concierge_server/src/generated/survey.dart' as _i25;
 import 'package:form_concierge_server/src/generated/auth_user_info.dart'
-    as _i25;
+    as _i26;
 export 'admin_user.dart';
 export 'answer.dart';
 export 'auth_requirement.dart';
 export 'auth_user_info.dart';
 export 'choice.dart';
+export 'notification_settings.dart';
 export 'public_config.dart';
 export 'question.dart';
 export 'question_result.dart';
@@ -314,6 +316,101 @@ class Protocol extends _i1.SerializationManagerServer {
           ],
           type: 'btree',
           isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _i2.TableDefinition(
+      name: 'notification_settings',
+      dartName: 'NotificationSettings',
+      schema: 'public',
+      module: 'form_concierge',
+      columns: [
+        _i2.ColumnDefinition(
+          name: 'id',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'nextval(\'notification_settings_id_seq\'::regclass)',
+        ),
+        _i2.ColumnDefinition(
+          name: 'surveyId',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _i2.ColumnDefinition(
+          name: 'enabled',
+          columnType: _i2.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'false',
+        ),
+        _i2.ColumnDefinition(
+          name: 'recipientEmail',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'sendHour',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+          columnDefault: '9',
+        ),
+        _i2.ColumnDefinition(
+          name: 'updatedAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+          columnDefault: 'CURRENT_TIMESTAMP',
+        ),
+        _i2.ColumnDefinition(
+          name: 'lastSentAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+      ],
+      foreignKeys: [
+        _i2.ForeignKeyDefinition(
+          constraintName: 'notification_settings_fk_0',
+          columns: ['surveyId'],
+          referenceTable: 'survey',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _i2.ForeignKeyAction.noAction,
+          onDelete: _i2.ForeignKeyAction.noAction,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _i2.IndexDefinition(
+          indexName: 'notification_settings_pkey',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'id',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: true,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'survey_id_unique',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'surveyId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
           isPrimary: false,
         ),
       ],
@@ -718,32 +815,35 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == _i9.Choice) {
       return _i9.Choice.fromJson(data) as T;
     }
-    if (t == _i10.PublicConfig) {
-      return _i10.PublicConfig.fromJson(data) as T;
+    if (t == _i10.NotificationSettings) {
+      return _i10.NotificationSettings.fromJson(data) as T;
     }
-    if (t == _i11.Question) {
-      return _i11.Question.fromJson(data) as T;
+    if (t == _i11.PublicConfig) {
+      return _i11.PublicConfig.fromJson(data) as T;
     }
-    if (t == _i12.QuestionResult) {
-      return _i12.QuestionResult.fromJson(data) as T;
+    if (t == _i12.Question) {
+      return _i12.Question.fromJson(data) as T;
     }
-    if (t == _i13.QuestionType) {
-      return _i13.QuestionType.fromJson(data) as T;
+    if (t == _i13.QuestionResult) {
+      return _i13.QuestionResult.fromJson(data) as T;
     }
-    if (t == _i14.QuestionWithChoices) {
-      return _i14.QuestionWithChoices.fromJson(data) as T;
+    if (t == _i14.QuestionType) {
+      return _i14.QuestionType.fromJson(data) as T;
     }
-    if (t == _i15.Survey) {
-      return _i15.Survey.fromJson(data) as T;
+    if (t == _i15.QuestionWithChoices) {
+      return _i15.QuestionWithChoices.fromJson(data) as T;
     }
-    if (t == _i16.SurveyResponse) {
-      return _i16.SurveyResponse.fromJson(data) as T;
+    if (t == _i16.Survey) {
+      return _i16.Survey.fromJson(data) as T;
     }
-    if (t == _i17.SurveyResults) {
-      return _i17.SurveyResults.fromJson(data) as T;
+    if (t == _i17.SurveyResponse) {
+      return _i17.SurveyResponse.fromJson(data) as T;
     }
-    if (t == _i18.SurveyStatus) {
-      return _i18.SurveyStatus.fromJson(data) as T;
+    if (t == _i18.SurveyResults) {
+      return _i18.SurveyResults.fromJson(data) as T;
+    }
+    if (t == _i19.SurveyStatus) {
+      return _i19.SurveyStatus.fromJson(data) as T;
     }
     if (t == _i1.getType<_i5.AdminUser?>()) {
       return (data != null ? _i5.AdminUser.fromJson(data) : null) as T;
@@ -760,33 +860,37 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == _i1.getType<_i9.Choice?>()) {
       return (data != null ? _i9.Choice.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i10.PublicConfig?>()) {
-      return (data != null ? _i10.PublicConfig.fromJson(data) : null) as T;
-    }
-    if (t == _i1.getType<_i11.Question?>()) {
-      return (data != null ? _i11.Question.fromJson(data) : null) as T;
-    }
-    if (t == _i1.getType<_i12.QuestionResult?>()) {
-      return (data != null ? _i12.QuestionResult.fromJson(data) : null) as T;
-    }
-    if (t == _i1.getType<_i13.QuestionType?>()) {
-      return (data != null ? _i13.QuestionType.fromJson(data) : null) as T;
-    }
-    if (t == _i1.getType<_i14.QuestionWithChoices?>()) {
-      return (data != null ? _i14.QuestionWithChoices.fromJson(data) : null)
+    if (t == _i1.getType<_i10.NotificationSettings?>()) {
+      return (data != null ? _i10.NotificationSettings.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i15.Survey?>()) {
-      return (data != null ? _i15.Survey.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i11.PublicConfig?>()) {
+      return (data != null ? _i11.PublicConfig.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i16.SurveyResponse?>()) {
-      return (data != null ? _i16.SurveyResponse.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i12.Question?>()) {
+      return (data != null ? _i12.Question.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i17.SurveyResults?>()) {
-      return (data != null ? _i17.SurveyResults.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i13.QuestionResult?>()) {
+      return (data != null ? _i13.QuestionResult.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i18.SurveyStatus?>()) {
-      return (data != null ? _i18.SurveyStatus.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i14.QuestionType?>()) {
+      return (data != null ? _i14.QuestionType.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i15.QuestionWithChoices?>()) {
+      return (data != null ? _i15.QuestionWithChoices.fromJson(data) : null)
+          as T;
+    }
+    if (t == _i1.getType<_i16.Survey?>()) {
+      return (data != null ? _i16.Survey.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i17.SurveyResponse?>()) {
+      return (data != null ? _i17.SurveyResponse.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i18.SurveyResults?>()) {
+      return (data != null ? _i18.SurveyResults.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i19.SurveyStatus?>()) {
+      return (data != null ? _i19.SurveyStatus.fromJson(data) : null) as T;
     }
     if (t == List<int>) {
       return (data as List).map((e) => deserialize<int>(e)).toList() as T;
@@ -828,37 +932,37 @@ class Protocol extends _i1.SerializationManagerServer {
               : null)
           as T;
     }
-    if (t == List<_i12.QuestionResult>) {
+    if (t == List<_i13.QuestionResult>) {
       return (data as List)
-              .map((e) => deserialize<_i12.QuestionResult>(e))
+              .map((e) => deserialize<_i13.QuestionResult>(e))
               .toList()
           as T;
     }
-    if (t == List<_i19.QuestionWithChoices>) {
+    if (t == List<_i20.QuestionWithChoices>) {
       return (data as List)
-              .map((e) => deserialize<_i19.QuestionWithChoices>(e))
+              .map((e) => deserialize<_i20.QuestionWithChoices>(e))
               .toList()
           as T;
     }
-    if (t == List<_i20.Choice>) {
-      return (data as List).map((e) => deserialize<_i20.Choice>(e)).toList()
+    if (t == List<_i21.Choice>) {
+      return (data as List).map((e) => deserialize<_i21.Choice>(e)).toList()
           as T;
     }
     if (t == List<int>) {
       return (data as List).map((e) => deserialize<int>(e)).toList() as T;
     }
-    if (t == List<_i21.Question>) {
-      return (data as List).map((e) => deserialize<_i21.Question>(e)).toList()
+    if (t == List<_i22.Question>) {
+      return (data as List).map((e) => deserialize<_i22.Question>(e)).toList()
           as T;
     }
-    if (t == List<_i22.SurveyResponse>) {
+    if (t == List<_i23.SurveyResponse>) {
       return (data as List)
-              .map((e) => deserialize<_i22.SurveyResponse>(e))
+              .map((e) => deserialize<_i23.SurveyResponse>(e))
               .toList()
           as T;
     }
-    if (t == List<_i23.Answer>) {
-      return (data as List).map((e) => deserialize<_i23.Answer>(e)).toList()
+    if (t == List<_i24.Answer>) {
+      return (data as List).map((e) => deserialize<_i24.Answer>(e)).toList()
           as T;
     }
     if (t == Map<String, int>) {
@@ -867,13 +971,13 @@ class Protocol extends _i1.SerializationManagerServer {
           )
           as T;
     }
-    if (t == List<_i24.Survey>) {
-      return (data as List).map((e) => deserialize<_i24.Survey>(e)).toList()
+    if (t == List<_i25.Survey>) {
+      return (data as List).map((e) => deserialize<_i25.Survey>(e)).toList()
           as T;
     }
-    if (t == List<_i25.AuthUserInfo>) {
+    if (t == List<_i26.AuthUserInfo>) {
       return (data as List)
-              .map((e) => deserialize<_i25.AuthUserInfo>(e))
+              .map((e) => deserialize<_i26.AuthUserInfo>(e))
               .toList()
           as T;
     }
@@ -899,15 +1003,16 @@ class Protocol extends _i1.SerializationManagerServer {
       _i7.AuthRequirement => 'AuthRequirement',
       _i8.AuthUserInfo => 'AuthUserInfo',
       _i9.Choice => 'Choice',
-      _i10.PublicConfig => 'PublicConfig',
-      _i11.Question => 'Question',
-      _i12.QuestionResult => 'QuestionResult',
-      _i13.QuestionType => 'QuestionType',
-      _i14.QuestionWithChoices => 'QuestionWithChoices',
-      _i15.Survey => 'Survey',
-      _i16.SurveyResponse => 'SurveyResponse',
-      _i17.SurveyResults => 'SurveyResults',
-      _i18.SurveyStatus => 'SurveyStatus',
+      _i10.NotificationSettings => 'NotificationSettings',
+      _i11.PublicConfig => 'PublicConfig',
+      _i12.Question => 'Question',
+      _i13.QuestionResult => 'QuestionResult',
+      _i14.QuestionType => 'QuestionType',
+      _i15.QuestionWithChoices => 'QuestionWithChoices',
+      _i16.Survey => 'Survey',
+      _i17.SurveyResponse => 'SurveyResponse',
+      _i18.SurveyResults => 'SurveyResults',
+      _i19.SurveyStatus => 'SurveyStatus',
       _ => null,
     };
   }
@@ -935,23 +1040,25 @@ class Protocol extends _i1.SerializationManagerServer {
         return 'AuthUserInfo';
       case _i9.Choice():
         return 'Choice';
-      case _i10.PublicConfig():
+      case _i10.NotificationSettings():
+        return 'NotificationSettings';
+      case _i11.PublicConfig():
         return 'PublicConfig';
-      case _i11.Question():
+      case _i12.Question():
         return 'Question';
-      case _i12.QuestionResult():
+      case _i13.QuestionResult():
         return 'QuestionResult';
-      case _i13.QuestionType():
+      case _i14.QuestionType():
         return 'QuestionType';
-      case _i14.QuestionWithChoices():
+      case _i15.QuestionWithChoices():
         return 'QuestionWithChoices';
-      case _i15.Survey():
+      case _i16.Survey():
         return 'Survey';
-      case _i16.SurveyResponse():
+      case _i17.SurveyResponse():
         return 'SurveyResponse';
-      case _i17.SurveyResults():
+      case _i18.SurveyResults():
         return 'SurveyResults';
-      case _i18.SurveyStatus():
+      case _i19.SurveyStatus():
         return 'SurveyStatus';
     }
     className = _i2.Protocol().getClassNameForObject(data);
@@ -990,32 +1097,35 @@ class Protocol extends _i1.SerializationManagerServer {
     if (dataClassName == 'Choice') {
       return deserialize<_i9.Choice>(data['data']);
     }
+    if (dataClassName == 'NotificationSettings') {
+      return deserialize<_i10.NotificationSettings>(data['data']);
+    }
     if (dataClassName == 'PublicConfig') {
-      return deserialize<_i10.PublicConfig>(data['data']);
+      return deserialize<_i11.PublicConfig>(data['data']);
     }
     if (dataClassName == 'Question') {
-      return deserialize<_i11.Question>(data['data']);
+      return deserialize<_i12.Question>(data['data']);
     }
     if (dataClassName == 'QuestionResult') {
-      return deserialize<_i12.QuestionResult>(data['data']);
+      return deserialize<_i13.QuestionResult>(data['data']);
     }
     if (dataClassName == 'QuestionType') {
-      return deserialize<_i13.QuestionType>(data['data']);
+      return deserialize<_i14.QuestionType>(data['data']);
     }
     if (dataClassName == 'QuestionWithChoices') {
-      return deserialize<_i14.QuestionWithChoices>(data['data']);
+      return deserialize<_i15.QuestionWithChoices>(data['data']);
     }
     if (dataClassName == 'Survey') {
-      return deserialize<_i15.Survey>(data['data']);
+      return deserialize<_i16.Survey>(data['data']);
     }
     if (dataClassName == 'SurveyResponse') {
-      return deserialize<_i16.SurveyResponse>(data['data']);
+      return deserialize<_i17.SurveyResponse>(data['data']);
     }
     if (dataClassName == 'SurveyResults') {
-      return deserialize<_i17.SurveyResults>(data['data']);
+      return deserialize<_i18.SurveyResults>(data['data']);
     }
     if (dataClassName == 'SurveyStatus') {
-      return deserialize<_i18.SurveyStatus>(data['data']);
+      return deserialize<_i19.SurveyStatus>(data['data']);
     }
     if (dataClassName.startsWith('serverpod.')) {
       data['className'] = dataClassName.substring(10);
@@ -1059,12 +1169,14 @@ class Protocol extends _i1.SerializationManagerServer {
         return _i6.Answer.t;
       case _i9.Choice:
         return _i9.Choice.t;
-      case _i11.Question:
-        return _i11.Question.t;
-      case _i15.Survey:
-        return _i15.Survey.t;
-      case _i16.SurveyResponse:
-        return _i16.SurveyResponse.t;
+      case _i10.NotificationSettings:
+        return _i10.NotificationSettings.t;
+      case _i12.Question:
+        return _i12.Question.t;
+      case _i16.Survey:
+        return _i16.Survey.t;
+      case _i17.SurveyResponse:
+        return _i17.SurveyResponse.t;
     }
     return null;
   }
