@@ -16,11 +16,13 @@ abstract class PublicConfig implements _i1.SerializableModel {
   PublicConfig._({
     required this.passwordResetEnabled,
     required this.requireEmailVerification,
+    required this.geminiEnabled,
   });
 
   factory PublicConfig({
     required bool passwordResetEnabled,
     required bool requireEmailVerification,
+    required bool geminiEnabled,
   }) = _PublicConfigImpl;
 
   factory PublicConfig.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -28,6 +30,7 @@ abstract class PublicConfig implements _i1.SerializableModel {
       passwordResetEnabled: jsonSerialization['passwordResetEnabled'] as bool,
       requireEmailVerification:
           jsonSerialization['requireEmailVerification'] as bool,
+      geminiEnabled: jsonSerialization['geminiEnabled'] as bool,
     );
   }
 
@@ -35,12 +38,15 @@ abstract class PublicConfig implements _i1.SerializableModel {
 
   bool requireEmailVerification;
 
+  bool geminiEnabled;
+
   /// Returns a shallow copy of this [PublicConfig]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
   PublicConfig copyWith({
     bool? passwordResetEnabled,
     bool? requireEmailVerification,
+    bool? geminiEnabled,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -48,6 +54,7 @@ abstract class PublicConfig implements _i1.SerializableModel {
       '__className__': 'PublicConfig',
       'passwordResetEnabled': passwordResetEnabled,
       'requireEmailVerification': requireEmailVerification,
+      'geminiEnabled': geminiEnabled,
     };
   }
 
@@ -61,9 +68,11 @@ class _PublicConfigImpl extends PublicConfig {
   _PublicConfigImpl({
     required bool passwordResetEnabled,
     required bool requireEmailVerification,
+    required bool geminiEnabled,
   }) : super._(
          passwordResetEnabled: passwordResetEnabled,
          requireEmailVerification: requireEmailVerification,
+         geminiEnabled: geminiEnabled,
        );
 
   /// Returns a shallow copy of this [PublicConfig]
@@ -73,11 +82,13 @@ class _PublicConfigImpl extends PublicConfig {
   PublicConfig copyWith({
     bool? passwordResetEnabled,
     bool? requireEmailVerification,
+    bool? geminiEnabled,
   }) {
     return PublicConfig(
       passwordResetEnabled: passwordResetEnabled ?? this.passwordResetEnabled,
       requireEmailVerification:
           requireEmailVerification ?? this.requireEmailVerification,
+      geminiEnabled: geminiEnabled ?? this.geminiEnabled,
     );
   }
 }

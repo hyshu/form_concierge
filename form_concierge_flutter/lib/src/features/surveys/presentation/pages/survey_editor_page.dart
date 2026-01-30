@@ -4,9 +4,11 @@ import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:go_router/go_router.dart';
 import 'package:rearch/rearch.dart';
 
+import '../../../../core/capsules/public_config_capsule.dart';
 import '../../../dashboard/presentation/capsules/survey_list_capsule.dart';
 import '../capsules/question_list_capsule.dart';
 import '../capsules/survey_form_capsule.dart';
+import '../widgets/ai_question_preview_dialog.dart';
 import '../widgets/draft_question_editor.dart';
 import '../widgets/question_form_dialog.dart';
 import '../widgets/question_list.dart';
@@ -24,11 +26,13 @@ class SurveyEditorPage extends RearchConsumer {
     final questionManager = use(questionListManagerCapsule);
     final surveyListManager = use(surveyListCapsule);
     final controllers = use(surveyFormControllersCapsule);
+    final publicConfig = use(publicConfigCapsule);
 
     final isNewSurvey = surveyId == null;
     final formState = formManager.getState(surveyId);
     final questionState =
         isNewSurvey ? null : questionManager.getState(surveyId!);
+    final geminiEnabled = publicConfig.state.geminiEnabled;
 
     // Load survey and questions on first build (only for existing surveys)
     if (use.isFirstBuild() && !isNewSurvey) {
@@ -145,7 +149,12 @@ class SurveyEditorPage extends RearchConsumer {
                   ),
                   const SizedBox(height: 48),
                   if (isNewSurvey)
-                    _buildDraftQuestionsSection(context, formManager, formState)
+                    _buildDraftQuestionsSection(
+                      context,
+                      formManager,
+                      formState,
+                      geminiEnabled,
+                    )
                   else
                     QuestionList(
                   surveyId: surveyId!,
@@ -267,9 +276,23 @@ class SurveyEditorPage extends RearchConsumer {
     BuildContext context,
     SurveyFormManager formManager,
     SurveyFormState formState,
+    bool geminiEnabled,
   ) {
     final colorScheme = Theme.of(context).colorScheme;
     final draftQuestions = formState.draftQuestions;
+
+    // Show preview dialog when generated questions are ready
+    if (formState.generatedQuestions != null &&
+        formState.generatedQuestions!.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        AiQuestionPreviewDialog.show(
+          context,
+          questions: formState.generatedQuestions!,
+          onApply: formManager.applyGeneratedQuestions,
+          onCancel: formManager.clearGeneratedQuestions,
+        );
+      });
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -284,7 +307,16 @@ class SurveyEditorPage extends RearchConsumer {
           ],
         ),
         const SizedBox(height: 16),
-        if (draftQuestions.isEmpty)
+        // Show AI generation UI when questions are empty and Gemini is enabled
+        if (draftQuestions.isEmpty && geminiEnabled)
+          _AiPromptInput(
+            isGenerating: formState.isGenerating,
+            error: formState.generationError,
+            onGenerate: formManager.generateQuestions,
+            onAddManually: () => _showAddDialog(context, formManager),
+            isSaving: formState.isSaving,
+          )
+        else if (draftQuestions.isEmpty)
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(32),
@@ -451,5 +483,128 @@ class SurveyEditorPage extends RearchConsumer {
         context.go('/admin');
       }
     }
+  }
+}
+
+/// Widget for AI prompt input to generate questions.
+class _AiPromptInput extends StatefulWidget {
+  final bool isGenerating;
+  final String? error;
+  final void Function(String prompt) onGenerate;
+  final VoidCallback onAddManually;
+  final bool isSaving;
+
+  const _AiPromptInput({
+    required this.isGenerating,
+    required this.error,
+    required this.onGenerate,
+    required this.onAddManually,
+    required this.isSaving,
+  });
+
+  @override
+  State<_AiPromptInput> createState() => _AiPromptInputState();
+}
+
+class _AiPromptInputState extends State<_AiPromptInput> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.auto_awesome,
+                size: 24,
+                color: colorScheme.primary,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Generate with AI',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: colorScheme.primary,
+                    ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Describe your survey and AI will generate questions for you.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _controller,
+            decoration: InputDecoration(
+              hintText: 'Example: Onboarding survey for a fitness app asking about exercise experience, target weight, and weekly workout frequency',
+              border: const OutlineInputBorder(),
+              filled: true,
+              fillColor: colorScheme.surface,
+            ),
+            maxLines: 3,
+            enabled: !widget.isGenerating && !widget.isSaving,
+          ),
+          if (widget.error != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              widget.error!,
+              style: TextStyle(color: colorScheme.error),
+            ),
+          ],
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              FilledButton.icon(
+                onPressed: widget.isGenerating || widget.isSaving
+                    ? null
+                    : () {
+                        final prompt = _controller.text.trim();
+                        if (prompt.isNotEmpty) {
+                          widget.onGenerate(prompt);
+                        }
+                      },
+                icon: widget.isGenerating
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Icon(Icons.auto_awesome),
+                label: Text(widget.isGenerating ? 'Generating...' : 'Generate'),
+              ),
+              const SizedBox(width: 12),
+              TextButton(
+                onPressed: widget.isGenerating || widget.isSaving
+                    ? null
+                    : widget.onAddManually,
+                child: const Text('Add manually'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }

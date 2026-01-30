@@ -33,6 +33,9 @@ class PublicConfigState {
 
   /// Whether password reset feature is available.
   bool get passwordResetEnabled => config?.passwordResetEnabled ?? false;
+
+  /// Whether Gemini AI is enabled.
+  bool get geminiEnabled => config?.geminiEnabled ?? false;
 }
 
 /// Capsule that manages public server configuration.

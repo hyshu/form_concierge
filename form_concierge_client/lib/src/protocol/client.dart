@@ -10,28 +10,52 @@
 // ignore_for_file: invalid_use_of_internal_member
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
-import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
-    as _i1;
-import 'package:serverpod_client/serverpod_client.dart' as _i2;
-import 'dart:async' as _i3;
-import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
-    as _i4;
-import 'package:form_concierge_client/src/protocol/choice.dart' as _i5;
-import 'package:form_concierge_client/src/protocol/public_config.dart' as _i6;
-import 'package:form_concierge_client/src/protocol/question.dart' as _i7;
-import 'package:form_concierge_client/src/protocol/survey_response.dart' as _i8;
-import 'package:form_concierge_client/src/protocol/answer.dart' as _i9;
-import 'package:form_concierge_client/src/protocol/survey_results.dart' as _i10;
-import 'package:form_concierge_client/src/protocol/survey.dart' as _i11;
+import 'package:serverpod_client/serverpod_client.dart' as _i1;
+import 'dart:async' as _i2;
 import 'package:form_concierge_client/src/protocol/question_with_choices.dart'
-    as _i12;
+    as _i3;
+import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
+    as _i4;
+import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
+    as _i5;
+import 'package:form_concierge_client/src/protocol/choice.dart' as _i6;
+import 'package:form_concierge_client/src/protocol/public_config.dart' as _i7;
+import 'package:form_concierge_client/src/protocol/question.dart' as _i8;
+import 'package:form_concierge_client/src/protocol/survey_response.dart' as _i9;
+import 'package:form_concierge_client/src/protocol/answer.dart' as _i10;
+import 'package:form_concierge_client/src/protocol/survey_results.dart' as _i11;
+import 'package:form_concierge_client/src/protocol/survey.dart' as _i12;
 import 'package:form_concierge_client/src/protocol/auth_user_info.dart' as _i13;
 import 'protocol.dart' as _i14;
 
+/// Endpoint for AI-powered survey generation.
+/// Requires authentication.
+/// {@category Endpoint}
+class EndpointAiAdmin extends _i1.EndpointRef {
+  EndpointAiAdmin(_i1.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'aiAdmin';
+
+  /// Generates survey questions from a natural language prompt.
+  ///
+  /// Returns a list of [QuestionWithChoices] that can be used to create
+  /// a new survey.
+  ///
+  /// Throws [ValidationException] if Gemini is not configured.
+  _i2.Future<List<_i3.QuestionWithChoices>> generateSurveyQuestions(
+    String prompt,
+  ) => caller.callServerEndpoint<List<_i3.QuestionWithChoices>>(
+    'aiAdmin',
+    'generateSurveyQuestions',
+    {'prompt': prompt},
+  );
+}
+
 /// Endpoint for refreshing JWT tokens
 /// {@category Endpoint}
-class EndpointRefreshJwtTokens extends _i1.EndpointRefreshJwtTokens {
-  EndpointRefreshJwtTokens(_i2.EndpointCaller caller) : super(caller);
+class EndpointRefreshJwtTokens extends _i4.EndpointRefreshJwtTokens {
+  EndpointRefreshJwtTokens(_i1.EndpointCaller caller) : super(caller);
 
   @override
   String get name => 'refreshJwtTokens';
@@ -55,9 +79,9 @@ class EndpointRefreshJwtTokens extends _i1.EndpointRefreshJwtTokens {
   /// This endpoint is unauthenticated, meaning the client won't include any
   /// authentication information with the call.
   @override
-  _i3.Future<_i1.AuthSuccess> refreshAccessToken({
+  _i2.Future<_i4.AuthSuccess> refreshAccessToken({
     required String refreshToken,
-  }) => caller.callServerEndpoint<_i1.AuthSuccess>(
+  }) => caller.callServerEndpoint<_i4.AuthSuccess>(
     'refreshJwtTokens',
     'refreshAccessToken',
     {'refreshToken': refreshToken},
@@ -67,8 +91,8 @@ class EndpointRefreshJwtTokens extends _i1.EndpointRefreshJwtTokens {
 
 /// Endpoint for email-based authentication
 /// {@category Endpoint}
-class EndpointEmailIdp extends _i4.EndpointEmailIdpBase {
-  EndpointEmailIdp(_i2.EndpointCaller caller) : super(caller);
+class EndpointEmailIdp extends _i5.EndpointEmailIdpBase {
+  EndpointEmailIdp(_i1.EndpointCaller caller) : super(caller);
 
   @override
   String get name => 'emailIdp';
@@ -83,10 +107,10 @@ class EndpointEmailIdp extends _i4.EndpointEmailIdpBase {
   ///
   /// Throws an [AuthUserBlockedException] if the auth user is blocked.
   @override
-  _i3.Future<_i1.AuthSuccess> login({
+  _i2.Future<_i4.AuthSuccess> login({
     required String email,
     required String password,
-  }) => caller.callServerEndpoint<_i1.AuthSuccess>(
+  }) => caller.callServerEndpoint<_i4.AuthSuccess>(
     'emailIdp',
     'login',
     {
@@ -106,8 +130,8 @@ class EndpointEmailIdp extends _i4.EndpointEmailIdpBase {
   /// registration. If the email is already registered, the returned ID will not
   /// be valid.
   @override
-  _i3.Future<_i2.UuidValue> startRegistration({required String email}) =>
-      caller.callServerEndpoint<_i2.UuidValue>(
+  _i2.Future<_i1.UuidValue> startRegistration({required String email}) =>
+      caller.callServerEndpoint<_i1.UuidValue>(
         'emailIdp',
         'startRegistration',
         {'email': email},
@@ -124,8 +148,8 @@ class EndpointEmailIdp extends _i4.EndpointEmailIdpBase {
   /// - [EmailAccountRequestExceptionReason.invalid] if no request exists
   ///   for the given [accountRequestId] or [verificationCode] is invalid.
   @override
-  _i3.Future<String> verifyRegistrationCode({
-    required _i2.UuidValue accountRequestId,
+  _i2.Future<String> verifyRegistrationCode({
+    required _i1.UuidValue accountRequestId,
     required String verificationCode,
   }) => caller.callServerEndpoint<String>(
     'emailIdp',
@@ -151,10 +175,10 @@ class EndpointEmailIdp extends _i4.EndpointEmailIdpBase {
   ///
   /// Returns a session for the newly created user.
   @override
-  _i3.Future<_i1.AuthSuccess> finishRegistration({
+  _i2.Future<_i4.AuthSuccess> finishRegistration({
     required String registrationToken,
     required String password,
-  }) => caller.callServerEndpoint<_i1.AuthSuccess>(
+  }) => caller.callServerEndpoint<_i4.AuthSuccess>(
     'emailIdp',
     'finishRegistration',
     {
@@ -177,8 +201,8 @@ class EndpointEmailIdp extends _i4.EndpointEmailIdpBase {
   ///   made too many attempts trying to request a password reset.
   ///
   @override
-  _i3.Future<_i2.UuidValue> startPasswordReset({required String email}) =>
-      caller.callServerEndpoint<_i2.UuidValue>(
+  _i2.Future<_i1.UuidValue> startPasswordReset({required String email}) =>
+      caller.callServerEndpoint<_i1.UuidValue>(
         'emailIdp',
         'startPasswordReset',
         {'email': email},
@@ -199,8 +223,8 @@ class EndpointEmailIdp extends _i4.EndpointEmailIdpBase {
   /// should be overridden to return credentials for the next step instead
   /// of the credentials for setting the password.
   @override
-  _i3.Future<String> verifyPasswordResetCode({
-    required _i2.UuidValue passwordResetRequestId,
+  _i2.Future<String> verifyPasswordResetCode({
+    required _i1.UuidValue passwordResetRequestId,
     required String verificationCode,
   }) => caller.callServerEndpoint<String>(
     'emailIdp',
@@ -226,7 +250,7 @@ class EndpointEmailIdp extends _i4.EndpointEmailIdpBase {
   ///
   /// Throws an [AuthUserBlockedException] if the auth user is blocked.
   @override
-  _i3.Future<void> finishPasswordReset({
+  _i2.Future<void> finishPasswordReset({
     required String finishPasswordResetToken,
     required String newPassword,
   }) => caller.callServerEndpoint<void>(
@@ -242,30 +266,30 @@ class EndpointEmailIdp extends _i4.EndpointEmailIdpBase {
 /// Admin endpoint for managing question choices.
 /// All methods require authentication.
 /// {@category Endpoint}
-class EndpointChoiceAdmin extends _i2.EndpointRef {
-  EndpointChoiceAdmin(_i2.EndpointCaller caller) : super(caller);
+class EndpointChoiceAdmin extends _i1.EndpointRef {
+  EndpointChoiceAdmin(_i1.EndpointCaller caller) : super(caller);
 
   @override
   String get name => 'choiceAdmin';
 
   /// Add a choice to a question.
-  _i3.Future<_i5.Choice> create(_i5.Choice choice) =>
-      caller.callServerEndpoint<_i5.Choice>(
+  _i2.Future<_i6.Choice> create(_i6.Choice choice) =>
+      caller.callServerEndpoint<_i6.Choice>(
         'choiceAdmin',
         'create',
         {'choice': choice},
       );
 
   /// Update a choice.
-  _i3.Future<_i5.Choice> update(_i5.Choice choice) =>
-      caller.callServerEndpoint<_i5.Choice>(
+  _i2.Future<_i6.Choice> update(_i6.Choice choice) =>
+      caller.callServerEndpoint<_i6.Choice>(
         'choiceAdmin',
         'update',
         {'choice': choice},
       );
 
   /// Delete a choice.
-  _i3.Future<bool> delete(int choiceId) => caller.callServerEndpoint<bool>(
+  _i2.Future<bool> delete(int choiceId) => caller.callServerEndpoint<bool>(
     'choiceAdmin',
     'delete',
     {'choiceId': choiceId},
@@ -273,10 +297,10 @@ class EndpointChoiceAdmin extends _i2.EndpointRef {
 
   /// Reorder choices within a question.
   /// Pass the choice IDs in the desired order.
-  _i3.Future<List<_i5.Choice>> reorder(
+  _i2.Future<List<_i6.Choice>> reorder(
     int questionId,
     List<int> choiceIds,
-  ) => caller.callServerEndpoint<List<_i5.Choice>>(
+  ) => caller.callServerEndpoint<List<_i6.Choice>>(
     'choiceAdmin',
     'reorder',
     {
@@ -286,8 +310,8 @@ class EndpointChoiceAdmin extends _i2.EndpointRef {
   );
 
   /// Get a choice by ID.
-  _i3.Future<_i5.Choice?> getById(int choiceId) =>
-      caller.callServerEndpoint<_i5.Choice?>(
+  _i2.Future<_i6.Choice?> getById(int choiceId) =>
+      caller.callServerEndpoint<_i6.Choice?>(
         'choiceAdmin',
         'getById',
         {'choiceId': choiceId},
@@ -297,8 +321,8 @@ class EndpointChoiceAdmin extends _i2.EndpointRef {
 /// Endpoint for retrieving public server configuration.
 /// All methods are public - no authentication required.
 /// {@category Endpoint}
-class EndpointConfig extends _i2.EndpointRef {
-  EndpointConfig(_i2.EndpointCaller caller) : super(caller);
+class EndpointConfig extends _i1.EndpointRef {
+  EndpointConfig(_i1.EndpointCaller caller) : super(caller);
 
   @override
   String get name => 'config';
@@ -307,8 +331,8 @@ class EndpointConfig extends _i2.EndpointRef {
   ///
   /// This endpoint is unauthenticated so clients can check
   /// feature availability before login.
-  _i3.Future<_i6.PublicConfig> getPublicConfig() =>
-      caller.callServerEndpoint<_i6.PublicConfig>(
+  _i2.Future<_i7.PublicConfig> getPublicConfig() =>
+      caller.callServerEndpoint<_i7.PublicConfig>(
         'config',
         'getPublicConfig',
         {},
@@ -318,8 +342,8 @@ class EndpointConfig extends _i2.EndpointRef {
 /// Admin endpoint for managing questions.
 /// All methods require authentication.
 /// {@category Endpoint}
-class EndpointQuestionAdmin extends _i2.EndpointRef {
-  EndpointQuestionAdmin(_i2.EndpointCaller caller) : super(caller);
+class EndpointQuestionAdmin extends _i1.EndpointRef {
+  EndpointQuestionAdmin(_i1.EndpointCaller caller) : super(caller);
 
   @override
   String get name => 'questionAdmin';
@@ -328,23 +352,29 @@ class EndpointQuestionAdmin extends _i2.EndpointRef {
   ///
   /// For choice-type questions (singleChoice, multipleChoice), two default
   /// choices are automatically added: "Choice 1" and "Choice 2".
-  _i3.Future<_i7.Question> create(_i7.Question question) =>
-      caller.callServerEndpoint<_i7.Question>(
+  _i2.Future<_i8.Question> create(_i8.Question question) =>
+      caller.callServerEndpoint<_i8.Question>(
         'questionAdmin',
         'create',
         {'question': question},
       );
 
   /// Update a question.
-  _i3.Future<_i7.Question> update(_i7.Question question) =>
-      caller.callServerEndpoint<_i7.Question>(
+  _i2.Future<_i8.Question> update(_i8.Question question) =>
+      caller.callServerEndpoint<_i8.Question>(
         'questionAdmin',
         'update',
         {'question': question},
       );
 
-  /// Delete a question and its options.
-  _i3.Future<bool> delete(int questionId) => caller.callServerEndpoint<bool>(
+  /// Delete a question.
+  ///
+  /// If the question has no answers, it is permanently deleted along with its
+  /// choices (cascade delete). If the question has answers, it is soft-deleted
+  /// (isDeleted = true) to preserve existing answer data.
+  ///
+  /// Returns `true` if hard-deleted, `false` if soft-deleted.
+  _i2.Future<bool> delete(int questionId) => caller.callServerEndpoint<bool>(
     'questionAdmin',
     'delete',
     {'questionId': questionId},
@@ -352,10 +382,10 @@ class EndpointQuestionAdmin extends _i2.EndpointRef {
 
   /// Reorder questions within a survey.
   /// Pass the question IDs in the desired order.
-  _i3.Future<List<_i7.Question>> reorder(
+  _i2.Future<List<_i8.Question>> reorder(
     int surveyId,
     List<int> questionIds,
-  ) => caller.callServerEndpoint<List<_i7.Question>>(
+  ) => caller.callServerEndpoint<List<_i8.Question>>(
     'questionAdmin',
     'reorder',
     {
@@ -364,25 +394,25 @@ class EndpointQuestionAdmin extends _i2.EndpointRef {
     },
   );
 
-  /// Get all questions for a survey.
-  _i3.Future<List<_i7.Question>> getForSurvey(int surveyId) =>
-      caller.callServerEndpoint<List<_i7.Question>>(
+  /// Get all active (non-deleted) questions for a survey.
+  _i2.Future<List<_i8.Question>> getForSurvey(int surveyId) =>
+      caller.callServerEndpoint<List<_i8.Question>>(
         'questionAdmin',
         'getForSurvey',
         {'surveyId': surveyId},
       );
 
   /// Get a question by ID.
-  _i3.Future<_i7.Question?> getById(int questionId) =>
-      caller.callServerEndpoint<_i7.Question?>(
+  _i2.Future<_i8.Question?> getById(int questionId) =>
+      caller.callServerEndpoint<_i8.Question?>(
         'questionAdmin',
         'getById',
         {'questionId': questionId},
       );
 
   /// Get all choices for a question.
-  _i3.Future<List<_i5.Choice>> getChoicesForQuestion(int questionId) =>
-      caller.callServerEndpoint<List<_i5.Choice>>(
+  _i2.Future<List<_i6.Choice>> getChoicesForQuestion(int questionId) =>
+      caller.callServerEndpoint<List<_i6.Choice>>(
         'questionAdmin',
         'getChoicesForQuestion',
         {'questionId': questionId},
@@ -392,18 +422,18 @@ class EndpointQuestionAdmin extends _i2.EndpointRef {
 /// Admin endpoint for viewing and analyzing survey responses.
 /// All methods require authentication.
 /// {@category Endpoint}
-class EndpointResponseAnalytics extends _i2.EndpointRef {
-  EndpointResponseAnalytics(_i2.EndpointCaller caller) : super(caller);
+class EndpointResponseAnalytics extends _i1.EndpointRef {
+  EndpointResponseAnalytics(_i1.EndpointCaller caller) : super(caller);
 
   @override
   String get name => 'responseAnalytics';
 
   /// Get all responses for a survey with pagination.
-  _i3.Future<List<_i8.SurveyResponse>> getResponses(
+  _i2.Future<List<_i9.SurveyResponse>> getResponses(
     int surveyId, {
     int? limit,
     int? offset,
-  }) => caller.callServerEndpoint<List<_i8.SurveyResponse>>(
+  }) => caller.callServerEndpoint<List<_i9.SurveyResponse>>(
     'responseAnalytics',
     'getResponses',
     {
@@ -414,7 +444,7 @@ class EndpointResponseAnalytics extends _i2.EndpointRef {
   );
 
   /// Get response count for a survey.
-  _i3.Future<int> getResponseCount(int surveyId) =>
+  _i2.Future<int> getResponseCount(int surveyId) =>
       caller.callServerEndpoint<int>(
         'responseAnalytics',
         'getResponseCount',
@@ -422,23 +452,23 @@ class EndpointResponseAnalytics extends _i2.EndpointRef {
       );
 
   /// Get all answers for a response.
-  _i3.Future<List<_i9.Answer>> getAnswersForResponse(int responseId) =>
-      caller.callServerEndpoint<List<_i9.Answer>>(
+  _i2.Future<List<_i10.Answer>> getAnswersForResponse(int responseId) =>
+      caller.callServerEndpoint<List<_i10.Answer>>(
         'responseAnalytics',
         'getAnswersForResponse',
         {'responseId': responseId},
       );
 
   /// Get aggregated results for a survey.
-  _i3.Future<_i10.SurveyResults> getAggregatedResults(int surveyId) =>
-      caller.callServerEndpoint<_i10.SurveyResults>(
+  _i2.Future<_i11.SurveyResults> getAggregatedResults(int surveyId) =>
+      caller.callServerEndpoint<_i11.SurveyResults>(
         'responseAnalytics',
         'getAggregatedResults',
         {'surveyId': surveyId},
       );
 
   /// Get response trends over time (daily counts for the last N days).
-  _i3.Future<Map<String, int>> getResponseTrends(
+  _i2.Future<Map<String, int>> getResponseTrends(
     int surveyId, {
     required int days,
   }) => caller.callServerEndpoint<Map<String, int>>(
@@ -451,7 +481,7 @@ class EndpointResponseAnalytics extends _i2.EndpointRef {
   );
 
   /// Delete a specific response.
-  _i3.Future<bool> deleteResponse(int responseId) =>
+  _i2.Future<bool> deleteResponse(int responseId) =>
       caller.callServerEndpoint<bool>(
         'responseAnalytics',
         'deleteResponse',
@@ -462,25 +492,25 @@ class EndpointResponseAnalytics extends _i2.EndpointRef {
 /// Admin endpoint for managing surveys.
 /// All methods require authentication.
 /// {@category Endpoint}
-class EndpointSurveyAdmin extends _i2.EndpointRef {
-  EndpointSurveyAdmin(_i2.EndpointCaller caller) : super(caller);
+class EndpointSurveyAdmin extends _i1.EndpointRef {
+  EndpointSurveyAdmin(_i1.EndpointCaller caller) : super(caller);
 
   @override
   String get name => 'surveyAdmin';
 
   /// Create a new survey.
-  _i3.Future<_i11.Survey> create(_i11.Survey survey) =>
-      caller.callServerEndpoint<_i11.Survey>(
+  _i2.Future<_i12.Survey> create(_i12.Survey survey) =>
+      caller.callServerEndpoint<_i12.Survey>(
         'surveyAdmin',
         'create',
         {'survey': survey},
       );
 
   /// Create a new survey with questions and choices in one transaction.
-  _i3.Future<_i11.Survey> createWithQuestions(
-    _i11.Survey survey,
-    List<_i12.QuestionWithChoices> questions,
-  ) => caller.callServerEndpoint<_i11.Survey>(
+  _i2.Future<_i12.Survey> createWithQuestions(
+    _i12.Survey survey,
+    List<_i3.QuestionWithChoices> questions,
+  ) => caller.callServerEndpoint<_i12.Survey>(
     'surveyAdmin',
     'createWithQuestions',
     {
@@ -490,55 +520,55 @@ class EndpointSurveyAdmin extends _i2.EndpointRef {
   );
 
   /// Update an existing survey.
-  _i3.Future<_i11.Survey> update(_i11.Survey survey) =>
-      caller.callServerEndpoint<_i11.Survey>(
+  _i2.Future<_i12.Survey> update(_i12.Survey survey) =>
+      caller.callServerEndpoint<_i12.Survey>(
         'surveyAdmin',
         'update',
         {'survey': survey},
       );
 
   /// Delete a survey and all related data.
-  _i3.Future<bool> delete(int surveyId) => caller.callServerEndpoint<bool>(
+  _i2.Future<bool> delete(int surveyId) => caller.callServerEndpoint<bool>(
     'surveyAdmin',
     'delete',
     {'surveyId': surveyId},
   );
 
   /// List all surveys for the current admin.
-  _i3.Future<List<_i11.Survey>> list() =>
-      caller.callServerEndpoint<List<_i11.Survey>>(
+  _i2.Future<List<_i12.Survey>> list() =>
+      caller.callServerEndpoint<List<_i12.Survey>>(
         'surveyAdmin',
         'list',
         {},
       );
 
   /// Get a survey by ID.
-  _i3.Future<_i11.Survey?> getById(int surveyId) =>
-      caller.callServerEndpoint<_i11.Survey?>(
+  _i2.Future<_i12.Survey?> getById(int surveyId) =>
+      caller.callServerEndpoint<_i12.Survey?>(
         'surveyAdmin',
         'getById',
         {'surveyId': surveyId},
       );
 
   /// Publish a survey.
-  _i3.Future<_i11.Survey> publish(int surveyId) =>
-      caller.callServerEndpoint<_i11.Survey>(
+  _i2.Future<_i12.Survey> publish(int surveyId) =>
+      caller.callServerEndpoint<_i12.Survey>(
         'surveyAdmin',
         'publish',
         {'surveyId': surveyId},
       );
 
   /// Close a survey (stop accepting responses).
-  _i3.Future<_i11.Survey> close(int surveyId) =>
-      caller.callServerEndpoint<_i11.Survey>(
+  _i2.Future<_i12.Survey> close(int surveyId) =>
+      caller.callServerEndpoint<_i12.Survey>(
         'surveyAdmin',
         'close',
         {'surveyId': surveyId},
       );
 
   /// Reopen a closed survey.
-  _i3.Future<_i11.Survey> reopen(int surveyId) =>
-      caller.callServerEndpoint<_i11.Survey>(
+  _i2.Future<_i12.Survey> reopen(int surveyId) =>
+      caller.callServerEndpoint<_i12.Survey>(
         'surveyAdmin',
         'reopen',
         {'surveyId': surveyId},
@@ -548,16 +578,16 @@ class EndpointSurveyAdmin extends _i2.EndpointRef {
 /// Public endpoint for accessing surveys and submitting responses.
 /// No authentication required for anonymous surveys.
 /// {@category Endpoint}
-class EndpointSurvey extends _i2.EndpointRef {
-  EndpointSurvey(_i2.EndpointCaller caller) : super(caller);
+class EndpointSurvey extends _i1.EndpointRef {
+  EndpointSurvey(_i1.EndpointCaller caller) : super(caller);
 
   @override
   String get name => 'survey';
 
   /// Get a published survey by its slug.
   /// Returns null if the survey doesn't exist or is not published.
-  _i3.Future<_i11.Survey?> getBySlug(String slug) =>
-      caller.callServerEndpoint<_i11.Survey?>(
+  _i2.Future<_i12.Survey?> getBySlug(String slug) =>
+      caller.callServerEndpoint<_i12.Survey?>(
         'survey',
         'getBySlug',
         {'slug': slug},
@@ -566,11 +596,11 @@ class EndpointSurvey extends _i2.EndpointRef {
   /// Submit a response to a survey.
   /// For authenticated surveys, the user must be logged in.
   /// For anonymous surveys, an anonymousId can be provided for tracking.
-  _i3.Future<_i8.SurveyResponse> submitResponse({
+  _i2.Future<_i9.SurveyResponse> submitResponse({
     required int surveyId,
-    required List<_i9.Answer> answers,
+    required List<_i10.Answer> answers,
     String? anonymousId,
-  }) => caller.callServerEndpoint<_i8.SurveyResponse>(
+  }) => caller.callServerEndpoint<_i9.SurveyResponse>(
     'survey',
     'submitResponse',
     {
@@ -580,19 +610,20 @@ class EndpointSurvey extends _i2.EndpointRef {
     },
   );
 
-  /// Get all questions for a published survey.
+  /// Get all active questions for a published survey.
   /// Returns empty list if survey is not found or not published.
-  _i3.Future<List<_i7.Question>> getQuestionsForSurvey(int surveyId) =>
-      caller.callServerEndpoint<List<_i7.Question>>(
+  _i2.Future<List<_i8.Question>> getQuestionsForSurvey(int surveyId) =>
+      caller.callServerEndpoint<List<_i8.Question>>(
         'survey',
         'getQuestionsForSurvey',
         {'surveyId': surveyId},
       );
 
   /// Get all choices for a question.
-  /// Only returns choices if the question belongs to a published survey.
-  _i3.Future<List<_i5.Choice>> getChoicesForQuestion(int questionId) =>
-      caller.callServerEndpoint<List<_i5.Choice>>(
+  /// Only returns choices if the question belongs to a published survey
+  /// and the question is not deleted.
+  _i2.Future<List<_i6.Choice>> getChoicesForQuestion(int questionId) =>
+      caller.callServerEndpoint<List<_i6.Choice>>(
         'survey',
         'getChoicesForQuestion',
         {'questionId': questionId},
@@ -602,15 +633,15 @@ class EndpointSurvey extends _i2.EndpointRef {
 /// Admin endpoint for managing users.
 /// Most methods require authentication, except for first user registration.
 /// {@category Endpoint}
-class EndpointUserAdmin extends _i2.EndpointRef {
-  EndpointUserAdmin(_i2.EndpointCaller caller) : super(caller);
+class EndpointUserAdmin extends _i1.EndpointRef {
+  EndpointUserAdmin(_i1.EndpointCaller caller) : super(caller);
 
   @override
   String get name => 'userAdmin';
 
   /// Check if this is the first user (no users exist yet).
   /// This endpoint is public - no authentication required.
-  _i3.Future<bool> isFirstUser() => caller.callServerEndpoint<bool>(
+  _i2.Future<bool> isFirstUser() => caller.callServerEndpoint<bool>(
     'userAdmin',
     'isFirstUser',
     {},
@@ -618,10 +649,10 @@ class EndpointUserAdmin extends _i2.EndpointRef {
 
   /// Register the first admin user.
   /// Only works if no users exist yet.
-  _i3.Future<_i1.AuthSuccess> registerFirstUser({
+  _i2.Future<_i4.AuthSuccess> registerFirstUser({
     required String email,
     required String password,
-  }) => caller.callServerEndpoint<_i1.AuthSuccess>(
+  }) => caller.callServerEndpoint<_i4.AuthSuccess>(
     'userAdmin',
     'registerFirstUser',
     {
@@ -631,7 +662,7 @@ class EndpointUserAdmin extends _i2.EndpointRef {
   );
 
   /// Get all users. Requires admin scope.
-  _i3.Future<List<_i13.AuthUserInfo>> listUsers() =>
+  _i2.Future<List<_i13.AuthUserInfo>> listUsers() =>
       caller.callServerEndpoint<List<_i13.AuthUserInfo>>(
         'userAdmin',
         'listUsers',
@@ -639,7 +670,7 @@ class EndpointUserAdmin extends _i2.EndpointRef {
       );
 
   /// Create a new user. Requires admin scope.
-  _i3.Future<_i13.AuthUserInfo> createUser({
+  _i2.Future<_i13.AuthUserInfo> createUser({
     required String email,
     required String password,
     required List<String> scopes,
@@ -657,7 +688,7 @@ class EndpointUserAdmin extends _i2.EndpointRef {
   ///
   /// Returns `true` if the deleted user was the current user (self-deletion),
   /// `false` otherwise (including when the user was not found).
-  _i3.Future<bool> deleteUser(_i2.UuidValue userId) =>
+  _i2.Future<bool> deleteUser(_i1.UuidValue userId) =>
       caller.callServerEndpoint<bool>(
         'userAdmin',
         'deleteUser',
@@ -665,7 +696,7 @@ class EndpointUserAdmin extends _i2.EndpointRef {
       );
 
   /// Toggle user blocked status. Requires admin scope.
-  _i3.Future<bool> toggleUserBlocked(_i2.UuidValue userId) =>
+  _i2.Future<bool> toggleUserBlocked(_i1.UuidValue userId) =>
       caller.callServerEndpoint<bool>(
         'userAdmin',
         'toggleUserBlocked',
@@ -675,16 +706,16 @@ class EndpointUserAdmin extends _i2.EndpointRef {
 
 class Modules {
   Modules(Client client) {
-    serverpod_auth_idp = _i4.Caller(client);
-    serverpod_auth_core = _i1.Caller(client);
+    serverpod_auth_idp = _i5.Caller(client);
+    serverpod_auth_core = _i4.Caller(client);
   }
 
-  late final _i4.Caller serverpod_auth_idp;
+  late final _i5.Caller serverpod_auth_idp;
 
-  late final _i1.Caller serverpod_auth_core;
+  late final _i4.Caller serverpod_auth_core;
 }
 
-class Client extends _i2.ServerpodClientShared {
+class Client extends _i1.ServerpodClientShared {
   Client(
     String host, {
     dynamic securityContext,
@@ -695,12 +726,12 @@ class Client extends _i2.ServerpodClientShared {
     Duration? streamingConnectionTimeout,
     Duration? connectionTimeout,
     Function(
-      _i2.MethodCallContext,
+      _i1.MethodCallContext,
       Object,
       StackTrace,
     )?
     onFailedCall,
-    Function(_i2.MethodCallContext)? onSucceededCall,
+    Function(_i1.MethodCallContext)? onSucceededCall,
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
          host,
@@ -713,6 +744,7 @@ class Client extends _i2.ServerpodClientShared {
          disconnectStreamsOnLostInternetConnection:
              disconnectStreamsOnLostInternetConnection,
        ) {
+    aiAdmin = EndpointAiAdmin(this);
     refreshJwtTokens = EndpointRefreshJwtTokens(this);
     emailIdp = EndpointEmailIdp(this);
     choiceAdmin = EndpointChoiceAdmin(this);
@@ -724,6 +756,8 @@ class Client extends _i2.ServerpodClientShared {
     userAdmin = EndpointUserAdmin(this);
     modules = Modules(this);
   }
+
+  late final EndpointAiAdmin aiAdmin;
 
   late final EndpointRefreshJwtTokens refreshJwtTokens;
 
@@ -746,7 +780,8 @@ class Client extends _i2.ServerpodClientShared {
   late final Modules modules;
 
   @override
-  Map<String, _i2.EndpointRef> get endpointRefLookup => {
+  Map<String, _i1.EndpointRef> get endpointRefLookup => {
+    'aiAdmin': aiAdmin,
     'refreshJwtTokens': refreshJwtTokens,
     'emailIdp': emailIdp,
     'choiceAdmin': choiceAdmin,
@@ -759,7 +794,7 @@ class Client extends _i2.ServerpodClientShared {
   };
 
   @override
-  Map<String, _i2.ModuleEndpointCaller> get moduleLookup => {
+  Map<String, _i1.ModuleEndpointCaller> get moduleLookup => {
     'serverpod_auth_idp': modules.serverpod_auth_idp,
     'serverpod_auth_core': modules.serverpod_auth_core,
   };
