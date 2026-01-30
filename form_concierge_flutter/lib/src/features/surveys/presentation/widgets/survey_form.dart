@@ -14,7 +14,8 @@ class SurveyForm extends StatefulWidget {
     required String slug,
     String? description,
     required AuthRequirement authRequirement,
-  }) onSave;
+  })
+  onSave;
 
   const SurveyForm({
     super.key,

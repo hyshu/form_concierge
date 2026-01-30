@@ -11,9 +11,14 @@ class DraftQuestionEditor extends StatelessWidget {
   final void Function(DraftQuestion question) onDelete;
   final void Function(int oldIndex, int newIndex) onReorder;
   final void Function(DraftQuestion question, String text) onAddChoice;
-  final void Function(DraftQuestion question, DraftChoice choice, String newText)
-      onUpdateChoice;
-  final void Function(DraftQuestion question, DraftChoice choice) onDeleteChoice;
+  final void Function(
+    DraftQuestion question,
+    DraftChoice choice,
+    String newText,
+  )
+  onUpdateChoice;
+  final void Function(DraftQuestion question, DraftChoice choice)
+  onDeleteChoice;
 
   const DraftQuestionEditor({
     super.key,
@@ -141,9 +146,7 @@ class _DraftQuestionTileState extends State<_DraftQuestionTile> {
                 if (widget.question.hasChoices)
                   IconButton(
                     icon: Icon(
-                      _isExpanded
-                          ? Icons.expand_less
-                          : Icons.expand_more,
+                      _isExpanded ? Icons.expand_less : Icons.expand_more,
                     ),
                     onPressed: () {
                       setState(() {
@@ -241,8 +244,8 @@ class _ChoicesSection extends StatelessWidget {
             Text(
               'No choices yet. Add at least one choice.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                color: colorScheme.onSurfaceVariant,
+              ),
             ),
           const SizedBox(height: 8),
           if (enabled)

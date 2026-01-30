@@ -30,8 +30,9 @@ class SurveyEditorPage extends RearchConsumer {
 
     final isNewSurvey = surveyId == null;
     final formState = formManager.getState(surveyId);
-    final questionState =
-        isNewSurvey ? null : questionManager.getState(surveyId!);
+    final questionState = isNewSurvey
+        ? null
+        : questionManager.getState(surveyId!);
     final geminiEnabled = publicConfig.state.geminiEnabled;
 
     // Load survey and questions on first build (only for existing surveys)
@@ -119,8 +120,9 @@ class SurveyEditorPage extends RearchConsumer {
                         children: [
                           Icon(
                             Icons.info_outline,
-                            color:
-                                Theme.of(context).colorScheme.onTertiaryContainer,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onTertiaryContainer,
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -157,67 +159,71 @@ class SurveyEditorPage extends RearchConsumer {
                     )
                   else
                     QuestionList(
-                  surveyId: surveyId!,
-                  questions: questionState!.questions,
-                  choicesByQuestion: questionState.choicesByQuestion,
-                  isLoading: questionState.isLoading,
-                  enabled: canEdit,
-                  onAddQuestion: ({
-                    required String text,
-                    required QuestionType type,
-                    required bool isRequired,
-                    String? placeholder,
-                  }) {
-                    questionManager.createQuestion(
                       surveyId: surveyId!,
-                      text: text,
-                      type: type,
-                      isRequired: isRequired,
-                      placeholder: placeholder,
-                    );
-                  },
-                  onEditQuestion: (
-                    question, {
-                    required String text,
-                    required QuestionType type,
-                    required bool isRequired,
-                    String? placeholder,
-                  }) {
-                    final updated = question.copyWith(
-                      text: text,
-                      type: type,
-                      isRequired: isRequired,
-                      placeholder: placeholder,
-                    );
-                    questionManager.updateQuestion(updated);
-                  },
-                  onDeleteQuestion: (question) {
-                    questionManager.deleteQuestion(surveyId!, question.id!);
-                  },
-                  onAddChoice: (questionId, text) {
-                    questionManager.createChoice(
-                      questionId: questionId,
-                      surveyId: surveyId!,
-                      text: text,
-                    );
-                  },
-                  onUpdateChoice: (choice, newText) {
-                    final updated = choice.copyWith(text: newText);
-                    questionManager.updateChoice(updated, surveyId!);
-                  },
-                  onDeleteChoice: (choice) {
-                    questionManager.deleteChoice(choice.id!, surveyId!);
-                  },
-                ),
-              if (questionState?.error != null) ...[
-                const SizedBox(height: 16),
-                Text(
-                  questionState!.error!,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
-                ),
-              ],
-            ],
-          ),
+                      questions: questionState!.questions,
+                      choicesByQuestion: questionState.choicesByQuestion,
+                      isLoading: questionState.isLoading,
+                      enabled: canEdit,
+                      onAddQuestion:
+                          ({
+                            required String text,
+                            required QuestionType type,
+                            required bool isRequired,
+                            String? placeholder,
+                          }) {
+                            questionManager.createQuestion(
+                              surveyId: surveyId!,
+                              text: text,
+                              type: type,
+                              isRequired: isRequired,
+                              placeholder: placeholder,
+                            );
+                          },
+                      onEditQuestion:
+                          (
+                            question, {
+                            required String text,
+                            required QuestionType type,
+                            required bool isRequired,
+                            String? placeholder,
+                          }) {
+                            final updated = question.copyWith(
+                              text: text,
+                              type: type,
+                              isRequired: isRequired,
+                              placeholder: placeholder,
+                            );
+                            questionManager.updateQuestion(updated);
+                          },
+                      onDeleteQuestion: (question) {
+                        questionManager.deleteQuestion(surveyId!, question.id!);
+                      },
+                      onAddChoice: (questionId, text) {
+                        questionManager.createChoice(
+                          questionId: questionId,
+                          surveyId: surveyId!,
+                          text: text,
+                        );
+                      },
+                      onUpdateChoice: (choice, newText) {
+                        final updated = choice.copyWith(text: newText);
+                        questionManager.updateChoice(updated, surveyId!);
+                      },
+                      onDeleteChoice: (choice) {
+                        questionManager.deleteChoice(choice.id!, surveyId!);
+                      },
+                    ),
+                  if (questionState?.error != null) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      questionState!.error!,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
           ),
         ),
@@ -239,36 +245,37 @@ class SurveyEditorPage extends RearchConsumer {
       existingSurvey: survey,
       isSaving: formState.isSaving,
       error: formState.error,
-      onSave: ({
-        required String title,
-        required String slug,
-        String? description,
-        required AuthRequirement authRequirement,
-      }) async {
-        if (isNewSurvey) {
-          final created = await formManager.createSurveyWithQuestions(
-            title: title,
-            slug: slug,
-            description: description,
-            authRequirement: authRequirement,
-          );
-          if (created != null && context.mounted) {
-            await surveyListManager.loadSurveys();
-            if (context.mounted) {
-              context.go('/admin');
+      onSave:
+          ({
+            required String title,
+            required String slug,
+            String? description,
+            required AuthRequirement authRequirement,
+          }) async {
+            if (isNewSurvey) {
+              final created = await formManager.createSurveyWithQuestions(
+                title: title,
+                slug: slug,
+                description: description,
+                authRequirement: authRequirement,
+              );
+              if (created != null && context.mounted) {
+                await surveyListManager.loadSurveys();
+                if (context.mounted) {
+                  context.go('/admin');
+                }
+              }
+            } else {
+              final updated = survey!.copyWith(
+                title: title,
+                slug: slug,
+                description: description,
+                authRequirement: authRequirement,
+                updatedAt: DateTime.now(),
+              );
+              await formManager.updateSurvey(updated);
             }
-          }
-        } else {
-          final updated = survey!.copyWith(
-            title: title,
-            slug: slug,
-            description: description,
-            authRequirement: authRequirement,
-            updatedAt: DateTime.now(),
-          );
-          await formManager.updateSurvey(updated);
-        }
-      },
+          },
     );
   }
 
@@ -340,13 +347,14 @@ class SurveyEditorPage extends RearchConsumer {
                 Text(
                   'Add questions to your survey',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
+                    color: colorScheme.onSurfaceVariant,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 FilledButton.icon(
-                  onPressed:
-                      formState.isSaving ? null : () => _showAddDialog(context, formManager),
+                  onPressed: formState.isSaving
+                      ? null
+                      : () => _showAddDialog(context, formManager),
                   icon: const Icon(Icons.add),
                   label: const Text('Add Question'),
                 ),
@@ -373,8 +381,9 @@ class SurveyEditorPage extends RearchConsumer {
               ),
               const SizedBox(height: 16),
               OutlinedButton.icon(
-                onPressed:
-                    formState.isSaving ? null : () => _showAddDialog(context, formManager),
+                onPressed: formState.isSaving
+                    ? null
+                    : () => _showAddDialog(context, formManager),
                 icon: const Icon(Icons.add),
                 label: const Text('Add Question'),
               ),
@@ -387,19 +396,20 @@ class SurveyEditorPage extends RearchConsumer {
   void _showAddDialog(BuildContext context, SurveyFormManager formManager) {
     QuestionFormDialog.show(
       context,
-      onSave: ({
-        required String text,
-        required QuestionType type,
-        required bool isRequired,
-        String? placeholder,
-      }) {
-        formManager.addDraftQuestion(
-          text: text,
-          type: type,
-          isRequired: isRequired,
-          placeholder: placeholder,
-        );
-      },
+      onSave:
+          ({
+            required String text,
+            required QuestionType type,
+            required bool isRequired,
+            String? placeholder,
+          }) {
+            formManager.addDraftQuestion(
+              text: text,
+              type: type,
+              isRequired: isRequired,
+              placeholder: placeholder,
+            );
+          },
     );
   }
 
@@ -420,20 +430,21 @@ class SurveyEditorPage extends RearchConsumer {
     QuestionFormDialog.show(
       context,
       existingQuestion: tempQuestion,
-      onSave: ({
-        required String text,
-        required QuestionType type,
-        required bool isRequired,
-        String? placeholder,
-      }) {
-        formManager.updateDraftQuestion(
-          tempId: question.tempId,
-          text: text,
-          type: type,
-          isRequired: isRequired,
-          placeholder: placeholder,
-        );
-      },
+      onSave:
+          ({
+            required String text,
+            required QuestionType type,
+            required bool isRequired,
+            String? placeholder,
+          }) {
+            formManager.updateDraftQuestion(
+              tempId: question.tempId,
+              text: text,
+              type: type,
+              isRequired: isRequired,
+              placeholder: placeholder,
+            );
+          },
     );
   }
 
@@ -540,8 +551,8 @@ class _AiPromptInputState extends State<_AiPromptInput> {
               Text(
                 'Generate with AI',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: colorScheme.primary,
-                    ),
+                  color: colorScheme.primary,
+                ),
               ),
             ],
           ),
@@ -549,14 +560,15 @@ class _AiPromptInputState extends State<_AiPromptInput> {
           Text(
             'Describe your survey and AI will generate questions for you.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
+              color: colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 16),
           TextField(
             controller: _controller,
             decoration: InputDecoration(
-              hintText: 'Example: Onboarding survey for a fitness app asking about exercise experience, target weight, and weekly workout frequency',
+              hintText:
+                  'Example: Onboarding survey for a fitness app asking about exercise experience, target weight, and weekly workout frequency',
               border: const OutlineInputBorder(),
               filled: true,
               fillColor: colorScheme.surface,

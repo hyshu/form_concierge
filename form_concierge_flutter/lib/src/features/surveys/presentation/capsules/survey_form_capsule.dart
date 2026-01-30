@@ -272,8 +272,9 @@ class SurveyFormManager {
   /// Delete a draft question.
   void deleteDraftQuestion(String tempId) {
     final state = getState(null);
-    final updatedQuestions =
-        state.draftQuestions.where((q) => q.tempId != tempId).toList();
+    final updatedQuestions = state.draftQuestions
+        .where((q) => q.tempId != tempId)
+        .toList();
     _setState(null, state.copyWith(draftQuestions: updatedQuestions));
   }
 
@@ -295,7 +296,10 @@ class SurveyFormManager {
     final updatedQuestions = state.draftQuestions.map((q) {
       if (q.tempId == questionTempId) {
         return q.copyWith(
-          choices: [...q.choices, DraftChoice.create(text: choiceText)],
+          choices: [
+            ...q.choices,
+            DraftChoice.create(text: choiceText),
+          ],
         );
       }
       return q;
@@ -330,8 +334,9 @@ class SurveyFormManager {
     final state = getState(null);
     final updatedQuestions = state.draftQuestions.map((q) {
       if (q.tempId == questionTempId) {
-        final updatedChoices =
-            q.choices.where((c) => c.tempId != choiceTempId).toList();
+        final updatedChoices = q.choices
+            .where((c) => c.tempId != choiceTempId)
+            .toList();
         return q.copyWith(choices: updatedChoices);
       }
       return q;
@@ -358,8 +363,9 @@ class SurveyFormManager {
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
-      final questions =
-          state.draftQuestions.map((q) => q.toQuestionWithChoices()).toList();
+      final questions = state.draftQuestions
+          .map((q) => q.toQuestionWithChoices())
+          .toList();
 
       final created = await _client.surveyAdmin.createWithQuestions(
         survey,
@@ -401,8 +407,9 @@ class SurveyFormManager {
 
     try {
       final questions = await _client.aiAdmin.generateSurveyQuestions(prompt);
-      final draftQuestions =
-          questions.map(DraftQuestion.fromQuestionWithChoices).toList();
+      final draftQuestions = questions
+          .map(DraftQuestion.fromQuestionWithChoices)
+          .toList();
 
       _setState(
         null,

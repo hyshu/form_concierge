@@ -5,8 +5,10 @@ import 'package:rearch/rearch.dart';
 
 import '../../../../core/widgets/confirm_delete_dialog.dart';
 import '../capsules/aggregated_results_capsule.dart';
+import '../capsules/notification_settings_capsule.dart';
 import '../capsules/response_list_capsule.dart';
 import '../widgets/aggregated_results_view.dart';
+import '../widgets/notification_settings_view.dart';
 import '../widgets/response_list.dart';
 
 /// Page showing survey responses and aggregated results.
@@ -19,18 +21,21 @@ class ResponsesPage extends RearchConsumer {
   Widget build(BuildContext context, WidgetHandle use) {
     final responseManager = use(responseListManagerCapsule);
     final resultsManager = use(aggregatedResultsManagerCapsule);
+    final notificationManager = use(notificationSettingsManagerCapsule);
 
     final responseState = responseManager.getState(surveyId);
     final resultsState = resultsManager.getState(surveyId);
+    final notificationState = notificationManager.getState(surveyId);
 
     // Load data on first build
     if (use.isFirstBuild()) {
       responseManager.loadResponses(surveyId);
       resultsManager.loadResults(surveyId);
+      notificationManager.loadSettings(surveyId);
     }
 
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Responses'),
@@ -43,6 +48,10 @@ class ResponsesPage extends RearchConsumer {
               Tab(
                 icon: Icon(Icons.list_alt),
                 text: 'Individual',
+              ),
+              Tab(
+                icon: Icon(Icons.notifications_outlined),
+                text: 'Notifications',
               ),
             ],
           ),
@@ -70,6 +79,26 @@ class ResponsesPage extends RearchConsumer {
                     responseManager.loadResponses(surveyId, page: page),
                 onDelete: (response) =>
                     _confirmDelete(context, response, responseManager),
+              ),
+              // Notification Settings Tab
+              NotificationSettingsView(
+                surveyId: surveyId,
+                settings: notificationState.settings,
+                isLoading: notificationState.isLoading,
+                isSaving: notificationState.isSaving,
+                isSendingTest: notificationState.isSendingTest,
+                error: notificationState.error,
+                successMessage: notificationState.successMessage,
+                isEmailConfigured: notificationState.isEmailConfigured,
+                onRefresh: () => notificationManager.loadSettings(surveyId),
+                onSave: (settings) =>
+                    notificationManager.saveSettings(surveyId, settings),
+                onToggleEnabled: () =>
+                    notificationManager.toggleEnabled(surveyId),
+                onSendTest: () =>
+                    notificationManager.sendTestNotification(surveyId),
+                onClearMessages: () =>
+                    notificationManager.clearMessages(surveyId),
               ),
             ],
           ),

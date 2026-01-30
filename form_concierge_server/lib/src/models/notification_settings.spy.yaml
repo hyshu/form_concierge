@@ -1,0 +1,21 @@
+### Configuration for daily email notifications per survey
+class: NotificationSettings
+table: notification_settings
+fields:
+  ### Reference to the survey (one settings record per survey)
+  surveyId: int, relation(parent=survey)
+  ### Whether daily notifications are enabled
+  enabled: bool, default=false
+  ### Email address to receive notifications
+  recipientEmail: String
+  ### Hour of day to send notification (0-23, UTC)
+  sendHour: int, default=9
+  ### When settings were last updated
+  updatedAt: DateTime, default=now
+  ### Last time notification was sent (null if never)
+  lastSentAt: DateTime?
+
+indexes:
+  survey_id_unique:
+    fields: surveyId
+    unique: true

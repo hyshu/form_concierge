@@ -18,6 +18,14 @@ choiceAdmin:
   - getById:
 config:
   - getPublicConfig:
+notificationSettings:
+  - getForSurvey:
+  - upsert:
+  - enable:
+  - disable:
+  - delete:
+  - isEmailConfigured:
+  - sendTestNotification:
 questionAdmin:
   - create:
   - update:

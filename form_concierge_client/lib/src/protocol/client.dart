@@ -20,13 +20,16 @@ import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
     as _i5;
 import 'package:form_concierge_client/src/protocol/choice.dart' as _i6;
 import 'package:form_concierge_client/src/protocol/public_config.dart' as _i7;
-import 'package:form_concierge_client/src/protocol/question.dart' as _i8;
-import 'package:form_concierge_client/src/protocol/survey_response.dart' as _i9;
-import 'package:form_concierge_client/src/protocol/answer.dart' as _i10;
-import 'package:form_concierge_client/src/protocol/survey_results.dart' as _i11;
-import 'package:form_concierge_client/src/protocol/survey.dart' as _i12;
-import 'package:form_concierge_client/src/protocol/auth_user_info.dart' as _i13;
-import 'protocol.dart' as _i14;
+import 'package:form_concierge_client/src/protocol/notification_settings.dart'
+    as _i8;
+import 'package:form_concierge_client/src/protocol/question.dart' as _i9;
+import 'package:form_concierge_client/src/protocol/survey_response.dart'
+    as _i10;
+import 'package:form_concierge_client/src/protocol/answer.dart' as _i11;
+import 'package:form_concierge_client/src/protocol/survey_results.dart' as _i12;
+import 'package:form_concierge_client/src/protocol/survey.dart' as _i13;
+import 'package:form_concierge_client/src/protocol/auth_user_info.dart' as _i14;
+import 'protocol.dart' as _i15;
 
 /// Endpoint for AI-powered survey generation.
 /// Requires authentication.
@@ -339,6 +342,72 @@ class EndpointConfig extends _i1.EndpointRef {
       );
 }
 
+/// Admin endpoint for managing daily notification settings.
+/// All methods require authentication.
+/// {@category Endpoint}
+class EndpointNotificationSettings extends _i1.EndpointRef {
+  EndpointNotificationSettings(_i1.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'notificationSettings';
+
+  /// Get notification settings for a survey.
+  /// Returns null if not configured.
+  _i2.Future<_i8.NotificationSettings?> getForSurvey(int surveyId) =>
+      caller.callServerEndpoint<_i8.NotificationSettings?>(
+        'notificationSettings',
+        'getForSurvey',
+        {'surveyId': surveyId},
+      );
+
+  /// Create or update notification settings for a survey.
+  _i2.Future<_i8.NotificationSettings> upsert(
+    _i8.NotificationSettings settings,
+  ) => caller.callServerEndpoint<_i8.NotificationSettings>(
+    'notificationSettings',
+    'upsert',
+    {'settings': settings},
+  );
+
+  /// Enable notifications for a survey.
+  _i2.Future<_i8.NotificationSettings> enable(int surveyId) =>
+      caller.callServerEndpoint<_i8.NotificationSettings>(
+        'notificationSettings',
+        'enable',
+        {'surveyId': surveyId},
+      );
+
+  /// Disable notifications for a survey.
+  _i2.Future<_i8.NotificationSettings> disable(int surveyId) =>
+      caller.callServerEndpoint<_i8.NotificationSettings>(
+        'notificationSettings',
+        'disable',
+        {'surveyId': surveyId},
+      );
+
+  /// Delete notification settings for a survey.
+  _i2.Future<bool> delete(int surveyId) => caller.callServerEndpoint<bool>(
+    'notificationSettings',
+    'delete',
+    {'surveyId': surveyId},
+  );
+
+  /// Check if email service is configured.
+  _i2.Future<bool> isEmailConfigured() => caller.callServerEndpoint<bool>(
+    'notificationSettings',
+    'isEmailConfigured',
+    {},
+  );
+
+  /// Send a test notification immediately.
+  _i2.Future<bool> sendTestNotification(int surveyId) =>
+      caller.callServerEndpoint<bool>(
+        'notificationSettings',
+        'sendTestNotification',
+        {'surveyId': surveyId},
+      );
+}
+
 /// Admin endpoint for managing questions.
 /// All methods require authentication.
 /// {@category Endpoint}
@@ -352,16 +421,16 @@ class EndpointQuestionAdmin extends _i1.EndpointRef {
   ///
   /// For choice-type questions (singleChoice, multipleChoice), two default
   /// choices are automatically added: "Choice 1" and "Choice 2".
-  _i2.Future<_i8.Question> create(_i8.Question question) =>
-      caller.callServerEndpoint<_i8.Question>(
+  _i2.Future<_i9.Question> create(_i9.Question question) =>
+      caller.callServerEndpoint<_i9.Question>(
         'questionAdmin',
         'create',
         {'question': question},
       );
 
   /// Update a question.
-  _i2.Future<_i8.Question> update(_i8.Question question) =>
-      caller.callServerEndpoint<_i8.Question>(
+  _i2.Future<_i9.Question> update(_i9.Question question) =>
+      caller.callServerEndpoint<_i9.Question>(
         'questionAdmin',
         'update',
         {'question': question},
@@ -382,10 +451,10 @@ class EndpointQuestionAdmin extends _i1.EndpointRef {
 
   /// Reorder questions within a survey.
   /// Pass the question IDs in the desired order.
-  _i2.Future<List<_i8.Question>> reorder(
+  _i2.Future<List<_i9.Question>> reorder(
     int surveyId,
     List<int> questionIds,
-  ) => caller.callServerEndpoint<List<_i8.Question>>(
+  ) => caller.callServerEndpoint<List<_i9.Question>>(
     'questionAdmin',
     'reorder',
     {
@@ -395,16 +464,16 @@ class EndpointQuestionAdmin extends _i1.EndpointRef {
   );
 
   /// Get all active (non-deleted) questions for a survey.
-  _i2.Future<List<_i8.Question>> getForSurvey(int surveyId) =>
-      caller.callServerEndpoint<List<_i8.Question>>(
+  _i2.Future<List<_i9.Question>> getForSurvey(int surveyId) =>
+      caller.callServerEndpoint<List<_i9.Question>>(
         'questionAdmin',
         'getForSurvey',
         {'surveyId': surveyId},
       );
 
   /// Get a question by ID.
-  _i2.Future<_i8.Question?> getById(int questionId) =>
-      caller.callServerEndpoint<_i8.Question?>(
+  _i2.Future<_i9.Question?> getById(int questionId) =>
+      caller.callServerEndpoint<_i9.Question?>(
         'questionAdmin',
         'getById',
         {'questionId': questionId},
@@ -429,11 +498,11 @@ class EndpointResponseAnalytics extends _i1.EndpointRef {
   String get name => 'responseAnalytics';
 
   /// Get all responses for a survey with pagination.
-  _i2.Future<List<_i9.SurveyResponse>> getResponses(
+  _i2.Future<List<_i10.SurveyResponse>> getResponses(
     int surveyId, {
     int? limit,
     int? offset,
-  }) => caller.callServerEndpoint<List<_i9.SurveyResponse>>(
+  }) => caller.callServerEndpoint<List<_i10.SurveyResponse>>(
     'responseAnalytics',
     'getResponses',
     {
@@ -452,16 +521,16 @@ class EndpointResponseAnalytics extends _i1.EndpointRef {
       );
 
   /// Get all answers for a response.
-  _i2.Future<List<_i10.Answer>> getAnswersForResponse(int responseId) =>
-      caller.callServerEndpoint<List<_i10.Answer>>(
+  _i2.Future<List<_i11.Answer>> getAnswersForResponse(int responseId) =>
+      caller.callServerEndpoint<List<_i11.Answer>>(
         'responseAnalytics',
         'getAnswersForResponse',
         {'responseId': responseId},
       );
 
   /// Get aggregated results for a survey.
-  _i2.Future<_i11.SurveyResults> getAggregatedResults(int surveyId) =>
-      caller.callServerEndpoint<_i11.SurveyResults>(
+  _i2.Future<_i12.SurveyResults> getAggregatedResults(int surveyId) =>
+      caller.callServerEndpoint<_i12.SurveyResults>(
         'responseAnalytics',
         'getAggregatedResults',
         {'surveyId': surveyId},
@@ -499,18 +568,18 @@ class EndpointSurveyAdmin extends _i1.EndpointRef {
   String get name => 'surveyAdmin';
 
   /// Create a new survey.
-  _i2.Future<_i12.Survey> create(_i12.Survey survey) =>
-      caller.callServerEndpoint<_i12.Survey>(
+  _i2.Future<_i13.Survey> create(_i13.Survey survey) =>
+      caller.callServerEndpoint<_i13.Survey>(
         'surveyAdmin',
         'create',
         {'survey': survey},
       );
 
   /// Create a new survey with questions and choices in one transaction.
-  _i2.Future<_i12.Survey> createWithQuestions(
-    _i12.Survey survey,
+  _i2.Future<_i13.Survey> createWithQuestions(
+    _i13.Survey survey,
     List<_i3.QuestionWithChoices> questions,
-  ) => caller.callServerEndpoint<_i12.Survey>(
+  ) => caller.callServerEndpoint<_i13.Survey>(
     'surveyAdmin',
     'createWithQuestions',
     {
@@ -520,8 +589,8 @@ class EndpointSurveyAdmin extends _i1.EndpointRef {
   );
 
   /// Update an existing survey.
-  _i2.Future<_i12.Survey> update(_i12.Survey survey) =>
-      caller.callServerEndpoint<_i12.Survey>(
+  _i2.Future<_i13.Survey> update(_i13.Survey survey) =>
+      caller.callServerEndpoint<_i13.Survey>(
         'surveyAdmin',
         'update',
         {'survey': survey},
@@ -535,40 +604,40 @@ class EndpointSurveyAdmin extends _i1.EndpointRef {
   );
 
   /// List all surveys for the current admin.
-  _i2.Future<List<_i12.Survey>> list() =>
-      caller.callServerEndpoint<List<_i12.Survey>>(
+  _i2.Future<List<_i13.Survey>> list() =>
+      caller.callServerEndpoint<List<_i13.Survey>>(
         'surveyAdmin',
         'list',
         {},
       );
 
   /// Get a survey by ID.
-  _i2.Future<_i12.Survey?> getById(int surveyId) =>
-      caller.callServerEndpoint<_i12.Survey?>(
+  _i2.Future<_i13.Survey?> getById(int surveyId) =>
+      caller.callServerEndpoint<_i13.Survey?>(
         'surveyAdmin',
         'getById',
         {'surveyId': surveyId},
       );
 
   /// Publish a survey.
-  _i2.Future<_i12.Survey> publish(int surveyId) =>
-      caller.callServerEndpoint<_i12.Survey>(
+  _i2.Future<_i13.Survey> publish(int surveyId) =>
+      caller.callServerEndpoint<_i13.Survey>(
         'surveyAdmin',
         'publish',
         {'surveyId': surveyId},
       );
 
   /// Close a survey (stop accepting responses).
-  _i2.Future<_i12.Survey> close(int surveyId) =>
-      caller.callServerEndpoint<_i12.Survey>(
+  _i2.Future<_i13.Survey> close(int surveyId) =>
+      caller.callServerEndpoint<_i13.Survey>(
         'surveyAdmin',
         'close',
         {'surveyId': surveyId},
       );
 
   /// Reopen a closed survey.
-  _i2.Future<_i12.Survey> reopen(int surveyId) =>
-      caller.callServerEndpoint<_i12.Survey>(
+  _i2.Future<_i13.Survey> reopen(int surveyId) =>
+      caller.callServerEndpoint<_i13.Survey>(
         'surveyAdmin',
         'reopen',
         {'surveyId': surveyId},
@@ -586,8 +655,8 @@ class EndpointSurvey extends _i1.EndpointRef {
 
   /// Get a published survey by its slug.
   /// Returns null if the survey doesn't exist or is not published.
-  _i2.Future<_i12.Survey?> getBySlug(String slug) =>
-      caller.callServerEndpoint<_i12.Survey?>(
+  _i2.Future<_i13.Survey?> getBySlug(String slug) =>
+      caller.callServerEndpoint<_i13.Survey?>(
         'survey',
         'getBySlug',
         {'slug': slug},
@@ -596,11 +665,11 @@ class EndpointSurvey extends _i1.EndpointRef {
   /// Submit a response to a survey.
   /// For authenticated surveys, the user must be logged in.
   /// For anonymous surveys, an anonymousId can be provided for tracking.
-  _i2.Future<_i9.SurveyResponse> submitResponse({
+  _i2.Future<_i10.SurveyResponse> submitResponse({
     required int surveyId,
-    required List<_i10.Answer> answers,
+    required List<_i11.Answer> answers,
     String? anonymousId,
-  }) => caller.callServerEndpoint<_i9.SurveyResponse>(
+  }) => caller.callServerEndpoint<_i10.SurveyResponse>(
     'survey',
     'submitResponse',
     {
@@ -612,8 +681,8 @@ class EndpointSurvey extends _i1.EndpointRef {
 
   /// Get all active questions for a published survey.
   /// Returns empty list if survey is not found or not published.
-  _i2.Future<List<_i8.Question>> getQuestionsForSurvey(int surveyId) =>
-      caller.callServerEndpoint<List<_i8.Question>>(
+  _i2.Future<List<_i9.Question>> getQuestionsForSurvey(int surveyId) =>
+      caller.callServerEndpoint<List<_i9.Question>>(
         'survey',
         'getQuestionsForSurvey',
         {'surveyId': surveyId},
@@ -662,19 +731,19 @@ class EndpointUserAdmin extends _i1.EndpointRef {
   );
 
   /// Get all users. Requires admin scope.
-  _i2.Future<List<_i13.AuthUserInfo>> listUsers() =>
-      caller.callServerEndpoint<List<_i13.AuthUserInfo>>(
+  _i2.Future<List<_i14.AuthUserInfo>> listUsers() =>
+      caller.callServerEndpoint<List<_i14.AuthUserInfo>>(
         'userAdmin',
         'listUsers',
         {},
       );
 
   /// Create a new user. Requires admin scope.
-  _i2.Future<_i13.AuthUserInfo> createUser({
+  _i2.Future<_i14.AuthUserInfo> createUser({
     required String email,
     required String password,
     required List<String> scopes,
-  }) => caller.callServerEndpoint<_i13.AuthUserInfo>(
+  }) => caller.callServerEndpoint<_i14.AuthUserInfo>(
     'userAdmin',
     'createUser',
     {
@@ -735,7 +804,7 @@ class Client extends _i1.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
          host,
-         _i14.Protocol(),
+         _i15.Protocol(),
          securityContext: securityContext,
          streamingConnectionTimeout: streamingConnectionTimeout,
          connectionTimeout: connectionTimeout,
@@ -749,6 +818,7 @@ class Client extends _i1.ServerpodClientShared {
     emailIdp = EndpointEmailIdp(this);
     choiceAdmin = EndpointChoiceAdmin(this);
     config = EndpointConfig(this);
+    notificationSettings = EndpointNotificationSettings(this);
     questionAdmin = EndpointQuestionAdmin(this);
     responseAnalytics = EndpointResponseAnalytics(this);
     surveyAdmin = EndpointSurveyAdmin(this);
@@ -766,6 +836,8 @@ class Client extends _i1.ServerpodClientShared {
   late final EndpointChoiceAdmin choiceAdmin;
 
   late final EndpointConfig config;
+
+  late final EndpointNotificationSettings notificationSettings;
 
   late final EndpointQuestionAdmin questionAdmin;
 
@@ -786,6 +858,7 @@ class Client extends _i1.ServerpodClientShared {
     'emailIdp': emailIdp,
     'choiceAdmin': choiceAdmin,
     'config': config,
+    'notificationSettings': notificationSettings,
     'questionAdmin': questionAdmin,
     'responseAnalytics': responseAnalytics,
     'surveyAdmin': surveyAdmin,
