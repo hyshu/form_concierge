@@ -14,12 +14,20 @@ class SurveyFormState {
   final String? error;
   final List<DraftQuestion> draftQuestions;
 
+  // AI generation state
+  final bool isGenerating;
+  final List<DraftQuestion>? generatedQuestions;
+  final String? generationError;
+
   const SurveyFormState({
     this.survey,
     this.isLoading = false,
     this.isSaving = false,
     this.error,
     this.draftQuestions = const [],
+    this.isGenerating = false,
+    this.generatedQuestions,
+    this.generationError,
   });
 
   factory SurveyFormState.initial() => const SurveyFormState();
@@ -30,12 +38,24 @@ class SurveyFormState {
     bool? isSaving,
     String? error,
     List<DraftQuestion>? draftQuestions,
+    bool? isGenerating,
+    List<DraftQuestion>? generatedQuestions,
+    String? generationError,
+    bool clearGeneratedQuestions = false,
+    bool clearGenerationError = false,
   }) => SurveyFormState(
     survey: survey ?? this.survey,
     isLoading: isLoading ?? this.isLoading,
     isSaving: isSaving ?? this.isSaving,
     error: error,
     draftQuestions: draftQuestions ?? this.draftQuestions,
+    isGenerating: isGenerating ?? this.isGenerating,
+    generatedQuestions: clearGeneratedQuestions
+        ? null
+        : (generatedQuestions ?? this.generatedQuestions),
+    generationError: clearGenerationError
+        ? null
+        : (generationError ?? this.generationError),
   );
 }
 
@@ -360,5 +380,70 @@ class SurveyFormManager {
       );
       return null;
     }
+  }
+
+  // AI Generation Methods
+
+  /// Generate questions using AI from a natural language prompt.
+  ///
+  /// The generated questions are stored in [SurveyFormState.generatedQuestions]
+  /// for preview. Call [applyGeneratedQuestions] to apply them to draftQuestions.
+  Future<void> generateQuestions(String prompt) async {
+    final state = getState(null);
+    _setState(
+      null,
+      state.copyWith(
+        isGenerating: true,
+        clearGenerationError: true,
+        clearGeneratedQuestions: true,
+      ),
+    );
+
+    try {
+      final questions = await _client.aiAdmin.generateSurveyQuestions(prompt);
+      final draftQuestions =
+          questions.map(DraftQuestion.fromQuestionWithChoices).toList();
+
+      _setState(
+        null,
+        getState(null).copyWith(
+          isGenerating: false,
+          generatedQuestions: draftQuestions,
+        ),
+      );
+    } on Exception catch (e) {
+      _setState(
+        null,
+        getState(null).copyWith(
+          isGenerating: false,
+          generationError: 'Failed to generate questions: $e',
+        ),
+      );
+    }
+  }
+
+  /// Apply the generated questions to draftQuestions.
+  void applyGeneratedQuestions() {
+    final state = getState(null);
+    if (state.generatedQuestions == null) return;
+
+    _setState(
+      null,
+      state.copyWith(
+        draftQuestions: [...state.draftQuestions, ...state.generatedQuestions!],
+        clearGeneratedQuestions: true,
+      ),
+    );
+  }
+
+  /// Clear the generated questions preview.
+  void clearGeneratedQuestions() {
+    _setState(
+      null,
+      getState(null).copyWith(
+        clearGeneratedQuestions: true,
+        clearGenerationError: true,
+      ),
+    );
   }
 }

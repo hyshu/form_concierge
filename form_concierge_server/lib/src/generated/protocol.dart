@@ -30,13 +30,13 @@ import 'survey.dart' as _i15;
 import 'survey_response.dart' as _i16;
 import 'survey_results.dart' as _i17;
 import 'survey_status.dart' as _i18;
-import 'package:form_concierge_server/src/generated/choice.dart' as _i19;
-import 'package:form_concierge_server/src/generated/question.dart' as _i20;
-import 'package:form_concierge_server/src/generated/survey_response.dart'
-    as _i21;
-import 'package:form_concierge_server/src/generated/answer.dart' as _i22;
 import 'package:form_concierge_server/src/generated/question_with_choices.dart'
-    as _i23;
+    as _i19;
+import 'package:form_concierge_server/src/generated/choice.dart' as _i20;
+import 'package:form_concierge_server/src/generated/question.dart' as _i21;
+import 'package:form_concierge_server/src/generated/survey_response.dart'
+    as _i22;
+import 'package:form_concierge_server/src/generated/answer.dart' as _i23;
 import 'package:form_concierge_server/src/generated/survey.dart' as _i24;
 import 'package:form_concierge_server/src/generated/auth_user_info.dart'
     as _i25;
@@ -834,37 +834,37 @@ class Protocol extends _i1.SerializationManagerServer {
               .toList()
           as T;
     }
-    if (t == List<_i19.Choice>) {
-      return (data as List).map((e) => deserialize<_i19.Choice>(e)).toList()
+    if (t == List<_i19.QuestionWithChoices>) {
+      return (data as List)
+              .map((e) => deserialize<_i19.QuestionWithChoices>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i20.Choice>) {
+      return (data as List).map((e) => deserialize<_i20.Choice>(e)).toList()
           as T;
     }
     if (t == List<int>) {
       return (data as List).map((e) => deserialize<int>(e)).toList() as T;
     }
-    if (t == List<_i20.Question>) {
-      return (data as List).map((e) => deserialize<_i20.Question>(e)).toList()
+    if (t == List<_i21.Question>) {
+      return (data as List).map((e) => deserialize<_i21.Question>(e)).toList()
           as T;
     }
-    if (t == List<_i21.SurveyResponse>) {
+    if (t == List<_i22.SurveyResponse>) {
       return (data as List)
-              .map((e) => deserialize<_i21.SurveyResponse>(e))
+              .map((e) => deserialize<_i22.SurveyResponse>(e))
               .toList()
           as T;
     }
-    if (t == List<_i22.Answer>) {
-      return (data as List).map((e) => deserialize<_i22.Answer>(e)).toList()
+    if (t == List<_i23.Answer>) {
+      return (data as List).map((e) => deserialize<_i23.Answer>(e)).toList()
           as T;
     }
     if (t == Map<String, int>) {
       return (data as Map).map(
             (k, v) => MapEntry(deserialize<String>(k), deserialize<int>(v)),
           )
-          as T;
-    }
-    if (t == List<_i23.QuestionWithChoices>) {
-      return (data as List)
-              .map((e) => deserialize<_i23.QuestionWithChoices>(e))
-              .toList()
           as T;
     }
     if (t == List<_i24.Survey>) {

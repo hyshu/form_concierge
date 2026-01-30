@@ -14,19 +14,19 @@
 import 'package:serverpod_test/serverpod_test.dart' as _i1;
 import 'package:serverpod/serverpod.dart' as _i2;
 import 'dart:async' as _i3;
-import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
-    as _i4;
-import 'package:form_concierge_server/src/generated/choice.dart' as _i5;
-import 'package:form_concierge_server/src/generated/public_config.dart' as _i6;
-import 'package:form_concierge_server/src/generated/question.dart' as _i7;
-import 'package:form_concierge_server/src/generated/survey_response.dart'
-    as _i8;
-import 'package:form_concierge_server/src/generated/answer.dart' as _i9;
-import 'package:form_concierge_server/src/generated/survey_results.dart'
-    as _i10;
-import 'package:form_concierge_server/src/generated/survey.dart' as _i11;
 import 'package:form_concierge_server/src/generated/question_with_choices.dart'
-    as _i12;
+    as _i4;
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
+    as _i5;
+import 'package:form_concierge_server/src/generated/choice.dart' as _i6;
+import 'package:form_concierge_server/src/generated/public_config.dart' as _i7;
+import 'package:form_concierge_server/src/generated/question.dart' as _i8;
+import 'package:form_concierge_server/src/generated/survey_response.dart'
+    as _i9;
+import 'package:form_concierge_server/src/generated/answer.dart' as _i10;
+import 'package:form_concierge_server/src/generated/survey_results.dart'
+    as _i11;
+import 'package:form_concierge_server/src/generated/survey.dart' as _i12;
 import 'package:form_concierge_server/src/generated/auth_user_info.dart'
     as _i13;
 import 'package:form_concierge_server/src/generated/protocol.dart';
@@ -136,6 +136,8 @@ void withServerpod(
 }
 
 class TestEndpoints {
+  late final _AiAdminEndpoint aiAdmin;
+
   late final _RefreshJwtTokensEndpoint refreshJwtTokens;
 
   late final _EmailIdpEndpoint emailIdp;
@@ -162,6 +164,10 @@ class _InternalTestEndpoints extends TestEndpoints
     _i2.SerializationManager serializationManager,
     _i2.EndpointDispatch endpoints,
   ) {
+    aiAdmin = _AiAdminEndpoint(
+      endpoints,
+      serializationManager,
+    );
     refreshJwtTokens = _RefreshJwtTokensEndpoint(
       endpoints,
       serializationManager,
@@ -201,6 +207,48 @@ class _InternalTestEndpoints extends TestEndpoints
   }
 }
 
+class _AiAdminEndpoint {
+  _AiAdminEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _i2.EndpointDispatch _endpointDispatch;
+
+  final _i2.SerializationManager _serializationManager;
+
+  _i3.Future<List<_i4.QuestionWithChoices>> generateSurveyQuestions(
+    _i1.TestSessionBuilder sessionBuilder,
+    String prompt,
+  ) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'aiAdmin',
+            method: 'generateSurveyQuestions',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'aiAdmin',
+          methodName: 'generateSurveyQuestions',
+          parameters: _i1.testObjectToJson({'prompt': prompt}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<List<_i4.QuestionWithChoices>>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+}
+
 class _RefreshJwtTokensEndpoint {
   _RefreshJwtTokensEndpoint(
     this._endpointDispatch,
@@ -211,7 +259,7 @@ class _RefreshJwtTokensEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i4.AuthSuccess> refreshAccessToken(
+  _i3.Future<_i5.AuthSuccess> refreshAccessToken(
     _i1.TestSessionBuilder sessionBuilder, {
     required String refreshToken,
   }) async {
@@ -234,7 +282,7 @@ class _RefreshJwtTokensEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i4.AuthSuccess>);
+                as _i3.Future<_i5.AuthSuccess>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -253,7 +301,7 @@ class _EmailIdpEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i4.AuthSuccess> login(
+  _i3.Future<_i5.AuthSuccess> login(
     _i1.TestSessionBuilder sessionBuilder, {
     required String email,
     required String password,
@@ -280,7 +328,7 @@ class _EmailIdpEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i4.AuthSuccess>);
+                as _i3.Future<_i5.AuthSuccess>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -354,7 +402,7 @@ class _EmailIdpEndpoint {
     });
   }
 
-  _i3.Future<_i4.AuthSuccess> finishRegistration(
+  _i3.Future<_i5.AuthSuccess> finishRegistration(
     _i1.TestSessionBuilder sessionBuilder, {
     required String registrationToken,
     required String password,
@@ -381,7 +429,7 @@ class _EmailIdpEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i4.AuthSuccess>);
+                as _i3.Future<_i5.AuthSuccess>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -501,9 +549,9 @@ class _ChoiceAdminEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i5.Choice> create(
+  _i3.Future<_i6.Choice> create(
     _i1.TestSessionBuilder sessionBuilder,
-    _i5.Choice choice,
+    _i6.Choice choice,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -524,7 +572,7 @@ class _ChoiceAdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i5.Choice>);
+                as _i3.Future<_i6.Choice>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -532,9 +580,9 @@ class _ChoiceAdminEndpoint {
     });
   }
 
-  _i3.Future<_i5.Choice> update(
+  _i3.Future<_i6.Choice> update(
     _i1.TestSessionBuilder sessionBuilder,
-    _i5.Choice choice,
+    _i6.Choice choice,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -555,7 +603,7 @@ class _ChoiceAdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i5.Choice>);
+                as _i3.Future<_i6.Choice>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -594,7 +642,7 @@ class _ChoiceAdminEndpoint {
     });
   }
 
-  _i3.Future<List<_i5.Choice>> reorder(
+  _i3.Future<List<_i6.Choice>> reorder(
     _i1.TestSessionBuilder sessionBuilder,
     int questionId,
     List<int> choiceIds,
@@ -621,7 +669,7 @@ class _ChoiceAdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i5.Choice>>);
+                as _i3.Future<List<_i6.Choice>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -629,7 +677,7 @@ class _ChoiceAdminEndpoint {
     });
   }
 
-  _i3.Future<_i5.Choice?> getById(
+  _i3.Future<_i6.Choice?> getById(
     _i1.TestSessionBuilder sessionBuilder,
     int choiceId,
   ) async {
@@ -652,7 +700,7 @@ class _ChoiceAdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i5.Choice?>);
+                as _i3.Future<_i6.Choice?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -671,7 +719,7 @@ class _ConfigEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i6.PublicConfig> getPublicConfig(
+  _i3.Future<_i7.PublicConfig> getPublicConfig(
     _i1.TestSessionBuilder sessionBuilder,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -693,7 +741,7 @@ class _ConfigEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i6.PublicConfig>);
+                as _i3.Future<_i7.PublicConfig>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -712,9 +760,9 @@ class _QuestionAdminEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i7.Question> create(
+  _i3.Future<_i8.Question> create(
     _i1.TestSessionBuilder sessionBuilder,
-    _i7.Question question,
+    _i8.Question question,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -735,7 +783,7 @@ class _QuestionAdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i7.Question>);
+                as _i3.Future<_i8.Question>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -743,9 +791,9 @@ class _QuestionAdminEndpoint {
     });
   }
 
-  _i3.Future<_i7.Question> update(
+  _i3.Future<_i8.Question> update(
     _i1.TestSessionBuilder sessionBuilder,
-    _i7.Question question,
+    _i8.Question question,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -766,7 +814,7 @@ class _QuestionAdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i7.Question>);
+                as _i3.Future<_i8.Question>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -805,7 +853,7 @@ class _QuestionAdminEndpoint {
     });
   }
 
-  _i3.Future<List<_i7.Question>> reorder(
+  _i3.Future<List<_i8.Question>> reorder(
     _i1.TestSessionBuilder sessionBuilder,
     int surveyId,
     List<int> questionIds,
@@ -832,7 +880,7 @@ class _QuestionAdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i7.Question>>);
+                as _i3.Future<List<_i8.Question>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -840,7 +888,7 @@ class _QuestionAdminEndpoint {
     });
   }
 
-  _i3.Future<List<_i7.Question>> getForSurvey(
+  _i3.Future<List<_i8.Question>> getForSurvey(
     _i1.TestSessionBuilder sessionBuilder,
     int surveyId,
   ) async {
@@ -863,7 +911,7 @@ class _QuestionAdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i7.Question>>);
+                as _i3.Future<List<_i8.Question>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -871,7 +919,7 @@ class _QuestionAdminEndpoint {
     });
   }
 
-  _i3.Future<_i7.Question?> getById(
+  _i3.Future<_i8.Question?> getById(
     _i1.TestSessionBuilder sessionBuilder,
     int questionId,
   ) async {
@@ -894,7 +942,7 @@ class _QuestionAdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i7.Question?>);
+                as _i3.Future<_i8.Question?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -902,7 +950,7 @@ class _QuestionAdminEndpoint {
     });
   }
 
-  _i3.Future<List<_i5.Choice>> getChoicesForQuestion(
+  _i3.Future<List<_i6.Choice>> getChoicesForQuestion(
     _i1.TestSessionBuilder sessionBuilder,
     int questionId,
   ) async {
@@ -925,7 +973,7 @@ class _QuestionAdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i5.Choice>>);
+                as _i3.Future<List<_i6.Choice>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -944,7 +992,7 @@ class _ResponseAnalyticsEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<List<_i8.SurveyResponse>> getResponses(
+  _i3.Future<List<_i9.SurveyResponse>> getResponses(
     _i1.TestSessionBuilder sessionBuilder,
     int surveyId, {
     int? limit,
@@ -973,7 +1021,7 @@ class _ResponseAnalyticsEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i8.SurveyResponse>>);
+                as _i3.Future<List<_i9.SurveyResponse>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1012,7 +1060,7 @@ class _ResponseAnalyticsEndpoint {
     });
   }
 
-  _i3.Future<List<_i9.Answer>> getAnswersForResponse(
+  _i3.Future<List<_i10.Answer>> getAnswersForResponse(
     _i1.TestSessionBuilder sessionBuilder,
     int responseId,
   ) async {
@@ -1035,7 +1083,7 @@ class _ResponseAnalyticsEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i9.Answer>>);
+                as _i3.Future<List<_i10.Answer>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1043,7 +1091,7 @@ class _ResponseAnalyticsEndpoint {
     });
   }
 
-  _i3.Future<_i10.SurveyResults> getAggregatedResults(
+  _i3.Future<_i11.SurveyResults> getAggregatedResults(
     _i1.TestSessionBuilder sessionBuilder,
     int surveyId,
   ) async {
@@ -1066,7 +1114,7 @@ class _ResponseAnalyticsEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i10.SurveyResults>);
+                as _i3.Future<_i11.SurveyResults>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1151,9 +1199,9 @@ class _SurveyAdminEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i11.Survey> create(
+  _i3.Future<_i12.Survey> create(
     _i1.TestSessionBuilder sessionBuilder,
-    _i11.Survey survey,
+    _i12.Survey survey,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -1174,7 +1222,7 @@ class _SurveyAdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i11.Survey>);
+                as _i3.Future<_i12.Survey>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1182,10 +1230,10 @@ class _SurveyAdminEndpoint {
     });
   }
 
-  _i3.Future<_i11.Survey> createWithQuestions(
+  _i3.Future<_i12.Survey> createWithQuestions(
     _i1.TestSessionBuilder sessionBuilder,
-    _i11.Survey survey,
-    List<_i12.QuestionWithChoices> questions,
+    _i12.Survey survey,
+    List<_i4.QuestionWithChoices> questions,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -1209,7 +1257,7 @@ class _SurveyAdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i11.Survey>);
+                as _i3.Future<_i12.Survey>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1217,9 +1265,9 @@ class _SurveyAdminEndpoint {
     });
   }
 
-  _i3.Future<_i11.Survey> update(
+  _i3.Future<_i12.Survey> update(
     _i1.TestSessionBuilder sessionBuilder,
-    _i11.Survey survey,
+    _i12.Survey survey,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -1240,7 +1288,7 @@ class _SurveyAdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i11.Survey>);
+                as _i3.Future<_i12.Survey>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1279,7 +1327,7 @@ class _SurveyAdminEndpoint {
     });
   }
 
-  _i3.Future<List<_i11.Survey>> list(
+  _i3.Future<List<_i12.Survey>> list(
     _i1.TestSessionBuilder sessionBuilder,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -1301,7 +1349,7 @@ class _SurveyAdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i11.Survey>>);
+                as _i3.Future<List<_i12.Survey>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1309,7 +1357,7 @@ class _SurveyAdminEndpoint {
     });
   }
 
-  _i3.Future<_i11.Survey?> getById(
+  _i3.Future<_i12.Survey?> getById(
     _i1.TestSessionBuilder sessionBuilder,
     int surveyId,
   ) async {
@@ -1332,7 +1380,7 @@ class _SurveyAdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i11.Survey?>);
+                as _i3.Future<_i12.Survey?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1340,7 +1388,7 @@ class _SurveyAdminEndpoint {
     });
   }
 
-  _i3.Future<_i11.Survey> publish(
+  _i3.Future<_i12.Survey> publish(
     _i1.TestSessionBuilder sessionBuilder,
     int surveyId,
   ) async {
@@ -1363,7 +1411,7 @@ class _SurveyAdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i11.Survey>);
+                as _i3.Future<_i12.Survey>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1371,7 +1419,7 @@ class _SurveyAdminEndpoint {
     });
   }
 
-  _i3.Future<_i11.Survey> close(
+  _i3.Future<_i12.Survey> close(
     _i1.TestSessionBuilder sessionBuilder,
     int surveyId,
   ) async {
@@ -1394,7 +1442,7 @@ class _SurveyAdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i11.Survey>);
+                as _i3.Future<_i12.Survey>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1402,7 +1450,7 @@ class _SurveyAdminEndpoint {
     });
   }
 
-  _i3.Future<_i11.Survey> reopen(
+  _i3.Future<_i12.Survey> reopen(
     _i1.TestSessionBuilder sessionBuilder,
     int surveyId,
   ) async {
@@ -1425,7 +1473,7 @@ class _SurveyAdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i11.Survey>);
+                as _i3.Future<_i12.Survey>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1444,7 +1492,7 @@ class _SurveyEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i11.Survey?> getBySlug(
+  _i3.Future<_i12.Survey?> getBySlug(
     _i1.TestSessionBuilder sessionBuilder,
     String slug,
   ) async {
@@ -1467,7 +1515,7 @@ class _SurveyEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i11.Survey?>);
+                as _i3.Future<_i12.Survey?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1475,10 +1523,10 @@ class _SurveyEndpoint {
     });
   }
 
-  _i3.Future<_i8.SurveyResponse> submitResponse(
+  _i3.Future<_i9.SurveyResponse> submitResponse(
     _i1.TestSessionBuilder sessionBuilder, {
     required int surveyId,
-    required List<_i9.Answer> answers,
+    required List<_i10.Answer> answers,
     String? anonymousId,
   }) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -1504,7 +1552,7 @@ class _SurveyEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i8.SurveyResponse>);
+                as _i3.Future<_i9.SurveyResponse>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1512,7 +1560,7 @@ class _SurveyEndpoint {
     });
   }
 
-  _i3.Future<List<_i7.Question>> getQuestionsForSurvey(
+  _i3.Future<List<_i8.Question>> getQuestionsForSurvey(
     _i1.TestSessionBuilder sessionBuilder,
     int surveyId,
   ) async {
@@ -1535,7 +1583,7 @@ class _SurveyEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i7.Question>>);
+                as _i3.Future<List<_i8.Question>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1543,7 +1591,7 @@ class _SurveyEndpoint {
     });
   }
 
-  _i3.Future<List<_i5.Choice>> getChoicesForQuestion(
+  _i3.Future<List<_i6.Choice>> getChoicesForQuestion(
     _i1.TestSessionBuilder sessionBuilder,
     int questionId,
   ) async {
@@ -1566,7 +1614,7 @@ class _SurveyEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i5.Choice>>);
+                as _i3.Future<List<_i6.Choice>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1613,7 +1661,7 @@ class _UserAdminEndpoint {
     });
   }
 
-  _i3.Future<_i4.AuthSuccess> registerFirstUser(
+  _i3.Future<_i5.AuthSuccess> registerFirstUser(
     _i1.TestSessionBuilder sessionBuilder, {
     required String email,
     required String password,
@@ -1640,7 +1688,7 @@ class _UserAdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i4.AuthSuccess>);
+                as _i3.Future<_i5.AuthSuccess>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

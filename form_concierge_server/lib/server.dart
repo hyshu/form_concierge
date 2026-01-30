@@ -7,6 +7,7 @@ import 'package:serverpod_auth_idp_server/providers/email.dart';
 import 'src/generated/endpoints.dart';
 import 'src/generated/protocol.dart';
 import 'src/services/email_service.dart';
+import 'src/services/gemini_service.dart';
 
 void run(List<String> args) async {
   final pod = Serverpod(args, Protocol(), Endpoints());
@@ -21,6 +22,16 @@ void run(List<String> args) async {
     );
   } else {
     pod.logVerbose('Email service disabled - SMTP not configured');
+  }
+
+  // Initialize Gemini service from API key configuration
+  final geminiConfig = GeminiConfig.fromServerpod(pod);
+  GeminiService.initialize(geminiConfig);
+
+  if (geminiConfig.enabled) {
+    pod.logVerbose('Gemini service enabled');
+  } else {
+    pod.logVerbose('Gemini service disabled - API key not configured');
   }
 
   // Use fixed verification code when email is disabled for easier development

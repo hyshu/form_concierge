@@ -71,6 +71,18 @@ class DraftQuestion {
     );
   }
 
+  /// Create from QuestionWithChoices (AI generated).
+  factory DraftQuestion.fromQuestionWithChoices(QuestionWithChoices q) {
+    return DraftQuestion(
+      tempId: _uuid.v4(),
+      text: q.text,
+      type: q.type,
+      isRequired: q.isRequired,
+      placeholder: q.placeholder,
+      choices: q.choices.map((c) => DraftChoice.create(text: c)).toList(),
+    );
+  }
+
   DraftQuestion copyWith({
     String? text,
     QuestionType? type,
