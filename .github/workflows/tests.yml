@@ -22,26 +22,26 @@ jobs:
           flutter-version: '3.32.8'
 
       - name: Start containers
-        working-directory: form_concierge_server
+        working-directory: server
         run: docker compose up --build -d
 
       - name: Install dependencies
-        working-directory: form_concierge_server
+        working-directory: server
         run: dart pub get
 
       - name: Install Serverpod CLI
-        working-directory: form_concierge_server
+        working-directory: server
         run: dart pub global activate serverpod_cli $VERSION
 
       - name: Run Serverpod generator
-        working-directory: form_concierge_server
+        working-directory: server
         run: serverpod generate
 
       - name: Run tests
-        working-directory: form_concierge_server
+        working-directory: server
         run: dart test
 
       - name: Stop containers
         if: always()
-        working-directory: form_concierge_server
+        working-directory: server
         run: docker compose down -v

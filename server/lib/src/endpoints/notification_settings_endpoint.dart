@@ -1,6 +1,6 @@
 import 'package:serverpod/serverpod.dart';
 
-import '../future_calls/daily_notification_future_call.dart';
+import '../generated/future_calls.dart';
 import '../generated/protocol.dart';
 import '../services/email_service.dart';
 import '../services/notification_email_builder.dart';
@@ -198,12 +198,10 @@ class NotificationSettingsEndpoint extends Endpoint {
     Session session,
     NotificationSettings settings,
   ) async {
-    final identifier = DailyNotificationFutureCall.taskIdentifier(
-      settings.surveyId,
-    );
+    final identifier = _dailyNotificationIdentifier(settings.surveyId);
 
     // Cancel any existing schedule to avoid duplicates
-    await session.serverpod.cancelFutureCall(identifier);
+    await session.serverpod.futureCalls.cancel(identifier);
 
     // Calculate next run time
     final now = DateTime.now().toUtc();
@@ -215,12 +213,10 @@ class NotificationSettingsEndpoint extends Endpoint {
     }
 
     // Schedule the future call
-    await session.serverpod.futureCallAtTime(
-      'dailyNotification',
-      settings,
-      nextRun,
-      identifier: identifier,
-    );
+    await session.serverpod.futureCalls
+        .callAtTime(nextRun, identifier: identifier)
+        .dailyNotification
+        .invoke(settings);
 
     session.log(
       'Scheduled daily notification for survey ${settings.surveyId} at $nextRun',
@@ -228,10 +224,13 @@ class NotificationSettingsEndpoint extends Endpoint {
   }
 
   Future<void> _cancelFutureCall(Session session, int surveyId) async {
-    final identifier = DailyNotificationFutureCall.taskIdentifier(surveyId);
-    await session.serverpod.cancelFutureCall(identifier);
+    final identifier = _dailyNotificationIdentifier(surveyId);
+    await session.serverpod.futureCalls.cancel(identifier);
     session.log('Cancelled daily notification for survey $surveyId');
   }
+
+  static String _dailyNotificationIdentifier(int surveyId) =>
+      'daily-notification-survey-$surveyId';
 
   bool _isValidEmail(String email) {
     return RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(email);
