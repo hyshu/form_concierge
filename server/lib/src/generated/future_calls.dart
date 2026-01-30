@@ -124,10 +124,10 @@ class _DailyNotificationFutureCallDispatcher {
 
   final _InvokeFutureCall _invokeFutureCall;
 
-  Future<void> invoke(_i2.NotificationSettings? settings) {
+  Future<void> invoke(_i2.NotificationSettings? object) {
     return _invokeFutureCall(
       'DailyNotificationInvokeFutureCall',
-      settings,
+      object,
     );
   }
 }
@@ -137,11 +137,11 @@ class DailyNotificationInvokeFutureCall
   @override
   _i3.Future<void> invoke(
     _i1.Session session,
-    _i2.NotificationSettings? settings,
+    _i2.NotificationSettings? object,
   ) async {
     await _i4.DailyNotificationFutureCall().invoke(
       session,
-      settings,
+      object,
     );
   }
 }

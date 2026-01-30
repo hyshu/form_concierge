@@ -2071,14 +2071,14 @@ class _UserAdminEndpoint {
 class _DailyNotificationFutureCall {
   Future<void> invoke(
     _i1.TestSessionBuilder sessionBuilder,
-    _i8.NotificationSettings? settings,
+    _i8.NotificationSettings? object,
   ) async {
     var _localUniqueSession = (sessionBuilder as _i1.InternalTestSessionBuilder)
         .internalBuild();
     try {
       await _i15.DailyNotificationInvokeFutureCall().invoke(
         _localUniqueSession,
-        settings,
+        object,
       );
     } finally {
       await _localUniqueSession.close();

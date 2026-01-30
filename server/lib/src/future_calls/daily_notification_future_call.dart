@@ -1,5 +1,6 @@
 import 'package:serverpod/serverpod.dart';
 
+import '../generated/future_calls.dart';
 import '../generated/protocol.dart';
 import '../services/email_service.dart';
 import '../services/notification_email_builder.dart';
@@ -10,12 +11,8 @@ import '../services/response_summary_service.dart';
 /// This call processes notifications for a specific survey and
 /// self-reschedules for the next day.
 class DailyNotificationFutureCall extends FutureCall<NotificationSettings> {
-  /// Identifier prefix for daily notification tasks.
-  static const taskIdentifierPrefix = 'daily-notification-survey';
-
-  /// Generates the task identifier for a specific survey.
-  static String taskIdentifier(int surveyId) =>
-      '$taskIdentifierPrefix-$surveyId';
+  static String _identifier(int surveyId) =>
+      'daily-notification-survey-$surveyId';
 
   @override
   Future<void> invoke(
@@ -81,18 +78,16 @@ class DailyNotificationFutureCall extends FutureCall<NotificationSettings> {
     // Schedule for tomorrow
     nextRun = nextRun.add(const Duration(days: 1));
 
-    final identifier = taskIdentifier(settings.surveyId);
+    final identifier = _identifier(settings.surveyId);
 
     // Cancel any existing schedule to avoid duplicates
-    await session.serverpod.cancelFutureCall(identifier);
+    await session.serverpod.futureCalls.cancel(identifier);
 
     // Schedule next run
-    await session.serverpod.futureCallAtTime(
-      'dailyNotification',
-      settings,
-      nextRun,
-      identifier: identifier,
-    );
+    await session.serverpod.futureCalls
+        .callAtTime(nextRun, identifier: identifier)
+        .dailyNotification
+        .invoke(settings);
 
     session.log(
       'Daily notification for survey ${settings.surveyId} rescheduled for $nextRun',

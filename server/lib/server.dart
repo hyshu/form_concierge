@@ -4,7 +4,6 @@ import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_idp_server/core.dart';
 import 'package:serverpod_auth_idp_server/providers/email.dart';
 
-import 'src/future_calls/daily_notification_future_call.dart';
 import 'src/generated/endpoints.dart';
 import 'src/generated/protocol.dart';
 import 'src/services/email_service.dart';
@@ -70,9 +69,6 @@ void run(List<String> args) async {
     pod.webServer.addRoute(StaticRoute.directory(surveyWebDir), '/s/**');
   }
 
-  // Register future calls
-  pod.registerFutureCall(DailyNotificationFutureCall(), 'dailyNotification');
-
   await pod.start();
 
   // Initialize scheduled notifications for existing enabled settings
@@ -98,12 +94,10 @@ Future<void> _initializeDailyNotifications(Serverpod pod) async {
     pod.logVerbose('Initializing ${settings.length} daily notification(s)');
 
     for (final setting in settings) {
-      final identifier = DailyNotificationFutureCall.taskIdentifier(
-        setting.surveyId,
-      );
+      final identifier = _dailyNotificationIdentifier(setting.surveyId);
 
       // Cancel any stale schedules
-      await session.serverpod.cancelFutureCall(identifier);
+      await session.serverpod.futureCalls.cancel(identifier);
 
       // Calculate next run time
       final now = DateTime.now().toUtc();
@@ -120,12 +114,10 @@ Future<void> _initializeDailyNotifications(Serverpod pod) async {
       }
 
       // Schedule the future call
-      await session.serverpod.futureCallAtTime(
-        'dailyNotification',
-        setting,
-        nextRun,
-        identifier: identifier,
-      );
+      await session.serverpod.futureCalls
+          .callAtTime(nextRun, identifier: identifier)
+          .dailyNotification
+          .invoke(setting);
 
       pod.logVerbose(
         'Scheduled notification for survey ${setting.surveyId} at $nextRun UTC',
@@ -135,6 +127,9 @@ Future<void> _initializeDailyNotifications(Serverpod pod) async {
     await session.close();
   }
 }
+
+String _dailyNotificationIdentifier(int surveyId) =>
+    'daily-notification-survey-$surveyId';
 
 void _sendRegistrationCode(
   Session session, {
