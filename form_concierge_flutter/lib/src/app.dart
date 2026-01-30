@@ -15,10 +15,14 @@ class App extends RearchConsumer {
     final router = use(appRouterCapsule);
     final authManager = use(authStateCapsule);
 
-    // Check auth on startup (only on first build)
-    if (use.isFirstBuild()) {
-      authManager.checkAuth();
-    }
+    // Check auth on startup
+    use.effect(
+      () {
+        authManager.checkAuth();
+        return null;
+      },
+      [],
+    );
 
     return MaterialApp.router(
       title: 'Form Concierge Admin',
