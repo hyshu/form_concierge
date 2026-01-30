@@ -1,0 +1,15 @@
+# This file configures your Serverpod Cloud project.
+# It is automatically generated and updated by the `scloud` command.
+# 
+# Useful commands:
+# - Deploy: `scloud deploy`
+# - Get Help: `scloud help`
+#
+# For full documentation, visit: https://docs.serverpod.cloud
+
+project:
+  projectId: "hayami"
+  scripts:
+    pre_deploy:
+      - "cd ../admin_dashboard && flutter build web --base-href /admin/ --wasm && cp -r build/web/* ../server/web/admin/"
+    post_deploy: []
