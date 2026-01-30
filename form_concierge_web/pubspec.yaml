@@ -1,0 +1,23 @@
+name: form_concierge_web
+description: Web survey form using Jaspr
+
+publish_to: none
+
+environment:
+  sdk: ^3.6.0
+
+jaspr:
+  mode: server
+
+dependencies:
+  jaspr: ^0.22.0
+  jaspr_router: ^0.8.1
+  form_concierge_client:
+    path: ../form_concierge_client
+
+dev_dependencies:
+  build_runner: ^2.4.14
+  build_web_compilers: ^4.4.6
+  jaspr_builder: ^0.22.0
+  jaspr_tailwind: ^0.3.6
+  lints: ^5.0.0
