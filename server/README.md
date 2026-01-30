@@ -16,19 +16,35 @@ Serverpod backend server for Form Concierge.
    dart pub get
    ```
 
-2. Start PostgreSQL and Redis:
+2. Create passwords configuration:
+
+   ```bash
+   cp config/passwords.yaml.example config/passwords.yaml
+   ```
+
+   Then edit `config/passwords.yaml` and replace all `<generate-random-password>` placeholders with secure random passwords.
+
+   **Tip:** You can generate random passwords easily by creating a temporary Serverpod project:
+
+   ```bash
+   serverpod create temp_passwords
+   cp temp_passwords/temp_passwords_server/config/passwords.yaml config/passwords.yaml
+   rm -rf temp_passwords
+   ```
+
+3. Start PostgreSQL and Redis:
 
    ```bash
    docker compose up -d
    ```
 
-3. Generate Serverpod code (run after model changes):
+4. Generate Serverpod code (run after model changes):
 
    ```bash
    serverpod generate
    ```
 
-4. Start the server with migrations:
+5. Start the server with migrations:
 
    ```bash
    dart run bin/main.dart --apply-migrations
