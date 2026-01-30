@@ -71,7 +71,7 @@ class SurveyListTile extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    '/s/${survey.slug}',
+                    '/${survey.slug}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSurfaceVariant,
                     ),
