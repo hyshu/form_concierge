@@ -1,3 +1,6 @@
 [submodule "docs"]
-	path = docs
+	path = docs_serverpod
 	url = https://github.com/serverpod/serverpod_docs.git
+[submodule "docs_jaspr"]
+	path = docs_jaspr
+	url = https://github.com/schultek/jaspr

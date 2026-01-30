@@ -6,7 +6,7 @@ argument-hint: [topic]
 
 # Serverpod Documentation Reference
 
-Official Serverpod documentation is available in `docs/docs/`.
+Official Serverpod documentation is available in `docs/docs_serverpod/`.
 
 ## Documentation Structure
 
