@@ -4,6 +4,7 @@ import { normalizeDeviceInfo, normalizeMetadata } from './metadata';
 import { choiceToJson, parseChoiceIds, questionToJson, responseToJson, surveyToJson } from './serializers';
 import { getVisibilityRules, visibleQuestionIds } from './visibility_rules';
 import { DEFAULT_FORM_CONTENT_LOCALE, localizedTextFor } from './localization';
+import { sendResponseNotification } from './notification_settings';
 
 export async function getPublicSurvey(env: Env, slug: string): Promise<Response> {
   const row = await env.DB.prepare(
@@ -60,6 +61,7 @@ export async function submitResponse(
   env: Env,
   surveyId: number,
   anonymous: AnonymousContext,
+  ctx?: ExecutionContext,
 ): Promise<Response> {
   const survey = await env.DB.prepare(`SELECT * FROM surveys WHERE id = ?`)
     .bind(surveyId)
@@ -139,6 +141,15 @@ export async function submitResponse(
   await env.DB.prepare(
     `UPDATE anonymous_accounts SET last_seen_at = ? WHERE id = ?`,
   ).bind(now, anonymous.id).run();
+
+  const notificationTask = sendResponseNotification(env, survey, response).catch((error) => {
+    console.error('Failed to send response notification', error);
+  });
+  if (ctx) {
+    ctx.waitUntil(notificationTask);
+  } else {
+    await notificationTask;
+  }
 
   return json(responseToJson(response), 201);
 }

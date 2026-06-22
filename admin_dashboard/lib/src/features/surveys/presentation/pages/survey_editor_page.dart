@@ -64,6 +64,7 @@ class SurveyEditorPage extends RearchConsumer {
         title: context.tr('Loading...'),
         selectedItemId: 'surveys',
         showUsers: canManageUsers,
+        showSettings: canManageUsers,
         onBack: () => context.go('/admin'),
         child: const Center(child: HuxLoading(size: HuxLoadingSize.large)),
       );
@@ -79,6 +80,7 @@ class SurveyEditorPage extends RearchConsumer {
         title: context.tr('Survey Not Found'),
         selectedItemId: 'surveys',
         showUsers: canManageUsers,
+        showSettings: canManageUsers,
         onBack: () => context.go('/admin'),
         child: HuxPageBody(
           child: HuxErrorState(
@@ -97,6 +99,7 @@ class SurveyEditorPage extends RearchConsumer {
       title: isNewSurvey ? context.tr('New Survey') : survey!.title,
       selectedItemId: 'surveys',
       showUsers: canManageUsers,
+      showSettings: canManageUsers,
       onBack: () => context.go('/admin'),
       actions: [
         if (!isNewSurvey &&

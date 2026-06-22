@@ -25,6 +25,8 @@ import {
   updateQuestion,
 } from './admin_questions';
 import { notificationSettings } from './notification_settings';
+import { generateSurveyQuestions } from './ai_generation';
+import { getAdminIntegrationSettings, isEmailConfiguredResponse, isGeminiConfigured, updateAdminIntegrationSettings } from './admin_settings';
 import { getPublicChoices, getPublicQuestions, getPublicSurvey, getPublicSurveyByDomain, submitResponse } from './public_surveys';
 import { listAdminVisibilityRules, listPublicVisibilityRules, replaceAdminVisibilityRules } from './visibility_rules';
 import {
@@ -44,13 +46,13 @@ import { requireScope } from './permissions';
 import { isPublicFormHtmlRequest, renderPublicForm } from './public_form_renderer';
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     if (request.method === 'OPTIONS') {
       return new Response(null, { status: 204, headers: jsonHeaders });
     }
 
     try {
-      return await route(request, env);
+      return await route(request, env, ctx);
     } catch (error) {
       if (error instanceof HttpError) {
         return json({ error: error.message, details: error.details }, error.status);
@@ -61,7 +63,7 @@ export default {
   },
 };
 
-async function route(request: Request, env: Env): Promise<Response> {
+async function route(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/+$/, '') || '/';
   const method = request.method.toUpperCase();
@@ -71,7 +73,7 @@ async function route(request: Request, env: Env): Promise<Response> {
     return json({
       passwordResetEnabled: false,
       requireEmailVerification: false,
-      geminiEnabled: false,
+      geminiEnabled: await isGeminiConfigured(env),
     });
   }
 
@@ -155,7 +157,7 @@ async function route(request: Request, env: Env): Promise<Response> {
     method === 'POST'
   ) {
     const anonymous = await requireAnonymous(request, env);
-    return submitResponse(request, env, Number(parts[3]), anonymous);
+    return submitResponse(request, env, Number(parts[3]), anonymous, ctx);
   }
 
   if (
@@ -205,6 +207,15 @@ async function routeAdmin(
     if (method === 'POST' && parts[3] && parts[4] === 'toggle-blocked') {
       return toggleUserBlocked(env, parts[3]);
     }
+  }
+
+  if (parts[2] === 'settings') {
+    if (method === 'GET' && parts[3] === 'email-configured') {
+      return isEmailConfiguredResponse(env);
+    }
+    requireScope(admin, 'admin');
+    if (method === 'GET' && parts.length === 3) return getAdminIntegrationSettings(env);
+    if (method === 'PUT' && parts.length === 3) return updateAdminIntegrationSettings(request, env);
   }
 
   if (parts[2] === 'surveys') {
@@ -310,7 +321,7 @@ async function routeAdmin(
 
   if (parts[2] === 'ai' && parts[3] === 'survey-questions') {
     requireScope(admin, 'survey:write');
-    throw new HttpError(501, 'AI generation is not configured');
+    return generateSurveyQuestions(request, env);
   }
 
   return json({ error: 'Not found' }, 404);

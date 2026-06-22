@@ -131,9 +131,7 @@ export function notificationToJson(row: NotificationSettingsRow) {
     surveyId: row.survey_id,
     enabled: row.enabled === 1,
     recipientEmail: row.recipient_email,
-    sendHour: row.send_hour,
     updatedAt: row.updated_at,
-    lastSentAt: row.last_sent_at,
   };
 }
 

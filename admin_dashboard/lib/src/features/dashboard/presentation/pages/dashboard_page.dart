@@ -36,6 +36,7 @@ class DashboardPage extends RearchConsumer {
       title: context.tr('Surveys'),
       selectedItemId: 'surveys',
       showUsers: canManageUsers,
+      showSettings: canManageUsers,
       actions: [
         HuxButton(
           onPressed: surveyManager.loadSurveys,

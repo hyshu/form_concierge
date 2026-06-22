@@ -167,9 +167,14 @@ class NotificationSettingsEndpoint {
     return true;
   }
 
-  Future<bool> isEmailConfigured() async => false;
+  Future<bool> isEmailConfigured() => _client.adminSettings.isEmailConfigured();
 
   Future<bool> sendTestNotification(int surveyId) async {
-    throw const ApiException(501, 'Email notifications are not configured');
+    await _client.request(
+      'POST',
+      '/api/admin/surveys/$surveyId/notification-settings/test',
+      authenticated: true,
+    );
+    return true;
   }
 }

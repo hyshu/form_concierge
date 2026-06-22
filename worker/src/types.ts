@@ -127,9 +127,20 @@ export type NotificationSettingsRow = {
   survey_id: number;
   enabled: number;
   recipient_email: string;
-  send_hour: number;
   updated_at: string;
-  last_sent_at: string | null;
+};
+
+export type IntegrationSettingsRow = {
+  id: number;
+  gemini_api_key: string | null;
+  smtp_host: string | null;
+  smtp_port: number | null;
+  smtp_username: string | null;
+  smtp_password: string | null;
+  smtp_from_email: string | null;
+  smtp_from_name: string | null;
+  smtp_secure_mode: string;
+  updated_at: string;
 };
 
 export type QuestionInput = {

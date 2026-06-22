@@ -4,7 +4,7 @@ import 'package:hux/hux.dart';
 
 import '../../../../core/localization/app_localizations.dart';
 
-/// View for configuring daily email notifications.
+/// View for configuring response email notifications.
 class NotificationSettingsView extends StatefulWidget {
   final int surveyId;
   final NotificationSettings? settings;
@@ -45,7 +45,6 @@ class NotificationSettingsView extends StatefulWidget {
 class _NotificationSettingsViewState extends State<NotificationSettingsView> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _emailController;
-  late int _selectedHour;
   bool _hasChanges = false;
 
   @override
@@ -54,7 +53,6 @@ class _NotificationSettingsViewState extends State<NotificationSettingsView> {
     _emailController = TextEditingController(
       text: widget.settings?.recipientEmail ?? '',
     );
-    _selectedHour = widget.settings?.sendHour ?? 9;
     _emailController.addListener(_onFormChanged);
   }
 
@@ -63,7 +61,6 @@ class _NotificationSettingsViewState extends State<NotificationSettingsView> {
     super.didUpdateWidget(oldWidget);
     if (widget.settings != oldWidget.settings && widget.settings != null) {
       _emailController.text = widget.settings!.recipientEmail;
-      _selectedHour = widget.settings!.sendHour;
       _hasChanges = false;
     }
   }
@@ -81,13 +78,6 @@ class _NotificationSettingsViewState extends State<NotificationSettingsView> {
     }
   }
 
-  void _onHourChanged(int value) {
-    setState(() {
-      _selectedHour = value;
-      _hasChanges = true;
-    });
-  }
-
   Future<void> _onSave() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -95,7 +85,6 @@ class _NotificationSettingsViewState extends State<NotificationSettingsView> {
       surveyId: widget.surveyId,
       enabled: widget.settings?.enabled ?? false,
       recipientEmail: _emailController.text.trim(),
-      sendHour: _selectedHour,
       updatedAt: DateTime.now(),
     );
 
@@ -157,7 +146,7 @@ class _NotificationSettingsViewState extends State<NotificationSettingsView> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        context.tr('Daily Email Notifications'),
+                        context.tr('Email Notifications'),
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ],
@@ -165,7 +154,7 @@ class _NotificationSettingsViewState extends State<NotificationSettingsView> {
                   const SizedBox(height: 8),
                   Text(
                     context.tr(
-                      'Receive a daily summary of new survey responses via email.',
+                      'Send an email every time a new response is submitted.',
                     ),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: HuxTokens.textSecondary(context),
@@ -192,30 +181,6 @@ class _NotificationSettingsViewState extends State<NotificationSettingsView> {
                       }
                       return null;
                     },
-                  ),
-                  const SizedBox(height: 16),
-                  _LabeledControl(
-                    label: context.tr('Send Time (UTC)'),
-                    child: HuxDropdown<int>(
-                      value: _selectedHour,
-                      enabled: widget.isEmailConfigured,
-                      useItemWidgetAsValue: true,
-                      items: List.generate(24, (hour) {
-                        final label =
-                            '${hour.toString().padLeft(2, '0')}:00 UTC';
-                        return HuxDropdownItem(
-                          value: hour,
-                          child: Row(
-                            children: [
-                              const Icon(LucideIcons.clock3, size: 18),
-                              const SizedBox(width: 8),
-                              Text(label),
-                            ],
-                          ),
-                        );
-                      }),
-                      onChanged: _onHourChanged,
-                    ),
                   ),
                   const SizedBox(height: 24),
                   HuxButton(
@@ -266,8 +231,8 @@ class _NotificationSettingsViewState extends State<NotificationSettingsView> {
                             Text(
                               context.tr(
                                 widget.settings!.enabled
-                                    ? 'Daily notifications are active'
-                                    : 'Daily notifications are paused',
+                                    ? 'Response notifications are active'
+                                    : 'Response notifications are paused',
                               ),
                               style: TextStyle(
                                 color: HuxTokens.textSecondary(context),
@@ -286,33 +251,6 @@ class _NotificationSettingsViewState extends State<NotificationSettingsView> {
                       ),
                     ],
                   ),
-                  if (widget.settings!.lastSentAt != null) ...[
-                    Divider(
-                      height: 32,
-                      color: HuxTokens.borderSecondary(context),
-                    ),
-                    Row(
-                      children: [
-                        Icon(
-                          LucideIcons.history,
-                          color: HuxTokens.iconSecondary(context),
-                        ),
-                        const SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(context.tr('Last Sent')),
-                            Text(
-                              _formatDateTime(widget.settings!.lastSentAt!),
-                              style: TextStyle(
-                                color: HuxTokens.textSecondary(context),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ],
                   const SizedBox(height: 16),
                   HuxButton(
                     onPressed:
@@ -334,12 +272,6 @@ class _NotificationSettingsViewState extends State<NotificationSettingsView> {
         ],
       ),
     );
-  }
-
-  String _formatDateTime(DateTime dt) {
-    final local = dt.toLocal();
-    return '${local.year}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')} '
-        '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
   }
 }
 
@@ -383,30 +315,6 @@ class _MessageCard extends StatelessWidget {
             ),
         ],
       ),
-    );
-  }
-}
-
-class _LabeledControl extends StatelessWidget {
-  const _LabeledControl({required this.label, required this.child});
-
-  final String label;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-            color: HuxTokens.textSecondary(context),
-          ),
-        ),
-        const SizedBox(height: 6),
-        SizedBox(width: double.infinity, child: child),
-      ],
     );
   }
 }

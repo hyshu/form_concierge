@@ -49,6 +49,7 @@ class ResponsesPage extends RearchConsumer {
       title: context.tr('Responses'),
       selectedItemId: 'surveys',
       showUsers: canManageUsers,
+      showSettings: canManageUsers,
       onBack: () => context.go('/admin'),
       actions: [
         if (responseState.isExporting)
