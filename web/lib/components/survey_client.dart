@@ -120,7 +120,7 @@ class SurveyClientState extends State<SurveyClient> {
       setState(() {
         _viewState = SurveyViewState.completed;
       });
-    } catch (e) {
+    } on Exception catch (_) {
       setState(() {
         _viewState = SurveyViewState.ready;
         _errorMessage = 'Failed to submit survey. Please try again.';
