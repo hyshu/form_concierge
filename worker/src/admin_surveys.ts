@@ -50,16 +50,15 @@ async function insertSurvey(
   const now = nowIso();
   const row = await db.prepare(
     `INSERT INTO surveys
-       (slug, title, description, status, auth_requirement, created_by_admin_id,
+       (slug, title, description, status, created_by_admin_id,
         created_at, updated_at, starts_at, ends_at)
-     VALUES (?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?)
+     VALUES (?, ?, ?, 'draft', ?, ?, ?, ?, ?)
      RETURNING *`,
   )
     .bind(
       slug,
       requireString(body.title, 'title'),
       optionalString(body.description),
-      body.authRequirement === 'authenticated' ? 'authenticated' : 'anonymous',
       admin.id,
       now,
       now,
@@ -110,7 +109,7 @@ export async function updateSurvey(request: Request, env: Env, surveyId: number)
   await ensureUniqueSlug(env.DB, slug, surveyId);
   const row = await env.DB.prepare(
     `UPDATE surveys
-     SET slug = ?, title = ?, description = ?, auth_requirement = ?,
+     SET slug = ?, title = ?, description = ?,
          starts_at = ?, ends_at = ?, updated_at = ?
      WHERE id = ?
      RETURNING *`,
@@ -118,7 +117,6 @@ export async function updateSurvey(request: Request, env: Env, surveyId: number)
     slug,
     requireString(body.title ?? existing.title, 'title'),
     optionalString(body.description ?? existing.description),
-    body.authRequirement === 'authenticated' ? 'authenticated' : 'anonymous',
     optionalString(body.startsAt ?? existing.starts_at),
     optionalString(body.endsAt ?? existing.ends_at),
     nowIso(),

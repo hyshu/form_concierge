@@ -69,7 +69,6 @@ class SurveyFormManager {
     required String title,
     required String slug,
     String? description,
-    required AuthRequirement authRequirement,
   }) async {
     _setState(null, getState(null).copyWith(isSaving: true, error: null));
     try {
@@ -78,7 +77,6 @@ class SurveyFormManager {
           title: title,
           slug: slug,
           description: description,
-          authRequirement: authRequirement,
         ),
       );
       _setState(null, getState(null).copyWith(isSaving: false));
@@ -229,7 +227,6 @@ class SurveyFormManager {
     required String title,
     required String slug,
     String? description,
-    required AuthRequirement authRequirement,
   }) async {
     final state = getState(null);
     _setState(null, state.copyWith(isSaving: true, error: null));
@@ -243,7 +240,6 @@ class SurveyFormManager {
           title: title,
           slug: slug,
           description: description,
-          authRequirement: authRequirement,
         ),
         questions,
       );
@@ -268,7 +264,6 @@ class SurveyFormManager {
     required String title,
     required String slug,
     String? description,
-    required AuthRequirement authRequirement,
   }) {
     final now = DateTime.now();
     return Survey(
@@ -276,7 +271,6 @@ class SurveyFormManager {
       title: title,
       description: description,
       status: SurveyStatus.draft,
-      authRequirement: authRequirement,
       createdAt: now,
       updatedAt: now,
     );

@@ -3,7 +3,6 @@ import 'package:jaspr/jaspr.dart';
 import 'package:jaspr/dom.dart';
 
 import '../state/survey_state.dart';
-import '../state/auth_state.dart';
 import '../utils/anonymous_storage.dart';
 import '../utils/device_info.dart';
 import '../utils/validation.dart';
@@ -11,7 +10,6 @@ import 'survey_loading.dart';
 import 'survey_error.dart';
 import 'survey_completed.dart';
 import 'survey_content.dart';
-import 'auth/auth_view.dart';
 
 @client
 class SurveyClient extends StatefulComponent {
@@ -40,7 +38,6 @@ class SurveyClientState extends State<SurveyClient> {
   late String _anonymousTokenStorageKey;
 
   SurveyViewState _viewState = SurveyViewState.ready;
-  SurveyAuthState _authState = const SurveyAuthState();
   Map<int, dynamic> _answers = {};
   Map<int, String> _validationErrors = {};
   String? _errorMessage;
@@ -132,19 +129,6 @@ class SurveyClientState extends State<SurveyClient> {
     return buildDeviceInfo();
   }
 
-  void _onAuthSuccess() {
-    setState(() {
-      _authState = _authState.copyWith(isAuthenticated: true);
-      _viewState = SurveyViewState.ready;
-    });
-  }
-
-  void _onAuthStateChanged(SurveyAuthState newState) {
-    setState(() {
-      _authState = newState;
-    });
-  }
-
   @override
   Component build(BuildContext context) {
     return div(classes: 'survey-wrapper', [
@@ -153,12 +137,6 @@ class SurveyClientState extends State<SurveyClient> {
         SurveyViewState.error => SurveyError(
             message: _errorMessage ?? 'An error occurred',
             onRetry: () => setState(() => _viewState = SurveyViewState.ready),
-          ),
-        SurveyViewState.authRequired => AuthView(
-            client: _client,
-            authState: _authState,
-            onAuthStateChanged: _onAuthStateChanged,
-            onAuthSuccess: _onAuthSuccess,
           ),
         SurveyViewState.ready || SurveyViewState.submitting => SurveyContent(
             survey: _survey,

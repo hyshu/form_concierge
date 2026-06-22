@@ -13,7 +13,6 @@ class SurveyForm extends StatefulWidget {
     required String title,
     required String slug,
     String? description,
-    required AuthRequirement authRequirement,
   })
   onSave;
 
@@ -32,14 +31,12 @@ class SurveyForm extends StatefulWidget {
 
 class _SurveyFormState extends State<SurveyForm> {
   final _formKey = GlobalKey<FormState>();
-  AuthRequirement _authRequirement = AuthRequirement.anonymous;
 
   @override
   void initState() {
     super.initState();
     if (widget.existingSurvey != null) {
       widget.controllers.populateFrom(widget.existingSurvey!);
-      _authRequirement = widget.existingSurvey!.authRequirement;
     }
   }
 
@@ -98,34 +95,6 @@ class _SurveyFormState extends State<SurveyForm> {
             enabled: !widget.isSaving,
             maxLines: 3,
           ),
-          const SizedBox(height: 16),
-          Text(
-            'Authentication',
-            style: Theme.of(context).textTheme.titleSmall,
-          ),
-          const SizedBox(height: 8),
-          SegmentedButton<AuthRequirement>(
-            segments: const [
-              ButtonSegment(
-                value: AuthRequirement.anonymous,
-                label: Text('Anonymous'),
-                icon: Icon(Icons.public),
-              ),
-              ButtonSegment(
-                value: AuthRequirement.authenticated,
-                label: Text('Login Required'),
-                icon: Icon(Icons.lock_outline),
-              ),
-            ],
-            selected: {_authRequirement},
-            onSelectionChanged: widget.isSaving
-                ? null
-                : (selected) {
-                    setState(() {
-                      _authRequirement = selected.first;
-                    });
-                  },
-          ),
           if (widget.error != null) ...[
             const SizedBox(height: 16),
             Text(
@@ -164,7 +133,6 @@ class _SurveyFormState extends State<SurveyForm> {
         description: widget.controllers.description.text.trim().isEmpty
             ? null
             : widget.controllers.description.text.trim(),
-        authRequirement: _authRequirement,
       );
     }
   }
