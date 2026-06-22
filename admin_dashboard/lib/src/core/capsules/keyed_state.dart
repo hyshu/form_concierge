@@ -9,13 +9,14 @@ KeyedStateAccessors<K, S> createKeyedState<K, S>(
   CapsuleHandle use,
   S Function() createInitialState,
 ) {
-  final (stateMap, setStateMap) = use.state<Map<K, S>>({});
+  final (getStateMap, setStateMap) = use.data<Map<K, S>>({});
 
   S getState(K key) {
-    return stateMap[key] ?? createInitialState();
+    return getStateMap()[key] ?? createInitialState();
   }
 
   void setState(K key, S state) {
+    final stateMap = getStateMap();
     setStateMap({...stateMap, key: state});
   }
 
