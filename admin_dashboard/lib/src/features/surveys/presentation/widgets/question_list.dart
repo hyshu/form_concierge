@@ -4,12 +4,14 @@ import 'package:form_concierge_client/form_concierge_client.dart';
 import '../../../../core/widgets/confirm_delete_dialog.dart';
 import 'question_form_dialog.dart';
 import 'question_list_tile.dart';
+import 'visibility_rule_editor.dart';
 
 /// Widget displaying the list of questions for a survey.
 class QuestionList extends StatelessWidget {
   final int surveyId;
   final List<Question> questions;
   final Map<int, List<Choice>> choicesByQuestion;
+  final List<QuestionVisibilityRule> visibilityRules;
   final bool isLoading;
   final bool enabled;
   final void Function({
@@ -17,6 +19,11 @@ class QuestionList extends StatelessWidget {
     required QuestionType type,
     required bool isRequired,
     String? placeholder,
+    int? minLength,
+    int? maxLength,
+    int? minSelected,
+    int? maxSelected,
+    required VisibilityConditionMode visibilityConditionMode,
   })
   onAddQuestion;
   final void Function(
@@ -25,18 +32,30 @@ class QuestionList extends StatelessWidget {
     required QuestionType type,
     required bool isRequired,
     String? placeholder,
+    int? minLength,
+    int? maxLength,
+    int? minSelected,
+    int? maxSelected,
+    required VisibilityConditionMode visibilityConditionMode,
   })
   onEditQuestion;
   final void Function(Question question) onDeleteQuestion;
   final void Function(int questionId, String text) onAddChoice;
   final void Function(Choice choice, String newText) onUpdateChoice;
   final void Function(Choice choice) onDeleteChoice;
+  final Future<void> Function({
+    required Question question,
+    required VisibilityConditionMode mode,
+    required List<QuestionVisibilityRule> rules,
+  })
+  onSaveVisibility;
 
   const QuestionList({
     super.key,
     required this.surveyId,
     required this.questions,
     required this.choicesByQuestion,
+    required this.visibilityRules,
     required this.isLoading,
     required this.enabled,
     required this.onAddQuestion,
@@ -45,6 +64,7 @@ class QuestionList extends StatelessWidget {
     required this.onAddChoice,
     required this.onUpdateChoice,
     required this.onDeleteChoice,
+    required this.onSaveVisibility,
   });
 
   @override
@@ -112,6 +132,9 @@ class QuestionList extends StatelessWidget {
               ...questions.asMap().entries.map((entry) {
                 final index = entry.key;
                 final question = entry.value;
+                final questionRules = visibilityRules
+                    .where((rule) => rule.targetQuestionId == question.id)
+                    .toList();
                 return Column(
                   children: [
                     Row(
@@ -138,6 +161,27 @@ class QuestionList extends StatelessWidget {
                           child: QuestionListTile(
                             question: question,
                             choices: choicesByQuestion[question.id] ?? [],
+                            visibilityRules: questionRules,
+                            visibilityRuleEditor: VisibilityRuleEditor(
+                              surveyId: surveyId,
+                              targetQuestion: question,
+                              sourceQuestions: questions
+                                  .where(
+                                    (candidate) =>
+                                        candidate.orderIndex <
+                                        question.orderIndex,
+                                  )
+                                  .toList(),
+                              choicesByQuestion: choicesByQuestion,
+                              rules: questionRules,
+                              enabled: enabled,
+                              onSave: ({required mode, required rules}) =>
+                                  onSaveVisibility(
+                                    question: question,
+                                    mode: mode,
+                                    rules: rules,
+                                  ),
+                            ),
                             enabled: enabled,
                             onEdit: () => _showEditDialog(context, question),
                             onDelete: () => _confirmDelete(context, question),
@@ -173,12 +217,22 @@ class QuestionList extends StatelessWidget {
             required QuestionType type,
             required bool isRequired,
             String? placeholder,
+            int? minLength,
+            int? maxLength,
+            int? minSelected,
+            int? maxSelected,
+            required VisibilityConditionMode visibilityConditionMode,
           }) {
             onAddQuestion(
               text: text,
               type: type,
               isRequired: isRequired,
               placeholder: placeholder,
+              minLength: minLength,
+              maxLength: maxLength,
+              minSelected: minSelected,
+              maxSelected: maxSelected,
+              visibilityConditionMode: visibilityConditionMode,
             );
           },
     );
@@ -194,6 +248,11 @@ class QuestionList extends StatelessWidget {
             required QuestionType type,
             required bool isRequired,
             String? placeholder,
+            int? minLength,
+            int? maxLength,
+            int? minSelected,
+            int? maxSelected,
+            required VisibilityConditionMode visibilityConditionMode,
           }) {
             onEditQuestion(
               question,
@@ -201,6 +260,11 @@ class QuestionList extends StatelessWidget {
               type: type,
               isRequired: isRequired,
               placeholder: placeholder,
+              minLength: minLength,
+              maxLength: maxLength,
+              minSelected: minSelected,
+              maxSelected: maxSelected,
+              visibilityConditionMode: visibilityConditionMode,
             );
           },
     );

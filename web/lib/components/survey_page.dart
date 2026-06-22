@@ -29,6 +29,8 @@ class SurveyPage extends StatelessComponent {
 
           final questions =
               await client.survey.getQuestionsForSurvey(survey.id!);
+          final visibilityRules =
+              await client.survey.getVisibilityRulesForSurvey(survey.id!);
           final choicesByQuestion =
               await client.survey.getChoicesByQuestion(questions);
 
@@ -37,6 +39,8 @@ class SurveyPage extends StatelessComponent {
             SurveyClient(
               surveyJson: survey.toJson(),
               questionsJson: questions.map((q) => q.toJson()).toList(),
+              visibilityRulesJson:
+                  visibilityRules.map((rule) => rule.toJson()).toList(),
               choicesByQuestionJson: _encodeChoicesMap(choicesByQuestion),
               serverUrl: serverUrl,
             ),

@@ -1,7 +1,8 @@
-import type { AnonymousContext, AnswerInput, AnswerRow, ChoiceRow, Env, QuestionRow, ResponseRow, SurveyRow } from './types';
+import type { AnonymousContext, AnswerInput, AnswerRow, ChoiceRow, Env, QuestionRow, ResponseRow, SurveyRow, VisibilityRuleRow } from './types';
 import { HttpError, isChoiceQuestionType, isTextQuestionType, json, nowIso, readJson, requireAnswerInput } from './utils';
 import { normalizeDeviceInfo, normalizeMetadata } from './metadata';
 import { choiceToJson, parseChoiceIds, questionToJson, responseToJson, surveyToJson } from './serializers';
+import { getVisibilityRules, visibleQuestionIds } from './visibility_rules';
 
 export async function getPublicSurvey(env: Env, slug: string): Promise<Response> {
   const row = await env.DB.prepare(
@@ -57,7 +58,8 @@ export async function submitResponse(
   const questions = await env.DB.prepare(
     `SELECT * FROM questions WHERE survey_id = ? AND is_deleted = 0 ORDER BY order_index`,
   ).bind(surveyId).all<QuestionRow>();
-  await validateAnswers(env, questions.results, answers);
+  const visibilityRules = await getVisibilityRules(env.DB, surveyId);
+  await validateAnswers(env, questions.results, visibilityRules, answers);
 
   const now = nowIso();
   const userAgent = request.headers.get('user-agent');
@@ -127,6 +129,7 @@ export async function submitResponse(
 async function validateAnswers(
   env: Env,
   questions: QuestionRow[],
+  visibilityRules: VisibilityRuleRow[],
   answers: AnswerInput[],
 ): Promise<void> {
   const byQuestion = new Map<number, AnswerInput>();
@@ -137,13 +140,19 @@ async function validateAnswers(
     byQuestion.set(questionId, answer);
   }
   const questionIds = new Set(questions.map((question) => question.id));
+  const visibleQuestionIdSet = visibleQuestionIds(questions, visibilityRules, answers);
   for (const questionId of byQuestion.keys()) {
     if (!questionIds.has(questionId)) throw new HttpError(400, 'Answer question does not belong to survey');
+    if (!visibleQuestionIdSet.has(questionId)) throw new HttpError(400, 'Answer question is not visible');
   }
   for (const question of questions) {
+    if (!visibleQuestionIdSet.has(question.id)) continue;
     const answer = byQuestion.get(question.id);
     if (!answer) {
       if (question.is_required) throw new HttpError(400, `Question "${question.text}" is required`);
+      if (question.min_selected != null && question.min_selected > 0) {
+        throw new HttpError(400, `Question "${question.text}" requires at least ${question.min_selected} choices`);
+      }
       continue;
     }
     if (isTextQuestionType(question.type)) {
@@ -170,6 +179,12 @@ async function validateAnswers(
     }
     if (question.type === 'singleChoice' && selected.length > 1) {
       throw new HttpError(400, `Question "${question.text}" allows one choice`);
+    }
+    if (question.min_selected != null && selected.length < question.min_selected) {
+      throw new HttpError(400, `Question "${question.text}" requires at least ${question.min_selected} choices`);
+    }
+    if (question.max_selected != null && selected.length > question.max_selected) {
+      throw new HttpError(400, `Question "${question.text}" allows at most ${question.max_selected} choices`);
     }
     const choices = await env.DB.prepare(
       `SELECT id FROM choices WHERE question_id = ?`,

@@ -73,15 +73,22 @@ class UserListManager {
   Future<bool> createUser({
     required String email,
     required String password,
-    required List<String> scopes,
+    required AdminRole role,
   }) async {
     return _runAndReload(
       () => _client.userAdmin.createUser(
         email: email,
         password: password,
-        scopes: scopes,
+        role: role,
       ),
       'Failed to create user',
+    );
+  }
+
+  Future<bool> updateUserRole(UuidValue userId, AdminRole role) async {
+    return _runAndReload(
+      () => _client.userAdmin.updateRole(userId, role),
+      'Failed to update role',
     );
   }
 

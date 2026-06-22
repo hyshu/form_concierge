@@ -8,6 +8,8 @@ import 'choice_editor.dart';
 class QuestionListTile extends StatelessWidget {
   final Question question;
   final List<Choice> choices;
+  final List<QuestionVisibilityRule> visibilityRules;
+  final Widget visibilityRuleEditor;
   final bool enabled;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
@@ -19,6 +21,8 @@ class QuestionListTile extends StatelessWidget {
     super.key,
     required this.question,
     required this.choices,
+    required this.visibilityRules,
+    required this.visibilityRuleEditor,
     required this.enabled,
     required this.onEdit,
     required this.onDelete,
@@ -78,6 +82,22 @@ class QuestionListTile extends StatelessWidget {
                           color: colorScheme.onSurfaceVariant,
                         ),
                       ),
+                      if (_validationSummary != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          _validationSummary!,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: colorScheme.onSurfaceVariant),
+                        ),
+                      ],
+                      if (visibilityRules.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          'Visible when ${visibilityRules.length} ${visibilityRules.length == 1 ? 'rule matches' : 'rules match'}',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: colorScheme.primary),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -117,9 +137,29 @@ class QuestionListTile extends StatelessWidget {
                 ),
               ),
             ],
+            const SizedBox(height: 8),
+            visibilityRuleEditor,
           ],
         ),
       ),
     );
+  }
+
+  String? get _validationSummary {
+    if (question.type.usesTextAnswer) {
+      final parts = [
+        if (question.minLength != null) 'min ${question.minLength}',
+        if (question.maxLength != null) 'max ${question.maxLength}',
+      ];
+      return parts.isEmpty ? null : 'Length: ${parts.join(', ')}';
+    }
+    if (question.type == QuestionType.multipleChoice) {
+      final parts = [
+        if (question.minSelected != null) 'min ${question.minSelected}',
+        if (question.maxSelected != null) 'max ${question.maxSelected}',
+      ];
+      return parts.isEmpty ? null : 'Selections: ${parts.join(', ')}';
+    }
+    return null;
   }
 }

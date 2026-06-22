@@ -34,6 +34,7 @@ CREATE TABLE surveys (
   title TEXT NOT NULL,
   description TEXT,
   status TEXT NOT NULL DEFAULT 'draft',
+  auth_requirement TEXT NOT NULL DEFAULT 'anonymous',
   created_by_admin_id TEXT REFERENCES admins(id) ON DELETE SET NULL,
   created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
   updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
@@ -54,6 +55,9 @@ CREATE TABLE questions (
   placeholder TEXT,
   min_length INTEGER,
   max_length INTEGER,
+  min_selected INTEGER,
+  max_selected INTEGER,
+  visibility_condition_mode TEXT NOT NULL DEFAULT 'all',
   is_deleted INTEGER NOT NULL DEFAULT 0
 );
 
@@ -106,6 +110,23 @@ CREATE TABLE answers (
 );
 
 CREATE INDEX answers_question_id ON answers(question_id);
+
+CREATE TABLE question_visibility_rules (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  survey_id INTEGER NOT NULL REFERENCES surveys(id) ON DELETE CASCADE,
+  target_question_id INTEGER NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
+  source_question_id INTEGER NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
+  operator TEXT NOT NULL,
+  value_json TEXT,
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+  updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+  CHECK (operator IN ('equals', 'notEquals', 'contains', 'notContains', 'isAnswered', 'isNotAnswered')),
+  CHECK (target_question_id != source_question_id)
+);
+
+CREATE INDEX question_visibility_rules_survey ON question_visibility_rules(survey_id);
+CREATE INDEX question_visibility_rules_target ON question_visibility_rules(target_question_id);
+CREATE INDEX question_visibility_rules_source ON question_visibility_rules(source_question_id);
 
 CREATE TABLE admin_replies (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

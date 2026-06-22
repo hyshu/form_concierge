@@ -10,6 +10,7 @@ class ResponseList extends StatelessWidget {
   final int currentPage;
   final int totalPages;
   final bool isLoading;
+  final bool canManageResponses;
   final String? error;
   final void Function(int page) onPageChange;
   final void Function(SurveyResponse response) onDelete;
@@ -22,6 +23,7 @@ class ResponseList extends StatelessWidget {
     required this.currentPage,
     required this.totalPages,
     required this.isLoading,
+    required this.canManageResponses,
     this.error,
     required this.onPageChange,
     required this.onDelete,
@@ -89,6 +91,7 @@ class ResponseList extends StatelessWidget {
               return _ResponseTile(
                 response: response,
                 index: currentPage * kDefaultPageSize + index + 1,
+                canManageResponses: canManageResponses,
                 onDelete: () => onDelete(response),
                 onReply: () => onReply(response),
               );
@@ -138,12 +141,14 @@ class ResponseList extends StatelessWidget {
 class _ResponseTile extends StatelessWidget {
   final SurveyResponse response;
   final int index;
+  final bool canManageResponses;
   final VoidCallback onDelete;
   final VoidCallback onReply;
 
   const _ResponseTile({
     required this.response,
     required this.index,
+    required this.canManageResponses,
     required this.onDelete,
     required this.onReply,
   });
@@ -246,21 +251,22 @@ class _ResponseTile extends StatelessWidget {
                 ],
               ),
             ),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.reply_outlined),
-                  onPressed: onReply,
-                  tooltip: 'Reply',
-                ),
-                IconButton(
-                  icon: Icon(Icons.delete_outline, color: colorScheme.error),
-                  onPressed: onDelete,
-                  tooltip: 'Delete response',
-                ),
-              ],
-            ),
+            if (canManageResponses)
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.reply_outlined),
+                    onPressed: onReply,
+                    tooltip: 'Reply',
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.delete_outline, color: colorScheme.error),
+                    onPressed: onDelete,
+                    tooltip: 'Delete response',
+                  ),
+                ],
+              ),
           ],
         ),
       ),

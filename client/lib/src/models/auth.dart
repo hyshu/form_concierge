@@ -4,6 +4,7 @@ class AuthUserInfo {
   final UuidValue id;
   final String? email;
   final List<String> scopeNames;
+  final AdminRole role;
   final bool blocked;
   final DateTime created;
 
@@ -11,6 +12,7 @@ class AuthUserInfo {
     required this.id,
     this.email,
     required this.scopeNames,
+    required this.role,
     required this.blocked,
     required this.created,
   });
@@ -21,6 +23,7 @@ class AuthUserInfo {
     scopeNames: (json['scopeNames'] as List? ?? const [])
         .map((e) => '$e')
         .toList(),
+    role: _enum(AdminRole.values, json['role'], AdminRole.viewer),
     blocked: _bool(json['blocked']),
     created: _date(json['created']),
   );
@@ -29,6 +32,7 @@ class AuthUserInfo {
     'id': id,
     'email': email,
     'scopeNames': scopeNames,
+    'role': _enumName(role),
     'blocked': blocked,
     'created': created.toIso8601String(),
   });

@@ -62,6 +62,8 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
       final questions = await widget.client.survey.getQuestionsForSurvey(
         survey.id!,
       );
+      final visibilityRules = await widget.client.survey
+          .getVisibilityRulesForSurvey(survey.id!);
 
       final choicesByQuestion = await widget.client.survey.getChoicesByQuestion(
         questions,
@@ -74,6 +76,7 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
           viewState: SurveyViewState.ready,
           survey: survey,
           questions: questions,
+          visibilityRules: visibilityRules,
           choicesByQuestion: choicesByQuestion,
         );
       });
@@ -89,58 +92,31 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
 
   void _updateAnswer(int questionId, dynamic value) {
     setState(() {
-      final newAnswers = Map<int, dynamic>.from(_state.answers);
-      newAnswers[questionId] = value;
+      final newAnswers = Map<int, dynamic>.from(_state.answers)
+        ..[questionId] = value;
+      final visibleQuestions = resolveVisibleQuestions(
+        _state.questions,
+        _state.visibilityRules,
+        newAnswers,
+      );
 
       final newErrors = Map<int, String>.from(_state.validationErrors);
       newErrors.remove(questionId);
 
       _state = _state.copyWith(
-        answers: newAnswers,
+        answers: pruneHiddenAnswers(newAnswers, visibleQuestions),
         validationErrors: newErrors,
       );
     });
   }
 
   Map<int, String> _validate() {
-    final errors = <int, String>{};
-
-    for (final question in _state.questions) {
-      final answer = _state.answers[question.id];
-
-      if (question.isRequired) {
-        if (answer == null) {
-          errors[question.id!] = 'This question is required';
-          continue;
-        }
-
-        if (answer is String && answer.trim().isEmpty) {
-          errors[question.id!] = 'This question is required';
-          continue;
-        }
-
-        if (answer is List && answer.isEmpty) {
-          errors[question.id!] = 'Please select at least one choice';
-          continue;
-        }
-      }
-
-      if (answer is String && answer.isNotEmpty) {
-        if (question.minLength != null && answer.length < question.minLength!) {
-          errors[question.id!] =
-              'Minimum ${question.minLength} characters required';
-          continue;
-        }
-
-        if (question.maxLength != null && answer.length > question.maxLength!) {
-          errors[question.id!] =
-              'Maximum ${question.maxLength} characters allowed';
-          continue;
-        }
-      }
-    }
-
-    return errors;
+    final visibleQuestions = resolveVisibleQuestions(
+      _state.questions,
+      _state.visibilityRules,
+      _state.answers,
+    );
+    return validateSurveyAnswers(_state.answers, visibleQuestions);
   }
 
   Future<void> _submit() async {
@@ -160,7 +136,12 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
     try {
       await _ensureAnonymousSession();
 
-      final answers = buildAnswers(_state.answers, _state.questions);
+      final visibleQuestions = resolveVisibleQuestions(
+        _state.questions,
+        _state.visibilityRules,
+        _state.answers,
+      );
+      final answers = buildAnswers(_state.answers, visibleQuestions);
 
       final response = await widget.client.survey.submitResponse(
         surveyId: _state.survey!.id!,
@@ -220,6 +201,11 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
 
   @override
   Widget build(BuildContext context) {
+    final visibleQuestions = resolveVisibleQuestions(
+      _state.questions,
+      _state.visibilityRules,
+      _state.answers,
+    );
     return switch (_state.viewState) {
       SurveyViewState.loading => const SurveyLoading(),
       SurveyViewState.error => SurveyError(
@@ -228,7 +214,7 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
       ),
       SurveyViewState.ready || SurveyViewState.submitting => SurveyContent(
         survey: _state.survey!,
-        questions: _state.questions,
+        questions: visibleQuestions,
         choicesByQuestion: _state.choicesByQuestion,
         answers: _state.answers,
         validationErrors: _state.validationErrors,

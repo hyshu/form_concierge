@@ -19,6 +19,10 @@ class MultipleChoiceQuestion extends StatelessComponent {
   @override
   Component build(BuildContext context) {
     return div(classes: 'space-y-2', [
+      if (question.minSelected != null || question.maxSelected != null)
+        div(classes: 'text-xs text-slate-500', [
+          Component.text(_selectionHint()),
+        ]),
       for (final choice in choices)
         label([
           input(
@@ -26,6 +30,9 @@ class MultipleChoiceQuestion extends StatelessComponent {
             name: 'question_${question.id}[]',
             value: choice.id.toString(),
             checked: value.contains(choice.id),
+            disabled: !value.contains(choice.id) &&
+                question.maxSelected != null &&
+                value.length >= question.maxSelected!,
             classes:
                 'w-4 h-4 text-indigo-600 accent-indigo-600 rounded flex-shrink-0',
             onChange: (bool? checked) {
@@ -45,5 +52,13 @@ class MultipleChoiceQuestion extends StatelessComponent {
             classes:
                 'flex items-center px-4 py-3 rounded-lg border ${value.contains(choice.id) ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'} cursor-pointer'),
     ]);
+  }
+
+  String _selectionHint() {
+    final parts = [
+      if (question.minSelected != null) 'min ${question.minSelected}',
+      if (question.maxSelected != null) 'max ${question.maxSelected}',
+    ];
+    return 'Select ${parts.join(', ')}';
   }
 }

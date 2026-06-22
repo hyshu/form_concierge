@@ -88,6 +88,9 @@ class Question {
   final String? placeholder;
   final int? minLength;
   final int? maxLength;
+  final int? minSelected;
+  final int? maxSelected;
+  final VisibilityConditionMode visibilityConditionMode;
   final bool isDeleted;
 
   const Question({
@@ -100,6 +103,9 @@ class Question {
     this.placeholder,
     this.minLength,
     this.maxLength,
+    this.minSelected,
+    this.maxSelected,
+    this.visibilityConditionMode = VisibilityConditionMode.all,
     this.isDeleted = false,
   });
 
@@ -113,6 +119,13 @@ class Question {
     placeholder: json['placeholder'] as String?,
     minLength: json['minLength'] == null ? null : _int(json['minLength']),
     maxLength: json['maxLength'] == null ? null : _int(json['maxLength']),
+    minSelected: json['minSelected'] == null ? null : _int(json['minSelected']),
+    maxSelected: json['maxSelected'] == null ? null : _int(json['maxSelected']),
+    visibilityConditionMode: _enum(
+      VisibilityConditionMode.values,
+      json['visibilityConditionMode'],
+      VisibilityConditionMode.all,
+    ),
     isDeleted: _bool(json['isDeleted']),
   );
 
@@ -126,6 +139,9 @@ class Question {
     'placeholder': placeholder,
     'minLength': minLength,
     'maxLength': maxLength,
+    'minSelected': minSelected,
+    'maxSelected': maxSelected,
+    'visibilityConditionMode': _enumName(visibilityConditionMode),
     'isDeleted': isDeleted,
   });
 
@@ -139,6 +155,9 @@ class Question {
     String? placeholder,
     int? minLength,
     int? maxLength,
+    int? minSelected,
+    int? maxSelected,
+    VisibilityConditionMode? visibilityConditionMode,
     bool? isDeleted,
   }) {
     return Question(
@@ -151,7 +170,83 @@ class Question {
       placeholder: placeholder ?? this.placeholder,
       minLength: minLength ?? this.minLength,
       maxLength: maxLength ?? this.maxLength,
+      minSelected: minSelected ?? this.minSelected,
+      maxSelected: maxSelected ?? this.maxSelected,
+      visibilityConditionMode:
+          visibilityConditionMode ?? this.visibilityConditionMode,
       isDeleted: isDeleted ?? this.isDeleted,
+    );
+  }
+}
+
+class QuestionVisibilityRule {
+  final int? id;
+  final int surveyId;
+  final int targetQuestionId;
+  final int sourceQuestionId;
+  final VisibilityOperator operator;
+  final Object? value;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+
+  const QuestionVisibilityRule({
+    this.id,
+    required this.surveyId,
+    required this.targetQuestionId,
+    required this.sourceQuestionId,
+    required this.operator,
+    this.value,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  factory QuestionVisibilityRule.fromJson(Map<String, dynamic> json) =>
+      QuestionVisibilityRule(
+        id: json['id'] == null ? null : _int(json['id']),
+        surveyId: _int(json['surveyId']),
+        targetQuestionId: _int(json['targetQuestionId']),
+        sourceQuestionId: _int(json['sourceQuestionId']),
+        operator: _enum(
+          VisibilityOperator.values,
+          json['operator'],
+          VisibilityOperator.equals,
+        ),
+        value: json['value'],
+        createdAt: _optionalDate(json['createdAt']),
+        updatedAt: _optionalDate(json['updatedAt']),
+      );
+
+  Map<String, dynamic> toJson() => _withoutNulls({
+    'id': id,
+    'surveyId': surveyId,
+    'targetQuestionId': targetQuestionId,
+    'sourceQuestionId': sourceQuestionId,
+    'operator': _enumName(operator),
+    'value': value,
+    'createdAt': createdAt?.toIso8601String(),
+    'updatedAt': updatedAt?.toIso8601String(),
+  });
+
+  QuestionVisibilityRule copyWith({
+    int? id,
+    int? surveyId,
+    int? targetQuestionId,
+    int? sourceQuestionId,
+    VisibilityOperator? operator,
+    Object? value,
+    bool clearValue = false,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) {
+    return QuestionVisibilityRule(
+      id: id ?? this.id,
+      surveyId: surveyId ?? this.surveyId,
+      targetQuestionId: targetQuestionId ?? this.targetQuestionId,
+      sourceQuestionId: sourceQuestionId ?? this.sourceQuestionId,
+      operator: operator ?? this.operator,
+      value: clearValue ? null : value ?? this.value,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 }
@@ -209,6 +304,11 @@ class QuestionWithChoices {
   final QuestionType type;
   final bool isRequired;
   final String? placeholder;
+  final int? minLength;
+  final int? maxLength;
+  final int? minSelected;
+  final int? maxSelected;
+  final VisibilityConditionMode visibilityConditionMode;
   final List<String> choices;
 
   const QuestionWithChoices({
@@ -216,25 +316,45 @@ class QuestionWithChoices {
     required this.type,
     required this.isRequired,
     this.placeholder,
+    this.minLength,
+    this.maxLength,
+    this.minSelected,
+    this.maxSelected,
+    this.visibilityConditionMode = VisibilityConditionMode.all,
     required this.choices,
   });
 
-  factory QuestionWithChoices.fromJson(Map<String, dynamic> json) =>
-      QuestionWithChoices(
-        text: json['text'] as String,
-        type: _enum(QuestionType.values, json['type'], QuestionType.textSingle),
-        isRequired: _bool(json['isRequired'], true),
-        placeholder: json['placeholder'] as String?,
-        choices: (json['choices'] as List? ?? const [])
-            .map((value) => value.toString())
-            .toList(),
-      );
+  factory QuestionWithChoices.fromJson(
+    Map<String, dynamic> json,
+  ) => QuestionWithChoices(
+    text: json['text'] as String,
+    type: _enum(QuestionType.values, json['type'], QuestionType.textSingle),
+    isRequired: _bool(json['isRequired'], true),
+    placeholder: json['placeholder'] as String?,
+    minLength: json['minLength'] == null ? null : _int(json['minLength']),
+    maxLength: json['maxLength'] == null ? null : _int(json['maxLength']),
+    minSelected: json['minSelected'] == null ? null : _int(json['minSelected']),
+    maxSelected: json['maxSelected'] == null ? null : _int(json['maxSelected']),
+    visibilityConditionMode: _enum(
+      VisibilityConditionMode.values,
+      json['visibilityConditionMode'],
+      VisibilityConditionMode.all,
+    ),
+    choices: (json['choices'] as List? ?? const [])
+        .map((value) => value.toString())
+        .toList(),
+  );
 
   Map<String, dynamic> toJson() => _withoutNulls({
     'text': text,
     'type': _enumName(type),
     'isRequired': isRequired,
     'placeholder': placeholder,
+    'minLength': minLength,
+    'maxLength': maxLength,
+    'minSelected': minSelected,
+    'maxSelected': maxSelected,
+    'visibilityConditionMode': _enumName(visibilityConditionMode),
     'choices': choices,
   });
 }

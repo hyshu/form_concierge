@@ -14,7 +14,7 @@ export async function bootstrapAdmin(request: Request, env: Env): Promise<Respon
   await env.DB.prepare(
     `INSERT INTO admins (id, email, password_hash, scope_names)
      VALUES (?, ?, ?, ?)`,
-  ).bind(id, email, passwordHash, JSON.stringify(['admin', 'user'])).run();
+  ).bind(id, email, passwordHash, JSON.stringify(['admin', 'survey:read', 'survey:write', 'response:read', 'response:write', 'user:manage'])).run();
   const user = await getAdminById(env.DB, id);
   return json(await createAdminSession(env.DB, user!));
 }

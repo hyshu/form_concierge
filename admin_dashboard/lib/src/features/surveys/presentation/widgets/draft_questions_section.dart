@@ -99,12 +99,21 @@ class DraftQuestionsSection extends StatelessWidget {
             required QuestionType type,
             required bool isRequired,
             String? placeholder,
+            int? minLength,
+            int? maxLength,
+            int? minSelected,
+            int? maxSelected,
+            required VisibilityConditionMode visibilityConditionMode,
           }) {
             formManager.addDraftQuestion(
               text: text,
               type: type,
               isRequired: isRequired,
               placeholder: placeholder,
+              minLength: minLength,
+              maxLength: maxLength,
+              minSelected: minSelected,
+              maxSelected: maxSelected,
             );
           },
     );
@@ -118,6 +127,10 @@ class DraftQuestionsSection extends StatelessWidget {
       orderIndex: 0,
       isRequired: question.isRequired,
       placeholder: question.placeholder,
+      minLength: question.minLength,
+      maxLength: question.maxLength,
+      minSelected: question.minSelected,
+      maxSelected: question.maxSelected,
     );
 
     QuestionFormDialog.show(
@@ -129,6 +142,11 @@ class DraftQuestionsSection extends StatelessWidget {
             required QuestionType type,
             required bool isRequired,
             String? placeholder,
+            int? minLength,
+            int? maxLength,
+            int? minSelected,
+            int? maxSelected,
+            required VisibilityConditionMode visibilityConditionMode,
           }) {
             formManager.updateDraftQuestion(
               tempId: question.tempId,
@@ -136,6 +154,10 @@ class DraftQuestionsSection extends StatelessWidget {
               type: type,
               isRequired: isRequired,
               placeholder: placeholder,
+              minLength: minLength,
+              maxLength: maxLength,
+              minSelected: minSelected,
+              maxSelected: maxSelected,
             );
           },
     );

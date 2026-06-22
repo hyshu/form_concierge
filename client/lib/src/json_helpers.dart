@@ -6,6 +6,19 @@ enum QuestionType { singleChoice, multipleChoice, textSingle, textMultiLine }
 
 enum SurveyStatus { draft, published, closed, archived }
 
+enum AdminRole { admin, editor, viewer }
+
+enum VisibilityConditionMode { all, any }
+
+enum VisibilityOperator {
+  equals,
+  notEquals,
+  contains,
+  notContains,
+  isAnswered,
+  isNotAnswered,
+}
+
 extension QuestionTypeProperties on QuestionType {
   bool get usesChoices =>
       this == QuestionType.singleChoice || this == QuestionType.multipleChoice;

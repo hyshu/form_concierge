@@ -26,6 +26,8 @@ class TextMultiLineQuestion extends StatelessComponent {
         attributes: {
           if (question.placeholder != null)
             'placeholder': question.placeholder!,
+          if (question.minLength != null)
+            'minlength': question.minLength.toString(),
           if (question.maxLength != null)
             'maxlength': question.maxLength.toString(),
           'rows': '4',

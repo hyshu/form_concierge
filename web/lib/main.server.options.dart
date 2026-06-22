@@ -39,6 +39,7 @@ Map<String, Object?> __survey_clientSurveyClient(
 ) => {
   'surveyJson': c.surveyJson,
   'questionsJson': c.questionsJson,
+  'visibilityRulesJson': c.visibilityRulesJson,
   'choicesByQuestionJson': c.choicesByQuestionJson,
   'serverUrl': c.serverUrl,
 };

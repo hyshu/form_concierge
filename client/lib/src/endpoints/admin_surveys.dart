@@ -67,6 +67,28 @@ class SurveyAdminEndpoint {
     return json == null ? null : Survey.fromJson(json);
   }
 
+  Future<List<QuestionVisibilityRule>> getVisibilityRules(int surveyId) async {
+    final json = await _client.request(
+      'GET',
+      '/api/admin/surveys/$surveyId/visibility-rules',
+      authenticated: true,
+    );
+    return _objectList(json, QuestionVisibilityRule.fromJson);
+  }
+
+  Future<List<QuestionVisibilityRule>> replaceVisibilityRules(
+    int surveyId,
+    List<QuestionVisibilityRule> rules,
+  ) async {
+    final json = await _client.request(
+      'PUT',
+      '/api/admin/surveys/$surveyId/visibility-rules',
+      body: {'rules': rules.map((rule) => rule.toJson()).toList()},
+      authenticated: true,
+    );
+    return _objectList(json, QuestionVisibilityRule.fromJson);
+  }
+
   Future<Survey> publish(int surveyId) => _status(surveyId, 'publish');
   Future<Survey> close(int surveyId) => _status(surveyId, 'close');
   Future<Survey> reopen(int surveyId) => _status(surveyId, 'reopen');

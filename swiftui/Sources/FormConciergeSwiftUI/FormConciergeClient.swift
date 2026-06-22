@@ -49,6 +49,10 @@ public actor FormConciergeClient {
     try await request("GET", "/api/questions/\(questionId)/choices")
   }
 
+  public func visibilityRules(surveyId: Int) async throws -> [QuestionVisibilityRule] {
+    try await request("GET", "/api/surveys/id/\(surveyId)/visibility-rules")
+  }
+
   public func submitResponse(
     surveyId: Int,
     answers: [Answer],

@@ -119,6 +119,7 @@ class UsersPage extends RearchConsumer {
             user: user,
             isCurrentUser: isCurrentUser,
             onToggleBlocked: () => manager.toggleUserBlocked(user.id),
+            onRoleChanged: (role) => manager.updateUserRole(user.id, role),
             onDelete: () => _confirmDelete(
               context,
               manager,
@@ -145,7 +146,7 @@ class UsersPage extends RearchConsumer {
       await manager.createUser(
         email: result['email'] as String,
         password: result['password'] as String,
-        scopes: (result['scopes'] as List).cast<String>(),
+        role: result['role'] as AdminRole,
       );
     }
   }

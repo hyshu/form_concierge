@@ -6,6 +6,7 @@ class SurveyState {
   final SurveyViewState viewState;
   final Survey? survey;
   final List<Question> questions;
+  final List<QuestionVisibilityRule> visibilityRules;
   final Map<int, List<Choice>> choicesByQuestion;
   final Map<int, dynamic> answers;
   final Map<int, String> validationErrors;
@@ -15,6 +16,7 @@ class SurveyState {
     this.viewState = SurveyViewState.loading,
     this.survey,
     this.questions = const [],
+    this.visibilityRules = const [],
     this.choicesByQuestion = const {},
     this.answers = const {},
     this.validationErrors = const {},
@@ -25,6 +27,7 @@ class SurveyState {
     SurveyViewState? viewState,
     Survey? survey,
     List<Question>? questions,
+    List<QuestionVisibilityRule>? visibilityRules,
     Map<int, List<Choice>>? choicesByQuestion,
     Map<int, dynamic>? answers,
     Map<int, String>? validationErrors,
@@ -34,6 +37,7 @@ class SurveyState {
       viewState: viewState ?? this.viewState,
       survey: survey ?? this.survey,
       questions: questions ?? this.questions,
+      visibilityRules: visibilityRules ?? this.visibilityRules,
       choicesByQuestion: choicesByQuestion ?? this.choicesByQuestion,
       answers: answers ?? this.answers,
       validationErrors: validationErrors ?? this.validationErrors,
