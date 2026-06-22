@@ -41,26 +41,54 @@ class LocalizedTextFieldGroup extends StatelessWidget {
         .where((locale) => locale != primary)
         .toList();
 
+    Widget fieldFor(
+      String locale, {
+      String? Function(String?)? validator,
+      TextInputAction? action,
+    }) {
+      return _LocalizedField(
+        controller: controllers[locale],
+        label: _localizedLabel(labelText, locale),
+        hint: hintText,
+        enabled: enabled,
+        maxLines: maxLines,
+        textInputAction: action ?? textInputAction,
+        autofocus: locale == primary && autofocus,
+        validator: validator,
+      );
+    }
+
+    final primaryField = fieldFor(
+      primary,
+      validator: requiredMessage == null
+          ? null
+          : (value) {
+              if (value == null || value.trim().isEmpty) {
+                return requiredMessage;
+              }
+              return null;
+            },
+    );
+
+    if (secondaryLocales.isEmpty) {
+      return primaryField;
+    }
+
+    if (secondaryLocales.length == 1) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          primaryField,
+          const SizedBox(height: 12),
+          fieldFor(secondaryLocales.single),
+        ],
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _LocalizedField(
-          controller: controllers[primary],
-          label: _localizedLabel(labelText, primary),
-          hint: hintText,
-          enabled: enabled,
-          maxLines: maxLines,
-          textInputAction: textInputAction,
-          autofocus: autofocus,
-          validator: requiredMessage == null
-              ? null
-              : (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return requiredMessage;
-                  }
-                  return null;
-                },
-        ),
+        primaryField,
         const SizedBox(height: 8),
         ExpansionTile(
           tilePadding: EdgeInsets.zero,
@@ -71,14 +99,7 @@ class LocalizedTextFieldGroup extends StatelessWidget {
           ),
           children: [
             for (final locale in secondaryLocales) ...[
-              _LocalizedField(
-                controller: controllers[locale],
-                label: _localizedLabel(labelText, locale),
-                hint: hintText,
-                enabled: enabled,
-                maxLines: maxLines,
-                textInputAction: textInputAction,
-              ),
+              fieldFor(locale),
               if (locale != secondaryLocales.last) const SizedBox(height: 12),
             ],
           ],
