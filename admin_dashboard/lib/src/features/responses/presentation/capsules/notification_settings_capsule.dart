@@ -16,7 +16,7 @@ class NotificationSettingsState {
 
   const NotificationSettingsState({
     this.settings,
-    this.isLoading = false,
+    this.isLoading = true,
     this.isSaving = false,
     this.isSendingTest = false,
     this.error,

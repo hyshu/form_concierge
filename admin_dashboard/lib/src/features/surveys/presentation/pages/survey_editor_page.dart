@@ -59,14 +59,19 @@ class SurveyEditorPage extends RearchConsumer {
       });
     }
 
-    if (!isNewSurvey && formState.isLoading) {
+    if (!isNewSurvey &&
+        (formState.isLoading ||
+            (formState.survey == null && formState.error == null))) {
       return HuxAdminShell(
         title: context.tr('Loading...'),
         selectedItemId: 'surveys',
         showUsers: canManageUsers,
         showSettings: canManageUsers,
         onBack: () => context.go('/admin'),
-        child: const Center(child: HuxLoading(size: HuxLoadingSize.large)),
+        child: HuxLoadingState(
+          message: context.tr('Loading...'),
+          maxWidth: 720,
+        ),
       );
     }
 

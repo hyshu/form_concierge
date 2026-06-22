@@ -14,7 +14,7 @@ class AggregatedResultsState {
   const AggregatedResultsState({
     this.results,
     this.choicesByQuestion = const {},
-    this.isLoading = false,
+    this.isLoading = true,
     this.error,
   });
 

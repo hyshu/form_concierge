@@ -57,7 +57,10 @@ class AdminSettingsPage extends RearchConsumer {
     }
 
     if (manager.state.isLoading && manager.state.settings == null) {
-      return const Center(child: HuxLoading(size: HuxLoadingSize.large));
+      return HuxLoadingState(
+        message: context.tr('Loading...'),
+        maxWidth: 880,
+      );
     }
 
     if (manager.state.error != null && manager.state.settings == null) {

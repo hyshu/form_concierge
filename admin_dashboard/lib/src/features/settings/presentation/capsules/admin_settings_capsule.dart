@@ -12,7 +12,7 @@ class AdminSettingsState {
 
   const AdminSettingsState({
     this.settings,
-    this.isLoading = false,
+    this.isLoading = true,
     this.isSaving = false,
     this.error,
     this.successMessage,
