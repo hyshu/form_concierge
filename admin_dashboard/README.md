@@ -1,15 +1,11 @@
 # form_concierge_flutter
 
-A new Flutter project with Serverpod.
+Flutter admin dashboard for Form Concierge.
 
-## Getting Started
+The API URL is read from `assets/config.json`.
 
-This project is a starting point for a Flutter application that is using
-Serverpod.
+Run with:
 
-A great starting point for learning Serverpod is our documentation site at:
-[https://docs.serverpod.dev](https://docs.serverpod.dev).
-
-To run the project, first make sure that the server is running, then do:
-
-    flutter run -d chrome
+```bash
+flutter run -d chrome
+```

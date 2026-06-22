@@ -1,83 +1,81 @@
 # CLI Commands
 
+## Cloudflare Workers
+
+Install dependencies:
+
+```bash
+cd worker
+npm install
+```
+
+Run locally:
+
+```bash
+npm run d1:migrate:local
+npm run dev
+```
+
+Deploy:
+
+```bash
+npm run d1:migrate:remote
+npm run deploy
+```
+
+Create D1 database:
+
+```bash
+npx wrangler d1 create form_concierge
+```
+
+Typecheck:
+
+```bash
+npm run typecheck
+```
+
 ## Jaspr CLI
 
-Install: `dart pub global activate jaspr_cli`
+Install:
 
-### Project
+```bash
+dart pub global activate jaspr_cli
+```
 
-Create new project: `jaspr create`
-Serve with hot-reload: `jaspr serve`
-Build project: `jaspr build`
+Serve with hot-reload:
 
-### Service Commands
+```bash
+FORM_CONCIERGE_API_URL=http://localhost:8787 jaspr serve
+```
 
-Show environment info: `jaspr doctor`
-Clean build directories: `jaspr clean`
-Analyze and fix lint: `jaspr analyze`
-Update CLI: `jaspr update`
+Build:
 
-### Build Modes
+```bash
+jaspr build
+```
 
-- Static: Pre-renders pages as `.html` files
-- Server: Use `--target` for executable, AOT snapshot, or kernel
-- Client: Outputs files for static hosting
+## Flutter
 
----
+Admin dashboard:
 
-# Serverpod CLI Commands
+```bash
+cd admin_dashboard
+flutter run -d chrome
+```
 
-## Project
+Example app:
 
-Create new project: `serverpod create <project>`
-Create Mini version: `serverpod create <project> --mini`
-Create module: `serverpod create --template module <name>`
-Check version: `serverpod version`
+```bash
+cd examples/inappform
+flutter run
+```
 
-## Code Generation
+## SwiftUI Package
 
-Generate code: `serverpod generate`
-Watch mode: `serverpod generate --watch`
-Enable experimental features: `serverpod generate --experimental-features=all`
+Build:
 
-## Migration
-
-Create migration: `serverpod create-migration`
-Force create: `serverpod create-migration --force`
-With tag: `serverpod create-migration --tag "v1-0-0"`
-
-## Repair Migration
-
-Create repair migration: `serverpod create-repair-migration`
-For production DB: `serverpod create-repair-migration --mode production`
-Target specific version: `serverpod create-repair-migration --version <migration-name>`
-Force create: `serverpod create-repair-migration --force`
-With tag: `serverpod create-repair-migration --tag "name"`
-
-## Server
-
-Start server: `dart run bin/main.dart`
-Apply migrations on start: `dart run bin/main.dart --apply-migrations`
-Apply repair migration: `dart run bin/main.dart --apply-repair-migration`
-Maintenance mode: `dart run bin/main.dart --role maintenance --apply-migrations`
-
-## Custom Scripts
-
-Run script: `serverpod run <script>`
-List scripts: `serverpod run --list`
-
-## Docker
-
-Start: `docker compose up`
-Start in background: `docker compose up -d`
-Stop: `docker compose down`
-Remove volumes: `docker compose down -v`
-
-## Serverpod Cloud (scloud)
-
-Deploy: `scloud deploy`
-Launch new project: `scloud launch`
-Set variable: `scloud variable set <name> <value>`
-Set secret: `scloud secret set <name> <value>`
-List domains: `scloud domain list`
-Add custom domain: `scloud domain add <domain>`
+```bash
+cd swiftui
+swift build
+```

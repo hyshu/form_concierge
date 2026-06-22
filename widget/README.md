@@ -1,73 +1,60 @@
 # form_concierge_survey_widget
 
-A Flutter widget package for embedding form_concierge surveys into any Flutter application.
-
-## Installation
-
-Add to your pubspec.yaml:
-
-```yaml
-dependencies:
-  form_concierge_survey_widget:
-    path: ../form_concierge_survey_widget
-  form_concierge_client:
-    path: ../form_concierge_client
-  serverpod_auth_core_flutter: ^3.2.3
-```
+Flutter widget package for embedding Form Concierge surveys.
 
 ## Setup
 
-Initialize the client with authentication support in your app:
-
 ```dart
 import 'package:form_concierge_client/form_concierge_client.dart';
-import 'package:serverpod_auth_core_flutter/serverpod_auth_core_flutter.dart';
 
-final client = Client('https://your-server.com')
-  ..authSessionManager = FlutterAuthSessionManager();
+final client = Client('https://your-worker.example.com');
 ```
 
 ## Usage
-
-Basic usage for anonymous surveys:
 
 ```dart
 FormConciergeSurvey(
   client: client,
   surveySlug: 'customer-feedback',
+  anonymousToken: savedAnonymousToken,
+  deviceInfo: DeviceInfo(
+    deviceId: savedLocalDeviceId,
+    label: 'Pixel 9',
+    platform: 'flutter',
+    os: 'android',
+    osVersion: '16',
+    appVersion: '1.4.2',
+  ),
+  metadata: {
+    'uid': currentUser.uid,
+    'userName': currentUser.displayName,
+    'plan': currentUser.plan,
+  },
+  onAnonymousSession: (session) async {
+    await saveAnonymousToken(session.token);
+  },
   onSubmitted: () {
     Navigator.pop(context);
   },
 )
 ```
 
-For surveys that require authentication, the widget will display a login form automatically. Users can also register a new account from within the widget.
+Pass `deviceInfo` from your app when you need stable device IDs, app versions, OS versions, model names, or any values collected outside this package. Use `metadata` for app/user/session context such as authenticated `uid`, display name, tenant, plan, or feature flags. The widget also adds basic screen, locale, timezone, and Flutter platform values when available.
 
-To handle authentication externally instead:
+The widget creates an anonymous account automatically before submission. Store `session.token` and pass it back as `anonymousToken` to receive admin replies across app launches.
+
+Submitted answers are retained on the server for admins, but anonymous users cannot fetch their answer history from the API. Store any respondent-facing submission receipt locally if needed.
+
+Admin replies can be read through the shared client:
 
 ```dart
-FormConciergeSurvey(
-  client: client,
-  surveySlug: 'member-survey',
-  onSubmitted: () => Navigator.pop(context),
-  onAuthRequired: () {
-    // Navigate to your own login screen
-    Navigator.pushNamed(context, '/login');
-  },
-)
+client.anonymous.useToken(savedAnonymousToken);
+final replies = await client.anonymous.getReplies(responseId: responseId);
 ```
-
-## Parameters
-
-- client: The form_concierge Client instance (required)
-- surveySlug: The unique identifier for the survey (required)
-- onSubmitted: Callback when the survey is successfully submitted
-- onAuthRequired: Callback when authentication is needed. If not provided, the widget shows a built-in login form.
-- anonymousId: Optional identifier for tracking anonymous responses
 
 ## Supported Question Types
 
-- Single choice (radio buttons)
-- Multiple choice (checkboxes)
+- Single choice
+- Multiple choice
 - Single line text
 - Multi-line text
