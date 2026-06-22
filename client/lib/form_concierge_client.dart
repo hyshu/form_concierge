@@ -13,6 +13,14 @@ enum SurveyStatus { draft, published, closed, archived }
 
 enum AuthRequirement { anonymous, authenticated }
 
+extension QuestionTypeProperties on QuestionType {
+  bool get usesChoices =>
+      this == QuestionType.singleChoice || this == QuestionType.multipleChoice;
+
+  bool get usesTextAnswer =>
+      this == QuestionType.textSingle || this == QuestionType.textMultiLine;
+}
+
 String _enumName(Object value) => value.toString().split('.').last;
 
 DateTime _date(dynamic value) =>
@@ -54,6 +62,51 @@ List<int>? _intList(dynamic value) {
 Map<String, dynamic>? _map(dynamic value) {
   if (value is Map) return Map<String, dynamic>.from(value);
   return null;
+}
+
+Map<String, dynamic> _requiredMap(dynamic value) {
+  final map = _map(value);
+  if (map == null) {
+    throw const FormatException('Expected JSON object');
+  }
+  return map;
+}
+
+T _object<T>(dynamic value, T Function(Map<String, dynamic>) fromJson) {
+  return fromJson(_requiredMap(value));
+}
+
+T? _optionalObject<T>(
+  dynamic value,
+  T Function(Map<String, dynamic>) fromJson,
+) {
+  final map = _map(value);
+  return map == null ? null : fromJson(map);
+}
+
+List<T> _objectList<T>(
+  dynamic value,
+  T Function(Map<String, dynamic>) fromJson,
+) {
+  final list = value as List? ?? const [];
+  return list.map((item) => _object(item, fromJson)).toList();
+}
+
+Future<Map<int, List<Choice>>> _choicesByQuestion(
+  Iterable<Question> questions,
+  Future<List<Choice>> Function(int questionId) getChoicesForQuestion,
+) async {
+  final entries = await Future.wait(
+    questions
+        .where((question) => question.id != null && question.type.usesChoices)
+        .map((question) async {
+          return MapEntry(
+            question.id!,
+            await getChoicesForQuestion(question.id!),
+          );
+        }),
+  );
+  return Map.fromEntries(entries);
 }
 
 Map<String, dynamic> _withoutNulls(Map<String, dynamic> source) {
@@ -357,6 +410,58 @@ class Answer {
   }
 }
 
+List<Answer> buildAnswers(
+  Map<int, dynamic> answerValues,
+  Iterable<Question> questions, {
+  int surveyResponseId = 0,
+}) {
+  final result = <Answer>[];
+
+  for (final question in questions) {
+    final questionId = question.id;
+    if (questionId == null) continue;
+
+    final value = answerValues[questionId];
+    if (value == null) continue;
+
+    switch (question.type) {
+      case QuestionType.singleChoice:
+        if (value is int) {
+          result.add(
+            Answer(
+              surveyResponseId: surveyResponseId,
+              questionId: questionId,
+              selectedChoiceIds: [value],
+            ),
+          );
+        }
+      case QuestionType.multipleChoice:
+        if (value is List<int> && value.isNotEmpty) {
+          result.add(
+            Answer(
+              surveyResponseId: surveyResponseId,
+              questionId: questionId,
+              selectedChoiceIds: value,
+            ),
+          );
+        }
+      case QuestionType.textSingle:
+      case QuestionType.textMultiLine:
+        if (value is String && value.trim().isNotEmpty) {
+          result.add(
+            Answer(
+              surveyResponseId: surveyResponseId,
+              questionId: questionId,
+              textValue: value.trim(),
+            ),
+          );
+        }
+    }
+  }
+
+  return result;
+}
+
 class DeviceInfo {
   final String? deviceId;
   final String? label;
@@ -525,9 +630,7 @@ class SurveyResponse {
     anonymousId: json['anonymousId'] as String?,
     anonymousAccountId: json['anonymousAccountId'] as String?,
     submittedAt: _date(json['submittedAt']),
-    deviceInfo: _map(json['deviceInfo']) == null
-        ? null
-        : DeviceInfo.fromJson(_map(json['deviceInfo'])!),
+    deviceInfo: _optionalObject(json['deviceInfo'], DeviceInfo.fromJson),
     metadata: _map(json['metadata']),
   );
 
@@ -573,9 +676,7 @@ class AnonymousSession {
 
   factory AnonymousSession.fromJson(Map<String, dynamic> json) =>
       AnonymousSession(
-        account: AnonymousAccount.fromJson(
-          json['account'] as Map<String, dynamic>,
-        ),
+        account: _object(json['account'], AnonymousAccount.fromJson),
         token: json['token'] as String,
       );
 }
@@ -692,7 +793,7 @@ class SurveyResults {
     surveyId: _int(json['surveyId']),
     totalResponses: _int(json['totalResponses']),
     questionResults: (json['questionResults'] as List? ?? const [])
-        .map((value) => QuestionResult.fromJson(value))
+        .map((value) => _object(value, QuestionResult.fromJson))
         .toList(),
   );
 }
@@ -772,7 +873,7 @@ class AuthSuccess {
 
   factory AuthSuccess.fromJson(Map<String, dynamic> json) => AuthSuccess(
     token: json['token'] as String,
-    user: AuthUserInfo.fromJson(json['user'] as Map<String, dynamic>),
+    user: _object(json['user'], AuthUserInfo.fromJson),
   );
 }
 
@@ -903,24 +1004,24 @@ class SurveyEndpoint {
   }
 
   Future<List<Question>> getQuestionsForSurvey(int surveyId) async {
-    final json =
-        await _client.request(
-              'GET',
-              '/api/surveys/id/$surveyId/questions',
-            )
-            as List;
-    return json.map((value) => Question.fromJson(value)).toList();
+    final json = await _client.request(
+      'GET',
+      '/api/surveys/id/$surveyId/questions',
+    );
+    return _objectList(json, Question.fromJson);
   }
 
   Future<List<Choice>> getChoicesForQuestion(int questionId) async {
-    final json =
-        await _client.request(
-              'GET',
-              '/api/questions/$questionId/choices',
-            )
-            as List;
-    return json.map((value) => Choice.fromJson(value)).toList();
+    final json = await _client.request(
+      'GET',
+      '/api/questions/$questionId/choices',
+    );
+    return _objectList(json, Choice.fromJson);
   }
+
+  Future<Map<int, List<Choice>>> getChoicesByQuestion(
+    Iterable<Question> questions,
+  ) => _choicesByQuestion(questions, getChoicesForQuestion);
 
   Future<SurveyResponse> submitResponse({
     required int surveyId,
@@ -987,15 +1088,13 @@ class AnonymousEndpoint {
 
   Future<List<AdminReply>> getReplies({int? responseId}) async {
     final query = responseId == null ? null : {'responseId': '$responseId'};
-    final json =
-        await _client.request(
-              'GET',
-              '/api/anonymous/replies',
-              query: query,
-              bearerToken: token,
-            )
-            as List;
-    return json.map((value) => AdminReply.fromJson(value)).toList();
+    final json = await _client.request(
+      'GET',
+      '/api/anonymous/replies',
+      query: query,
+      bearerToken: token,
+    );
+    return _objectList(json, AdminReply.fromJson);
   }
 }
 
@@ -1133,14 +1232,12 @@ class SurveyAdminEndpoint {
   }
 
   Future<List<Survey>> list() async {
-    final json =
-        await _client.request(
-              'GET',
-              '/api/admin/surveys',
-              authenticated: true,
-            )
-            as List;
-    return json.map((value) => Survey.fromJson(value)).toList();
+    final json = await _client.request(
+      'GET',
+      '/api/admin/surveys',
+      authenticated: true,
+    );
+    return _objectList(json, Survey.fromJson);
   }
 
   Future<Survey?> getById(int surveyId) async {
@@ -1200,26 +1297,22 @@ class QuestionAdminEndpoint {
   }
 
   Future<List<Question>> reorder(int surveyId, List<int> questionIds) async {
-    final json =
-        await _client.request(
-              'POST',
-              '/api/admin/surveys/$surveyId/questions/reorder',
-              body: {'questionIds': questionIds},
-              authenticated: true,
-            )
-            as List;
-    return json.map((value) => Question.fromJson(value)).toList();
+    final json = await _client.request(
+      'POST',
+      '/api/admin/surveys/$surveyId/questions/reorder',
+      body: {'questionIds': questionIds},
+      authenticated: true,
+    );
+    return _objectList(json, Question.fromJson);
   }
 
   Future<List<Question>> getForSurvey(int surveyId) async {
-    final json =
-        await _client.request(
-              'GET',
-              '/api/admin/surveys/$surveyId/questions',
-              authenticated: true,
-            )
-            as List;
-    return json.map((value) => Question.fromJson(value)).toList();
+    final json = await _client.request(
+      'GET',
+      '/api/admin/surveys/$surveyId/questions',
+      authenticated: true,
+    );
+    return _objectList(json, Question.fromJson);
   }
 
   Future<Question?> getById(int questionId) async {
@@ -1232,15 +1325,17 @@ class QuestionAdminEndpoint {
   }
 
   Future<List<Choice>> getChoicesForQuestion(int questionId) async {
-    final json =
-        await _client.request(
-              'GET',
-              '/api/admin/questions/$questionId/choices',
-              authenticated: true,
-            )
-            as List;
-    return json.map((value) => Choice.fromJson(value)).toList();
+    final json = await _client.request(
+      'GET',
+      '/api/admin/questions/$questionId/choices',
+      authenticated: true,
+    );
+    return _objectList(json, Choice.fromJson);
   }
+
+  Future<Map<int, List<Choice>>> getChoicesByQuestion(
+    Iterable<Question> questions,
+  ) => _choicesByQuestion(questions, getChoicesForQuestion);
 }
 
 class ChoiceAdminEndpoint {
@@ -1277,15 +1372,13 @@ class ChoiceAdminEndpoint {
   }
 
   Future<List<Choice>> reorder(int questionId, List<int> choiceIds) async {
-    final json =
-        await _client.request(
-              'POST',
-              '/api/admin/questions/$questionId/choices/reorder',
-              body: {'choiceIds': choiceIds},
-              authenticated: true,
-            )
-            as List;
-    return json.map((value) => Choice.fromJson(value)).toList();
+    final json = await _client.request(
+      'POST',
+      '/api/admin/questions/$questionId/choices/reorder',
+      body: {'choiceIds': choiceIds},
+      authenticated: true,
+    );
+    return _objectList(json, Choice.fromJson);
   }
 
   Future<Choice?> getById(int choiceId) async {
@@ -1307,18 +1400,16 @@ class ResponseAnalyticsEndpoint {
     int? limit,
     int? offset,
   }) async {
-    final json =
-        await _client.request(
-              'GET',
-              '/api/admin/surveys/$surveyId/responses',
-              query: {
-                if (limit != null) 'limit': '$limit',
-                if (offset != null) 'offset': '$offset',
-              },
-              authenticated: true,
-            )
-            as List;
-    return json.map((value) => SurveyResponse.fromJson(value)).toList();
+    final json = await _client.request(
+      'GET',
+      '/api/admin/surveys/$surveyId/responses',
+      query: {
+        if (limit != null) 'limit': '$limit',
+        if (offset != null) 'offset': '$offset',
+      },
+      authenticated: true,
+    );
+    return _objectList(json, SurveyResponse.fromJson);
   }
 
   Future<int> getResponseCount(int surveyId) async {
@@ -1331,14 +1422,12 @@ class ResponseAnalyticsEndpoint {
   }
 
   Future<List<Answer>> getAnswersForResponse(int responseId) async {
-    final json =
-        await _client.request(
-              'GET',
-              '/api/admin/responses/$responseId/answers',
-              authenticated: true,
-            )
-            as List;
-    return json.map((value) => Answer.fromJson(value)).toList();
+    final json = await _client.request(
+      'GET',
+      '/api/admin/responses/$responseId/answers',
+      authenticated: true,
+    );
+    return _objectList(json, Answer.fromJson);
   }
 
   Future<SurveyResults> getAggregatedResults(int surveyId) async {
@@ -1354,15 +1443,15 @@ class ResponseAnalyticsEndpoint {
     int surveyId, {
     int days = 30,
   }) async {
-    final json =
-        await _client.request(
-              'GET',
-              '/api/admin/surveys/$surveyId/trends',
-              query: {'days': '$days'},
-              authenticated: true,
-            )
-            as Map;
-    return json.map((key, value) => MapEntry(key.toString(), _int(value)));
+    final json = await _client.request(
+      'GET',
+      '/api/admin/surveys/$surveyId/trends',
+      query: {'days': '$days'},
+      authenticated: true,
+    );
+    return _requiredMap(
+      json,
+    ).map((key, value) => MapEntry(key.toString(), _int(value)));
   }
 
   Future<bool> deleteResponse(int responseId) async {
@@ -1385,14 +1474,12 @@ class ResponseAnalyticsEndpoint {
   }
 
   Future<List<AdminReply>> getReplies(int responseId) async {
-    final json =
-        await _client.request(
-              'GET',
-              '/api/admin/responses/$responseId/replies',
-              authenticated: true,
-            )
-            as List;
-    return json.map((value) => AdminReply.fromJson(value)).toList();
+    final json = await _client.request(
+      'GET',
+      '/api/admin/responses/$responseId/replies',
+      authenticated: true,
+    );
+    return _objectList(json, AdminReply.fromJson);
   }
 }
 
@@ -1471,14 +1558,12 @@ class UserAdminEndpoint {
   }
 
   Future<List<AuthUserInfo>> listUsers() async {
-    final json =
-        await _client.request(
-              'GET',
-              '/api/admin/users',
-              authenticated: true,
-            )
-            as List;
-    return json.map((value) => AuthUserInfo.fromJson(value)).toList();
+    final json = await _client.request(
+      'GET',
+      '/api/admin/users',
+      authenticated: true,
+    );
+    return _objectList(json, AuthUserInfo.fromJson);
   }
 
   Future<AuthUserInfo> createUser({
@@ -1521,14 +1606,12 @@ class AiAdminEndpoint {
   Future<List<QuestionWithChoices>> generateSurveyQuestions(
     String prompt,
   ) async {
-    final json =
-        await _client.request(
-              'POST',
-              '/api/admin/ai/survey-questions',
-              body: {'prompt': prompt},
-              authenticated: true,
-            )
-            as List;
-    return json.map((value) => QuestionWithChoices.fromJson(value)).toList();
+    final json = await _client.request(
+      'POST',
+      '/api/admin/ai/survey-questions',
+      body: {'prompt': prompt},
+      authenticated: true,
+    );
+    return _objectList(json, QuestionWithChoices.fromJson);
   }
 }

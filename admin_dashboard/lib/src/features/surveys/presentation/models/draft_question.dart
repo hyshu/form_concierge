@@ -54,8 +54,7 @@ class DraftQuestion {
   }) {
     // Add default choices for choice-type questions
     final choices = <DraftChoice>[];
-    if (type == QuestionType.singleChoice ||
-        type == QuestionType.multipleChoice) {
+    if (type.usesChoices) {
       choices.addAll([
         DraftChoice.create(text: 'Choice 1'),
         DraftChoice.create(text: 'Choice 2'),
@@ -113,6 +112,5 @@ class DraftQuestion {
   }
 
   /// Whether this question type uses choices.
-  bool get hasChoices =>
-      type == QuestionType.singleChoice || type == QuestionType.multipleChoice;
+  bool get hasChoices => type.usesChoices;
 }

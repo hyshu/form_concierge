@@ -29,16 +29,8 @@ class SurveyPage extends StatelessComponent {
 
           final questions =
               await client.survey.getQuestionsForSurvey(survey.id!);
-          final choicesByQuestion = <int, List<Choice>>{};
-
-          for (final question in questions) {
-            if (question.type == QuestionType.singleChoice ||
-                question.type == QuestionType.multipleChoice) {
-              final choices =
-                  await client.survey.getChoicesForQuestion(question.id!);
-              choicesByQuestion[question.id!] = choices;
-            }
-          }
+          final choicesByQuestion =
+              await client.survey.getChoicesByQuestion(questions);
 
           return Component.fragment([
             Document.head(title: survey.title),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 
+import '../../../../core/extensions/question_type_presentation.dart';
+
 const int _kMaxTextResponsesPreview = 10;
 
 /// Card displaying results for a single question.
@@ -30,7 +32,7 @@ class QuestionResultCard extends StatelessWidget {
             Row(
               children: [
                 Icon(
-                  _iconForType(result.questionType),
+                  result.questionType.icon,
                   size: 20,
                   color: colorScheme.primary,
                 ),
@@ -200,14 +202,5 @@ class QuestionResultCard extends StatelessWidget {
           ),
       ],
     );
-  }
-
-  IconData _iconForType(QuestionType type) {
-    return switch (type) {
-      QuestionType.singleChoice => Icons.radio_button_checked,
-      QuestionType.multipleChoice => Icons.check_box,
-      QuestionType.textSingle => Icons.short_text,
-      QuestionType.textMultiLine => Icons.notes,
-    };
   }
 }

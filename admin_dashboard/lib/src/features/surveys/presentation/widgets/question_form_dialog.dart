@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 
+import '../../../../core/extensions/question_type_presentation.dart';
+
 /// Dialog for creating/editing a question.
 class QuestionFormDialog extends StatefulWidget {
   final Question? existingQuestion;
@@ -110,8 +112,8 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
                   dropdownMenuEntries: QuestionType.values.map((type) {
                     return DropdownMenuEntry(
                       value: type,
-                      label: _labelForType(type),
-                      leadingIcon: Icon(_iconForType(type), size: 20),
+                      label: type.label,
+                      leadingIcon: Icon(type.icon, size: 20),
                     );
                   }).toList(),
                   onSelected: (value) {
@@ -123,8 +125,7 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
                   },
                 ),
                 const SizedBox(height: 16),
-                if (_type == QuestionType.textSingle ||
-                    _type == QuestionType.textMultiLine)
+                if (_type.usesTextAnswer)
                   TextFormField(
                     controller: _placeholderController,
                     decoration: const InputDecoration(
@@ -174,23 +175,5 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
       );
       Navigator.pop(context);
     }
-  }
-
-  IconData _iconForType(QuestionType type) {
-    return switch (type) {
-      QuestionType.singleChoice => Icons.radio_button_checked,
-      QuestionType.multipleChoice => Icons.check_box,
-      QuestionType.textSingle => Icons.short_text,
-      QuestionType.textMultiLine => Icons.notes,
-    };
-  }
-
-  String _labelForType(QuestionType type) {
-    return switch (type) {
-      QuestionType.singleChoice => 'Single Choice',
-      QuestionType.multipleChoice => 'Multiple Choice',
-      QuestionType.textSingle => 'Short Text',
-      QuestionType.textMultiLine => 'Long Text',
-    };
   }
 }

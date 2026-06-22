@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 
+import '../../../../core/extensions/question_type_presentation.dart';
 import 'choice_editor.dart';
 
 /// List tile for displaying a question with its choices.
@@ -29,9 +30,7 @@ class QuestionListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final isChoiceType =
-        question.type == QuestionType.singleChoice ||
-        question.type == QuestionType.multipleChoice;
+    final usesChoices = question.type.usesChoices;
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8),
@@ -44,7 +43,7 @@ class QuestionListTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Icon(
-                  _iconForType(question.type),
+                  question.type.icon,
                   size: 24,
                   color: colorScheme.primary,
                 ),
@@ -74,7 +73,7 @@ class QuestionListTile extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        _labelForType(question.type),
+                        question.type.label,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),
@@ -98,7 +97,7 @@ class QuestionListTile extends StatelessWidget {
                 ],
               ],
             ),
-            if (isChoiceType) ...[
+            if (usesChoices) ...[
               const SizedBox(height: 16),
               ChoiceEditor(
                 choices: choices,
@@ -108,7 +107,7 @@ class QuestionListTile extends StatelessWidget {
                 onDelete: onDeleteChoice,
               ),
             ],
-            if (!isChoiceType && question.placeholder != null) ...[
+            if (!usesChoices && question.placeholder != null) ...[
               const SizedBox(height: 8),
               Text(
                 'Placeholder: ${question.placeholder}',
@@ -122,23 +121,5 @@ class QuestionListTile extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  IconData _iconForType(QuestionType type) {
-    return switch (type) {
-      QuestionType.singleChoice => Icons.radio_button_checked,
-      QuestionType.multipleChoice => Icons.check_box,
-      QuestionType.textSingle => Icons.short_text,
-      QuestionType.textMultiLine => Icons.notes,
-    };
-  }
-
-  String _labelForType(QuestionType type) {
-    return switch (type) {
-      QuestionType.singleChoice => 'Single Choice',
-      QuestionType.multipleChoice => 'Multiple Choice',
-      QuestionType.textSingle => 'Short Text',
-      QuestionType.textMultiLine => 'Long Text',
-    };
   }
 }

@@ -71,48 +71,46 @@ class SurveyListManager {
 
   /// Delete a survey by ID.
   Future<bool> deleteSurvey(int surveyId) async {
-    try {
-      await _client.surveyAdmin.delete(surveyId);
-      await loadSurveys();
-      return true;
-    } on Exception catch (e) {
-      _setState(state.copyWith(error: 'Failed to delete survey: $e'));
-      return false;
-    }
+    return _runAndReload(
+      () => _client.surveyAdmin.delete(surveyId),
+      'Failed to delete survey',
+    );
   }
 
   /// Publish a survey.
   Future<bool> publishSurvey(int surveyId) async {
-    try {
-      await _client.surveyAdmin.publish(surveyId);
-      await loadSurveys();
-      return true;
-    } on Exception catch (e) {
-      _setState(state.copyWith(error: 'Failed to publish survey: $e'));
-      return false;
-    }
+    return _runAndReload(
+      () => _client.surveyAdmin.publish(surveyId),
+      'Failed to publish survey',
+    );
   }
 
   /// Close a survey.
   Future<bool> closeSurvey(int surveyId) async {
-    try {
-      await _client.surveyAdmin.close(surveyId);
-      await loadSurveys();
-      return true;
-    } on Exception catch (e) {
-      _setState(state.copyWith(error: 'Failed to close survey: $e'));
-      return false;
-    }
+    return _runAndReload(
+      () => _client.surveyAdmin.close(surveyId),
+      'Failed to close survey',
+    );
   }
 
   /// Reopen a closed survey.
   Future<bool> reopenSurvey(int surveyId) async {
+    return _runAndReload(
+      () => _client.surveyAdmin.reopen(surveyId),
+      'Failed to reopen survey',
+    );
+  }
+
+  Future<bool> _runAndReload(
+    Future<void> Function() action,
+    String errorMessage,
+  ) async {
     try {
-      await _client.surveyAdmin.reopen(surveyId);
+      await action();
       await loadSurveys();
       return true;
     } on Exception catch (e) {
-      _setState(state.copyWith(error: 'Failed to reopen survey: $e'));
+      _setState(state.copyWith(error: '$errorMessage: $e'));
       return false;
     }
   }
