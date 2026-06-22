@@ -5,6 +5,7 @@ import 'package:jaspr/dom.dart';
 import '../state/survey_state.dart';
 import '../utils/anonymous_storage.dart';
 import '../utils/device_info.dart';
+import '../utils/ssr_payload.dart';
 import '../utils/validation.dart';
 import 'survey_loading.dart';
 import 'survey_error.dart';
@@ -57,6 +58,17 @@ class SurveyClientState extends State<SurveyClient> {
 
     final surveyJson = component.surveyJson;
     if (surveyJson == null) {
+      final payload = readSsrSurveyPayload(
+        slug: component.slug,
+        domain: component.domain,
+      );
+      if (payload != null) {
+        _hydratePayload(payload);
+        _viewState = SurveyViewState.ready;
+        _ensureAnonymousAccount();
+        return;
+      }
+
       _loadSurvey();
       return;
     }
@@ -74,6 +86,37 @@ class SurveyClientState extends State<SurveyClient> {
     );
     _viewState = SurveyViewState.ready;
     _ensureAnonymousAccount();
+  }
+
+  void _hydratePayload(Map<String, dynamic> payload) {
+    final choicesByQuestion = (payload['choicesByQuestion'] as Map? ?? {})
+        .map<String, List<Choice>>(
+          (key, value) => MapEntry(
+            key.toString(),
+            (value as List? ?? const [])
+                .whereType<Map>()
+                .map((item) => Choice.fromJson(Map<String, dynamic>.from(item)))
+                .toList(),
+          ),
+        )
+        .map((key, value) => MapEntry(int.parse(key), value));
+
+    _hydrateSurvey(
+      Survey.fromJson(Map<String, dynamic>.from(payload['survey'] as Map)),
+      (payload['questions'] as List? ?? const [])
+          .whereType<Map>()
+          .map((item) => Question.fromJson(Map<String, dynamic>.from(item)))
+          .toList(),
+      (payload['visibilityRules'] as List? ?? const [])
+          .whereType<Map>()
+          .map(
+            (item) => QuestionVisibilityRule.fromJson(
+              Map<String, dynamic>.from(item),
+            ),
+          )
+          .toList(),
+      choicesByQuestion,
+    );
   }
 
   Future<void> _loadSurvey() async {
