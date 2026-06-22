@@ -31,6 +31,7 @@ class _ProjectFormState extends State<ProjectForm> {
   late final Map<String, TextEditingController> _descriptionTranslations;
   String _defaultLocale = defaultFormContentLocale;
   List<String> _supportedLocales = const [defaultFormContentLocale];
+  bool _didSetInitialLocale = false;
 
   @override
   void initState() {
@@ -58,6 +59,18 @@ class _ProjectFormState extends State<ProjectForm> {
             project.descriptionTranslations.values[locale] ?? '';
       }
     }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_didSetInitialLocale || widget.existingProject != null) return;
+    final initialLocale = _formContentLocaleFromAdminLocale(
+      Localizations.localeOf(context),
+    );
+    _defaultLocale = initialLocale;
+    _supportedLocales = [initialLocale];
+    _didSetInitialLocale = true;
   }
 
   @override
@@ -381,4 +394,19 @@ String _localeLabels(Iterable<String> locales) {
   return orderedFormContentLocales(
     locales,
   ).map((locale) => formContentLocaleLabels[locale]!).join(', ');
+}
+
+String _formContentLocaleFromAdminLocale(Locale locale) {
+  final scriptCode = locale.scriptCode;
+  final countryCode = locale.countryCode;
+  final candidates = [
+    if (scriptCode != null) '${locale.languageCode}-$scriptCode',
+    if (countryCode != null) '${locale.languageCode}-$countryCode',
+    locale.languageCode,
+  ];
+  for (final candidate in candidates) {
+    final normalized = normalizeFormContentLocale(candidate);
+    if (formContentLocaleCodes.contains(normalized)) return normalized;
+  }
+  return defaultFormContentLocale;
 }
