@@ -39,7 +39,11 @@ class _LoginFormState extends State<LoginForm> {
     );
 
     try {
-      await component.client.emailIdp.login(email: _email, password: _password);
+      final auth = await component.client.emailIdp.login(
+        email: _email,
+        password: _password,
+      );
+      await component.client.auth.updateSignedInUser(auth);
       component.onAuthSuccess();
     } catch (e) {
       final errorMessage = _parseError(e.toString());

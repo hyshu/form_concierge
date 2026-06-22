@@ -60,10 +60,11 @@ class _SetPasswordFormState extends State<SetPasswordForm> {
         throw Exception('Registration token not found');
       }
 
-      await component.client.emailIdp.finishRegistration(
+      final auth = await component.client.emailIdp.finishRegistration(
         registrationToken: token,
         password: _password,
       );
+      await component.client.auth.updateSignedInUser(auth);
       component.onAuthSuccess();
     } catch (e) {
       final errorMessage = _parseError(e.toString());

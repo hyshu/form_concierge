@@ -10,7 +10,7 @@ void main() {
   Jaspr.initializeApp(options: defaultServerOptions);
 
   final serverUrl =
-      Platform.environment['SERVERPOD_URL'] ?? 'http://localhost:8080';
+      Platform.environment['FORM_CONCIERGE_API_URL'] ?? 'http://localhost:8787';
 
   runApp(Document(
     title: 'Form Concierge',
