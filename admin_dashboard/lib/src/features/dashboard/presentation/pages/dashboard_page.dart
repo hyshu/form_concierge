@@ -285,6 +285,10 @@ class _ProjectCard extends StatelessWidget {
                     onReopen: canWrite && survey.status == SurveyStatus.closed
                         ? () => manager.reopenSurvey(survey.id!)
                         : null,
+                    onWebEnabledChanged: canWrite
+                        ? (enabled) =>
+                              manager.updateSurveyWebEnabled(survey, enabled)
+                        : null,
                     onDelete: canWrite ? () => onDeleteSurvey(survey) : null,
                   ),
               ],
@@ -311,6 +315,7 @@ class _SurveyRow extends StatelessWidget {
   final VoidCallback? onPublish;
   final VoidCallback? onClose;
   final VoidCallback? onReopen;
+  final ValueChanged<bool>? onWebEnabledChanged;
   final VoidCallback? onDelete;
 
   const _SurveyRow({
@@ -321,6 +326,7 @@ class _SurveyRow extends StatelessWidget {
     this.onPublish,
     this.onClose,
     this.onReopen,
+    this.onWebEnabledChanged,
     this.onDelete,
   });
 
@@ -367,6 +373,23 @@ class _SurveyRow extends StatelessWidget {
                   _MetadataItem(
                     icon: LucideIcons.clock3,
                     text: survey.updatedAt.toIsoDateString(),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      HuxSwitch(
+                        value: survey.webEnabled,
+                        onChanged: onWebEnabledChanged,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        context.tr('Web public'),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: HuxTokens.textSecondary(context),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

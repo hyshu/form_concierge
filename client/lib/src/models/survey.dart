@@ -371,6 +371,7 @@ class Survey {
   final LocalizedText titleTranslations;
   final LocalizedText descriptionTranslations;
   final SurveyStatus status;
+  final bool webEnabled;
   final String? createdByUserId;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -383,6 +384,7 @@ class Survey {
     required this.titleTranslations,
     required this.descriptionTranslations,
     this.status = SurveyStatus.draft,
+    this.webEnabled = true,
     this.createdByUserId,
     required this.createdAt,
     required this.updatedAt,
@@ -398,6 +400,7 @@ class Survey {
       json['descriptionTranslations'],
     ),
     status: _enum(SurveyStatus.values, json['status'], SurveyStatus.draft),
+    webEnabled: _bool(json['webEnabled'], true),
     createdByUserId: json['createdByUserId'] as String?,
     createdAt: _date(json['createdAt']),
     updatedAt: _date(json['updatedAt']),
@@ -411,6 +414,7 @@ class Survey {
     'titleTranslations': titleTranslations.toJson(),
     'descriptionTranslations': descriptionTranslations.toJson(),
     'status': _enumName(status),
+    'webEnabled': webEnabled,
     'createdByUserId': createdByUserId,
     'createdAt': createdAt.toIso8601String(),
     'updatedAt': updatedAt.toIso8601String(),
@@ -424,6 +428,7 @@ class Survey {
     LocalizedText? titleTranslations,
     LocalizedText? descriptionTranslations,
     SurveyStatus? status,
+    bool? webEnabled,
     String? createdByUserId,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -437,6 +442,7 @@ class Survey {
       descriptionTranslations:
           descriptionTranslations ?? this.descriptionTranslations,
       status: status ?? this.status,
+      webEnabled: webEnabled ?? this.webEnabled,
       createdByUserId: createdByUserId ?? this.createdByUserId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

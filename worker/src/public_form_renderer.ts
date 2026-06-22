@@ -90,7 +90,7 @@ async function loadProjectData(
 ): Promise<PublicProjectData | null> {
   const rows = await env.DB.prepare(
     `SELECT * FROM surveys
-     WHERE project_id = ? AND status = 'published'
+     WHERE project_id = ? AND status = 'published' AND web_enabled = 1
      ORDER BY updated_at DESC`,
   ).bind(project.id).all<SurveyRow>();
   const surveys = rows.results.filter(isAccepting);

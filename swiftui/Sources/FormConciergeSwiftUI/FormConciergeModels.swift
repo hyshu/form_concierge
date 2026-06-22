@@ -110,6 +110,7 @@ public struct Survey: Codable, Identifiable, Sendable {
   public let titleTranslations: LocalizedText
   public let descriptionTranslations: LocalizedText
   public let status: SurveyStatus
+  public let webEnabled: Bool
   public let createdAt: Date
   public let updatedAt: Date
 

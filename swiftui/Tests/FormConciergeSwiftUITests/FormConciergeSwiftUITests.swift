@@ -309,6 +309,7 @@ final class FormConciergeSwiftUITests: XCTestCase {
       "titleTranslations": ["en": "Customer feedback", "ja": "顧客フィードバック"],
       "descriptionTranslations": ["en": "Tell us", "ja": "ご意見をお聞かせください"],
       "status": "published",
+      "webEnabled": true,
       "createdAt": "2026-06-22T10:00:00Z",
       "updatedAt": "2026-06-22T10:00:00Z",
     ]

@@ -56,15 +56,16 @@ async function insertSurvey(
   const now = nowIso();
   const row = await db.prepare(
     `INSERT INTO surveys
-       (project_id, title_translations, description_translations, status, created_by_admin_id,
+       (project_id, title_translations, description_translations, status, web_enabled, created_by_admin_id,
         created_at, updated_at, starts_at, ends_at)
-     VALUES (?, ?, ?, 'draft', ?, ?, ?, ?, ?)
+     VALUES (?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?)
      RETURNING *`,
   )
     .bind(
       projectId,
       JSON.stringify(content.titleTranslations),
       JSON.stringify(content.descriptionTranslations),
+      Object.hasOwn(body, 'webEnabled') ? boolToInt(body.webEnabled) : 1,
       admin.id,
       now,
       now,
@@ -122,12 +123,13 @@ export async function updateSurvey(request: Request, env: Env, surveyId: number)
   const row = await env.DB.prepare(
     `UPDATE surveys
      SET title_translations = ?, description_translations = ?,
-         starts_at = ?, ends_at = ?, updated_at = ?
+         web_enabled = ?, starts_at = ?, ends_at = ?, updated_at = ?
      WHERE id = ?
      RETURNING *`,
   ).bind(
     JSON.stringify(content.titleTranslations),
     JSON.stringify(content.descriptionTranslations),
+    Object.hasOwn(body, 'webEnabled') ? boolToInt(body.webEnabled) : existing.web_enabled,
     optionalString(body.startsAt ?? existing.starts_at),
     optionalString(body.endsAt ?? existing.ends_at),
     nowIso(),

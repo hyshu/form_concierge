@@ -38,6 +38,7 @@ export type SurveyRow = {
   title_translations: string;
   description_translations: string;
   status: string;
+  web_enabled: number;
   auth_requirement: string;
   created_by_admin_id: string | null;
   created_at: string;

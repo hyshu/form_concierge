@@ -25,6 +25,7 @@ export function surveyToJson(row: SurveyRow) {
     titleTranslations: parseLocalizedText(row.title_translations),
     descriptionTranslations: parseLocalizedText(row.description_translations),
     status: row.status,
+    webEnabled: row.web_enabled === 1,
     authRequirement: row.auth_requirement,
     createdByUserId: row.created_by_admin_id,
     createdAt: row.created_at,
