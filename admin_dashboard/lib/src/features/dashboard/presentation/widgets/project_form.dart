@@ -152,7 +152,7 @@ class _ProjectFormState extends State<ProjectForm> {
             ),
             const SizedBox(height: 16),
             Text(
-              context.tr('Localized project names'),
+              context.tr('Project content'),
               style: Theme.of(context).textTheme.titleSmall,
             ),
             const SizedBox(height: 8),
@@ -166,11 +166,6 @@ class _ProjectFormState extends State<ProjectForm> {
               textInputAction: TextInputAction.next,
             ),
             const SizedBox(height: 16),
-            Text(
-              context.tr('Localized descriptions'),
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            const SizedBox(height: 8),
             LocalizedTextFieldGroup(
               controllers: _descriptionTranslations,
               primaryLocale: _defaultLocale,

@@ -79,7 +79,7 @@ void main() {
           'Use a dedicated host to open this project without a slug.',
           'Custom domain (optional)',
           'Default language',
-          'Localized project names',
+          'Project content',
           'Project name',
           'Enter project name',
           'Project name is required',

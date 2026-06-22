@@ -216,7 +216,7 @@ const _localizedValues = <String, Map<String, String>>{
     'Use a dedicated host to open this project without a slug.':
         'Use a dedicated host to open this project without a slug.',
     'Default language': 'Default language',
-    'Localized project names': 'Localized project names',
+    'Project content': 'Project content',
     'Project name': 'Project name',
     'Enter project name': 'Enter project name',
     'Project name is required': 'Project name is required',
@@ -570,7 +570,7 @@ const _localizedValues = <String, Map<String, String>>{
     'Use a dedicated host to open this project without a slug.':
         '専用ホストでスラッグなしにこのプロジェクトを開けます。',
     'Default language': 'デフォルト言語',
-    'Localized project names': 'プロジェクト名の多言語入力',
+    'Project content': '表示内容',
     'Project name': 'プロジェクト名',
     'Enter project name': 'プロジェクト名を入力',
     'Project name is required': 'プロジェクト名は必須です',
@@ -907,7 +907,7 @@ const _localizedValues = <String, Map<String, String>>{
     'Custom domain must be a hostname like forms.example.com':
         '自定义域名必须是 forms.example.com 这样的主机名',
     'Default language': '默认语言',
-    'Localized project names': '本地化项目名称',
+    'Project content': '显示内容',
     'Project name': '项目名称',
     'Enter project name': '输入项目名称',
     'Project name is required': '项目名称为必填项',
@@ -1199,7 +1199,7 @@ const _localizedValues = <String, Map<String, String>>{
     'Custom domain must be a hostname like forms.example.com':
         '自訂網域必須是 forms.example.com 這樣的主機名稱',
     'Default language': '預設語言',
-    'Localized project names': '本地化專案名稱',
+    'Project content': '顯示內容',
     'Project name': '專案名稱',
     'Enter project name': '輸入專案名稱',
     'Project name is required': '專案名稱為必填',
@@ -1492,7 +1492,7 @@ const _localizedValues = <String, Map<String, String>>{
     'Custom domain must be a hostname like forms.example.com':
         '사용자 지정 도메인은 forms.example.com 같은 호스트 이름이어야 합니다',
     'Default language': '기본 언어',
-    'Localized project names': '다국어 프로젝트 이름',
+    'Project content': '표시 내용',
     'Project name': '프로젝트 이름',
     'Enter project name': '프로젝트 이름 입력',
     'Project name is required': '프로젝트 이름은 필수입니다',
@@ -1798,7 +1798,7 @@ const _localizedValues = <String, Map<String, String>>{
     'Custom domain must be a hostname like forms.example.com':
         'Eigene Domain muss ein Hostname wie forms.example.com sein',
     'Default language': 'Standardsprache',
-    'Localized project names': 'Lokalisierte Projektnamen',
+    'Project content': 'Anzeigeinhalt',
     'Project name': 'Projektname',
     'Enter project name': 'Projektname eingeben',
     'Project name is required': 'Projektname ist erforderlich',
