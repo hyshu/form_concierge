@@ -3,6 +3,7 @@ import 'package:jaspr/jaspr.dart';
 import 'package:jaspr/dom.dart';
 
 import '../../state/auth_state.dart';
+import 'auth_form_controls.dart';
 
 class VerifyCodeForm extends StatefulComponent {
   const VerifyCodeForm({
@@ -39,7 +40,13 @@ class _VerifyCodeFormState extends State<VerifyCodeForm> {
     try {
       final requestId = component.authState.registrationRequestId;
       if (requestId == null) {
-        throw Exception('Registration request ID not found');
+        component.onAuthStateChanged(
+          component.authState.copyWith(
+            isLoading: false,
+            error: 'Registration session expired. Please start over.',
+          ),
+        );
+        return;
       }
 
       final result = await component.client.emailIdp.verifyRegistrationCode(
@@ -54,19 +61,20 @@ class _VerifyCodeFormState extends State<VerifyCodeForm> {
           registrationToken: result,
         ),
       );
-    } catch (e) {
-      final errorMessage = _parseError(e.toString());
+    } on Exception catch (error) {
+      final errorMessage = _parseError(error);
       component.onAuthStateChanged(
         component.authState.copyWith(isLoading: false, error: errorMessage),
       );
     }
   }
 
-  String _parseError(String error) {
-    if (error.contains('invalidVerificationCode')) {
+  String _parseError(Exception error) {
+    final message = error.toString();
+    if (message.contains('invalidVerificationCode')) {
       return 'Invalid verification code. Please try again.';
     }
-    if (error.contains('expired')) {
+    if (message.contains('expired')) {
       return 'Verification code has expired. Please request a new one.';
     }
     return 'Verification failed. Please try again.';
@@ -89,15 +97,7 @@ class _VerifyCodeFormState extends State<VerifyCodeForm> {
 
       // Error message
       if (component.authState.error != null)
-        div(
-            classes:
-                'flex items-start gap-3 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm',
-            [
-              span(classes: 'text-red-500 flex-shrink-0', [
-                Component.text('\u26A0'),
-              ]),
-              span([Component.text(component.authState.error!)]),
-            ]),
+        AuthErrorMessage(component.authState.error!),
 
       // Code field
       div(classes: 'space-y-1.5', [
@@ -109,8 +109,7 @@ class _VerifyCodeFormState extends State<VerifyCodeForm> {
           id: 'code',
           name: 'code',
           value: _code,
-          classes:
-              'w-full px-4 py-3 border border-slate-200 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 focus:outline-none text-sm disabled:bg-slate-50 disabled:cursor-not-allowed placeholder:text-slate-400 text-center tracking-widest',
+          classes: '$authInputClasses text-center tracking-widest',
           disabled: isLoading,
           attributes: {
             'placeholder': 'Enter verification code',
@@ -124,8 +123,7 @@ class _VerifyCodeFormState extends State<VerifyCodeForm> {
       div(classes: 'pt-2', [
         button(
           [Component.text(isLoading ? 'Verifying...' : 'Verify')],
-          classes:
-              'w-full py-3 px-4 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm',
+          classes: authPrimaryButtonClasses,
           disabled: isLoading,
           onClick: isLoading ? null : () => _submit(),
         ),
