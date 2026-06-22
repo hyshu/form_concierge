@@ -15,6 +15,22 @@ async function enableFlutterSemantics(page) {
   await page.evaluate(() => document.querySelector('flt-semantics-placeholder')?.click());
 }
 
+async function typeIntoFlutterInput(page, locator, value) {
+  await expect(locator).toBeVisible();
+  await locator.fill(value);
+  await expect(locator).toHaveValue(value);
+}
+
+function apiResponse(apiUrl, pathname) {
+  const expected = new URL(pathname, apiUrl);
+  return (response) => {
+    const actual = new URL(response.url());
+    return response.status() === 200 &&
+      actual.origin === expected.origin &&
+      actual.pathname === expected.pathname;
+  };
+}
+
 test('admin dashboard logs in and renders seeded project data', async ({ page }) => {
   const seed = await seedData();
   const adminUrl = process.env.ADMIN_URL ?? 'http://127.0.0.1:8080';
@@ -25,15 +41,26 @@ test('admin dashboard logs in and renders seeded project data', async ({ page })
 
   await expect(page.locator('body')).toContainText('Login');
 
+  const loginResponsePromise = page.waitForResponse(
+    apiResponse(apiUrl, '/api/admin/auth/login'),
+  );
   const projectResponsePromise = page.waitForResponse(
-    (response) => response.url() === `${apiUrl}/api/admin/projects` && response.status() === 200,
+    apiResponse(apiUrl, '/api/admin/projects'),
   );
 
-  const inputs = page.locator('input, textarea');
-  await inputs.nth(0).fill(seed.adminEmail);
-  await inputs.nth(1).fill(seed.adminPassword);
+  await typeIntoFlutterInput(
+    page,
+    page.locator('input[autocomplete="email"]'),
+    seed.adminEmail,
+  );
+  await typeIntoFlutterInput(
+    page,
+    page.locator('input[type="password"]'),
+    seed.adminPassword,
+  );
   await page.getByRole('button', { name: 'Login' }).click();
 
+  await loginResponsePromise;
   const projectResponse = await projectResponsePromise;
   const projects = await projectResponse.json();
   expect(projects).toEqual(
