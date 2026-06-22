@@ -1,6 +1,7 @@
 export interface Env {
   DB: D1Database;
   PUBLIC_BASE_URL?: string;
+  PUBLIC_FORM_ASSET_BASE_URL?: string;
 }
 
 export type AdminContext = {

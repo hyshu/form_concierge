@@ -41,6 +41,7 @@ import {
 import { HttpError, countRows, json, jsonHeaders } from './utils';
 import { anonymousAccountToJson, replyToJson } from './serializers';
 import { requireScope } from './permissions';
+import { isPublicFormHtmlRequest, renderPublicForm } from './public_form_renderer';
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -170,6 +171,10 @@ async function route(request: Request, env: Env): Promise<Response> {
   if (parts[0] === 'api' && parts[1] === 'admin') {
     const admin = await requireAdmin(request, env);
     return routeAdmin(request, env, admin, parts, url);
+  }
+
+  if (isPublicFormHtmlRequest(request, path)) {
+    return renderPublicForm(request, env);
   }
 
   return json({ error: 'Not found' }, 404);
