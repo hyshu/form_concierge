@@ -66,13 +66,4 @@ class UserAdminEndpoint {
     );
     return _bool(json['selfDeleted']);
   }
-
-  Future<bool> toggleUserBlocked(UuidValue userId) async {
-    final json = await _client.request(
-      'POST',
-      '/api/admin/users/$userId/toggle-blocked',
-      authenticated: true,
-    );
-    return _bool(json['blocked']);
-  }
 }

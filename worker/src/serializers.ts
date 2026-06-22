@@ -158,7 +158,6 @@ export function adminContextToJson(user: AdminContext) {
     email: user.email,
     scopeNames: user.scopeNames,
     role: roleFromScopes(user.scopeNames),
-    blocked: user.blocked,
     created: user.created,
   };
 }
@@ -168,7 +167,6 @@ export function adminRowToContext(row: AdminRow): AdminContext {
     id: row.id,
     email: row.email,
     scopeNames: parseJsonArray(row.scope_names),
-    blocked: row.blocked === 1,
     created: row.created_at,
   };
 }

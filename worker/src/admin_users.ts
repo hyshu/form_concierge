@@ -7,7 +7,7 @@ import { scopesForRole } from './permissions';
 
 export async function listUsers(env: Env): Promise<Response> {
   const rows = await env.DB.prepare(
-    `SELECT id, email, scope_names, blocked, created_at FROM admins ORDER BY created_at`,
+    `SELECT id, email, scope_names, created_at FROM admins ORDER BY created_at`,
   ).all<AdminRow>();
   return json(rows.results.map(adminUserToJson));
 }
@@ -37,7 +37,7 @@ export async function updateUserRole(request: Request, env: Env, userId: string)
   }
   const row = await env.DB.prepare(
     `UPDATE admins SET scope_names = ?, updated_at = ? WHERE id = ?
-     RETURNING id, email, scope_names, blocked, created_at`,
+     RETURNING id, email, scope_names, created_at`,
   ).bind(JSON.stringify(scopesForRole(role)), nowIso(), userId).first<AdminRow>();
   if (!row) throw new HttpError(404, 'User not found');
   return json(adminUserToJson(row));
@@ -51,30 +51,14 @@ export async function deleteUser(env: Env, admin: AdminContext, userId: string):
   return json({ selfDeleted: admin.id === userId });
 }
 
-export async function toggleUserBlocked(env: Env, userId: string): Promise<Response> {
-  const current = await env.DB.prepare(
-    `SELECT blocked FROM admins WHERE id = ?`,
-  ).bind(userId).first<{ blocked: number }>();
-  if (!current) throw new HttpError(404, 'User not found');
-  if (current.blocked === 0 && await isLastActiveAdmin(env.DB, userId)) {
-    throw new HttpError(400, 'Cannot block the last active admin');
-  }
-  const row = await env.DB.prepare(
-    `UPDATE admins SET blocked = CASE WHEN blocked = 1 THEN 0 ELSE 1 END,
-     updated_at = ? WHERE id = ? RETURNING blocked`,
-  ).bind(nowIso(), userId).first<{ blocked: number }>();
-  if (!row) throw new HttpError(404, 'User not found');
-  return json({ blocked: row.blocked === 1 });
-}
-
 async function isLastActiveAdmin(db: D1Database, userId: string): Promise<boolean> {
   const target = await db.prepare(
-    `SELECT blocked, scope_names FROM admins WHERE id = ?`,
-  ).bind(userId).first<{ blocked: number; scope_names: string }>();
-  if (!target || target.blocked === 1 || !target.scope_names.includes('"admin"')) return false;
+    `SELECT scope_names FROM admins WHERE id = ?`,
+  ).bind(userId).first<{ scope_names: string }>();
+  if (!target || !target.scope_names.includes('"admin"')) return false;
   const row = await db.prepare(
     `SELECT COUNT(*) AS count FROM admins
-     WHERE blocked = 0 AND scope_names LIKE '%"admin"%'`,
+     WHERE scope_names LIKE '%"admin"%'`,
   ).first<{ count: number }>();
   return Number(row?.count ?? 0) <= 1;
 }

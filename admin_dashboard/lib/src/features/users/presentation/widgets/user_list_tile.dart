@@ -8,14 +8,12 @@ class UserListTile extends StatelessWidget {
   const UserListTile({
     super.key,
     required this.user,
-    required this.onToggleBlocked,
     required this.onRoleChanged,
     required this.onDelete,
     this.isCurrentUser = false,
   });
 
   final AuthUserInfo user;
-  final VoidCallback onToggleBlocked;
   final ValueChanged<AdminRole> onRoleChanged;
   final VoidCallback onDelete;
   final bool isCurrentUser;
@@ -33,7 +31,6 @@ class UserListTile extends StatelessWidget {
           );
           final controls = _UserControls(
             user: user,
-            onToggleBlocked: onToggleBlocked,
             onRoleChanged: onRoleChanged,
             onDelete: onDelete,
           );
@@ -44,7 +41,7 @@ class UserListTile extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    _UserIcon(blocked: user.blocked),
+                    const _UserIcon(),
                     const SizedBox(width: 12),
                     Expanded(child: details),
                   ],
@@ -57,7 +54,7 @@ class UserListTile extends StatelessWidget {
 
           return Row(
             children: [
-              _UserIcon(blocked: user.blocked),
+              const _UserIcon(),
               const SizedBox(width: 12),
               Expanded(child: details),
               const SizedBox(width: 16),
@@ -98,12 +95,6 @@ class _UserDetails extends StatelessWidget {
                 variant: HuxBadgeVariant.primary,
                 size: HuxBadgeSize.small,
               ),
-            if (user.blocked)
-              HuxBadge(
-                label: context.tr('Blocked'),
-                variant: HuxBadgeVariant.destructive,
-                size: HuxBadgeSize.small,
-              ),
           ],
         ),
         const SizedBox(height: 6),
@@ -119,13 +110,11 @@ class _UserDetails extends StatelessWidget {
 class _UserControls extends StatelessWidget {
   const _UserControls({
     required this.user,
-    required this.onToggleBlocked,
     required this.onRoleChanged,
     required this.onDelete,
   });
 
   final AuthUserInfo user;
-  final VoidCallback onToggleBlocked;
   final ValueChanged<AdminRole> onRoleChanged;
   final VoidCallback onDelete;
 
@@ -158,17 +147,6 @@ class _UserControls extends StatelessWidget {
             onChanged: onRoleChanged,
           ),
         ),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            HuxSwitch(
-              value: !user.blocked,
-              onChanged: (_) => onToggleBlocked(),
-            ),
-            const SizedBox(width: 8),
-            Text(context.tr(user.blocked ? 'Unblock' : 'Block')),
-          ],
-        ),
         Tooltip(
           message: context.tr('Delete'),
           child: HuxButton(
@@ -186,9 +164,7 @@ class _UserControls extends StatelessWidget {
 }
 
 class _UserIcon extends StatelessWidget {
-  const _UserIcon({required this.blocked});
-
-  final bool blocked;
+  const _UserIcon();
 
   @override
   Widget build(BuildContext context) {
@@ -196,18 +172,14 @@ class _UserIcon extends StatelessWidget {
       width: 44,
       height: 44,
       decoration: BoxDecoration(
-        color: blocked
-            ? HuxTokens.surfaceDestructive(context)
-            : HuxTokens.primary(context).withValues(alpha: 0.12),
+        color: HuxTokens.primary(context).withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: HuxTokens.borderPrimary(context)),
       ),
       alignment: Alignment.center,
       child: Icon(
-        blocked ? LucideIcons.userX : LucideIcons.user,
-        color: blocked
-            ? HuxTokens.textDestructive(context)
-            : HuxTokens.primary(context),
+        LucideIcons.user,
+        color: HuxTokens.primary(context),
       ),
     );
   }

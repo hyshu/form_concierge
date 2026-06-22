@@ -102,7 +102,6 @@ class UsersPage extends RearchConsumer {
               child: UserListTile(
                 user: user,
                 isCurrentUser: isCurrentUser,
-                onToggleBlocked: () => manager.toggleUserBlocked(user.id),
                 onRoleChanged: (role) => manager.updateUserRole(user.id, role),
                 onDelete: () => _confirmDelete(
                   context,

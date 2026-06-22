@@ -109,14 +109,6 @@ class UserListManager {
     }
   }
 
-  /// Toggle user blocked status.
-  Future<bool> toggleUserBlocked(UuidValue userId) async {
-    return _runAndReload(
-      () => _client.userAdmin.toggleUserBlocked(userId),
-      'Failed to update user',
-    );
-  }
-
   Future<bool> _runAndReload(
     Future<void> Function() action,
     String errorMessage,
