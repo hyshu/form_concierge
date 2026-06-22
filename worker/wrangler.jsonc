@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "form-concierge-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-06-22",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "form_concierge",
+      "database_id": "replace-with-cloudflare-d1-database-id",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "vars": {
+    "PUBLIC_BASE_URL": "http://localhost:8787"
+  }
+}

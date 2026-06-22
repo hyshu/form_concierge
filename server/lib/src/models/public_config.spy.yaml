@@ -1,5 +1,0 @@
-class: PublicConfig
-fields:
-  passwordResetEnabled: bool
-  requireEmailVerification: bool
-  geminiEnabled: bool

@@ -1,7 +1,0 @@
-class: AuthUserInfo
-fields:
-  id: UuidValue
-  email: String?
-  scopeNames: List<String>
-  blocked: bool
-  created: DateTime

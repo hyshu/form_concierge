@@ -1,6 +1,0 @@
-### Authentication requirement for survey responses
-enum: AuthRequirement
-serialized: byName
-values:
-  - anonymous
-  - authenticated
