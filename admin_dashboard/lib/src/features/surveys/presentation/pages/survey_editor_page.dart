@@ -8,11 +8,7 @@ import '../../../../core/capsules/public_config_capsule.dart';
 import '../../../dashboard/presentation/capsules/survey_list_capsule.dart';
 import '../capsules/question_list_capsule.dart';
 import '../capsules/survey_form_capsule.dart';
-import '../models/draft_question.dart';
-import '../widgets/ai_prompt_input.dart';
-import '../widgets/ai_question_preview_dialog.dart';
-import '../widgets/draft_question_editor.dart';
-import '../widgets/question_form_dialog.dart';
+import '../widgets/draft_questions_section.dart';
 import '../widgets/question_list.dart';
 import '../widgets/survey_form.dart';
 
@@ -153,11 +149,10 @@ class SurveyEditorPage extends RearchConsumer {
                   ),
                   const SizedBox(height: 48),
                   if (isNewSurvey)
-                    _buildDraftQuestionsSection(
-                      context,
-                      formManager,
-                      formState,
-                      geminiEnabled,
+                    DraftQuestionsSection(
+                      formManager: formManager,
+                      formState: formState,
+                      geminiEnabled: geminiEnabled,
                     )
                   else
                     QuestionList(
@@ -277,175 +272,6 @@ class SurveyEditorPage extends RearchConsumer {
               );
               await formManager.updateSurvey(updated);
             }
-          },
-    );
-  }
-
-  Widget _buildDraftQuestionsSection(
-    BuildContext context,
-    SurveyFormManager formManager,
-    SurveyFormState formState,
-    bool geminiEnabled,
-  ) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final draftQuestions = formState.draftQuestions;
-
-    // Show preview dialog when generated questions are ready
-    if (formState.generatedQuestions != null &&
-        formState.generatedQuestions!.isNotEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        AiQuestionPreviewDialog.show(
-          context,
-          questions: formState.generatedQuestions!,
-          onApply: formManager.applyGeneratedQuestions,
-          onCancel: formManager.clearGeneratedQuestions,
-        );
-      });
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              'Questions',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const Spacer(),
-          ],
-        ),
-        const SizedBox(height: 16),
-        // Show AI generation UI when questions are empty and Gemini is enabled
-        if (draftQuestions.isEmpty && geminiEnabled)
-          AiPromptInput(
-            isGenerating: formState.isGenerating,
-            error: formState.generationError,
-            onGenerate: formManager.generateQuestions,
-            onAddManually: () => _showAddDialog(context, formManager),
-            isSaving: formState.isSaving,
-          )
-        else if (draftQuestions.isEmpty)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              children: [
-                Icon(
-                  Icons.help_outline,
-                  size: 48,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'No questions yet',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Add questions to your survey',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                FilledButton.icon(
-                  onPressed: formState.isSaving
-                      ? null
-                      : () => _showAddDialog(context, formManager),
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add Question'),
-                ),
-              ],
-            ),
-          )
-        else
-          Column(
-            children: [
-              DraftQuestionEditor(
-                questions: draftQuestions,
-                enabled: !formState.isSaving,
-                onEdit: (question) =>
-                    _showEditDialog(context, formManager, question),
-                onDelete: (question) =>
-                    formManager.deleteDraftQuestion(question.tempId),
-                onReorder: formManager.reorderDraftQuestions,
-                onAddChoice: (question, text) =>
-                    formManager.addChoiceToDraftQuestion(question.tempId, text),
-                onUpdateChoice: (question, choice, newText) => formManager
-                    .updateDraftChoice(question.tempId, choice.tempId, newText),
-                onDeleteChoice: (question, choice) => formManager
-                    .deleteDraftChoice(question.tempId, choice.tempId),
-              ),
-              const SizedBox(height: 16),
-              OutlinedButton.icon(
-                onPressed: formState.isSaving
-                    ? null
-                    : () => _showAddDialog(context, formManager),
-                icon: const Icon(Icons.add),
-                label: const Text('Add Question'),
-              ),
-            ],
-          ),
-      ],
-    );
-  }
-
-  void _showAddDialog(BuildContext context, SurveyFormManager formManager) {
-    QuestionFormDialog.show(
-      context,
-      onSave:
-          ({
-            required String text,
-            required QuestionType type,
-            required bool isRequired,
-            String? placeholder,
-          }) {
-            formManager.addDraftQuestion(
-              text: text,
-              type: type,
-              isRequired: isRequired,
-              placeholder: placeholder,
-            );
-          },
-    );
-  }
-
-  void _showEditDialog(
-    BuildContext context,
-    SurveyFormManager formManager,
-    DraftQuestion question,
-  ) {
-    final tempQuestion = Question(
-      surveyId: 0,
-      text: question.text,
-      type: question.type,
-      orderIndex: 0,
-      isRequired: question.isRequired,
-      placeholder: question.placeholder,
-    );
-
-    QuestionFormDialog.show(
-      context,
-      existingQuestion: tempQuestion,
-      onSave:
-          ({
-            required String text,
-            required QuestionType type,
-            required bool isRequired,
-            String? placeholder,
-          }) {
-            formManager.updateDraftQuestion(
-              tempId: question.tempId,
-              text: text,
-              type: type,
-              isRequired: isRequired,
-              placeholder: placeholder,
-            );
           },
     );
   }
