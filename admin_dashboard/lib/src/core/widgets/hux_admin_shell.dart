@@ -33,7 +33,7 @@ class HuxAdminShell extends StatelessWidget {
         child: Row(
           children: [
             if (isWide)
-              _Sidebar(
+              _StaticSidebar(
                 selectedItemId: selectedItemId,
                 showUsers: showUsers,
                 showSettings: showSettings,
@@ -61,8 +61,8 @@ class HuxAdminShell extends StatelessWidget {
   }
 }
 
-class _Sidebar extends StatelessWidget {
-  const _Sidebar({
+class _StaticSidebar extends StatelessWidget {
+  const _StaticSidebar({
     required this.selectedItemId,
     required this.showUsers,
     required this.showSettings,
@@ -74,55 +74,186 @@ class _Sidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return HuxSidebar(
-      width: 260,
-      selectedItemId: selectedItemId,
-      onItemSelected: (itemId) => _go(context, itemId),
-      header: Row(
-        children: [
-          const Icon(LucideIcons.clipboardList, size: 28),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              context.tr('Form Concierge'),
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
-      items: [
-        HuxSidebarItemData(
-          id: 'surveys',
-          icon: LucideIcons.layoutDashboard,
-          label: context.tr('Surveys'),
+    final items = _navigationItems(
+      context,
+      showUsers: showUsers,
+      showSettings: showSettings,
+    );
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: HuxTokens.surfacePrimary(context),
+        border: Border(
+          right: BorderSide(color: HuxTokens.borderSecondary(context)),
         ),
-        if (showUsers)
-          HuxSidebarItemData(
-            id: 'users',
-            icon: LucideIcons.users,
-            label: context.tr('User Management'),
+      ),
+      child: SizedBox(
+        width: 260,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    LucideIcons.clipboardList,
+                    size: 26,
+                    color: HuxTokens.iconPrimary(context),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      context.tr('Form Concierge'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: HuxTokens.textPrimary(context),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              for (final item in items) ...[
+                _SidebarNavigationItem(
+                  item: item,
+                  selected: selectedItemId == item.id,
+                  onTap: () => _goToNavigationItem(context, item.id),
+                ),
+                const SizedBox(height: 4),
+              ],
+            ],
           ),
-        if (showSettings)
-          HuxSidebarItemData(
-            id: 'settings',
-            icon: LucideIcons.settings,
-            label: context.tr('Settings'),
-          ),
-      ],
+        ),
+      ),
     );
   }
+}
 
-  void _go(BuildContext context, String itemId) {
-    switch (itemId) {
-      case 'surveys':
-        context.go('/admin');
-      case 'users':
-        context.go('/admin/users');
-      case 'settings':
-        context.go('/admin/settings');
-    }
+class _SidebarNavigationItem extends StatelessWidget {
+  const _SidebarNavigationItem({
+    required this.item,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final _NavigationItem item;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final textColor = selected
+        ? HuxTokens.primary(context)
+        : HuxTokens.textSecondary(context);
+    final iconColor = selected
+        ? HuxTokens.primary(context)
+        : HuxTokens.iconSecondary(context);
+
+    return Semantics(
+      selected: selected,
+      button: true,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+        child: InkWell(
+          onTap: selected ? null : onTap,
+          borderRadius: BorderRadius.circular(8),
+          splashFactory: NoSplash.splashFactory,
+          overlayColor: WidgetStateProperty.resolveWith((states) {
+            if (selected) {
+              return Colors.transparent;
+            }
+            if (states.contains(WidgetState.hovered) ||
+                states.contains(WidgetState.focused)) {
+              return HuxTokens.surfaceHover(context);
+            }
+            return Colors.transparent;
+          }),
+          child: Container(
+            height: 44,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: selected
+                  ? HuxTokens.surfaceSecondary(context)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                Icon(item.icon, size: 18, color: iconColor),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    item.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: textColor,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NavigationItem {
+  const _NavigationItem({
+    required this.id,
+    required this.icon,
+    required this.label,
+  });
+
+  final String id;
+  final IconData icon;
+  final String label;
+}
+
+List<_NavigationItem> _navigationItems(
+  BuildContext context, {
+  required bool showUsers,
+  required bool showSettings,
+}) {
+  return [
+    _NavigationItem(
+      id: 'surveys',
+      icon: LucideIcons.layoutDashboard,
+      label: context.tr('Surveys'),
+    ),
+    if (showUsers)
+      _NavigationItem(
+        id: 'users',
+        icon: LucideIcons.users,
+        label: context.tr('User Management'),
+      ),
+    if (showSettings)
+      _NavigationItem(
+        id: 'settings',
+        icon: LucideIcons.settings,
+        label: context.tr('Settings'),
+      ),
+  ];
+}
+
+void _goToNavigationItem(BuildContext context, String itemId) {
+  switch (itemId) {
+    case 'surveys':
+      context.go('/admin');
+      return;
+    case 'users':
+      context.go('/admin/users');
+      return;
+    case 'settings':
+      context.go('/admin/settings');
+      return;
   }
 }
 
@@ -147,6 +278,12 @@ class _TopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final items = _navigationItems(
+      context,
+      showUsers: showUsers,
+      showSettings: showSettings,
+    );
+
     return DecoratedBox(
       decoration: BoxDecoration(
         color: HuxTokens.surfacePrimary(context),
@@ -174,31 +311,13 @@ class _TopBar extends StatelessWidget {
                   value: selectedItemId ?? 'surveys',
                   useItemWidgetAsValue: true,
                   items: [
-                    HuxDropdownItem(
-                      value: 'surveys',
-                      child: Text(context.tr('Surveys')),
-                    ),
-                    if (showUsers)
+                    for (final item in items)
                       HuxDropdownItem(
-                        value: 'users',
-                        child: Text(context.tr('User Management')),
-                      ),
-                    if (showSettings)
-                      HuxDropdownItem(
-                        value: 'settings',
-                        child: Text(context.tr('Settings')),
+                        value: item.id,
+                        child: Text(item.label),
                       ),
                   ],
-                  onChanged: (itemId) {
-                    switch (itemId) {
-                      case 'surveys':
-                        context.go('/admin');
-                      case 'users':
-                        context.go('/admin/users');
-                      case 'settings':
-                        context.go('/admin/settings');
-                    }
-                  },
+                  onChanged: (itemId) => _goToNavigationItem(context, itemId),
                 ),
               ),
               const SizedBox(width: 12),
