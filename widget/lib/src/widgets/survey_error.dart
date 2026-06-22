@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:form_concierge_client/form_concierge_client.dart';
 
 class SurveyError extends StatelessWidget {
+  final String locale;
   final String message;
   final VoidCallback? onRetry;
 
-  const SurveyError({super.key, required this.message, this.onRetry});
+  const SurveyError({
+    super.key,
+    required this.locale,
+    required this.message,
+    this.onRetry,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +40,7 @@ class SurveyError extends StatelessWidget {
               FilledButton.icon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh),
-                label: const Text('Retry'),
+                label: Text(FormContentMessages.text(locale, 'tryAgain')),
               ),
             ],
           ],

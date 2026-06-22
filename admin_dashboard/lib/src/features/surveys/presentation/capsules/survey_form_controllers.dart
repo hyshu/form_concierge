@@ -4,26 +4,49 @@ import 'package:rearch/rearch.dart';
 
 /// Form controllers for survey editing.
 class SurveyFormControllers {
-  final TextEditingController title;
   final TextEditingController slug;
-  final TextEditingController description;
+  final Map<String, TextEditingController> titleTranslations;
+  final Map<String, TextEditingController> descriptionTranslations;
 
   SurveyFormControllers({
-    required this.title,
     required this.slug,
-    required this.description,
+    required this.titleTranslations,
+    required this.descriptionTranslations,
   });
 
   void dispose() {
-    title.dispose();
     slug.dispose();
-    description.dispose();
+    for (final controller in titleTranslations.values) {
+      controller.dispose();
+    }
+    for (final controller in descriptionTranslations.values) {
+      controller.dispose();
+    }
   }
 
   void populateFrom(Survey survey) {
-    title.text = survey.title;
     slug.text = survey.slug;
-    description.text = survey.description ?? '';
+    for (final locale in formContentLocaleCodes) {
+      titleTranslations[locale]!.text = survey.titleTranslations.valueFor(
+        locale,
+      );
+      descriptionTranslations[locale]!.text = survey.descriptionTranslations
+          .valueFor(locale);
+    }
+  }
+
+  LocalizedText titleValue() {
+    return LocalizedText({
+      for (final locale in formContentLocaleCodes)
+        locale: titleTranslations[locale]!.text.trim(),
+    });
+  }
+
+  LocalizedText descriptionValue() {
+    return LocalizedText({
+      for (final locale in formContentLocaleCodes)
+        locale: descriptionTranslations[locale]!.text.trim(),
+    });
   }
 }
 
@@ -31,9 +54,15 @@ class SurveyFormControllers {
 SurveyFormControllers surveyFormControllersCapsule(CapsuleHandle use) {
   final controllers = use.memo(
     () => SurveyFormControllers(
-      title: TextEditingController(),
       slug: TextEditingController(),
-      description: TextEditingController(),
+      titleTranslations: {
+        for (final locale in formContentLocaleCodes)
+          locale: TextEditingController(),
+      },
+      descriptionTranslations: {
+        for (final locale in formContentLocaleCodes)
+          locale: TextEditingController(),
+      },
     ),
   );
 

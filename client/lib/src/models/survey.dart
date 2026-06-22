@@ -1,10 +1,256 @@
 part of form_concierge_client;
 
+const formContentLocaleCodes = <String>[
+  'en',
+  'ja',
+  'zh-Hans',
+  'zh-Hant',
+  'ko',
+  'de',
+];
+
+const defaultFormContentLocale = 'en';
+
+const formContentLocaleLabels = <String, String>{
+  'en': 'English',
+  'ja': '日本語',
+  'zh-Hans': '简体中文',
+  'zh-Hant': '繁體中文',
+  'ko': '한국어',
+  'de': 'Deutsch',
+};
+
+String normalizeFormContentLocale(String locale) {
+  final normalized = locale.replaceAll('_', '-');
+  if (formContentLocaleCodes.contains(normalized)) return normalized;
+  final lower = normalized.toLowerCase();
+  if (lower == 'zh-hans' || lower == 'zh-cn' || lower == 'zh-sg') {
+    return 'zh-Hans';
+  }
+  if (lower == 'zh-hant' ||
+      lower == 'zh-tw' ||
+      lower == 'zh-hk' ||
+      lower == 'zh-mo') {
+    return 'zh-Hant';
+  }
+  final language = lower.split('-').first;
+  if (formContentLocaleCodes.contains(language)) return language;
+  return normalized;
+}
+
+class LocalizedText {
+  final Map<String, String> values;
+
+  const LocalizedText(this.values);
+
+  factory LocalizedText.fromJson(Object? json) {
+    final map = _requiredMap(json);
+    return LocalizedText(
+      map.map((key, value) => MapEntry(key, value as String)),
+    );
+  }
+
+  factory LocalizedText.filled(
+    String value, {
+    Iterable<String> locales = formContentLocaleCodes,
+  }) {
+    return LocalizedText({
+      for (final locale in locales) locale: value,
+    });
+  }
+
+  Map<String, dynamic> toJson() => Map<String, dynamic>.from(values);
+
+  String valueFor(String locale) => values[normalizeFormContentLocale(locale)]!;
+
+  LocalizedText copyWithLocale(String locale, String value) {
+    return LocalizedText({
+      ...values,
+      normalizeFormContentLocale(locale): value,
+    });
+  }
+}
+
+class FormContentMessages {
+  static String text(String locale, String key) =>
+      _messages[normalizeFormContentLocale(locale)]![key]!;
+
+  static String requiredQuestion(String locale) =>
+      text(locale, 'requiredQuestion');
+
+  static String minCharacters(String locale, int count) =>
+      text(locale, 'minCharacters').replaceAll('{count}', '$count');
+
+  static String maxCharacters(String locale, int count) =>
+      text(locale, 'maxCharacters').replaceAll('{count}', '$count');
+
+  static String minChoices(String locale, int count) =>
+      text(locale, 'minChoices').replaceAll('{count}', '$count');
+
+  static String maxChoices(String locale, int count) =>
+      text(locale, 'maxChoices').replaceAll('{count}', '$count');
+
+  static String selectionHint(
+    String locale, {
+    int? minSelected,
+    int? maxSelected,
+  }) {
+    final parts = [
+      if (minSelected != null)
+        text(locale, 'minShort').replaceAll('{count}', '$minSelected'),
+      if (maxSelected != null)
+        text(locale, 'maxShort').replaceAll('{count}', '$maxSelected'),
+    ];
+    return text(
+      locale,
+      'selectionHint',
+    ).replaceAll('{summary}', parts.join(', '));
+  }
+}
+
+const _messages = <String, Map<String, String>>{
+  'en': {
+    'loadingSurvey': 'Loading survey...',
+    'somethingWentWrong': 'Something went wrong',
+    'tryAgain': 'Try Again',
+    'submit': 'Submit',
+    'submitting': 'Submitting...',
+    'thankYou': 'Thank you!',
+    'submitted': 'Your response has been submitted successfully.',
+    'submittedWithTitle': 'Your response to "{title}" has been submitted.',
+    'anonymousStartFailed': 'Failed to start anonymous session.',
+    'submitFailed': 'Failed to submit survey. Please try again.',
+    'errorOccurred': 'An error occurred',
+    'surveyNotFound': 'Survey not found or not available',
+    'requiredQuestion': 'This question is required',
+    'minCharacters': 'Minimum {count} characters required',
+    'maxCharacters': 'Maximum {count} characters allowed',
+    'minChoices': 'Select at least {count} choices',
+    'maxChoices': 'Select at most {count} choices',
+    'selectionHint': 'Select {summary}',
+    'minShort': 'min {count}',
+    'maxShort': 'max {count}',
+  },
+  'ja': {
+    'loadingSurvey': 'フォームを読み込んでいます...',
+    'somethingWentWrong': '問題が発生しました',
+    'tryAgain': '再試行',
+    'submit': '送信',
+    'submitting': '送信中...',
+    'thankYou': 'ありがとうございます',
+    'submitted': '回答を送信しました。',
+    'submittedWithTitle': '「{title}」への回答を送信しました。',
+    'anonymousStartFailed': '匿名セッションを開始できませんでした。',
+    'submitFailed': '回答を送信できませんでした。もう一度お試しください。',
+    'errorOccurred': 'エラーが発生しました',
+    'surveyNotFound': 'フォームが見つからないか、利用できません',
+    'requiredQuestion': 'この項目は必須です',
+    'minCharacters': '{count}文字以上で入力してください',
+    'maxCharacters': '{count}文字以内で入力してください',
+    'minChoices': '{count}個以上選択してください',
+    'maxChoices': '{count}個以内で選択してください',
+    'selectionHint': '{summary} を選択',
+    'minShort': '最小 {count}',
+    'maxShort': '最大 {count}',
+  },
+  'zh-Hans': {
+    'loadingSurvey': '正在加载表单...',
+    'somethingWentWrong': '出现问题',
+    'tryAgain': '重试',
+    'submit': '提交',
+    'submitting': '正在提交...',
+    'thankYou': '谢谢！',
+    'submitted': '您的回答已成功提交。',
+    'submittedWithTitle': '您对“{title}”的回答已提交。',
+    'anonymousStartFailed': '无法启动匿名会话。',
+    'submitFailed': '无法提交回答。请重试。',
+    'errorOccurred': '发生错误',
+    'surveyNotFound': '找不到表单或表单不可用',
+    'requiredQuestion': '此项为必填',
+    'minCharacters': '至少需要 {count} 个字符',
+    'maxCharacters': '最多允许 {count} 个字符',
+    'minChoices': '至少选择 {count} 项',
+    'maxChoices': '最多选择 {count} 项',
+    'selectionHint': '选择 {summary}',
+    'minShort': '最少 {count}',
+    'maxShort': '最多 {count}',
+  },
+  'zh-Hant': {
+    'loadingSurvey': '正在載入表單...',
+    'somethingWentWrong': '發生問題',
+    'tryAgain': '重試',
+    'submit': '送出',
+    'submitting': '送出中...',
+    'thankYou': '謝謝！',
+    'submitted': '您的回答已成功送出。',
+    'submittedWithTitle': '您對「{title}」的回答已送出。',
+    'anonymousStartFailed': '無法啟動匿名工作階段。',
+    'submitFailed': '無法送出回答。請再試一次。',
+    'errorOccurred': '發生錯誤',
+    'surveyNotFound': '找不到表單或表單無法使用',
+    'requiredQuestion': '此項為必填',
+    'minCharacters': '至少需要 {count} 個字元',
+    'maxCharacters': '最多允許 {count} 個字元',
+    'minChoices': '至少選擇 {count} 項',
+    'maxChoices': '最多選擇 {count} 項',
+    'selectionHint': '選擇 {summary}',
+    'minShort': '最少 {count}',
+    'maxShort': '最多 {count}',
+  },
+  'ko': {
+    'loadingSurvey': '양식을 불러오는 중...',
+    'somethingWentWrong': '문제가 발생했습니다',
+    'tryAgain': '다시 시도',
+    'submit': '제출',
+    'submitting': '제출 중...',
+    'thankYou': '감사합니다!',
+    'submitted': '응답이 성공적으로 제출되었습니다.',
+    'submittedWithTitle': '"{title}"에 대한 응답이 제출되었습니다.',
+    'anonymousStartFailed': '익명 세션을 시작하지 못했습니다.',
+    'submitFailed': '응답을 제출하지 못했습니다. 다시 시도해 주세요.',
+    'errorOccurred': '오류가 발생했습니다',
+    'surveyNotFound': '양식을 찾을 수 없거나 사용할 수 없습니다',
+    'requiredQuestion': '이 항목은 필수입니다',
+    'minCharacters': '최소 {count}자가 필요합니다',
+    'maxCharacters': '최대 {count}자까지 입력할 수 있습니다',
+    'minChoices': '최소 {count}개를 선택하세요',
+    'maxChoices': '최대 {count}개까지 선택하세요',
+    'selectionHint': '{summary} 선택',
+    'minShort': '최소 {count}',
+    'maxShort': '최대 {count}',
+  },
+  'de': {
+    'loadingSurvey': 'Formular wird geladen...',
+    'somethingWentWrong': 'Etwas ist schiefgelaufen',
+    'tryAgain': 'Erneut versuchen',
+    'submit': 'Absenden',
+    'submitting': 'Wird gesendet...',
+    'thankYou': 'Vielen Dank!',
+    'submitted': 'Ihre Antwort wurde erfolgreich gesendet.',
+    'submittedWithTitle': 'Ihre Antwort zu "{title}" wurde gesendet.',
+    'anonymousStartFailed': 'Anonyme Sitzung konnte nicht gestartet werden.',
+    'submitFailed':
+        'Antwort konnte nicht gesendet werden. Bitte versuchen Sie es erneut.',
+    'errorOccurred': 'Ein Fehler ist aufgetreten',
+    'surveyNotFound': 'Formular nicht gefunden oder nicht verfügbar',
+    'requiredQuestion': 'Diese Frage ist erforderlich',
+    'minCharacters': 'Mindestens {count} Zeichen erforderlich',
+    'maxCharacters': 'Höchstens {count} Zeichen erlaubt',
+    'minChoices': 'Wählen Sie mindestens {count} Optionen',
+    'maxChoices': 'Wählen Sie höchstens {count} Optionen',
+    'selectionHint': '{summary} auswählen',
+    'minShort': 'min. {count}',
+    'maxShort': 'max. {count}',
+  },
+};
+
 class Survey {
   final int? id;
   final String slug;
-  final String title;
-  final String? description;
+  final String defaultLocale;
+  final List<String> supportedLocales;
+  final LocalizedText titleTranslations;
+  final LocalizedText descriptionTranslations;
   final SurveyStatus status;
   final String? createdByUserId;
   final DateTime createdAt;
@@ -15,8 +261,10 @@ class Survey {
   const Survey({
     this.id,
     required this.slug,
-    required this.title,
-    this.description,
+    this.defaultLocale = defaultFormContentLocale,
+    this.supportedLocales = formContentLocaleCodes,
+    required this.titleTranslations,
+    required this.descriptionTranslations,
     this.status = SurveyStatus.draft,
     this.createdByUserId,
     required this.createdAt,
@@ -28,8 +276,14 @@ class Survey {
   factory Survey.fromJson(Map<String, dynamic> json) => Survey(
     id: json['id'] == null ? null : _int(json['id']),
     slug: json['slug'] as String,
-    title: json['title'] as String,
-    description: json['description'] as String?,
+    defaultLocale: json['defaultLocale'] as String,
+    supportedLocales: (json['supportedLocales'] as List)
+        .map((value) => value as String)
+        .toList(),
+    titleTranslations: LocalizedText.fromJson(json['titleTranslations']),
+    descriptionTranslations: LocalizedText.fromJson(
+      json['descriptionTranslations'],
+    ),
     status: _enum(SurveyStatus.values, json['status'], SurveyStatus.draft),
     createdByUserId: json['createdByUserId'] as String?,
     createdAt: _date(json['createdAt']),
@@ -41,8 +295,10 @@ class Survey {
   Map<String, dynamic> toJson() => _withoutNulls({
     'id': id,
     'slug': slug,
-    'title': title,
-    'description': description,
+    'defaultLocale': defaultLocale,
+    'supportedLocales': supportedLocales,
+    'titleTranslations': titleTranslations.toJson(),
+    'descriptionTranslations': descriptionTranslations.toJson(),
     'status': _enumName(status),
     'createdByUserId': createdByUserId,
     'createdAt': createdAt.toIso8601String(),
@@ -54,8 +310,10 @@ class Survey {
   Survey copyWith({
     int? id,
     String? slug,
-    String? title,
-    String? description,
+    String? defaultLocale,
+    List<String>? supportedLocales,
+    LocalizedText? titleTranslations,
+    LocalizedText? descriptionTranslations,
     SurveyStatus? status,
     String? createdByUserId,
     DateTime? createdAt,
@@ -66,8 +324,11 @@ class Survey {
     return Survey(
       id: id ?? this.id,
       slug: slug ?? this.slug,
-      title: title ?? this.title,
-      description: description ?? this.description,
+      defaultLocale: defaultLocale ?? this.defaultLocale,
+      supportedLocales: supportedLocales ?? this.supportedLocales,
+      titleTranslations: titleTranslations ?? this.titleTranslations,
+      descriptionTranslations:
+          descriptionTranslations ?? this.descriptionTranslations,
       status: status ?? this.status,
       createdByUserId: createdByUserId ?? this.createdByUserId,
       createdAt: createdAt ?? this.createdAt,
@@ -76,16 +337,26 @@ class Survey {
       endsAt: endsAt ?? this.endsAt,
     );
   }
+
+  String titleFor(String locale) => titleTranslations.valueFor(locale);
+  String descriptionFor(String locale) =>
+      descriptionTranslations.valueFor(locale);
+
+  String get title => titleFor(defaultLocale);
+  String? get description {
+    final value = descriptionFor(defaultLocale);
+    return value.trim().isEmpty ? null : value;
+  }
 }
 
 class Question {
   final int? id;
   final int surveyId;
-  final String text;
+  final LocalizedText textTranslations;
   final QuestionType type;
   final int orderIndex;
   final bool isRequired;
-  final String? placeholder;
+  final LocalizedText placeholderTranslations;
   final int? minLength;
   final int? maxLength;
   final int? minSelected;
@@ -96,11 +367,11 @@ class Question {
   const Question({
     this.id,
     required this.surveyId,
-    required this.text,
+    required this.textTranslations,
     required this.type,
     required this.orderIndex,
     this.isRequired = true,
-    this.placeholder,
+    required this.placeholderTranslations,
     this.minLength,
     this.maxLength,
     this.minSelected,
@@ -112,11 +383,13 @@ class Question {
   factory Question.fromJson(Map<String, dynamic> json) => Question(
     id: json['id'] == null ? null : _int(json['id']),
     surveyId: _int(json['surveyId']),
-    text: json['text'] as String,
+    textTranslations: LocalizedText.fromJson(json['textTranslations']),
     type: _enum(QuestionType.values, json['type'], QuestionType.textSingle),
     orderIndex: _int(json['orderIndex']),
     isRequired: _bool(json['isRequired'], true),
-    placeholder: json['placeholder'] as String?,
+    placeholderTranslations: LocalizedText.fromJson(
+      json['placeholderTranslations'],
+    ),
     minLength: json['minLength'] == null ? null : _int(json['minLength']),
     maxLength: json['maxLength'] == null ? null : _int(json['maxLength']),
     minSelected: json['minSelected'] == null ? null : _int(json['minSelected']),
@@ -132,11 +405,11 @@ class Question {
   Map<String, dynamic> toJson() => _withoutNulls({
     'id': id,
     'surveyId': surveyId,
-    'text': text,
+    'textTranslations': textTranslations.toJson(),
     'type': _enumName(type),
     'orderIndex': orderIndex,
     'isRequired': isRequired,
-    'placeholder': placeholder,
+    'placeholderTranslations': placeholderTranslations.toJson(),
     'minLength': minLength,
     'maxLength': maxLength,
     'minSelected': minSelected,
@@ -148,11 +421,11 @@ class Question {
   Question copyWith({
     int? id,
     int? surveyId,
-    String? text,
+    LocalizedText? textTranslations,
     QuestionType? type,
     int? orderIndex,
     bool? isRequired,
-    String? placeholder,
+    LocalizedText? placeholderTranslations,
     int? minLength,
     int? maxLength,
     int? minSelected,
@@ -163,11 +436,12 @@ class Question {
     return Question(
       id: id ?? this.id,
       surveyId: surveyId ?? this.surveyId,
-      text: text ?? this.text,
+      textTranslations: textTranslations ?? this.textTranslations,
       type: type ?? this.type,
       orderIndex: orderIndex ?? this.orderIndex,
       isRequired: isRequired ?? this.isRequired,
-      placeholder: placeholder ?? this.placeholder,
+      placeholderTranslations:
+          placeholderTranslations ?? this.placeholderTranslations,
       minLength: minLength ?? this.minLength,
       maxLength: maxLength ?? this.maxLength,
       minSelected: minSelected ?? this.minSelected,
@@ -177,6 +451,16 @@ class Question {
       isDeleted: isDeleted ?? this.isDeleted,
     );
   }
+
+  String textFor(String locale) => textTranslations.valueFor(locale);
+
+  String? placeholderFor(String locale) {
+    final value = placeholderTranslations.valueFor(locale);
+    return value.trim().isEmpty ? null : value;
+  }
+
+  String get text => textFor(defaultFormContentLocale);
+  String? get placeholder => placeholderFor(defaultFormContentLocale);
 }
 
 class QuestionVisibilityRule {
@@ -254,14 +538,14 @@ class QuestionVisibilityRule {
 class Choice {
   final int? id;
   final int questionId;
-  final String text;
+  final LocalizedText textTranslations;
   final int orderIndex;
   final String? value;
 
   const Choice({
     this.id,
     required this.questionId,
-    required this.text,
+    required this.textTranslations,
     required this.orderIndex,
     this.value,
   });
@@ -269,7 +553,7 @@ class Choice {
   factory Choice.fromJson(Map<String, dynamic> json) => Choice(
     id: json['id'] == null ? null : _int(json['id']),
     questionId: _int(json['questionId']),
-    text: json['text'] as String,
+    textTranslations: LocalizedText.fromJson(json['textTranslations']),
     orderIndex: _int(json['orderIndex']),
     value: json['value'] as String?,
   );
@@ -277,7 +561,7 @@ class Choice {
   Map<String, dynamic> toJson() => _withoutNulls({
     'id': id,
     'questionId': questionId,
-    'text': text,
+    'textTranslations': textTranslations.toJson(),
     'orderIndex': orderIndex,
     'value': value,
   });
@@ -285,52 +569,57 @@ class Choice {
   Choice copyWith({
     int? id,
     int? questionId,
-    String? text,
+    LocalizedText? textTranslations,
     int? orderIndex,
     String? value,
   }) {
     return Choice(
       id: id ?? this.id,
       questionId: questionId ?? this.questionId,
-      text: text ?? this.text,
+      textTranslations: textTranslations ?? this.textTranslations,
       orderIndex: orderIndex ?? this.orderIndex,
       value: value ?? this.value,
     );
   }
+
+  String textFor(String locale) => textTranslations.valueFor(locale);
+  String get text => textFor(defaultFormContentLocale);
 }
 
 class QuestionWithChoices {
-  final String text;
+  final LocalizedText textTranslations;
   final QuestionType type;
   final bool isRequired;
-  final String? placeholder;
+  final LocalizedText placeholderTranslations;
   final int? minLength;
   final int? maxLength;
   final int? minSelected;
   final int? maxSelected;
   final VisibilityConditionMode visibilityConditionMode;
-  final List<String> choices;
+  final List<LocalizedText> choiceTranslations;
 
   const QuestionWithChoices({
-    required this.text,
+    required this.textTranslations,
     required this.type,
     required this.isRequired,
-    this.placeholder,
+    required this.placeholderTranslations,
     this.minLength,
     this.maxLength,
     this.minSelected,
     this.maxSelected,
     this.visibilityConditionMode = VisibilityConditionMode.all,
-    required this.choices,
+    required this.choiceTranslations,
   });
 
   factory QuestionWithChoices.fromJson(
     Map<String, dynamic> json,
   ) => QuestionWithChoices(
-    text: json['text'] as String,
+    textTranslations: LocalizedText.fromJson(json['textTranslations']),
     type: _enum(QuestionType.values, json['type'], QuestionType.textSingle),
     isRequired: _bool(json['isRequired'], true),
-    placeholder: json['placeholder'] as String?,
+    placeholderTranslations: LocalizedText.fromJson(
+      json['placeholderTranslations'],
+    ),
     minLength: json['minLength'] == null ? null : _int(json['minLength']),
     maxLength: json['maxLength'] == null ? null : _int(json['maxLength']),
     minSelected: json['minSelected'] == null ? null : _int(json['minSelected']),
@@ -340,21 +629,33 @@ class QuestionWithChoices {
       json['visibilityConditionMode'],
       VisibilityConditionMode.all,
     ),
-    choices: (json['choices'] as List? ?? const [])
-        .map((value) => value.toString())
+    choiceTranslations: (json['choiceTranslations'] as List? ?? const [])
+        .map(LocalizedText.fromJson)
         .toList(),
   );
 
   Map<String, dynamic> toJson() => _withoutNulls({
-    'text': text,
+    'textTranslations': textTranslations.toJson(),
     'type': _enumName(type),
     'isRequired': isRequired,
-    'placeholder': placeholder,
+    'placeholderTranslations': placeholderTranslations.toJson(),
     'minLength': minLength,
     'maxLength': maxLength,
     'minSelected': minSelected,
     'maxSelected': maxSelected,
     'visibilityConditionMode': _enumName(visibilityConditionMode),
-    'choices': choices,
+    'choiceTranslations': choiceTranslations
+        .map((translations) => translations.toJson())
+        .toList(),
   });
+
+  String get text => textTranslations.valueFor(defaultFormContentLocale);
+  String? get placeholder {
+    final value = placeholderTranslations.valueFor(defaultFormContentLocale);
+    return value.trim().isEmpty ? null : value;
+  }
+
+  List<String> get choices => choiceTranslations
+      .map((translations) => translations.valueFor(defaultFormContentLocale))
+      .toList();
 }

@@ -7,8 +7,8 @@ import '../../../../core/localization/app_localizations.dart';
 class ChoiceEditor extends StatelessWidget {
   final List<Choice> choices;
   final bool enabled;
-  final void Function(String text) onAdd;
-  final void Function(Choice choice, String newText) onUpdate;
+  final void Function(LocalizedText textTranslations) onAdd;
+  final void Function(Choice choice, LocalizedText textTranslations) onUpdate;
   final void Function(Choice choice) onDelete;
 
   const ChoiceEditor({
@@ -31,7 +31,7 @@ class ChoiceEditor extends StatelessWidget {
           (choice) => _ChoiceTile(
             choice: choice,
             enabled: enabled,
-            onUpdate: (newText) => onUpdate(choice, newText),
+            onUpdate: (textTranslations) => onUpdate(choice, textTranslations),
             onDelete: () => onDelete(choice),
           ),
         ),
@@ -55,23 +55,34 @@ class ChoiceEditor extends StatelessWidget {
   }
 
   void _showAddDialog(BuildContext context) {
-    final controller = TextEditingController();
+    final controllers = {
+      for (final locale in formContentLocaleCodes)
+        locale: TextEditingController(),
+    };
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(context.tr('Add Choice')),
-        content: TextField(
-          controller: controller,
-          decoration: InputDecoration(
-            labelText: context.tr('Choice text'),
+        content: SizedBox(
+          width: 400,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final locale in formContentLocaleCodes) ...[
+                  TextField(
+                    controller: controllers[locale],
+                    decoration: InputDecoration(
+                      labelText:
+                          '${context.tr('Choice text')} (${formContentLocaleLabels[locale]!})',
+                    ),
+                    autofocus: locale == defaultFormContentLocale,
+                  ),
+                  const SizedBox(height: 12),
+                ],
+              ],
+            ),
           ),
-          autofocus: true,
-          onSubmitted: (value) {
-            if (value.trim().isNotEmpty) {
-              onAdd(value.trim());
-              Navigator.pop(context);
-            }
-          },
         ),
         actions: [
           TextButton(
@@ -80,8 +91,15 @@ class ChoiceEditor extends StatelessWidget {
           ),
           FilledButton(
             onPressed: () {
-              if (controller.text.trim().isNotEmpty) {
-                onAdd(controller.text.trim());
+              if (controllers.values.every(
+                (controller) => controller.text.trim().isNotEmpty,
+              )) {
+                onAdd(
+                  LocalizedText({
+                    for (final locale in formContentLocaleCodes)
+                      locale: controllers[locale]!.text.trim(),
+                  }),
+                );
                 Navigator.pop(context);
               }
             },
@@ -89,14 +107,18 @@ class ChoiceEditor extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ).whenComplete(() {
+      for (final controller in controllers.values) {
+        controller.dispose();
+      }
+    });
   }
 }
 
-class _ChoiceTile extends StatefulWidget {
+class _ChoiceTile extends StatelessWidget {
   final Choice choice;
   final bool enabled;
-  final void Function(String newText) onUpdate;
+  final void Function(LocalizedText textTranslations) onUpdate;
   final VoidCallback onDelete;
 
   const _ChoiceTile({
@@ -107,67 +129,8 @@ class _ChoiceTile extends StatefulWidget {
   });
 
   @override
-  State<_ChoiceTile> createState() => _ChoiceTileState();
-}
-
-class _ChoiceTileState extends State<_ChoiceTile> {
-  bool _isEditing = false;
-  late TextEditingController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(text: widget.choice.text);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-
-    if (_isEditing) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _controller,
-                autofocus: true,
-                decoration: const InputDecoration(
-                  isDense: true,
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                ),
-                onSubmitted: _save,
-              ),
-            ),
-            IconButton(
-              icon: const Icon(Icons.check),
-              onPressed: () => _save(_controller.text),
-              visualDensity: VisualDensity.compact,
-            ),
-            IconButton(
-              icon: const Icon(Icons.close),
-              onPressed: () {
-                setState(() {
-                  _isEditing = false;
-                  _controller.text = widget.choice.text;
-                });
-              },
-              visualDensity: VisualDensity.compact,
-            ),
-          ],
-        ),
-      );
-    }
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4),
@@ -185,29 +148,21 @@ class _ChoiceTileState extends State<_ChoiceTile> {
           ),
           const SizedBox(width: 8),
           Expanded(
-            child: widget.enabled
+            child: enabled
                 ? InkWell(
-                    onTap: () {
-                      setState(() {
-                        _isEditing = true;
-                      });
-                    },
+                    onTap: () => _showEditDialog(context),
                     borderRadius: BorderRadius.circular(4),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Text(widget.choice.text),
+                      child: Text(choice.text),
                     ),
                   )
-                : Text(widget.choice.text),
+                : Text(choice.text),
           ),
-          if (widget.enabled) ...[
+          if (enabled) ...[
             IconButton(
               icon: const Icon(Icons.edit, size: 20),
-              onPressed: () {
-                setState(() {
-                  _isEditing = true;
-                });
-              },
+              onPressed: () => _showEditDialog(context),
               visualDensity: VisualDensity.compact,
             ),
             IconButton(
@@ -216,7 +171,7 @@ class _ChoiceTileState extends State<_ChoiceTile> {
                 size: 20,
                 color: colorScheme.error,
               ),
-              onPressed: widget.onDelete,
+              onPressed: onDelete,
               visualDensity: VisualDensity.compact,
             ),
           ],
@@ -225,12 +180,64 @@ class _ChoiceTileState extends State<_ChoiceTile> {
     );
   }
 
-  void _save(String value) {
-    if (value.trim().isNotEmpty && value.trim() != widget.choice.text) {
-      widget.onUpdate(value.trim());
-    }
-    setState(() {
-      _isEditing = false;
+  void _showEditDialog(BuildContext context) {
+    final controllers = {
+      for (final locale in formContentLocaleCodes)
+        locale: TextEditingController(
+          text: choice.textTranslations.valueFor(locale),
+        ),
+    };
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(context.tr('Edit Choice')),
+        content: SizedBox(
+          width: 400,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final locale in formContentLocaleCodes) ...[
+                  TextField(
+                    controller: controllers[locale],
+                    decoration: InputDecoration(
+                      labelText:
+                          '${context.tr('Choice text')} (${formContentLocaleLabels[locale]!})',
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(context.tr('Cancel')),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (controllers.values.every(
+                (controller) => controller.text.trim().isNotEmpty,
+              )) {
+                onUpdate(
+                  LocalizedText({
+                    for (final locale in formContentLocaleCodes)
+                      locale: controllers[locale]!.text.trim(),
+                  }),
+                );
+                Navigator.pop(context);
+              }
+            },
+            child: Text(context.tr('Save')),
+          ),
+        ],
+      ),
+    ).whenComplete(() {
+      for (final controller in controllers.values) {
+        controller.dispose();
+      }
     });
   }
 }

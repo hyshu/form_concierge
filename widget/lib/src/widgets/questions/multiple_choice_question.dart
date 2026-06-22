@@ -5,6 +5,7 @@ class MultipleChoiceQuestion extends StatelessWidget {
   final Question question;
   final List<Choice> choices;
   final List<int> selectedChoiceIds;
+  final String locale;
   final ValueChanged<List<int>> onChanged;
 
   const MultipleChoiceQuestion({
@@ -12,6 +13,7 @@ class MultipleChoiceQuestion extends StatelessWidget {
     required this.question,
     required this.choices,
     required this.selectedChoiceIds,
+    required this.locale,
     required this.onChanged,
   });
 
@@ -24,7 +26,11 @@ class MultipleChoiceQuestion extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: Text(
-              _selectionHint(),
+              FormContentMessages.selectionHint(
+                locale,
+                minSelected: question.minSelected,
+                maxSelected: question.maxSelected,
+              ),
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),
@@ -32,7 +38,7 @@ class MultipleChoiceQuestion extends StatelessWidget {
           final isSelected = selectedChoiceIds.contains(choice.id);
 
           return CheckboxListTile(
-            title: Text(choice.text),
+            title: Text(choice.textFor(locale)),
             value: isSelected,
             onChanged:
                 !isSelected &&
@@ -55,13 +61,5 @@ class MultipleChoiceQuestion extends StatelessWidget {
         }),
       ],
     );
-  }
-
-  String _selectionHint() {
-    final parts = [
-      if (question.minSelected != null) 'min ${question.minSelected}',
-      if (question.maxSelected != null) 'max ${question.maxSelected}',
-    ];
-    return 'Select ${parts.join(', ')}';
   }
 }

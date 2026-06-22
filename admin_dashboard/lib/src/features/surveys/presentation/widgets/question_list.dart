@@ -16,10 +16,10 @@ class QuestionList extends StatelessWidget {
   final bool isLoading;
   final bool enabled;
   final void Function({
-    required String text,
+    required LocalizedText textTranslations,
     required QuestionType type,
     required bool isRequired,
-    String? placeholder,
+    required LocalizedText placeholderTranslations,
     int? minLength,
     int? maxLength,
     int? minSelected,
@@ -29,10 +29,10 @@ class QuestionList extends StatelessWidget {
   onAddQuestion;
   final void Function(
     Question question, {
-    required String text,
+    required LocalizedText textTranslations,
     required QuestionType type,
     required bool isRequired,
-    String? placeholder,
+    required LocalizedText placeholderTranslations,
     int? minLength,
     int? maxLength,
     int? minSelected,
@@ -41,8 +41,10 @@ class QuestionList extends StatelessWidget {
   })
   onEditQuestion;
   final void Function(Question question) onDeleteQuestion;
-  final void Function(int questionId, String text) onAddChoice;
-  final void Function(Choice choice, String newText) onUpdateChoice;
+  final void Function(int questionId, LocalizedText textTranslations)
+  onAddChoice;
+  final void Function(Choice choice, LocalizedText textTranslations)
+  onUpdateChoice;
   final void Function(Choice choice) onDeleteChoice;
   final Future<void> Function({
     required Question question,
@@ -214,10 +216,10 @@ class QuestionList extends StatelessWidget {
       context,
       onSave:
           ({
-            required String text,
+            required LocalizedText textTranslations,
             required QuestionType type,
             required bool isRequired,
-            String? placeholder,
+            required LocalizedText placeholderTranslations,
             int? minLength,
             int? maxLength,
             int? minSelected,
@@ -225,10 +227,10 @@ class QuestionList extends StatelessWidget {
             required VisibilityConditionMode visibilityConditionMode,
           }) {
             onAddQuestion(
-              text: text,
+              textTranslations: textTranslations,
               type: type,
               isRequired: isRequired,
-              placeholder: placeholder,
+              placeholderTranslations: placeholderTranslations,
               minLength: minLength,
               maxLength: maxLength,
               minSelected: minSelected,
@@ -245,10 +247,10 @@ class QuestionList extends StatelessWidget {
       existingQuestion: question,
       onSave:
           ({
-            required String text,
+            required LocalizedText textTranslations,
             required QuestionType type,
             required bool isRequired,
-            String? placeholder,
+            required LocalizedText placeholderTranslations,
             int? minLength,
             int? maxLength,
             int? minSelected,
@@ -257,10 +259,10 @@ class QuestionList extends StatelessWidget {
           }) {
             onEditQuestion(
               question,
-              text: text,
+              textTranslations: textTranslations,
               type: type,
               isRequired: isRequired,
-              placeholder: placeholder,
+              placeholderTranslations: placeholderTranslations,
               minLength: minLength,
               maxLength: maxLength,
               minSelected: minSelected,

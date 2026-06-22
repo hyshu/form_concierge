@@ -11,6 +11,7 @@ class QuestionWidget extends StatelessWidget {
   final List<Choice> choices;
   final dynamic value;
   final String? error;
+  final String locale;
   final ValueChanged<dynamic> onChanged;
 
   const QuestionWidget({
@@ -19,6 +20,7 @@ class QuestionWidget extends StatelessWidget {
     required this.choices,
     required this.value,
     this.error,
+    required this.locale,
     required this.onChanged,
   });
 
@@ -34,7 +36,7 @@ class QuestionWidget extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                question.text,
+                question.textFor(locale),
                 style: Theme.of(context).textTheme.titleMedium,
               ),
             ),
@@ -66,23 +68,25 @@ class QuestionWidget extends StatelessWidget {
       QuestionType.singleChoice => SingleChoiceQuestion(
         choices: choices,
         selectedChoiceId: value as int?,
+        locale: locale,
         onChanged: onChanged,
       ),
       QuestionType.multipleChoice => MultipleChoiceQuestion(
         question: question,
         choices: choices,
         selectedChoiceIds: (value as List<int>?) ?? [],
+        locale: locale,
         onChanged: onChanged,
       ),
       QuestionType.textSingle => TextSingleQuestion(
-        placeholder: question.placeholder,
+        placeholder: question.placeholderFor(locale),
         minLength: question.minLength,
         maxLength: question.maxLength,
         value: value as String?,
         onChanged: onChanged,
       ),
       QuestionType.textMultiLine => TextMultiLineQuestion(
-        placeholder: question.placeholder,
+        placeholder: question.placeholderFor(locale),
         minLength: question.minLength,
         maxLength: question.maxLength,
         value: value as String?,

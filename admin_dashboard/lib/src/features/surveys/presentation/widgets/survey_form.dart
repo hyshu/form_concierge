@@ -11,9 +11,10 @@ class SurveyForm extends StatefulWidget {
   final bool isSaving;
   final String? error;
   final Future<void> Function({
-    required String title,
+    required String defaultLocale,
     required String slug,
-    String? description,
+    required LocalizedText titleTranslations,
+    required LocalizedText descriptionTranslations,
   })
   onSave;
 
@@ -32,12 +33,14 @@ class SurveyForm extends StatefulWidget {
 
 class _SurveyFormState extends State<SurveyForm> {
   final _formKey = GlobalKey<FormState>();
+  String _defaultLocale = defaultFormContentLocale;
 
   @override
   void initState() {
     super.initState();
     if (widget.existingSurvey != null) {
       widget.controllers.populateFrom(widget.existingSurvey!);
+      _defaultLocale = widget.existingSurvey!.defaultLocale;
     }
   }
 
@@ -50,21 +53,49 @@ class _SurveyFormState extends State<SurveyForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          TextFormField(
-            controller: widget.controllers.title,
-            decoration: InputDecoration(
-              labelText: context.tr('Title'),
-              hintText: context.tr('Enter survey title'),
-            ),
-            enabled: !widget.isSaving,
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return context.tr('Title is required');
-              }
-              return null;
-            },
-            textInputAction: TextInputAction.next,
+          DropdownMenu<String>(
+            initialSelection: _defaultLocale,
+            expandedInsets: EdgeInsets.zero,
+            label: Text(context.tr('Default language')),
+            dropdownMenuEntries: [
+              for (final locale in formContentLocaleCodes)
+                DropdownMenuEntry(
+                  value: locale,
+                  label: formContentLocaleLabels[locale]!,
+                ),
+            ],
+            onSelected: widget.isSaving
+                ? null
+                : (value) {
+                    if (value == null) return;
+                    setState(() => _defaultLocale = value);
+                  },
           ),
+          const SizedBox(height: 16),
+          Text(
+            context.tr('Localized titles'),
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+          const SizedBox(height: 8),
+          for (final locale in formContentLocaleCodes) ...[
+            TextFormField(
+              controller: widget.controllers.titleTranslations[locale],
+              decoration: InputDecoration(
+                labelText:
+                    '${context.tr('Title')} (${formContentLocaleLabels[locale]!})',
+                hintText: context.tr('Enter survey title'),
+              ),
+              enabled: !widget.isSaving,
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return context.tr('Title is required');
+                }
+                return null;
+              },
+              textInputAction: TextInputAction.next,
+            ),
+            const SizedBox(height: 12),
+          ],
           const SizedBox(height: 16),
           TextFormField(
             controller: widget.controllers.slug,
@@ -89,15 +120,24 @@ class _SurveyFormState extends State<SurveyForm> {
             textInputAction: TextInputAction.next,
           ),
           const SizedBox(height: 16),
-          TextFormField(
-            controller: widget.controllers.description,
-            decoration: InputDecoration(
-              labelText: context.tr('Description (optional)'),
-              hintText: context.tr('Brief description of the survey'),
-            ),
-            enabled: !widget.isSaving,
-            maxLines: 3,
+          Text(
+            context.tr('Localized descriptions'),
+            style: Theme.of(context).textTheme.titleSmall,
           ),
+          const SizedBox(height: 8),
+          for (final locale in formContentLocaleCodes) ...[
+            TextFormField(
+              controller: widget.controllers.descriptionTranslations[locale],
+              decoration: InputDecoration(
+                labelText:
+                    '${context.tr('Description (optional)')} (${formContentLocaleLabels[locale]!})',
+                hintText: context.tr('Brief description of the survey'),
+              ),
+              enabled: !widget.isSaving,
+              maxLines: 2,
+            ),
+            const SizedBox(height: 12),
+          ],
           if (widget.error != null) ...[
             const SizedBox(height: 16),
             Text(
@@ -133,11 +173,10 @@ class _SurveyFormState extends State<SurveyForm> {
   void _submit() {
     if (_formKey.currentState?.validate() ?? false) {
       widget.onSave(
-        title: widget.controllers.title.text.trim(),
+        defaultLocale: _defaultLocale,
         slug: widget.controllers.slug.text.trim(),
-        description: widget.controllers.description.text.trim().isEmpty
-            ? null
-            : widget.controllers.description.text.trim(),
+        titleTranslations: widget.controllers.titleValue(),
+        descriptionTranslations: widget.controllers.descriptionValue(),
       );
     }
   }

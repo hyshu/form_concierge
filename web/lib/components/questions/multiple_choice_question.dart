@@ -7,6 +7,7 @@ class MultipleChoiceQuestion extends StatelessComponent {
     required this.question,
     required this.choices,
     required this.value,
+    required this.locale,
     required this.onChanged,
     super.key,
   });
@@ -14,6 +15,7 @@ class MultipleChoiceQuestion extends StatelessComponent {
   final Question question;
   final List<Choice> choices;
   final List<int> value;
+  final String locale;
   final void Function(dynamic value) onChanged;
 
   @override
@@ -21,7 +23,13 @@ class MultipleChoiceQuestion extends StatelessComponent {
     return div(classes: 'space-y-2', [
       if (question.minSelected != null || question.maxSelected != null)
         div(classes: 'text-xs text-slate-500', [
-          Component.text(_selectionHint()),
+          Component.text(
+            FormContentMessages.selectionHint(
+              locale,
+              minSelected: question.minSelected,
+              maxSelected: question.maxSelected,
+            ),
+          ),
         ]),
       for (final choice in choices)
         label([
@@ -46,19 +54,11 @@ class MultipleChoiceQuestion extends StatelessComponent {
             },
           ),
           span(classes: 'ml-3 text-sm text-slate-700', [
-            Component.text(choice.text),
+            Component.text(choice.textFor(locale)),
           ]),
         ],
             classes:
                 'flex items-center px-4 py-3 rounded-lg border ${value.contains(choice.id) ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'} cursor-pointer'),
     ]);
-  }
-
-  String _selectionHint() {
-    final parts = [
-      if (question.minSelected != null) 'min ${question.minSelected}',
-      if (question.maxSelected != null) 'max ${question.maxSelected}',
-    ];
-    return 'Select ${parts.join(', ')}';
   }
 }

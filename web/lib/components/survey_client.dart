@@ -39,6 +39,7 @@ class SurveyClientState extends State<SurveyClient> {
   late Map<int, List<Choice>> _choicesByQuestion;
   late Client _client;
   late String _anonymousTokenStorageKey;
+  late String _locale;
 
   SurveyViewState _viewState = SurveyViewState.ready;
   Map<int, dynamic> _answers = {};
@@ -51,6 +52,7 @@ class SurveyClientState extends State<SurveyClient> {
 
     // Decode data passed from server
     _survey = Survey.fromJson(component.surveyJson);
+    _locale = _survey.defaultLocale;
     _questions =
         component.questionsJson.map((j) => Question.fromJson(j)).toList();
     _visibilityRules = component.visibilityRulesJson
@@ -82,7 +84,10 @@ class SurveyClientState extends State<SurveyClient> {
     } on Exception catch (_) {
       setState(() {
         _viewState = SurveyViewState.error;
-        _errorMessage = 'Failed to start anonymous session.';
+        _errorMessage = FormContentMessages.text(
+          _locale,
+          'anonymousStartFailed',
+        );
       });
       return false;
     }
@@ -108,7 +113,7 @@ class SurveyClientState extends State<SurveyClient> {
       _visibilityRules,
       _answers,
     );
-    final errors = validateAnswers(_answers, visible);
+    final errors = validateAnswers(_answers, visible, _locale);
 
     if (errors.isNotEmpty) {
       setState(() {
@@ -138,7 +143,7 @@ class SurveyClientState extends State<SurveyClient> {
     } on Exception catch (_) {
       setState(() {
         _viewState = SurveyViewState.ready;
-        _errorMessage = 'Failed to submit survey. Please try again.';
+        _errorMessage = FormContentMessages.text(_locale, 'submitFailed');
       });
     }
   }
@@ -158,7 +163,9 @@ class SurveyClientState extends State<SurveyClient> {
       switch (_viewState) {
         SurveyViewState.loading => const SurveyLoading(),
         SurveyViewState.error => SurveyError(
-            message: _errorMessage ?? 'An error occurred',
+            locale: _locale,
+            message: _errorMessage ??
+                FormContentMessages.text(_locale, 'errorOccurred'),
             onRetry: () => setState(() => _viewState = SurveyViewState.ready),
           ),
         SurveyViewState.ready || SurveyViewState.submitting => SurveyContent(
@@ -168,11 +175,22 @@ class SurveyClientState extends State<SurveyClient> {
             answers: _answers,
             validationErrors: _validationErrors,
             errorMessage: _errorMessage,
+            locale: _locale,
             isSubmitting: _viewState == SurveyViewState.submitting,
             onAnswerChanged: _updateAnswer,
+            onLocaleChanged: (locale) {
+              setState(() {
+                _locale = locale;
+                _validationErrors = {};
+                _errorMessage = null;
+              });
+            },
             onSubmit: _submit,
           ),
-        SurveyViewState.completed => SurveyCompleted(survey: _survey),
+        SurveyViewState.completed => SurveyCompleted(
+            survey: _survey,
+            locale: _locale,
+          ),
       },
     ]);
   }

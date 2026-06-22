@@ -6,12 +6,14 @@ class TextMultiLineQuestion extends StatelessComponent {
   const TextMultiLineQuestion({
     required this.question,
     required this.value,
+    required this.locale,
     required this.onChanged,
     super.key,
   });
 
   final Question question;
   final String? value;
+  final String locale;
   final void Function(dynamic value) onChanged;
 
   @override
@@ -24,8 +26,8 @@ class TextMultiLineQuestion extends StatelessComponent {
         classes:
             'w-full px-4 py-3 border border-slate-200 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 focus:outline-none text-sm bg-white resize-y min-h-[120px] placeholder:text-slate-400',
         attributes: {
-          if (question.placeholder != null)
-            'placeholder': question.placeholder!,
+          if (question.placeholderFor(locale) != null)
+            'placeholder': question.placeholderFor(locale)!,
           if (question.minLength != null)
             'minlength': question.minLength.toString(),
           if (question.maxLength != null)

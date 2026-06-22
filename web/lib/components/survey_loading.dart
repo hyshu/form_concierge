@@ -1,3 +1,4 @@
+import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:jaspr/jaspr.dart';
 import 'package:jaspr/dom.dart';
 
@@ -15,7 +16,12 @@ class SurveyLoading extends StatelessComponent {
                   'w-10 h-10 border-3 border-slate-200 border-t-indigo-600 rounded-full animate-spin',
               []),
           p(classes: 'mt-4 text-slate-500 text-sm', [
-            Component.text('Loading survey...'),
+            Component.text(
+              FormContentMessages.text(
+                defaultFormContentLocale,
+                'loadingSurvey',
+              ),
+            ),
           ]),
         ]);
   }

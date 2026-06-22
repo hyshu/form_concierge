@@ -28,29 +28,98 @@ public enum VisibilityOperator: String, Codable, Sendable {
   case isNotAnswered
 }
 
+public let formContentLocaleCodes = ["en", "ja", "zh-Hans", "zh-Hant", "ko", "de"]
+public let defaultFormContentLocale = "en"
+
+public let formContentLocaleLabels = [
+  "en": "English",
+  "ja": "日本語",
+  "zh-Hans": "简体中文",
+  "zh-Hant": "繁體中文",
+  "ko": "한국어",
+  "de": "Deutsch"
+]
+
+public func normalizeFormContentLocale(_ locale: String) -> String {
+  let normalized = locale.replacingOccurrences(of: "_", with: "-")
+  if formContentLocaleCodes.contains(normalized) { return normalized }
+
+  let lower = normalized.lowercased()
+  if lower == "zh-hans" || lower == "zh-cn" || lower == "zh-sg" {
+    return "zh-Hans"
+  }
+  if lower == "zh-hant" || lower == "zh-tw" || lower == "zh-hk" || lower == "zh-mo" {
+    return "zh-Hant"
+  }
+
+  let language = lower.split(separator: "-").first.map(String.init) ?? lower
+  if formContentLocaleCodes.contains(language) { return language }
+  return normalized
+}
+
+public struct LocalizedText: Codable, Equatable, Sendable {
+  public let values: [String: String]
+
+  public init(_ values: [String: String]) {
+    self.values = values
+  }
+
+  public init(from decoder: Decoder) throws {
+    let container = try decoder.singleValueContainer()
+    values = try container.decode([String: String].self)
+  }
+
+  public func encode(to encoder: Encoder) throws {
+    var container = encoder.singleValueContainer()
+    try container.encode(values)
+  }
+
+  public func value(for locale: String) -> String {
+    values[normalizeFormContentLocale(locale)]!
+  }
+}
+
 public struct Survey: Codable, Identifiable, Sendable {
   public let id: Int
   public let slug: String
-  public let title: String
-  public let description: String?
+  public let defaultLocale: String
+  public let supportedLocales: [String]
+  public let titleTranslations: LocalizedText
+  public let descriptionTranslations: LocalizedText
   public let status: SurveyStatus
   public let createdAt: Date
   public let updatedAt: Date
+
+  public func title(for locale: String) -> String {
+    titleTranslations.value(for: locale)
+  }
+
+  public func description(for locale: String) -> String {
+    descriptionTranslations.value(for: locale)
+  }
 }
 
 public struct Question: Codable, Identifiable, Sendable {
   public let id: Int
   public let surveyId: Int
-  public let text: String
+  public let textTranslations: LocalizedText
   public let type: QuestionType
   public let orderIndex: Int
   public let isRequired: Bool
-  public let placeholder: String?
+  public let placeholderTranslations: LocalizedText
   public let minLength: Int?
   public let maxLength: Int?
   public let minSelected: Int?
   public let maxSelected: Int?
   public let visibilityConditionMode: VisibilityConditionMode
+
+  public func text(for locale: String) -> String {
+    textTranslations.value(for: locale)
+  }
+
+  public func placeholder(for locale: String) -> String {
+    placeholderTranslations.value(for: locale)
+  }
 }
 
 public struct QuestionVisibilityRule: Codable, Identifiable, Sendable {
@@ -134,9 +203,13 @@ public enum VisibilityRuleValue: Codable, Equatable, Sendable {
 public struct Choice: Codable, Identifiable, Sendable {
   public let id: Int
   public let questionId: Int
-  public let text: String
+  public let textTranslations: LocalizedText
   public let orderIndex: Int
   public let value: String?
+
+  public func text(for locale: String) -> String {
+    textTranslations.value(for: locale)
+  }
 }
 
 public struct Answer: Codable, Sendable {

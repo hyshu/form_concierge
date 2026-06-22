@@ -3,6 +3,7 @@ import { HttpError, isChoiceQuestionType, isTextQuestionType, json, nowIso, read
 import { normalizeDeviceInfo, normalizeMetadata } from './metadata';
 import { choiceToJson, parseChoiceIds, questionToJson, responseToJson, surveyToJson } from './serializers';
 import { getVisibilityRules, visibleQuestionIds } from './visibility_rules';
+import { DEFAULT_FORM_CONTENT_LOCALE, localizedTextFor } from './localization';
 
 export async function getPublicSurvey(env: Env, slug: string): Promise<Response> {
   const row = await env.DB.prepare(
@@ -147,24 +148,25 @@ async function validateAnswers(
   }
   for (const question of questions) {
     if (!visibleQuestionIdSet.has(question.id)) continue;
+    const questionText = localizedTextFor(question.text_translations, DEFAULT_FORM_CONTENT_LOCALE);
     const answer = byQuestion.get(question.id);
     if (!answer) {
-      if (question.is_required) throw new HttpError(400, `Question "${question.text}" is required`);
+      if (question.is_required) throw new HttpError(400, `Question "${questionText}" is required`);
       if (question.min_selected != null && question.min_selected > 0) {
-        throw new HttpError(400, `Question "${question.text}" requires at least ${question.min_selected} choices`);
+        throw new HttpError(400, `Question "${questionText}" requires at least ${question.min_selected} choices`);
       }
       continue;
     }
     if (isTextQuestionType(question.type)) {
       const value = typeof answer.textValue === 'string' ? answer.textValue.trim() : '';
       if (question.is_required && value.length === 0) {
-        throw new HttpError(400, `Question "${question.text}" is required`);
+        throw new HttpError(400, `Question "${questionText}" is required`);
       }
       if (question.min_length != null && value.length < question.min_length) {
-        throw new HttpError(400, `Question "${question.text}" is too short`);
+        throw new HttpError(400, `Question "${questionText}" is too short`);
       }
       if (question.max_length != null && value.length > question.max_length) {
-        throw new HttpError(400, `Question "${question.text}" is too long`);
+        throw new HttpError(400, `Question "${questionText}" is too long`);
       }
       answer.textValue = value.length === 0 ? null : value;
       answer.selectedChoiceIds = null;
@@ -175,16 +177,16 @@ async function validateAnswers(
       ? answer.selectedChoiceIds.map(Number)
       : [];
     if (question.is_required && selected.length === 0) {
-      throw new HttpError(400, `Question "${question.text}" requires a choice`);
+      throw new HttpError(400, `Question "${questionText}" requires a choice`);
     }
     if (question.type === 'singleChoice' && selected.length > 1) {
-      throw new HttpError(400, `Question "${question.text}" allows one choice`);
+      throw new HttpError(400, `Question "${questionText}" allows one choice`);
     }
     if (question.min_selected != null && selected.length < question.min_selected) {
-      throw new HttpError(400, `Question "${question.text}" requires at least ${question.min_selected} choices`);
+      throw new HttpError(400, `Question "${questionText}" requires at least ${question.min_selected} choices`);
     }
     if (question.max_selected != null && selected.length > question.max_selected) {
-      throw new HttpError(400, `Question "${question.text}" allows at most ${question.max_selected} choices`);
+      throw new HttpError(400, `Question "${questionText}" allows at most ${question.max_selected} choices`);
     }
     const choices = await env.DB.prepare(
       `SELECT id FROM choices WHERE question_id = ?`,

@@ -4,6 +4,7 @@ public struct FormConciergeSurveyView: View {
   private let client: FormConciergeClient
   private let surveySlug: String
   private let anonymousToken: String?
+  private let locale: String?
   private let deviceInfo: DeviceInfo?
   private let metadata: [String: FormConciergeMetadataValue]?
   private let onAnonymousSession: ((AnonymousSession) -> Void)?
@@ -24,6 +25,7 @@ public struct FormConciergeSurveyView: View {
     client: FormConciergeClient,
     surveySlug: String,
     anonymousToken: String? = nil,
+    locale: String? = nil,
     deviceInfo: DeviceInfo? = nil,
     metadata: [String: FormConciergeMetadataValue]? = nil,
     onAnonymousSession: ((AnonymousSession) -> Void)? = nil,
@@ -33,6 +35,7 @@ public struct FormConciergeSurveyView: View {
     self.client = client
     self.surveySlug = surveySlug
     self.anonymousToken = anonymousToken
+    self.locale = locale
     self.deviceInfo = deviceInfo
     self.metadata = metadata
     self.onAnonymousSession = onAnonymousSession
@@ -43,23 +46,27 @@ public struct FormConciergeSurveyView: View {
   public var body: some View {
     Group {
       if isLoading {
-        ProgressView()
+        ProgressView(FormContentMessages.text(activeLocale, "loadingSurvey"))
       } else if completed, let survey {
         VStack(spacing: 12) {
           Image(systemName: "checkmark.circle.fill")
             .font(.system(size: 48))
             .foregroundStyle(.green)
-          Text("Thanks for completing \(survey.title).")
+          Text(FormContentMessages.text(activeLocale, "thankYou"))
             .font(.headline)
+          Text(FormContentMessages.submittedWithTitle(activeLocale, title: survey.title(for: activeLocale)))
+            .multilineTextAlignment(.center)
+            .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
       } else if let survey {
         ScrollView {
           VStack(alignment: .leading, spacing: 24) {
             VStack(alignment: .leading, spacing: 8) {
-              Text(survey.title)
+              Text(survey.title(for: activeLocale))
                 .font(.largeTitle.bold())
-              if let description = survey.description, !description.isEmpty {
+              let description = survey.description(for: activeLocale)
+              if !description.isEmpty {
                 Text(description)
                   .foregroundStyle(.secondary)
               }
@@ -70,6 +77,7 @@ public struct FormConciergeSurveyView: View {
                 question: question,
                 choices: choicesByQuestion[question.id] ?? [],
                 value: answers[question.id],
+                locale: activeLocale,
                 onChange: { updateAnswer(questionId: question.id, value: $0) }
               )
             }
@@ -83,9 +91,9 @@ public struct FormConciergeSurveyView: View {
               Task { await submit() }
             } label: {
               if isSubmitting {
-                ProgressView()
+                ProgressView(FormContentMessages.text(activeLocale, "submitting"))
               } else {
-                Text("Submit")
+                Text(FormContentMessages.text(activeLocale, "submit"))
                   .frame(maxWidth: .infinity)
               }
             }
@@ -99,9 +107,9 @@ public struct FormConciergeSurveyView: View {
           Image(systemName: "exclamationmark.triangle")
             .font(.system(size: 42))
             .foregroundStyle(.secondary)
-          Text("Survey unavailable")
+          Text(FormContentMessages.text(activeLocale, "surveyUnavailable"))
             .font(.headline)
-          Text(errorMessage ?? "Please try again later.")
+          Text(errorMessage ?? FormContentMessages.text(activeLocale, "tryAgainLater"))
             .foregroundStyle(.secondary)
             .multilineTextAlignment(.center)
         }
@@ -181,16 +189,17 @@ public struct FormConciergeSurveyView: View {
   private func validate() -> String? {
     for question in visibleQuestions {
       let value = answers[question.id]
+      let questionText = question.text(for: activeLocale)
       if question.isRequired, value == nil || value?.isEmpty == true {
-        return "\(question.text) is required."
+        return FormContentMessages.requiredQuestion(activeLocale, question: questionText)
       }
       if case .text(let text) = value {
         let count = text.trimmingCharacters(in: .whitespacesAndNewlines).count
         if let minLength = question.minLength, count > 0, count < minLength {
-          return "\(question.text) must be at least \(minLength) characters."
+          return FormContentMessages.minCharacters(activeLocale, question: questionText, count: minLength)
         }
         if let maxLength = question.maxLength, count > maxLength {
-          return "\(question.text) must be at most \(maxLength) characters."
+          return FormContentMessages.maxCharacters(activeLocale, question: questionText, count: maxLength)
         }
       }
       let selectedCount: Int
@@ -203,10 +212,10 @@ public struct FormConciergeSurveyView: View {
         selectedCount = 0
       }
       if let minSelected = question.minSelected, selectedCount < minSelected {
-        return "\(question.text) requires at least \(minSelected) choices."
+        return FormContentMessages.minChoices(activeLocale, question: questionText, count: minSelected)
       }
       if let maxSelected = question.maxSelected, selectedCount > maxSelected {
-        return "\(question.text) allows at most \(maxSelected) choices."
+        return FormContentMessages.maxChoices(activeLocale, question: questionText, count: maxSelected)
       }
     }
     return nil
@@ -231,6 +240,12 @@ public struct FormConciergeSurveyView: View {
       ).map(\.id)
     )
     answers = next.filter { visibleIds.contains($0.key) }
+  }
+
+  private var activeLocale: String {
+    normalizeFormContentLocale(
+      locale ?? survey?.defaultLocale ?? defaultFormContentLocale
+    )
   }
 }
 
@@ -349,15 +364,16 @@ private struct QuestionView: View {
   let question: Question
   let choices: [Choice]
   let value: SurveyAnswerValue?
+  let locale: String
   let onChange: (SurveyAnswerValue) -> Void
 
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
-      Text(question.text)
+      Text(question.text(for: locale))
         .font(.headline)
       switch question.type {
       case .textSingle:
-        TextField(question.placeholder ?? "", text: textBinding)
+        TextField(question.placeholder(for: locale), text: textBinding)
           .textFieldStyle(.roundedBorder)
       case .textMultiLine:
         TextEditor(text: textBinding)
@@ -367,17 +383,17 @@ private struct QuestionView: View {
               .stroke(.quaternary)
           )
       case .singleChoice:
-        Picker(question.text, selection: singleBinding) {
-          Text("Select").tag(-1)
+        Picker(question.text(for: locale), selection: singleBinding) {
+          Text(FormContentMessages.text(locale, "select")).tag(-1)
           ForEach(choices) { choice in
-            Text(choice.text).tag(choice.id)
+            Text(choice.text(for: locale)).tag(choice.id)
           }
         }
         .pickerStyle(.inline)
       case .multipleChoice:
         ForEach(choices) { choice in
           Toggle(
-            choice.text,
+            choice.text(for: locale),
             isOn: Binding(
               get: { multipleValue.contains(choice.id) },
               set: { enabled in

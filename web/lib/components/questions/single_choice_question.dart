@@ -7,6 +7,7 @@ class SingleChoiceQuestion extends StatelessComponent {
     required this.question,
     required this.choices,
     required this.value,
+    required this.locale,
     required this.onChanged,
     super.key,
   });
@@ -14,6 +15,7 @@ class SingleChoiceQuestion extends StatelessComponent {
   final Question question;
   final List<Choice> choices;
   final int? value;
+  final String locale;
   final void Function(dynamic value) onChanged;
 
   @override
@@ -34,7 +36,7 @@ class SingleChoiceQuestion extends StatelessComponent {
             },
           ),
           span(classes: 'ml-3 text-sm text-slate-700', [
-            Component.text(choice.text),
+            Component.text(choice.textFor(locale)),
           ]),
         ],
             classes:

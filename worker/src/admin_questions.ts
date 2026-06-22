@@ -12,12 +12,12 @@ import {
   optionalString,
   readJson,
   requireNumberList,
-  requireString,
   requiredRow,
   updateOrder,
 } from './utils';
 import { choiceToJson, questionToJson } from './serializers';
 import { mustChoice, mustQuestion, mustSurvey } from './admin_records';
+import { FORM_CONTENT_LOCALES, defaultLocalizedText, requireLocalizedText } from './localization';
 
 export async function createQuestion(request: Request, env: Env): Promise<Response> {
   const body = await readJson(request);
@@ -30,17 +30,22 @@ export async function createQuestion(request: Request, env: Env): Promise<Respon
   ).bind(surveyId).first<{ max_order: number | null }>();
   const row = await env.DB.prepare(
     `INSERT INTO questions
-       (survey_id, text, type, order_index, is_required, placeholder,
+       (survey_id, text_translations, type, order_index, is_required, placeholder_translations,
         min_length, max_length, min_selected, max_selected, visibility_condition_mode)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      RETURNING *`,
   ).bind(
     surveyId,
-    requireString(body.text, 'text'),
+    JSON.stringify(requireLocalizedText(body.textTranslations, 'textTranslations', FORM_CONTENT_LOCALES)),
     type,
     (max?.max_order ?? -1) + 1,
     boolToInt(body.isRequired !== false),
-    optionalString(body.placeholder),
+    JSON.stringify(requireLocalizedText(
+      body.placeholderTranslations,
+      'placeholderTranslations',
+      FORM_CONTENT_LOCALES,
+      { allowEmpty: true },
+    )),
     validation.minLength,
     validation.maxLength,
     validation.minSelected,
@@ -49,7 +54,10 @@ export async function createQuestion(request: Request, env: Env): Promise<Respon
   ).first<QuestionRow>();
   const question = requiredRow(row, 'Question');
   if (isChoiceQuestionType(question.type)) {
-    await insertChoices(env.DB, question.id, ['Choice 1', 'Choice 2']);
+    await insertChoices(env.DB, question.id, [
+      defaultLocalizedText('Choice 1'),
+      defaultLocalizedText('Choice 2'),
+    ]);
   }
   return json(questionToJson(question), 201);
 }
@@ -69,17 +77,22 @@ export async function updateQuestion(request: Request, env: Env, questionId: num
   );
   const row = await env.DB.prepare(
     `UPDATE questions
-     SET text = ?, type = ?, order_index = ?, is_required = ?, placeholder = ?,
+     SET text_translations = ?, type = ?, order_index = ?, is_required = ?, placeholder_translations = ?,
          min_length = ?, max_length = ?, min_selected = ?, max_selected = ?,
          visibility_condition_mode = ?, is_deleted = ?
      WHERE id = ?
      RETURNING *`,
   ).bind(
-    requireString(body.text ?? existing.text, 'text'),
+    JSON.stringify(requireLocalizedText(body.textTranslations, 'textTranslations', FORM_CONTENT_LOCALES)),
     type,
     optionalNumber(body.orderIndex) ?? existing.order_index,
     boolToInt(body.isRequired ?? existing.is_required === 1),
-    optionalString(body.placeholder ?? existing.placeholder),
+    JSON.stringify(requireLocalizedText(
+      body.placeholderTranslations,
+      'placeholderTranslations',
+      FORM_CONTENT_LOCALES,
+      { allowEmpty: true },
+    )),
     validation.minLength,
     validation.maxLength,
     validation.minSelected,
@@ -192,12 +205,12 @@ export async function createChoice(request: Request, env: Env): Promise<Response
     `SELECT MAX(order_index) AS max_order FROM choices WHERE question_id = ?`,
   ).bind(question.id).first<{ max_order: number | null }>();
   const row = await env.DB.prepare(
-    `INSERT INTO choices (question_id, text, order_index, value)
+    `INSERT INTO choices (question_id, text_translations, order_index, value)
      VALUES (?, ?, ?, ?)
      RETURNING *`,
   ).bind(
     question.id,
-    requireString(body.text, 'text'),
+    JSON.stringify(requireLocalizedText(body.textTranslations, 'textTranslations', FORM_CONTENT_LOCALES)),
     (max?.max_order ?? -1) + 1,
     optionalString(body.value),
   ).first<ChoiceRow>();
@@ -208,9 +221,9 @@ export async function updateChoice(request: Request, env: Env, choiceId: number)
   const existing = await mustChoice(env.DB, choiceId);
   const body = await readJson(request);
   const row = await env.DB.prepare(
-    `UPDATE choices SET text = ?, order_index = ?, value = ? WHERE id = ? RETURNING *`,
+    `UPDATE choices SET text_translations = ?, order_index = ?, value = ? WHERE id = ? RETURNING *`,
   ).bind(
-    requireString(body.text ?? existing.text, 'text'),
+    JSON.stringify(requireLocalizedText(body.textTranslations, 'textTranslations', FORM_CONTENT_LOCALES)),
     optionalNumber(body.orderIndex) ?? existing.order_index,
     optionalString(body.value ?? existing.value),
     choiceId,
