@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
+import 'package:hux/hux.dart';
 
 import '../../../../core/localization/app_localizations.dart';
 import '../capsules/survey_form_capsule.dart';
@@ -50,137 +51,139 @@ class _SurveyFormState extends State<SurveyForm> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Form(
-      key: _formKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          DropdownMenu<String>(
-            initialSelection: _defaultLocale,
-            expandedInsets: EdgeInsets.zero,
-            label: Text(context.tr('Default language')),
-            dropdownMenuEntries: [
-              for (final locale in formContentLocaleCodes)
-                DropdownMenuEntry(
-                  value: locale,
-                  label: formContentLocaleLabels[locale]!,
-                ),
-            ],
-            onSelected: widget.isSaving
-                ? null
-                : (value) {
-                    if (value == null) return;
-                    setState(() => _defaultLocale = value);
-                    widget.onDefaultLocaleChanged?.call(value);
-                  },
-          ),
-          const SizedBox(height: 16),
-          Text(
-            context.tr('Localized titles'),
-            style: Theme.of(context).textTheme.titleSmall,
-          ),
-          const SizedBox(height: 8),
-          LocalizedTextFieldGroup(
-            controllers: widget.controllers.titleTranslations,
-            primaryLocale: _defaultLocale,
-            labelText: context.tr('Title'),
-            hintText: context.tr('Enter survey title'),
-            enabled: !widget.isSaving,
-            requiredMessage: context.tr('Title is required'),
-            textInputAction: TextInputAction.next,
-          ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: widget.controllers.slug,
-            decoration: InputDecoration(
-              labelText: context.tr('URL Slug'),
-              hintText: 'my-survey',
-              prefixText: '/',
-              prefixStyle: TextStyle(color: colorScheme.onSurfaceVariant),
+    return HuxCard(
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              context.tr('Default language'),
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: HuxTokens.textSecondary(context),
+              ),
             ),
-            enabled: !widget.isSaving,
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return context.tr('Slug is required');
-              }
-              if (!RegExp(r'^[a-z0-9-]+$').hasMatch(value)) {
-                return context.tr(
-                  'Only lowercase letters, numbers, and hyphens allowed',
-                );
-              }
-              return null;
-            },
-            textInputAction: TextInputAction.next,
-          ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: widget.controllers.customDomain,
-            decoration: InputDecoration(
-              labelText: context.tr('Custom domain (optional)'),
-              hintText: 'forms.example.com',
+            const SizedBox(height: 6),
+            SizedBox(
+              width: double.infinity,
+              child: HuxDropdown<String>(
+                value: _defaultLocale,
+                enabled: !widget.isSaving,
+                useItemWidgetAsValue: true,
+                items: [
+                  for (final locale in formContentLocaleCodes)
+                    HuxDropdownItem(
+                      value: locale,
+                      child: Text(formContentLocaleLabels[locale]!),
+                    ),
+                ],
+                onChanged: (value) {
+                  setState(() => _defaultLocale = value);
+                  widget.onDefaultLocaleChanged?.call(value);
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              context.tr('Localized titles'),
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            const SizedBox(height: 8),
+            LocalizedTextFieldGroup(
+              controllers: widget.controllers.titleTranslations,
+              primaryLocale: _defaultLocale,
+              labelText: context.tr('Title'),
+              hintText: context.tr('Enter survey title'),
+              enabled: !widget.isSaving,
+              requiredMessage: context.tr('Title is required'),
+              textInputAction: TextInputAction.next,
+            ),
+            const SizedBox(height: 16),
+            HuxInput(
+              controller: widget.controllers.slug,
+              label: context.tr('URL Slug'),
+              hint: 'my-survey',
+              prefixIcon: Text(
+                '/',
+                style: TextStyle(color: HuxTokens.textSecondary(context)),
+              ),
+              enabled: !widget.isSaving,
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return context.tr('Slug is required');
+                }
+                if (!RegExp(r'^[a-z0-9-]+$').hasMatch(value)) {
+                  return context.tr(
+                    'Only lowercase letters, numbers, and hyphens allowed',
+                  );
+                }
+                return null;
+              },
+              textInputAction: TextInputAction.next,
+            ),
+            const SizedBox(height: 16),
+            HuxInput(
+              controller: widget.controllers.customDomain,
+              label: context.tr('Custom domain (optional)'),
+              hint: 'forms.example.com',
               helperText: context.tr(
                 'Use a dedicated host to open this survey without a slug.',
               ),
+              prefixIcon: const Icon(LucideIcons.globe),
+              enabled: !widget.isSaving,
+              validator: (value) {
+                final domain = value?.trim().toLowerCase() ?? '';
+                if (domain.isEmpty) return null;
+                if (!RegExp(
+                  r'^(?=.{1,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$',
+                ).hasMatch(domain)) {
+                  return context.tr(
+                    'Custom domain must be a hostname like forms.example.com',
+                  );
+                }
+                return null;
+              },
+              textInputAction: TextInputAction.next,
             ),
-            enabled: !widget.isSaving,
-            validator: (value) {
-              final domain = value?.trim().toLowerCase() ?? '';
-              if (domain.isEmpty) return null;
-              if (!RegExp(
-                r'^(?=.{1,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$',
-              ).hasMatch(domain)) {
-                return context.tr(
-                  'Custom domain must be a hostname like forms.example.com',
-                );
-              }
-              return null;
-            },
-            textInputAction: TextInputAction.next,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            context.tr('Localized descriptions'),
-            style: Theme.of(context).textTheme.titleSmall,
-          ),
-          const SizedBox(height: 8),
-          LocalizedTextFieldGroup(
-            controllers: widget.controllers.descriptionTranslations,
-            primaryLocale: _defaultLocale,
-            labelText: context.tr('Description (optional)'),
-            hintText: context.tr('Brief description of the survey'),
-            enabled: !widget.isSaving,
-            maxLines: 2,
-          ),
-          if (widget.error != null) ...[
             const SizedBox(height: 16),
             Text(
-              context.trMessage(widget.error!),
-              style: TextStyle(color: colorScheme.error),
+              context.tr('Localized descriptions'),
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            const SizedBox(height: 8),
+            LocalizedTextFieldGroup(
+              controllers: widget.controllers.descriptionTranslations,
+              primaryLocale: _defaultLocale,
+              labelText: context.tr('Description (optional)'),
+              hintText: context.tr('Brief description of the survey'),
+              enabled: !widget.isSaving,
+              maxLines: 2,
+            ),
+            if (widget.error != null) ...[
+              const SizedBox(height: 16),
+              Text(
+                context.trMessage(widget.error!),
+                style: TextStyle(color: HuxTokens.textDestructive(context)),
+              ),
+            ],
+            const SizedBox(height: 24),
+            HuxButton(
+              onPressed: widget.isSaving ? null : _submit,
+              isLoading: widget.isSaving,
+              width: HuxButtonWidth.expand,
+              icon: widget.existingSurvey != null
+                  ? LucideIcons.save
+                  : LucideIcons.plus,
+              child: Text(
+                context.tr(
+                  widget.existingSurvey != null
+                      ? 'Save Changes'
+                      : 'Create Survey',
+                ),
+              ),
             ),
           ],
-          const SizedBox(height: 24),
-          FilledButton(
-            onPressed: widget.isSaving ? null : _submit,
-            child: widget.isSaving
-                ? SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: colorScheme.onPrimary,
-                    ),
-                  )
-                : Text(
-                    context.tr(
-                      widget.existingSurvey != null
-                          ? 'Save Changes'
-                          : 'Create Survey',
-                    ),
-                  ),
-          ),
-        ],
+        ),
       ),
     );
   }

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
+import 'package:hux/hux.dart';
 
 import '../../../../core/constants/pagination.dart';
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/widgets/hux_states.dart';
 
 /// Widget showing a paginated list of individual responses.
 class ResponseList extends StatelessWidget {
@@ -33,51 +35,22 @@ class ResponseList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     if (isLoading && responses.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: HuxLoading(size: HuxLoadingSize.large));
     }
 
     if (error != null && responses.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.error_outline,
-              size: 48,
-              color: colorScheme.error,
-            ),
-            const SizedBox(height: 16),
-            Text(context.trMessage(error!)),
-            const SizedBox(height: 16),
-            FilledButton(
-              onPressed: () => onPageChange(0),
-              child: Text(context.tr('Retry')),
-            ),
-          ],
-        ),
+      return HuxErrorState(
+        message: context.trMessage(error!),
+        onRetry: () => onPageChange(0),
       );
     }
 
     if (responses.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.inbox_outlined,
-              size: 64,
-              color: colorScheme.onSurfaceVariant,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              context.tr('No responses yet'),
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-          ],
-        ),
+      return HuxEmptyState(
+        icon: LucideIcons.inbox,
+        title: context.tr('No responses yet'),
+        message: '',
       );
     }
 
@@ -86,7 +59,7 @@ class ResponseList extends StatelessWidget {
         Expanded(
           child: ListView.builder(
             itemCount: responses.length,
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.only(top: 16, bottom: 16),
             itemBuilder: (context, index) {
               final response = responses[index];
               return _ResponseTile(
@@ -103,20 +76,25 @@ class ResponseList extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: colorScheme.surface,
+              color: HuxTokens.surfacePrimary(context),
               border: Border(
-                top: BorderSide(color: colorScheme.outlineVariant),
+                top: BorderSide(color: HuxTokens.borderSecondary(context)),
               ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                IconButton(
-                  onPressed: currentPage > 0
-                      ? () => onPageChange(currentPage - 1)
-                      : null,
-                  icon: const Icon(Icons.chevron_left),
-                  tooltip: context.tr('Previous page'),
+                Tooltip(
+                  message: context.tr('Previous page'),
+                  child: HuxButton(
+                    onPressed: currentPage > 0
+                        ? () => onPageChange(currentPage - 1)
+                        : null,
+                    variant: HuxButtonVariant.ghost,
+                    size: HuxButtonSize.small,
+                    icon: LucideIcons.chevronLeft,
+                    child: const SizedBox(width: 0),
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Text(
@@ -127,12 +105,17 @@ class ResponseList extends StatelessWidget {
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(width: 16),
-                IconButton(
-                  onPressed: currentPage < totalPages - 1
-                      ? () => onPageChange(currentPage + 1)
-                      : null,
-                  icon: const Icon(Icons.chevron_right),
-                  tooltip: context.tr('Next page'),
+                Tooltip(
+                  message: context.tr('Next page'),
+                  child: HuxButton(
+                    onPressed: currentPage < totalPages - 1
+                        ? () => onPageChange(currentPage + 1)
+                        : null,
+                    variant: HuxButtonVariant.ghost,
+                    size: HuxButtonSize.small,
+                    icon: LucideIcons.chevronRight,
+                    child: const SizedBox(width: 0),
+                  ),
                 ),
               ],
             ),
@@ -159,120 +142,127 @@ class _ResponseTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final deviceInfo = response.deviceInfo;
     final deviceSummary = deviceInfo?.summary;
     final deviceDetails = deviceInfo?.detailSummary;
     final userAgent = deviceInfo?.userAgent;
     final metadataSummary = _metadataSummary(response.metadata);
 
-    return Card(
+    return HuxCard(
       margin: const EdgeInsets.only(bottom: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest,
-                shape: BoxShape.circle,
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: HuxTokens.surfaceSecondary(context),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              '#$index',
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: HuxTokens.textSecondary(context),
               ),
-              alignment: Alignment.center,
-              child: Text(
-                '#$index',
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  response.submittedAt.toIsoDateTimeString(),
+                  style: Theme.of(context).textTheme.titleSmall,
                 ),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    response.submittedAt.toIsoDateTimeString(),
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(
+                      response.userId != null
+                          ? LucideIcons.user
+                          : LucideIcons.userRound,
+                      size: 16,
+                      color: HuxTokens.iconSecondary(context),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      response.userId != null
+                          ? context.tr('User #{id}', {'id': response.userId})
+                          : context.tr('Anonymous'),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: HuxTokens.textSecondary(context),
+                      ),
+                    ),
+                  ],
+                ),
+                if (deviceSummary != null) ...[
                   const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(
-                        response.userId != null
-                            ? Icons.person
-                            : Icons.person_outline,
-                        size: 16,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        response.userId != null
-                            ? context.tr('User #{id}', {'id': response.userId})
-                            : context.tr('Anonymous'),
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
+                  _InfoRow(
+                    icon: LucideIcons.monitorSmartphone,
+                    text: deviceSummary,
+                    color: HuxTokens.textSecondary(context),
                   ),
-                  if (deviceSummary != null) ...[
-                    const SizedBox(height: 4),
-                    _InfoRow(
-                      icon: Icons.devices_outlined,
-                      text: deviceSummary,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ],
-                  if (deviceDetails != null) ...[
-                    const SizedBox(height: 4),
-                    _InfoRow(
-                      icon: Icons.info_outline,
-                      text: deviceDetails,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ],
-                  if (userAgent != null && userAgent.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Tooltip(
-                      message: userAgent,
-                      child: _InfoRow(
-                        icon: Icons.language,
-                        text: userAgent,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                  if (metadataSummary != null) ...[
-                    const SizedBox(height: 4),
-                    _InfoRow(
-                      icon: Icons.sell_outlined,
-                      text: metadataSummary,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ],
                 ],
-              ),
+                if (deviceDetails != null) ...[
+                  const SizedBox(height: 4),
+                  _InfoRow(
+                    icon: LucideIcons.info,
+                    text: deviceDetails,
+                    color: HuxTokens.textSecondary(context),
+                  ),
+                ],
+                if (userAgent != null && userAgent.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Tooltip(
+                    message: userAgent,
+                    child: _InfoRow(
+                      icon: LucideIcons.languages,
+                      text: userAgent,
+                      color: HuxTokens.textSecondary(context),
+                    ),
+                  ),
+                ],
+                if (metadataSummary != null) ...[
+                  const SizedBox(height: 4),
+                  _InfoRow(
+                    icon: LucideIcons.tags,
+                    text: metadataSummary,
+                    color: HuxTokens.textSecondary(context),
+                  ),
+                ],
+              ],
             ),
-            if (canManageResponses)
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.reply_outlined),
+          ),
+          if (canManageResponses)
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Tooltip(
+                  message: context.tr('Reply'),
+                  child: HuxButton(
                     onPressed: onReply,
-                    tooltip: context.tr('Reply'),
+                    variant: HuxButtonVariant.ghost,
+                    size: HuxButtonSize.small,
+                    icon: LucideIcons.reply,
+                    child: const SizedBox(width: 0),
                   ),
-                  IconButton(
-                    icon: Icon(Icons.delete_outline, color: colorScheme.error),
+                ),
+                Tooltip(
+                  message: context.tr('Delete response'),
+                  child: HuxButton(
                     onPressed: onDelete,
-                    tooltip: context.tr('Delete response'),
+                    variant: HuxButtonVariant.ghost,
+                    size: HuxButtonSize.small,
+                    icon: LucideIcons.trash2,
+                    textColor: HuxTokens.textDestructive(context),
+                    child: const SizedBox(width: 0),
                   ),
-                ],
-              ),
-          ],
-        ),
+                ),
+              ],
+            ),
+        ],
       ),
     );
   }

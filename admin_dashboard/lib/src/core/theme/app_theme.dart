@@ -1,30 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:hux/hux.dart';
 
-/// Application theme configuration using Material 3.
-/// All colors are derived from colorScheme - no hardcoded colors.
+/// Application theme configuration backed by Hux UI.
 abstract final class AppTheme {
   static ThemeData light() {
-    return ThemeData(
-      useMaterial3: true,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: Colors.indigo,
-        brightness: Brightness.light,
-      ),
-      inputDecorationTheme: const InputDecorationTheme(
-        border: OutlineInputBorder(),
+    return HuxTheme.lightTheme.copyWith(
+      scaffoldBackgroundColor: const Color(0xFFF8FAFC),
+      appBarTheme: HuxTheme.lightTheme.appBarTheme.copyWith(
+        centerTitle: false,
+        elevation: 0,
+        scrolledUnderElevation: 0,
       ),
     );
   }
 
   static ThemeData dark() {
-    return ThemeData(
-      useMaterial3: true,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: Colors.indigo,
-        brightness: Brightness.dark,
-      ),
-      inputDecorationTheme: const InputDecorationTheme(
-        border: OutlineInputBorder(),
+    return HuxTheme.darkTheme.copyWith(
+      appBarTheme: HuxTheme.darkTheme.appBarTheme.copyWith(
+        centerTitle: false,
+        elevation: 0,
+        scrolledUnderElevation: 0,
       ),
     );
   }

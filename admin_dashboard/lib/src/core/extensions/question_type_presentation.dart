@@ -1,13 +1,14 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
+import 'package:hux/hux.dart';
 
 extension QuestionTypePresentation on QuestionType {
   IconData get icon {
     return switch (this) {
-      QuestionType.singleChoice => Icons.radio_button_checked,
-      QuestionType.multipleChoice => Icons.check_box,
-      QuestionType.textSingle => Icons.short_text,
-      QuestionType.textMultiLine => Icons.notes,
+      QuestionType.singleChoice => LucideIcons.circleDot,
+      QuestionType.multipleChoice => LucideIcons.squareCheck,
+      QuestionType.textSingle => LucideIcons.textCursorInput,
+      QuestionType.textMultiLine => LucideIcons.alignLeft,
     };
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
+import 'package:hux/hux.dart';
 
 import '../../../../core/extensions/question_type_presentation.dart';
 import '../../../../core/localization/app_localizations.dart';
@@ -128,14 +129,13 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(
-        context.tr(
-          widget.existingQuestion != null ? 'Edit Question' : 'Add Question',
-        ),
+    return HuxDialog(
+      title: context.tr(
+        widget.existingQuestion != null ? 'Edit Question' : 'Add Question',
       ),
+      size: HuxDialogSize.large,
       content: SizedBox(
-        width: 400,
+        width: 520,
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(
@@ -143,10 +143,7 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  context.tr('Localized question text'),
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
+                _SectionTitle(text: context.tr('Localized question text')),
                 const SizedBox(height: 8),
                 LocalizedTextFieldGroup(
                   controllers: _textControllers,
@@ -157,70 +154,57 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
                   requiredMessage: context.tr('Question text is required'),
                 ),
                 const SizedBox(height: 16),
-                Text(
-                  context.tr('Question Type'),
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
+                _SectionTitle(text: context.tr('Question Type')),
                 const SizedBox(height: 8),
-                DropdownMenu<QuestionType>(
-                  initialSelection: _type,
-                  expandedInsets: EdgeInsets.zero,
-                  dropdownMenuEntries: QuestionType.values.map((type) {
-                    return DropdownMenuEntry(
-                      value: type,
-                      label: context.tr(type.label),
-                      leadingIcon: Icon(type.icon, size: 20),
-                    );
-                  }).toList(),
-                  onSelected: (value) {
-                    if (value != null) {
-                      setState(() {
-                        _type = value;
-                      });
-                    }
-                  },
+                SizedBox(
+                  width: double.infinity,
+                  child: HuxDropdown<QuestionType>(
+                    value: _type,
+                    useItemWidgetAsValue: true,
+                    items: QuestionType.values.map((type) {
+                      return HuxDropdownItem(
+                        value: type,
+                        child: Row(
+                          children: [
+                            Icon(type.icon, size: 18),
+                            const SizedBox(width: 8),
+                            Text(context.tr(type.label)),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (value) => setState(() => _type = value),
+                  ),
                 ),
                 const SizedBox(height: 16),
-                if (_type.usesTextAnswer)
-                  Column(
+                if (_type.usesTextAnswer) ...[
+                  _SectionTitle(text: context.tr('Localized placeholders')),
+                  const SizedBox(height: 8),
+                  LocalizedTextFieldGroup(
+                    controllers: _placeholderControllers,
+                    primaryLocale: widget.primaryLocale,
+                    labelText: context.tr('Placeholder (optional)'),
+                    hintText: context.tr('Placeholder text for the input'),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
                     children: [
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          context.tr('Localized placeholders'),
-                          style: Theme.of(context).textTheme.titleSmall,
+                      Expanded(
+                        child: _NumberField(
+                          controller: _minLengthController,
+                          label: context.tr('Min length'),
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      LocalizedTextFieldGroup(
-                        controllers: _placeholderControllers,
-                        primaryLocale: widget.primaryLocale,
-                        labelText: context.tr('Placeholder (optional)'),
-                        hintText: context.tr(
-                          'Placeholder text for the input',
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _NumberField(
+                          controller: _maxLengthController,
+                          label: context.tr('Max length'),
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _NumberField(
-                              controller: _minLengthController,
-                              label: context.tr('Min length'),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _NumberField(
-                              controller: _maxLengthController,
-                              label: context.tr('Max length'),
-                            ),
-                          ),
-                        ],
                       ),
                     ],
-                  )
-                else if (_type == QuestionType.multipleChoice)
+                  ),
+                ] else if (_type == QuestionType.multipleChoice)
                   Row(
                     children: [
                       Expanded(
@@ -239,40 +223,57 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
                     ],
                   ),
                 const SizedBox(height: 16),
-                DropdownMenu<VisibilityConditionMode>(
-                  initialSelection: _visibilityConditionMode,
-                  expandedInsets: EdgeInsets.zero,
-                  label: Text(context.tr('Visibility rule match')),
-                  dropdownMenuEntries: [
-                    DropdownMenuEntry(
-                      value: VisibilityConditionMode.all,
-                      label: context.tr('All rules'),
-                    ),
-                    DropdownMenuEntry(
-                      value: VisibilityConditionMode.any,
-                      label: context.tr('Any rule'),
-                    ),
-                  ],
-                  onSelected: (value) {
-                    if (value == null) return;
-                    setState(() {
-                      _visibilityConditionMode = value;
-                    });
-                  },
+                _SectionTitle(text: context.tr('Visibility rule match')),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: HuxDropdown<VisibilityConditionMode>(
+                    value: _visibilityConditionMode,
+                    useItemWidgetAsValue: true,
+                    items: [
+                      HuxDropdownItem(
+                        value: VisibilityConditionMode.all,
+                        child: Text(context.tr('All rules')),
+                      ),
+                      HuxDropdownItem(
+                        value: VisibilityConditionMode.any,
+                        child: Text(context.tr('Any rule')),
+                      ),
+                    ],
+                    onChanged: (value) =>
+                        setState(() => _visibilityConditionMode = value),
+                  ),
                 ),
                 const SizedBox(height: 16),
-                SwitchListTile(
-                  title: Text(context.tr('Required')),
-                  subtitle: Text(
-                    context.tr('Respondents must answer this question'),
+                HuxCard(
+                  backgroundColor: HuxTokens.surfaceSecondary(context),
+                  child: Row(
+                    children: [
+                      HuxSwitch(
+                        value: _isRequired,
+                        onChanged: (value) =>
+                            setState(() => _isRequired = value),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(context.tr('Required')),
+                            const SizedBox(height: 4),
+                            Text(
+                              context.tr(
+                                'Respondents must answer this question',
+                              ),
+                              style: TextStyle(
+                                color: HuxTokens.textSecondary(context),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  value: _isRequired,
-                  onChanged: (value) {
-                    setState(() {
-                      _isRequired = value;
-                    });
-                  },
-                  contentPadding: EdgeInsets.zero,
                 ),
               ],
             ),
@@ -280,12 +281,16 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
         ),
       ),
       actions: [
-        TextButton(
+        HuxButton(
           onPressed: () => Navigator.pop(context),
+          variant: HuxButtonVariant.secondary,
           child: Text(context.tr('Cancel')),
         ),
-        FilledButton(
+        HuxButton(
           onPressed: _submit,
+          icon: widget.existingQuestion != null
+              ? LucideIcons.save
+              : LucideIcons.plus,
           child: Text(
             context.tr(widget.existingQuestion != null ? 'Save' : 'Add'),
           ),
@@ -327,6 +332,17 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
   }
 }
 
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(text, style: Theme.of(context).textTheme.titleSmall);
+  }
+}
+
 class _NumberField extends StatelessWidget {
   const _NumberField({required this.controller, required this.label});
 
@@ -335,9 +351,9 @@ class _NumberField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
+    return HuxInput(
       controller: controller,
-      decoration: InputDecoration(labelText: label),
+      label: label,
       keyboardType: TextInputType.number,
       validator: (value) {
         final trimmed = value?.trim() ?? '';

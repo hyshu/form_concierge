@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hux/hux.dart';
 
 import '../../../../core/localization/app_localizations.dart';
 import '../capsules/login_form_capsule.dart';
@@ -24,33 +25,25 @@ class LoginForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return AutofillGroup(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          TextField(
+          HuxInput(
             controller: controllers.email,
-            decoration: InputDecoration(
-              labelText: context.tr('Email'),
-              prefixIcon: const Icon(Icons.email_outlined),
-            ),
+            label: context.tr('Email'),
+            prefixIcon: const Icon(LucideIcons.mail),
             keyboardType: TextInputType.emailAddress,
-            autofillHints: const [AutofillHints.email],
             enabled: !isLoading,
             textInputAction: TextInputAction.next,
           ),
           const SizedBox(height: 16),
-          TextField(
+          HuxInput(
             controller: controllers.password,
-            decoration: InputDecoration(
-              labelText: context.tr('Password'),
-              prefixIcon: const Icon(Icons.lock_outlined),
-            ),
+            label: context.tr('Password'),
+            prefixIcon: const Icon(LucideIcons.lock),
             obscureText: true,
-            autofillHints: const [AutofillHints.password],
             enabled: !isLoading,
             textInputAction: TextInputAction.done,
             onSubmitted: (_) => onSubmit(),
@@ -59,8 +52,10 @@ class LoginForm extends StatelessWidget {
             const SizedBox(height: 8),
             Align(
               alignment: Alignment.centerRight,
-              child: TextButton(
+              child: HuxButton(
                 onPressed: isLoading ? null : onForgotPassword,
+                variant: HuxButtonVariant.ghost,
+                size: HuxButtonSize.small,
                 child: Text(context.tr('Forgot Password?')),
               ),
             ),
@@ -69,24 +64,18 @@ class LoginForm extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               context.trMessage(error!),
-              style: TextStyle(color: colorScheme.error),
+              style: TextStyle(color: HuxTokens.textDestructive(context)),
             ),
           ],
           const SizedBox(height: 24),
-          FilledButton(
+          HuxButton(
             onPressed: isLoading ? null : onSubmit,
-            child: isLoading
-                ? SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: colorScheme.onPrimary,
-                    ),
-                  )
-                : Text(
-                    context.tr(isRegistration ? 'Create Account' : 'Login'),
-                  ),
+            isLoading: isLoading,
+            width: HuxButtonWidth.expand,
+            icon: isRegistration ? LucideIcons.userPlus : LucideIcons.logIn,
+            child: Text(
+              context.tr(isRegistration ? 'Create Account' : 'Login'),
+            ),
           ),
         ],
       ),

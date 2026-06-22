@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hux/hux.dart';
 
 import '../../../../core/extensions/question_type_presentation.dart';
 import '../../../../core/localization/app_localizations.dart';
@@ -36,16 +37,10 @@ class AiQuestionPreviewDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return AlertDialog(
-      title: Row(
-        children: [
-          Icon(Icons.auto_awesome, color: colorScheme.primary),
-          const SizedBox(width: 8),
-          Text(context.tr('Generated Questions')),
-        ],
-      ),
+    return HuxDialog(
+      title: context.tr('Generated Questions'),
+      size: HuxDialogSize.large,
+      showCloseButton: false,
       content: SizedBox(
         width: 500,
         height: 400,
@@ -60,7 +55,7 @@ class AiQuestionPreviewDialog extends StatelessWidget {
                 },
               ),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
+                color: HuxTokens.textSecondary(context),
               ),
             ),
             const SizedBox(height: 16),
@@ -81,20 +76,21 @@ class AiQuestionPreviewDialog extends StatelessWidget {
         ),
       ),
       actions: [
-        TextButton(
+        HuxButton(
           onPressed: () {
             Navigator.pop(context);
             onCancel();
           },
+          variant: HuxButtonVariant.secondary,
           child: Text(context.tr('Cancel')),
         ),
-        FilledButton.icon(
+        HuxButton(
           onPressed: () {
             Navigator.pop(context);
             onApply();
           },
-          icon: const Icon(Icons.check),
-          label: Text(context.tr('Apply')),
+          icon: LucideIcons.check,
+          child: Text(context.tr('Apply')),
         ),
       ],
     );
@@ -112,8 +108,6 @@ class _QuestionPreviewTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
@@ -123,14 +117,14 @@ class _QuestionPreviewTile extends StatelessWidget {
             width: 28,
             height: 28,
             decoration: BoxDecoration(
-              color: colorScheme.primaryContainer,
-              borderRadius: BorderRadius.circular(14),
+              color: HuxTokens.primary(context).withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
             ),
             child: Center(
               child: Text(
                 '$index',
                 style: TextStyle(
-                  color: colorScheme.onPrimaryContainer,
+                  color: HuxTokens.primary(context),
                   fontWeight: FontWeight.bold,
                   fontSize: 12,
                 ),
@@ -147,33 +141,21 @@ class _QuestionPreviewTile extends StatelessWidget {
                     Icon(
                       question.type.icon,
                       size: 16,
-                      color: colorScheme.onSurfaceVariant,
+                      color: HuxTokens.iconSecondary(context),
                     ),
                     const SizedBox(width: 4),
                     Text(
                       context.tr(question.type.label),
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
+                        color: HuxTokens.textSecondary(context),
                       ),
                     ),
                     if (question.isRequired) ...[
                       const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: colorScheme.errorContainer,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          context.tr('Required'),
-                          style: TextStyle(
-                            color: colorScheme.onErrorContainer,
-                            fontSize: 10,
-                          ),
-                        ),
+                      HuxBadge(
+                        label: context.tr('Required'),
+                        variant: HuxBadgeVariant.primary,
+                        size: HuxBadgeSize.small,
                       ),
                     ],
                   ],
@@ -189,14 +171,10 @@ class _QuestionPreviewTile extends StatelessWidget {
                     spacing: 8,
                     runSpacing: 4,
                     children: question.choices.map((choice) {
-                      return Chip(
-                        label: Text(
-                          choice.text,
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        visualDensity: VisualDensity.compact,
-                        padding: EdgeInsets.zero,
+                      return HuxBadge(
+                        label: choice.text,
+                        variant: HuxBadgeVariant.secondary,
+                        size: HuxBadgeSize.small,
                       );
                     }).toList(),
                   ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
+import 'package:hux/hux.dart';
 
 import '../../../../core/extensions/question_type_presentation.dart';
 import '../../../../core/localization/app_localizations.dart';
@@ -37,14 +38,13 @@ class QuestionListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final usesChoices = question.type.usesChoices;
     final validationSummary = _validationSummary(context);
 
-    return Card(
+    return HuxCard(
       margin: const EdgeInsets.symmetric(vertical: 8),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.zero,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -54,7 +54,7 @@ class QuestionListTile extends StatelessWidget {
                 Icon(
                   question.type.icon,
                   size: 24,
-                  color: colorScheme.primary,
+                  color: HuxTokens.primary(context),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -70,13 +70,10 @@ class QuestionListTile extends StatelessWidget {
                             ),
                           ),
                           if (question.isRequired)
-                            Text(
-                              '*',
-                              style: TextStyle(
-                                color: colorScheme.error,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
+                            HuxBadge(
+                              label: context.tr('Required'),
+                              variant: HuxBadgeVariant.primary,
+                              size: HuxBadgeSize.small,
                             ),
                         ],
                       ),
@@ -84,7 +81,7 @@ class QuestionListTile extends StatelessWidget {
                       Text(
                         context.tr(question.type.label),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
+                          color: HuxTokens.textSecondary(context),
                         ),
                       ),
                       if (validationSummary != null) ...[
@@ -92,7 +89,9 @@ class QuestionListTile extends StatelessWidget {
                         Text(
                           validationSummary,
                           style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: colorScheme.onSurfaceVariant),
+                              ?.copyWith(
+                                color: HuxTokens.textSecondary(context),
+                              ),
                         ),
                       ],
                       if (visibilityRules.isNotEmpty) ...[
@@ -105,24 +104,33 @@ class QuestionListTile extends StatelessWidget {
                             {'count': visibilityRules.length},
                           ),
                           style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: colorScheme.primary),
+                              ?.copyWith(color: HuxTokens.primary(context)),
                         ),
                       ],
                     ],
                   ),
                 ),
                 if (enabled) ...[
-                  IconButton(
-                    icon: const Icon(Icons.edit),
-                    onPressed: onEdit,
-                    tooltip: context.tr('Edit question'),
-                    visualDensity: VisualDensity.compact,
+                  Tooltip(
+                    message: context.tr('Edit question'),
+                    child: HuxButton(
+                      onPressed: onEdit,
+                      variant: HuxButtonVariant.ghost,
+                      size: HuxButtonSize.small,
+                      icon: LucideIcons.pencil,
+                      child: const SizedBox(width: 0),
+                    ),
                   ),
-                  IconButton(
-                    icon: Icon(Icons.delete_outline, color: colorScheme.error),
-                    onPressed: onDelete,
-                    tooltip: context.tr('Delete question'),
-                    visualDensity: VisualDensity.compact,
+                  Tooltip(
+                    message: context.tr('Delete question'),
+                    child: HuxButton(
+                      onPressed: onDelete,
+                      variant: HuxButtonVariant.ghost,
+                      size: HuxButtonSize.small,
+                      icon: LucideIcons.trash2,
+                      textColor: HuxTokens.textDestructive(context),
+                      child: const SizedBox(width: 0),
+                    ),
                   ),
                 ],
               ],
@@ -146,7 +154,7 @@ class QuestionListTile extends StatelessWidget {
                   'placeholder': question.placeholderFor(primaryLocale),
                 }),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
+                  color: HuxTokens.textSecondary(context),
                   fontStyle: FontStyle.italic,
                 ),
               ),

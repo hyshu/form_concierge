@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_rearch/flutter_rearch.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hux/hux.dart';
 import 'package:rearch/rearch.dart';
 
 import '../../../../core/capsules/client_capsule.dart';
 import '../../../../core/capsules/public_config_capsule.dart';
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/widgets/hux_admin_shell.dart';
+import '../../../../core/widgets/hux_states.dart';
 import '../../../dashboard/presentation/capsules/survey_list_capsule.dart';
 import '../capsules/question_list_capsule.dart';
 import '../capsules/survey_form_capsule.dart';
@@ -39,6 +42,7 @@ class SurveyEditorPage extends RearchConsumer {
     final geminiEnabled = publicConfig.state.geminiEnabled;
     final role = client.auth.signedInUser?.role;
     final canWriteSurveys = role == AdminRole.admin || role == AdminRole.editor;
+    final canManageUsers = role == AdminRole.admin;
 
     // Load survey and questions on first build (only for existing surveys)
     if (use.isFirstBuild() && !isNewSurvey) {
@@ -56,9 +60,12 @@ class SurveyEditorPage extends RearchConsumer {
     }
 
     if (!isNewSurvey && formState.isLoading) {
-      return Scaffold(
-        appBar: AppBar(title: Text(context.tr('Loading...'))),
-        body: const Center(child: CircularProgressIndicator()),
+      return HuxAdminShell(
+        title: context.tr('Loading...'),
+        selectedItemId: 'surveys',
+        showUsers: canManageUsers,
+        onBack: () => context.go('/admin'),
+        child: const Center(child: HuxLoading(size: HuxLoadingSize.large)),
       );
     }
 
@@ -68,25 +75,15 @@ class SurveyEditorPage extends RearchConsumer {
         survey?.defaultLocale ??
         defaultFormContentLocale;
     if (!isNewSurvey && survey == null) {
-      return Scaffold(
-        appBar: AppBar(title: Text(context.tr('Survey Not Found'))),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.error_outline,
-                size: 64,
-                color: Theme.of(context).colorScheme.error,
-              ),
-              const SizedBox(height: 16),
-              Text(context.tr('Survey not found')),
-              const SizedBox(height: 24),
-              FilledButton(
-                onPressed: () => context.go('/admin'),
-                child: Text(context.tr('Back to Dashboard')),
-              ),
-            ],
+      return HuxAdminShell(
+        title: context.tr('Survey Not Found'),
+        selectedItemId: 'surveys',
+        showUsers: canManageUsers,
+        onBack: () => context.go('/admin'),
+        child: HuxPageBody(
+          child: HuxErrorState(
+            message: context.tr('Survey not found'),
+            onRetry: () => context.go('/admin'),
           ),
         ),
       );
@@ -96,194 +93,180 @@ class SurveyEditorPage extends RearchConsumer {
         canWriteSurveys &&
         (isNewSurvey || survey!.status != SurveyStatus.archived);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(isNewSurvey ? context.tr('New Survey') : survey!.title),
-        actions: [
-          if (!isNewSurvey &&
-              canWriteSurveys &&
-              survey!.status == SurveyStatus.draft)
-            TextButton.icon(
-              onPressed: _canPublish(questionState!)
-                  ? () => _publishSurvey(context, surveyListManager)
-                  : null,
-              icon: const Icon(Icons.publish),
-              label: Text(context.tr('Publish')),
-            ),
-        ],
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 600),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (!isNewSurvey && !canEdit) ...[
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.tertiaryContainer,
-                        borderRadius: BorderRadius.circular(12),
+    return HuxAdminShell(
+      title: isNewSurvey ? context.tr('New Survey') : survey!.title,
+      selectedItemId: 'surveys',
+      showUsers: canManageUsers,
+      onBack: () => context.go('/admin'),
+      actions: [
+        if (!isNewSurvey &&
+            canWriteSurveys &&
+            survey!.status == SurveyStatus.draft)
+          HuxButton(
+            onPressed: _canPublish(questionState!)
+                ? () => _publishSurvey(context, surveyListManager)
+                : null,
+            icon: LucideIcons.upload,
+            child: Text(context.tr('Publish')),
+          ),
+      ],
+      child: SafeArea(
+        child: HuxPageBody(
+          maxWidth: 720,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (!isNewSurvey && !canEdit) ...[
+                HuxCard(
+                  child: Row(
+                    children: [
+                      Icon(
+                        LucideIcons.info,
+                        color: HuxTokens.iconSecondary(context),
                       ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.info_outline,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onTertiaryContainer,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          context.tr(
+                            'This survey is archived. You cannot edit the questions.',
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              context.tr(
-                                'This survey is archived. You cannot edit the questions.',
-                              ),
-                              style: TextStyle(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onTertiaryContainer,
-                              ),
-                            ),
+                          style: TextStyle(
+                            color: HuxTokens.textSecondary(context),
                           ),
-                        ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 24),
-                  ],
-                  _buildSurveyForm(
-                    context,
-                    formManager,
-                    surveyListManager,
-                    controllers,
-                    formState,
-                    survey,
-                    isNewSurvey,
-                    onDefaultLocaleChanged: setDefaultLocaleOverride,
+                    ],
                   ),
-                  const SizedBox(height: 48),
-                  if (isNewSurvey)
-                    DraftQuestionsSection(
-                      formManager: formManager,
-                      formState: formState,
-                      geminiEnabled: geminiEnabled,
-                      primaryLocale: activeDefaultLocale,
-                    )
-                  else
-                    QuestionList(
-                      surveyId: surveyId!,
-                      questions: questionState!.questions,
-                      choicesByQuestion: questionState.choicesByQuestion,
-                      visibilityRules: questionState.visibilityRules,
-                      primaryLocale: activeDefaultLocale,
-                      isLoading: questionState.isLoading,
-                      enabled: canEdit,
-                      onAddQuestion:
-                          ({
-                            required LocalizedText textTranslations,
-                            required QuestionType type,
-                            required bool isRequired,
-                            required LocalizedText placeholderTranslations,
-                            int? minLength,
-                            int? maxLength,
-                            int? minSelected,
-                            int? maxSelected,
-                            required VisibilityConditionMode
-                            visibilityConditionMode,
-                          }) {
-                            questionManager.createQuestion(
-                              surveyId: surveyId!,
-                              textTranslations: textTranslations,
-                              type: type,
-                              isRequired: isRequired,
-                              placeholderTranslations: placeholderTranslations,
-                              minLength: minLength,
-                              maxLength: maxLength,
-                              minSelected: minSelected,
-                              maxSelected: maxSelected,
-                              visibilityConditionMode: visibilityConditionMode,
-                            );
-                          },
-                      onEditQuestion:
-                          (
-                            question, {
-                            required LocalizedText textTranslations,
-                            required QuestionType type,
-                            required bool isRequired,
-                            required LocalizedText placeholderTranslations,
-                            int? minLength,
-                            int? maxLength,
-                            int? minSelected,
-                            int? maxSelected,
-                            required VisibilityConditionMode
-                            visibilityConditionMode,
-                          }) {
-                            final updated = Question(
-                              id: question.id,
-                              surveyId: question.surveyId,
-                              textTranslations: textTranslations,
-                              type: type,
-                              orderIndex: question.orderIndex,
-                              isRequired: isRequired,
-                              placeholderTranslations: placeholderTranslations,
-                              minLength: minLength,
-                              maxLength: maxLength,
-                              minSelected: minSelected,
-                              maxSelected: maxSelected,
-                              visibilityConditionMode: visibilityConditionMode,
-                              isDeleted: question.isDeleted,
-                            );
-                            questionManager.updateQuestion(updated);
-                          },
-                      onDeleteQuestion: (question) {
-                        questionManager.deleteQuestion(surveyId!, question.id!);
-                      },
-                      onAddChoice: (questionId, textTranslations) {
-                        questionManager.createChoice(
-                          questionId: questionId,
+                ),
+                const SizedBox(height: 24),
+              ],
+              _buildSurveyForm(
+                context,
+                formManager,
+                surveyListManager,
+                controllers,
+                formState,
+                survey,
+                isNewSurvey,
+                onDefaultLocaleChanged: setDefaultLocaleOverride,
+              ),
+              const SizedBox(height: 48),
+              if (isNewSurvey)
+                DraftQuestionsSection(
+                  formManager: formManager,
+                  formState: formState,
+                  geminiEnabled: geminiEnabled,
+                  primaryLocale: activeDefaultLocale,
+                )
+              else
+                QuestionList(
+                  surveyId: surveyId!,
+                  questions: questionState!.questions,
+                  choicesByQuestion: questionState.choicesByQuestion,
+                  visibilityRules: questionState.visibilityRules,
+                  primaryLocale: activeDefaultLocale,
+                  isLoading: questionState.isLoading,
+                  enabled: canEdit,
+                  onAddQuestion:
+                      ({
+                        required LocalizedText textTranslations,
+                        required QuestionType type,
+                        required bool isRequired,
+                        required LocalizedText placeholderTranslations,
+                        int? minLength,
+                        int? maxLength,
+                        int? minSelected,
+                        int? maxSelected,
+                        required VisibilityConditionMode
+                        visibilityConditionMode,
+                      }) {
+                        questionManager.createQuestion(
                           surveyId: surveyId!,
                           textTranslations: textTranslations,
+                          type: type,
+                          isRequired: isRequired,
+                          placeholderTranslations: placeholderTranslations,
+                          minLength: minLength,
+                          maxLength: maxLength,
+                          minSelected: minSelected,
+                          maxSelected: maxSelected,
+                          visibilityConditionMode: visibilityConditionMode,
                         );
                       },
-                      onUpdateChoice: (choice, textTranslations) {
-                        final updated = choice.copyWith(
+                  onEditQuestion:
+                      (
+                        question, {
+                        required LocalizedText textTranslations,
+                        required QuestionType type,
+                        required bool isRequired,
+                        required LocalizedText placeholderTranslations,
+                        int? minLength,
+                        int? maxLength,
+                        int? minSelected,
+                        int? maxSelected,
+                        required VisibilityConditionMode
+                        visibilityConditionMode,
+                      }) {
+                        final updated = Question(
+                          id: question.id,
+                          surveyId: question.surveyId,
                           textTranslations: textTranslations,
+                          type: type,
+                          orderIndex: question.orderIndex,
+                          isRequired: isRequired,
+                          placeholderTranslations: placeholderTranslations,
+                          minLength: minLength,
+                          maxLength: maxLength,
+                          minSelected: minSelected,
+                          maxSelected: maxSelected,
+                          visibilityConditionMode: visibilityConditionMode,
+                          isDeleted: question.isDeleted,
                         );
-                        questionManager.updateChoice(updated, surveyId!);
+                        questionManager.updateQuestion(updated);
                       },
-                      onDeleteChoice: (choice) {
-                        questionManager.deleteChoice(choice.id!, surveyId!);
+                  onDeleteQuestion: (question) {
+                    questionManager.deleteQuestion(surveyId!, question.id!);
+                  },
+                  onAddChoice: (questionId, textTranslations) {
+                    questionManager.createChoice(
+                      questionId: questionId,
+                      surveyId: surveyId!,
+                      textTranslations: textTranslations,
+                    );
+                  },
+                  onUpdateChoice: (choice, textTranslations) {
+                    final updated = choice.copyWith(
+                      textTranslations: textTranslations,
+                    );
+                    questionManager.updateChoice(updated, surveyId!);
+                  },
+                  onDeleteChoice: (choice) {
+                    questionManager.deleteChoice(choice.id!, surveyId!);
+                  },
+                  onSaveVisibility:
+                      ({
+                        required question,
+                        required mode,
+                        required rules,
+                      }) async {
+                        await questionManager.saveVisibilityRules(
+                          surveyId: surveyId!,
+                          targetQuestion: question,
+                          conditionMode: mode,
+                          targetRules: rules,
+                        );
                       },
-                      onSaveVisibility:
-                          ({
-                            required question,
-                            required mode,
-                            required rules,
-                          }) async {
-                            await questionManager.saveVisibilityRules(
-                              surveyId: surveyId!,
-                              targetQuestion: question,
-                              conditionMode: mode,
-                              targetRules: rules,
-                            );
-                          },
-                    ),
-                  if (questionState?.error != null) ...[
-                    const SizedBox(height: 16),
-                    Text(
-                      context.trMessage(questionState!.error!),
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
+                ),
+              if (questionState?.error != null) ...[
+                const SizedBox(height: 16),
+                Text(
+                  context.trMessage(questionState!.error!),
+                  style: TextStyle(
+                    color: HuxTokens.textDestructive(context),
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
       ),
@@ -364,18 +347,19 @@ class SurveyEditorPage extends RearchConsumer {
   ) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(context.tr('Publish Survey')),
-        content: Text(
-          context.tr('Publish survey confirmation'),
-        ),
+      builder: (context) => HuxDialog(
+        title: context.tr('Publish Survey'),
+        content: Text(context.tr('Publish survey confirmation')),
+        showCloseButton: false,
         actions: [
-          TextButton(
+          HuxButton(
             onPressed: () => Navigator.pop(context, false),
+            variant: HuxButtonVariant.secondary,
             child: Text(context.tr('Cancel')),
           ),
-          FilledButton(
+          HuxButton(
             onPressed: () => Navigator.pop(context, true),
+            icon: LucideIcons.upload,
             child: Text(context.tr('Publish')),
           ),
         ],

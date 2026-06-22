@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
+import 'package:hux/hux.dart';
 
 import '../../../../core/localization/app_localizations.dart';
 
@@ -80,13 +81,11 @@ class _NotificationSettingsViewState extends State<NotificationSettingsView> {
     }
   }
 
-  void _onHourChanged(int? value) {
-    if (value != null) {
-      setState(() {
-        _selectedHour = value;
-        _hasChanges = true;
-      });
-    }
+  void _onHourChanged(int value) {
+    setState(() {
+      _selectedHour = value;
+      _hasChanges = true;
+    });
   }
 
   Future<void> _onSave() async {
@@ -108,287 +107,225 @@ class _NotificationSettingsViewState extends State<NotificationSettingsView> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
     if (widget.isLoading && widget.settings == null) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: HuxLoading(size: HuxLoadingSize.large));
     }
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.only(top: 16, bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Email not configured warning
           if (!widget.isEmailConfigured) ...[
-            Card(
-              color: colorScheme.errorContainer,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.warning_amber_rounded,
-                      color: colorScheme.onErrorContainer,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        context.tr(
-                          'Email service is not configured. Contact your administrator to enable SMTP settings.',
-                        ),
-                        style: TextStyle(color: colorScheme.onErrorContainer),
-                      ),
-                    ),
-                  ],
-                ),
+            _MessageCard(
+              icon: LucideIcons.triangleAlert,
+              message: context.tr(
+                'Email service is not configured. Contact your administrator to enable SMTP settings.',
               ),
+              destructive: true,
             ),
             const SizedBox(height: 16),
           ],
-
-          // Error message
           if (widget.error != null) ...[
-            Card(
-              color: colorScheme.errorContainer,
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Row(
-                  children: [
-                    Icon(Icons.error_outline, color: colorScheme.error),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        context.trMessage(widget.error!),
-                        style: TextStyle(color: colorScheme.onErrorContainer),
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: widget.onClearMessages,
-                      iconSize: 20,
-                    ),
-                  ],
-                ),
-              ),
+            _MessageCard(
+              icon: LucideIcons.circleAlert,
+              message: context.trMessage(widget.error!),
+              destructive: true,
+              onClose: widget.onClearMessages,
             ),
             const SizedBox(height: 16),
           ],
-
-          // Success message
           if (widget.successMessage != null) ...[
-            Card(
-              color: colorScheme.primaryContainer,
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.check_circle_outline,
-                      color: colorScheme.onPrimaryContainer,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        context.trMessage(widget.successMessage!),
-                        style: TextStyle(color: colorScheme.onPrimaryContainer),
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: widget.onClearMessages,
-                      iconSize: 20,
-                    ),
-                  ],
-                ),
-              ),
+            _MessageCard(
+              icon: LucideIcons.circleCheck,
+              message: context.trMessage(widget.successMessage!),
+              onClose: widget.onClearMessages,
             ),
             const SizedBox(height: 16),
           ],
-
-          // Main settings card
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.notifications_outlined,
-                          color: colorScheme.primary,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          context.tr('Daily Email Notifications'),
-                          style: textTheme.titleMedium,
-                        ),
-                      ],
+          HuxCard(
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        LucideIcons.bell,
+                        color: HuxTokens.primary(context),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        context.tr('Daily Email Notifications'),
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    context.tr(
+                      'Receive a daily summary of new survey responses via email.',
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      context.tr(
-                        'Receive a daily summary of new survey responses via email.',
-                      ),
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: HuxTokens.textSecondary(context),
                     ),
-                    const Divider(height: 32),
-
-                    // Email field
-                    TextFormField(
-                      controller: _emailController,
-                      decoration: InputDecoration(
-                        labelText: context.tr('Recipient Email'),
-                        hintText: 'email@example.com',
-                        prefixIcon: const Icon(Icons.email_outlined),
-                        border: const OutlineInputBorder(),
-                      ),
-                      keyboardType: TextInputType.emailAddress,
+                  ),
+                  Divider(
+                    height: 32,
+                    color: HuxTokens.borderSecondary(context),
+                  ),
+                  HuxInput(
+                    controller: _emailController,
+                    label: context.tr('Recipient Email'),
+                    hint: 'email@example.com',
+                    prefixIcon: const Icon(LucideIcons.mail),
+                    keyboardType: TextInputType.emailAddress,
+                    enabled: widget.isEmailConfigured,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return context.tr('Email is required');
+                      }
+                      final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
+                      if (!emailRegex.hasMatch(value.trim())) {
+                        return context.tr('Enter a valid email address');
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  _LabeledControl(
+                    label: context.tr('Send Time (UTC)'),
+                    child: HuxDropdown<int>(
+                      value: _selectedHour,
                       enabled: widget.isEmailConfigured,
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return context.tr('Email is required');
-                        }
-                        final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
-                        if (!emailRegex.hasMatch(value.trim())) {
-                          return context.tr('Enter a valid email address');
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Time selector
-                    DropdownButtonFormField<int>(
-                      initialValue: _selectedHour,
-                      decoration: InputDecoration(
-                        labelText: context.tr('Send Time (UTC)'),
-                        prefixIcon: const Icon(Icons.schedule),
-                        border: const OutlineInputBorder(),
-                      ),
+                      useItemWidgetAsValue: true,
                       items: List.generate(24, (hour) {
                         final label =
                             '${hour.toString().padLeft(2, '0')}:00 UTC';
-                        return DropdownMenuItem(
+                        return HuxDropdownItem(
                           value: hour,
-                          child: Text(label),
+                          child: Row(
+                            children: [
+                              const Icon(LucideIcons.clock3, size: 18),
+                              const SizedBox(width: 8),
+                              Text(label),
+                            ],
+                          ),
                         );
                       }),
-                      onChanged: widget.isEmailConfigured
-                          ? _onHourChanged
-                          : null,
+                      onChanged: _onHourChanged,
                     ),
-                    const SizedBox(height: 24),
-
-                    // Save button
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton.icon(
-                        onPressed:
-                            widget.isEmailConfigured &&
-                                !widget.isSaving &&
-                                (_hasChanges || widget.settings == null)
-                            ? _onSave
-                            : null,
-                        icon: widget.isSaving
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Icon(Icons.save),
-                        label: Text(
-                          context.tr(
-                            widget.settings == null
-                                ? 'Create Settings'
-                                : 'Save Changes',
-                          ),
-                        ),
+                  ),
+                  const SizedBox(height: 24),
+                  HuxButton(
+                    onPressed:
+                        widget.isEmailConfigured &&
+                            !widget.isSaving &&
+                            (_hasChanges || widget.settings == null)
+                        ? _onSave
+                        : null,
+                    isLoading: widget.isSaving,
+                    width: HuxButtonWidth.expand,
+                    icon: LucideIcons.save,
+                    child: Text(
+                      context.tr(
+                        widget.settings == null
+                            ? 'Create Settings'
+                            : 'Save Changes',
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
-
-          // Enable/Disable and Test section (only if settings exist)
           if (widget.settings != null) ...[
             const SizedBox(height: 16),
-            Card(
+            HuxCard(
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Enable/Disable toggle
-                  SwitchListTile(
-                    title: Text(context.tr('Enable Notifications')),
-                    subtitle: Text(
-                      context.tr(
+                  Row(
+                    children: [
+                      Icon(
                         widget.settings!.enabled
-                            ? 'Daily notifications are active'
-                            : 'Daily notifications are paused',
+                            ? LucideIcons.bellRing
+                            : LucideIcons.bellOff,
+                        color: widget.settings!.enabled
+                            ? HuxTokens.primary(context)
+                            : HuxTokens.iconSecondary(context),
                       ),
-                    ),
-                    value: widget.settings!.enabled,
-                    onChanged: widget.isEmailConfigured && !widget.isSaving
-                        ? (_) => widget.onToggleEnabled()
-                        : null,
-                    secondary: Icon(
-                      widget.settings!.enabled
-                          ? Icons.notifications_active
-                          : Icons.notifications_off_outlined,
-                      color: widget.settings!.enabled
-                          ? colorScheme.primary
-                          : colorScheme.outline,
-                    ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(context.tr('Enable Notifications')),
+                            const SizedBox(height: 4),
+                            Text(
+                              context.tr(
+                                widget.settings!.enabled
+                                    ? 'Daily notifications are active'
+                                    : 'Daily notifications are paused',
+                              ),
+                              style: TextStyle(
+                                color: HuxTokens.textSecondary(context),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      HuxSwitch(
+                        value: widget.settings!.enabled,
+                        isDisabled:
+                            !widget.isEmailConfigured || widget.isSaving,
+                        onChanged: (_) {
+                          widget.onToggleEnabled();
+                        },
+                      ),
+                    ],
                   ),
-                  const Divider(height: 1),
-
-                  // Last sent info
-                  if (widget.settings!.lastSentAt != null)
-                    ListTile(
-                      leading: Icon(
-                        Icons.history,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                      title: Text(context.tr('Last Sent')),
-                      subtitle: Text(
-                        _formatDateTime(widget.settings!.lastSentAt!),
-                      ),
+                  if (widget.settings!.lastSentAt != null) ...[
+                    Divider(
+                      height: 32,
+                      color: HuxTokens.borderSecondary(context),
                     ),
-
-                  // Test notification button
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed:
-                            widget.isEmailConfigured &&
-                                !widget.isSendingTest &&
-                                !widget.isSaving
-                            ? widget.onSendTest
-                            : null,
-                        icon: widget.isSendingTest
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Icon(Icons.send),
-                        label: Text(context.tr('Send Test Notification')),
-                      ),
+                    Row(
+                      children: [
+                        Icon(
+                          LucideIcons.history,
+                          color: HuxTokens.iconSecondary(context),
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(context.tr('Last Sent')),
+                            Text(
+                              _formatDateTime(widget.settings!.lastSentAt!),
+                              style: TextStyle(
+                                color: HuxTokens.textSecondary(context),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
+                  ],
+                  const SizedBox(height: 16),
+                  HuxButton(
+                    onPressed:
+                        widget.isEmailConfigured &&
+                            !widget.isSendingTest &&
+                            !widget.isSaving
+                        ? widget.onSendTest
+                        : null,
+                    isLoading: widget.isSendingTest,
+                    width: HuxButtonWidth.expand,
+                    variant: HuxButtonVariant.outline,
+                    icon: LucideIcons.send,
+                    child: Text(context.tr('Send Test Notification')),
                   ),
                 ],
               ),
@@ -403,5 +340,73 @@ class _NotificationSettingsViewState extends State<NotificationSettingsView> {
     final local = dt.toLocal();
     return '${local.year}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')} '
         '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
+  }
+}
+
+class _MessageCard extends StatelessWidget {
+  const _MessageCard({
+    required this.icon,
+    required this.message,
+    this.destructive = false,
+    this.onClose,
+  });
+
+  final IconData icon;
+  final String message;
+  final bool destructive;
+  final VoidCallback? onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = destructive
+        ? HuxTokens.textDestructive(context)
+        : HuxTokens.textSuccess(context);
+    return HuxCard(
+      backgroundColor: destructive
+          ? HuxTokens.surfaceDestructive(context)
+          : HuxTokens.surfaceSuccess(context),
+      child: Row(
+        children: [
+          Icon(icon, color: color),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(message, style: TextStyle(color: color)),
+          ),
+          if (onClose != null)
+            HuxButton(
+              onPressed: onClose,
+              variant: HuxButtonVariant.ghost,
+              size: HuxButtonSize.small,
+              icon: LucideIcons.x,
+              textColor: color,
+              child: const SizedBox(width: 0),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LabeledControl extends StatelessWidget {
+  const _LabeledControl({required this.label, required this.child});
+
+  final String label;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            color: HuxTokens.textSecondary(context),
+          ),
+        ),
+        const SizedBox(height: 6),
+        SizedBox(width: double.infinity, child: child),
+      ],
+    );
   }
 }

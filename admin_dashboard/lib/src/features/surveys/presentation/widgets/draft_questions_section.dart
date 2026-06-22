@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
+import 'package:hux/hux.dart';
 
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/widgets/hux_states.dart';
 import '../capsules/survey_form_capsule.dart';
 import '../models/draft_question.dart';
 import 'ai_prompt_input.dart';
@@ -91,12 +93,13 @@ class DraftQuestionsSection extends StatelessWidget {
                     .deleteDraftChoice(question.tempId, choice.tempId),
               ),
               const SizedBox(height: 16),
-              OutlinedButton.icon(
+              HuxButton(
                 onPressed: formState.isSaving
                     ? null
                     : () => _showAddDialog(context),
-                icon: const Icon(Icons.add),
-                label: Text(context.tr('Add Question')),
+                variant: HuxButtonVariant.outline,
+                icon: LucideIcons.plus,
+                child: Text(context.tr('Add Question')),
               ),
             ],
           ),
@@ -199,41 +202,14 @@ class _EmptyDraftQuestions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: [
-          Icon(
-            Icons.help_outline,
-            size: 48,
-            color: colorScheme.onSurfaceVariant,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            context.tr('No questions yet'),
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            context.tr('Add questions to your survey'),
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 16),
-          FilledButton.icon(
-            onPressed: isSaving ? null : onAdd,
-            icon: const Icon(Icons.add),
-            label: Text(context.tr('Add Question')),
-          ),
-        ],
+    return HuxEmptyState(
+      icon: LucideIcons.circleHelp,
+      title: context.tr('No questions yet'),
+      message: context.tr('Add questions to your survey'),
+      action: HuxButton(
+        onPressed: isSaving ? null : onAdd,
+        icon: LucideIcons.plus,
+        child: Text(context.tr('Add Question')),
       ),
     );
   }
