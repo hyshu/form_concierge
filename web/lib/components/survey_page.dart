@@ -41,8 +41,8 @@ class SurveyPage extends StatelessComponent {
               serverUrl: serverUrl,
             ),
           ]);
-        } catch (e) {
-          return _buildError(e.toString());
+        } on Exception catch (error) {
+          return _buildError(error.toString());
         }
       },
     );
