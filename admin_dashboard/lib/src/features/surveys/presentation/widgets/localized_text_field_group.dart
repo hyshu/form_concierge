@@ -10,6 +10,7 @@ class LocalizedTextFieldGroup extends StatelessWidget {
     required this.controllers,
     required this.primaryLocale,
     required this.labelText,
+    this.locales = formContentLocaleCodes,
     this.hintText,
     this.enabled = true,
     this.maxLines = 1,
@@ -21,6 +22,7 @@ class LocalizedTextFieldGroup extends StatelessWidget {
   final Map<String, TextEditingController> controllers;
   final String primaryLocale;
   final String labelText;
+  final Iterable<String> locales;
   final String? hintText;
   final bool enabled;
   final int maxLines;
@@ -30,8 +32,12 @@ class LocalizedTextFieldGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = normalizedPrimaryLocale(primaryLocale);
-    final secondaryLocales = formContentLocaleCodes
+    final supportedLocales = orderedFormContentLocales(locales);
+    final normalizedPrimary = normalizedPrimaryLocale(primaryLocale);
+    final primary = supportedLocales.contains(normalizedPrimary)
+        ? normalizedPrimary
+        : supportedLocales.first;
+    final secondaryLocales = supportedLocales
         .where((locale) => locale != primary)
         .toList();
 
@@ -136,19 +142,32 @@ class _LocalizedField extends StatelessWidget {
 LocalizedText localizedTextFromControllers(
   Map<String, TextEditingController> controllers, {
   required String primaryLocale,
+  Iterable<String> locales = formContentLocaleCodes,
   bool fallbackEmptyToPrimary = true,
 }) {
-  final primary = normalizedPrimaryLocale(primaryLocale);
+  final supportedLocales = orderedFormContentLocales(locales);
+  final normalizedPrimary = normalizedPrimaryLocale(primaryLocale);
+  final primary = supportedLocales.contains(normalizedPrimary)
+      ? normalizedPrimary
+      : supportedLocales.first;
   final primaryValue = controllers[primary]?.text.trim() ?? '';
 
   return LocalizedText({
-    for (final locale in formContentLocaleCodes)
+    for (final locale in supportedLocales)
       locale: _localizedControllerValue(
         controllers[locale]?.text.trim() ?? '',
         primaryValue: primaryValue,
         fallbackEmptyToPrimary: fallbackEmptyToPrimary,
       ),
   });
+}
+
+List<String> orderedFormContentLocales(Iterable<String> locales) {
+  final normalized = locales.map(normalizeFormContentLocale).toSet();
+  final ordered = formContentLocaleCodes
+      .where((locale) => normalized.contains(locale))
+      .toList(growable: false);
+  return ordered.isEmpty ? const [defaultFormContentLocale] : ordered;
 }
 
 String normalizedPrimaryLocale(String locale) {

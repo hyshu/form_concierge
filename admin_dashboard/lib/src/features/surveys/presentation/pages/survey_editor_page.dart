@@ -318,6 +318,7 @@ class SurveyEditorPage extends RearchConsumer {
       isSaving: formState.isSaving,
       error: formState.error,
       primaryLocale: project?.defaultLocale ?? defaultFormContentLocale,
+      locales: project?.supportedLocales ?? formContentLocaleCodes,
       onSave:
           ({
             required LocalizedText titleTranslations,

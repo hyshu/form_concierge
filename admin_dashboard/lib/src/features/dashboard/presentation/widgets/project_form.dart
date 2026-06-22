@@ -30,6 +30,7 @@ class _ProjectFormState extends State<ProjectForm> {
   late final Map<String, TextEditingController> _nameTranslations;
   late final Map<String, TextEditingController> _descriptionTranslations;
   String _defaultLocale = defaultFormContentLocale;
+  List<String> _supportedLocales = const [defaultFormContentLocale];
 
   @override
   void initState() {
@@ -46,7 +47,10 @@ class _ProjectFormState extends State<ProjectForm> {
     if (project != null) {
       _slug.text = project.slug;
       _customDomain.text = project.customDomain ?? '';
-      _defaultLocale = project.defaultLocale;
+      _supportedLocales = orderedFormContentLocales(project.supportedLocales);
+      _defaultLocale = _supportedLocales.contains(project.defaultLocale)
+          ? project.defaultLocale
+          : _supportedLocales.first;
       for (final locale in formContentLocaleCodes) {
         _nameTranslations[locale]!.text =
             project.nameTranslations.values[locale] ?? '';
@@ -130,6 +134,12 @@ class _ProjectFormState extends State<ProjectForm> {
               ),
             ),
             const SizedBox(height: 16),
+            _LanguageSelector(
+              locales: _supportedLocales,
+              enabled: !widget.isSaving,
+              onPressed: _selectSupportedLocales,
+            ),
+            const SizedBox(height: 16),
             Text(
               context.tr('Default language'),
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
@@ -142,7 +152,7 @@ class _ProjectFormState extends State<ProjectForm> {
               enabled: !widget.isSaving,
               useItemWidgetAsValue: true,
               items: [
-                for (final locale in formContentLocaleCodes)
+                for (final locale in _supportedLocales)
                   HuxDropdownItem(
                     value: locale,
                     child: Text(formContentLocaleLabels[locale]!),
@@ -159,6 +169,7 @@ class _ProjectFormState extends State<ProjectForm> {
             LocalizedTextFieldGroup(
               controllers: _nameTranslations,
               primaryLocale: _defaultLocale,
+              locales: _supportedLocales,
               labelText: context.tr('Project name'),
               hintText: context.tr('Enter project name'),
               enabled: !widget.isSaving,
@@ -169,6 +180,7 @@ class _ProjectFormState extends State<ProjectForm> {
             LocalizedTextFieldGroup(
               controllers: _descriptionTranslations,
               primaryLocale: _defaultLocale,
+              locales: _supportedLocales,
               labelText: context.tr('Description (optional)'),
               hintText: context.tr('Brief description of the project'),
               enabled: !widget.isSaving,
@@ -213,14 +225,16 @@ class _ProjectFormState extends State<ProjectForm> {
         slug: _slug.text.trim(),
         customDomain: _customDomainValue(),
         defaultLocale: _defaultLocale,
-        supportedLocales: formContentLocaleCodes,
+        supportedLocales: _supportedLocales,
         nameTranslations: localizedTextFromControllers(
           _nameTranslations,
           primaryLocale: _defaultLocale,
+          locales: _supportedLocales,
         ),
         descriptionTranslations: localizedTextFromControllers(
           _descriptionTranslations,
           primaryLocale: _defaultLocale,
+          locales: _supportedLocales,
           fallbackEmptyToPrimary: false,
         ),
         createdByUserId: existing?.createdByUserId,
@@ -234,4 +248,146 @@ class _ProjectFormState extends State<ProjectForm> {
     final domain = _customDomain.text.trim().toLowerCase();
     return domain.isEmpty ? null : domain;
   }
+
+  Future<void> _selectSupportedLocales() async {
+    final selected = await showDialog<List<String>>(
+      context: context,
+      builder: (context) => _LocaleSelectionDialog(
+        selectedLocales: _supportedLocales,
+      ),
+    );
+    if (selected == null || !mounted) return;
+    setState(() {
+      _supportedLocales = orderedFormContentLocales(selected);
+      if (!_supportedLocales.contains(_defaultLocale)) {
+        _defaultLocale = _supportedLocales.first;
+      }
+    });
+  }
+}
+
+class _LanguageSelector extends StatelessWidget {
+  const _LanguageSelector({
+    required this.locales,
+    required this.enabled,
+    required this.onPressed,
+  });
+
+  final List<String> locales;
+  final bool enabled;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                context.tr('Localized languages'),
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: HuxTokens.textSecondary(context),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                _localeLabels(locales),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        HuxButton(
+          onPressed: enabled ? onPressed : null,
+          variant: HuxButtonVariant.secondary,
+          icon: LucideIcons.languages,
+          child: Text(context.tr('Select languages')),
+        ),
+      ],
+    );
+  }
+}
+
+class _LocaleSelectionDialog extends StatefulWidget {
+  const _LocaleSelectionDialog({required this.selectedLocales});
+
+  final List<String> selectedLocales;
+
+  @override
+  State<_LocaleSelectionDialog> createState() => _LocaleSelectionDialogState();
+}
+
+class _LocaleSelectionDialogState extends State<_LocaleSelectionDialog> {
+  late final Set<String> _selected = orderedFormContentLocales(
+    widget.selectedLocales,
+  ).toSet();
+
+  @override
+  Widget build(BuildContext context) {
+    return HuxDialog(
+      title: context.tr('Localized languages'),
+      size: HuxDialogSize.medium,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final locale in formContentLocaleCodes)
+            Material(
+              type: MaterialType.transparency,
+              child: CheckboxListTile(
+                key: ValueKey('project-locale-$locale'),
+                value: _selected.contains(locale),
+                onChanged: _canToggle(locale)
+                    ? (value) => _toggle(locale, value ?? false)
+                    : null,
+                title: Text(formContentLocaleLabels[locale]!),
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                controlAffinity: ListTileControlAffinity.leading,
+                activeColor: HuxTokens.primary(context),
+              ),
+            ),
+        ],
+      ),
+      actions: [
+        HuxButton(
+          onPressed: () => Navigator.of(context).pop(),
+          variant: HuxButtonVariant.secondary,
+          child: Text(context.tr('Cancel')),
+        ),
+        HuxButton(
+          onPressed: () => Navigator.of(context).pop(
+            orderedFormContentLocales(_selected),
+          ),
+          icon: LucideIcons.check,
+          child: Text(context.tr('Apply')),
+        ),
+      ],
+    );
+  }
+
+  bool _canToggle(String locale) {
+    return !_selected.contains(locale) || _selected.length > 1;
+  }
+
+  void _toggle(String locale, bool selected) {
+    setState(() {
+      if (selected) {
+        _selected.add(locale);
+      } else if (_selected.length > 1) {
+        _selected.remove(locale);
+      }
+    });
+  }
+}
+
+String _localeLabels(Iterable<String> locales) {
+  return orderedFormContentLocales(
+    locales,
+  ).map((locale) => formContentLocaleLabels[locale]!).join(', ');
 }

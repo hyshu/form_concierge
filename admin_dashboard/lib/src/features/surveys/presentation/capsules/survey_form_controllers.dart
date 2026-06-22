@@ -23,11 +23,10 @@ class SurveyFormControllers {
 
   void populateFrom(Survey survey) {
     for (final locale in formContentLocaleCodes) {
-      titleTranslations[locale]!.text = survey.titleTranslations.valueFor(
-        locale,
-      );
-      descriptionTranslations[locale]!.text = survey.descriptionTranslations
-          .valueFor(locale);
+      titleTranslations[locale]!.text =
+          survey.titleTranslations.values[locale] ?? '';
+      descriptionTranslations[locale]!.text =
+          survey.descriptionTranslations.values[locale] ?? '';
     }
   }
 

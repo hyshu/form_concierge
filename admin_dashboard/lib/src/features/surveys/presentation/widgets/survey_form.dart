@@ -13,6 +13,7 @@ class SurveyForm extends StatefulWidget {
   final bool isSaving;
   final String? error;
   final String primaryLocale;
+  final Iterable<String> locales;
   final Future<void> Function({
     required LocalizedText titleTranslations,
     required LocalizedText descriptionTranslations,
@@ -26,6 +27,7 @@ class SurveyForm extends StatefulWidget {
     required this.isSaving,
     this.error,
     required this.primaryLocale,
+    this.locales = formContentLocaleCodes,
     required this.onSave,
   });
 
@@ -60,6 +62,7 @@ class _SurveyFormState extends State<SurveyForm> {
             LocalizedTextFieldGroup(
               controllers: widget.controllers.titleTranslations,
               primaryLocale: widget.primaryLocale,
+              locales: widget.locales,
               labelText: context.tr('Title'),
               hintText: context.tr('Enter survey title'),
               enabled: !widget.isSaving,
@@ -75,6 +78,7 @@ class _SurveyFormState extends State<SurveyForm> {
             LocalizedTextFieldGroup(
               controllers: widget.controllers.descriptionTranslations,
               primaryLocale: widget.primaryLocale,
+              locales: widget.locales,
               labelText: context.tr('Description (optional)'),
               hintText: context.tr('Brief description of the survey'),
               enabled: !widget.isSaving,
@@ -115,10 +119,12 @@ class _SurveyFormState extends State<SurveyForm> {
         titleTranslations: localizedTextFromControllers(
           widget.controllers.titleTranslations,
           primaryLocale: widget.primaryLocale,
+          locales: widget.locales,
         ),
         descriptionTranslations: localizedTextFromControllers(
           widget.controllers.descriptionTranslations,
           primaryLocale: widget.primaryLocale,
+          locales: widget.locales,
           fallbackEmptyToPrimary: false,
         ),
       );

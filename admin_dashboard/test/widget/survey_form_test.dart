@@ -23,7 +23,12 @@ void main() {
       controllers.dispose();
     });
 
-    Widget buildSubject({bool isSaving = false, String? error}) {
+    Widget buildSubject({
+      bool isSaving = false,
+      String? error,
+      String primaryLocale = defaultFormContentLocale,
+      Iterable<String> locales = formContentLocaleCodes,
+    }) {
       return localizedTestApp(
         home: Scaffold(
           body: SingleChildScrollView(
@@ -31,7 +36,8 @@ void main() {
               controllers: controllers,
               isSaving: isSaving,
               error: error,
-              primaryLocale: defaultFormContentLocale,
+              primaryLocale: primaryLocale,
+              locales: locales,
               onSave:
                   ({
                     required LocalizedText titleTranslations,
@@ -94,6 +100,20 @@ void main() {
         }
       },
     );
+
+    testWidgets('submits only configured locales', (tester) async {
+      await tester.pumpWidget(
+        buildSubject(primaryLocale: 'ja', locales: const ['ja', 'de']),
+      );
+      controllers.titleTranslations['ja']!.text = '調査';
+      await tester.pump();
+
+      await _tapCreateSurvey(tester);
+
+      expect(savedTitleTranslations!.values.keys, ['ja', 'de']);
+      expect(savedTitleTranslations!.valueFor('ja'), '調査');
+      expect(savedTitleTranslations!.valueFor('de'), '調査');
+    });
   });
 
   group('SurveyForm states', () {
