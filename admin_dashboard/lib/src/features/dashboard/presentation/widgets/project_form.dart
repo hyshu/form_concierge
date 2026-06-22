@@ -104,9 +104,6 @@ class _ProjectFormState extends State<ProjectForm> {
               controller: _customDomain,
               label: context.tr('Custom domain (optional)'),
               hint: 'forms.example.com',
-              helperText: context.tr(
-                'Use a dedicated host to open this project without a slug.',
-              ),
               prefixIcon: const Icon(LucideIcons.globe),
               enabled: !widget.isSaving,
               validator: (value) {
@@ -122,6 +119,15 @@ class _ProjectFormState extends State<ProjectForm> {
                 return null;
               },
               textInputAction: TextInputAction.next,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              context.tr(
+                'Use a dedicated host to open this project without a slug.',
+              ),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: HuxTokens.textSecondary(context),
+              ),
             ),
             const SizedBox(height: 16),
             Text(
