@@ -55,6 +55,23 @@ client.anonymous.useToken(savedAnonymousToken);
 final replies = await client.anonymous.getReplies(responseId: responseId);
 ```
 
+To check whether new admin replies exist without downloading the full reply list, use the reply checker. The server returns only the latest reply timestamp; the checker stores the last seen timestamp locally.
+
+```dart
+final checker = FormConciergeReplyChecker(
+  client: client,
+  anonymousToken: savedAnonymousToken,
+  responseId: responseId,
+);
+
+final result = await checker.check();
+if (result.hasNewReplies) {
+  // Show your in-app badge or notification.
+}
+
+await checker.markLatestSeen();
+```
+
 ## Supported Question Types
 
 - Single choice

@@ -89,6 +89,15 @@ public actor FormConciergeClient {
     return try await request("GET", path, bearerToken: anonymousToken)
   }
 
+  public func latestReplyAt(responseId: Int? = nil) async throws -> Date? {
+    var path = "/api/anonymous/replies/latest"
+    if let responseId {
+      path += "?responseId=\(responseId)"
+    }
+    let payload: LatestReplyPayload = try await request("GET", path, bearerToken: anonymousToken)
+    return payload.latestReplyAt
+  }
+
   private func request<T: Decodable>(
     _ method: String,
     _ path: String,
@@ -129,6 +138,10 @@ private struct SubmitResponsePayload: Encodable {
   let answers: [Answer]
   let deviceInfo: DeviceInfo?
   let metadata: [String: FormConciergeMetadataValue]?
+}
+
+private struct LatestReplyPayload: Decodable {
+  let latestReplyAt: Date?
 }
 
 private struct AnyEncodable: Encodable {

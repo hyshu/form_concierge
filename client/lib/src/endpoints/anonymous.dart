@@ -51,4 +51,15 @@ class AnonymousEndpoint {
     );
     return _objectList(json, AdminReply.fromJson);
   }
+
+  Future<DateTime?> getLatestReplyAt({int? responseId}) async {
+    final query = responseId == null ? null : {'responseId': '$responseId'};
+    final json = await _client.request(
+      'GET',
+      '/api/anonymous/replies/latest',
+      query: query,
+      bearerToken: token,
+    );
+    return _optionalDate(json['latestReplyAt']);
+  }
 }
