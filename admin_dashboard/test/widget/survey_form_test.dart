@@ -143,6 +143,26 @@ void main() {
     );
 
     scenarioWidget(
+      'primary title is enough and empty secondary titles use primary text',
+      given: (tester) async {
+        await tester.pumpWidget(buildSubject());
+        controllers.titleTranslations[defaultFormContentLocale]!.text =
+            'Primary Survey';
+        controllers.slug.text = 'primary-survey';
+        await tester.pump();
+      },
+      when: (tester) async {
+        await _tapCreateSurvey(tester);
+      },
+      then: (tester) async {
+        expect(saveWasCalled, isTrue);
+        for (final locale in formContentLocaleCodes) {
+          expect(savedTitleTranslations!.valueFor(locale), 'Primary Survey');
+        }
+      },
+    );
+
+    scenarioWidget(
       'empty custom domain saves null',
       given: (tester) async {
         await tester.pumpWidget(buildSubject());
@@ -288,6 +308,21 @@ void main() {
       await tester.pumpWidget(buildSubject(isSaving: false));
 
       expect(find.text('Create Survey'), findsOneWidget);
+    });
+
+    testWidgets('hides secondary language fields behind expansion tiles', (
+      tester,
+    ) async {
+      await tester.pumpWidget(buildSubject());
+
+      expect(find.text('Title (English)'), findsOneWidget);
+      expect(find.text('Title (日本語)'), findsNothing);
+      expect(find.text('Other languages'), findsNWidgets(2));
+
+      await tester.tap(find.text('Other languages').first);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Title (日本語)'), findsOneWidget);
     });
   });
 

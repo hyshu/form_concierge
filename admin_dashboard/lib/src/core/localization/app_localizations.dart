@@ -272,6 +272,7 @@ const _localizedValues = <String, Map<String, String>>{
     'Title': 'Title',
     'Enter survey title': 'Enter survey title',
     'Title is required': 'Title is required',
+    'Other languages': 'Other languages',
     'URL Slug': 'URL Slug',
     'Slug is required': 'Slug is required',
     'Only lowercase letters, numbers, and hyphens allowed':
@@ -327,6 +328,7 @@ const _localizedValues = <String, Map<String, String>>{
     'Add at least one choice for choice questions':
         'Add at least one choice for choice questions',
     'Choice text': 'Choice text',
+    'Choice text is required': 'Choice text is required',
     'Visibility rules': 'Visibility rules',
     'Always visible': 'Always visible',
     '{count} rule': '{count} rule',
@@ -573,6 +575,7 @@ const _localizedValues = <String, Map<String, String>>{
     'Title': 'タイトル',
     'Enter survey title': 'アンケートのタイトルを入力',
     'Title is required': 'タイトルは必須です',
+    'Other languages': '他の言語',
     'URL Slug': 'URLスラッグ',
     'Slug is required': 'スラッグは必須です',
     'Only lowercase letters, numbers, and hyphens allowed':
@@ -627,6 +630,7 @@ const _localizedValues = <String, Map<String, String>>{
     'Add at least one choice for choice questions':
         '選択式の質問には少なくとも1つの選択肢を追加してください',
     'Choice text': '選択肢のテキスト',
+    'Choice text is required': '選択肢のテキストは必須です',
     'Visibility rules': '表示ルール',
     'Always visible': '常に表示',
     '{count} rule': '{count}件のルール',
@@ -858,6 +862,7 @@ const _localizedValues = <String, Map<String, String>>{
     'Title': '标题',
     'Enter survey title': '输入问卷标题',
     'Title is required': '标题为必填项',
+    'Other languages': '其他语言',
     'URL Slug': 'URL 标识',
     'Slug is required': 'URL 标识为必填项',
     'Only lowercase letters, numbers, and hyphens allowed': '只能使用小写字母、数字和连字符',
@@ -905,6 +910,7 @@ const _localizedValues = <String, Map<String, String>>{
     'Add Choice': '添加选项',
     'Add at least one choice for choice questions': '选择题至少需要添加一个选项',
     'Choice text': '选项文本',
+    'Choice text is required': '选项文本为必填项',
     'Visibility rules': '可见性规则',
     'Always visible': '始终显示',
     '{count} rule': '{count} 条规则',
@@ -1132,6 +1138,7 @@ const _localizedValues = <String, Map<String, String>>{
     'Title': '標題',
     'Enter survey title': '輸入問卷標題',
     'Title is required': '標題為必填',
+    'Other languages': '其他語言',
     'URL Slug': 'URL 識別碼',
     'Slug is required': 'URL 識別碼為必填',
     'Only lowercase letters, numbers, and hyphens allowed': '只能使用小寫字母、數字和連字號',
@@ -1179,6 +1186,7 @@ const _localizedValues = <String, Map<String, String>>{
     'Add Choice': '新增選項',
     'Add at least one choice for choice questions': '選擇題至少需要新增一個選項',
     'Choice text': '選項文字',
+    'Choice text is required': '選項文字為必填',
     'Visibility rules': '可見性規則',
     'Always visible': '一律顯示',
     '{count} rule': '{count} 條規則',
@@ -1408,6 +1416,7 @@ const _localizedValues = <String, Map<String, String>>{
     'Title': '제목',
     'Enter survey title': '설문 제목 입력',
     'Title is required': '제목은 필수입니다',
+    'Other languages': '다른 언어',
     'URL Slug': 'URL 슬러그',
     'Slug is required': '슬러그는 필수입니다',
     'Only lowercase letters, numbers, and hyphens allowed':
@@ -1456,6 +1465,7 @@ const _localizedValues = <String, Map<String, String>>{
     'Add Choice': '선택지 추가',
     'Add at least one choice for choice questions': '선택형 질문에는 선택지를 하나 이상 추가하세요',
     'Choice text': '선택지 텍스트',
+    'Choice text is required': '선택지 텍스트는 필수입니다',
     'Visibility rules': '표시 규칙',
     'Always visible': '항상 표시',
     '{count} rule': '규칙 {count}개',
@@ -1701,6 +1711,7 @@ const _localizedValues = <String, Map<String, String>>{
     'Title': 'Titel',
     'Enter survey title': 'Umfragetitel eingeben',
     'Title is required': 'Titel ist erforderlich',
+    'Other languages': 'Andere Sprachen',
     'URL Slug': 'URL-Slug',
     'Slug is required': 'Slug ist erforderlich',
     'Only lowercase letters, numbers, and hyphens allowed':
@@ -1753,6 +1764,7 @@ const _localizedValues = <String, Map<String, String>>{
     'Add at least one choice for choice questions':
         'Füge bei Auswahlfragen mindestens eine Auswahl hinzu',
     'Choice text': 'Auswahltext',
+    'Choice text is required': 'Auswahltext ist erforderlich',
     'Visibility rules': 'Sichtbarkeitsregeln',
     'Always visible': 'Immer sichtbar',
     '{count} rule': '{count} Regel',

@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 
 import '../../../../core/localization/app_localizations.dart';
+import 'localized_text_field_group.dart';
 
 /// Widget for editing question choices.
 class ChoiceEditor extends StatelessWidget {
   final List<Choice> choices;
+  final String primaryLocale;
   final bool enabled;
   final void Function(LocalizedText textTranslations) onAdd;
   final void Function(Choice choice, LocalizedText textTranslations) onUpdate;
@@ -14,6 +16,7 @@ class ChoiceEditor extends StatelessWidget {
   const ChoiceEditor({
     super.key,
     required this.choices,
+    this.primaryLocale = defaultFormContentLocale,
     required this.enabled,
     required this.onAdd,
     required this.onUpdate,
@@ -30,6 +33,7 @@ class ChoiceEditor extends StatelessWidget {
         ...choices.map(
           (choice) => _ChoiceTile(
             choice: choice,
+            primaryLocale: primaryLocale,
             enabled: enabled,
             onUpdate: (textTranslations) => onUpdate(choice, textTranslations),
             onDelete: () => onDelete(choice),
@@ -55,6 +59,7 @@ class ChoiceEditor extends StatelessWidget {
   }
 
   void _showAddDialog(BuildContext context) {
+    final formKey = GlobalKey<FormState>();
     final controllers = {
       for (final locale in formContentLocaleCodes)
         locale: TextEditingController(),
@@ -65,22 +70,16 @@ class ChoiceEditor extends StatelessWidget {
         title: Text(context.tr('Add Choice')),
         content: SizedBox(
           width: 400,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                for (final locale in formContentLocaleCodes) ...[
-                  TextField(
-                    controller: controllers[locale],
-                    decoration: InputDecoration(
-                      labelText:
-                          '${context.tr('Choice text')} (${formContentLocaleLabels[locale]!})',
-                    ),
-                    autofocus: locale == defaultFormContentLocale,
-                  ),
-                  const SizedBox(height: 12),
-                ],
-              ],
+          child: Form(
+            key: formKey,
+            child: SingleChildScrollView(
+              child: LocalizedTextFieldGroup(
+                controllers: controllers,
+                primaryLocale: primaryLocale,
+                labelText: context.tr('Choice text'),
+                requiredMessage: context.tr('Choice text is required'),
+                autofocus: true,
+              ),
             ),
           ),
         ),
@@ -91,14 +90,12 @@ class ChoiceEditor extends StatelessWidget {
           ),
           FilledButton(
             onPressed: () {
-              if (controllers.values.every(
-                (controller) => controller.text.trim().isNotEmpty,
-              )) {
+              if (formKey.currentState?.validate() ?? false) {
                 onAdd(
-                  LocalizedText({
-                    for (final locale in formContentLocaleCodes)
-                      locale: controllers[locale]!.text.trim(),
-                  }),
+                  localizedTextFromControllers(
+                    controllers,
+                    primaryLocale: primaryLocale,
+                  ),
                 );
                 Navigator.pop(context);
               }
@@ -117,12 +114,14 @@ class ChoiceEditor extends StatelessWidget {
 
 class _ChoiceTile extends StatelessWidget {
   final Choice choice;
+  final String primaryLocale;
   final bool enabled;
   final void Function(LocalizedText textTranslations) onUpdate;
   final VoidCallback onDelete;
 
   const _ChoiceTile({
     required this.choice,
+    required this.primaryLocale,
     required this.enabled,
     required this.onUpdate,
     required this.onDelete,
@@ -154,10 +153,10 @@ class _ChoiceTile extends StatelessWidget {
                     borderRadius: BorderRadius.circular(4),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Text(choice.text),
+                      child: Text(choice.textFor(primaryLocale)),
                     ),
                   )
-                : Text(choice.text),
+                : Text(choice.textFor(primaryLocale)),
           ),
           if (enabled) ...[
             IconButton(
@@ -181,6 +180,7 @@ class _ChoiceTile extends StatelessWidget {
   }
 
   void _showEditDialog(BuildContext context) {
+    final formKey = GlobalKey<FormState>();
     final controllers = {
       for (final locale in formContentLocaleCodes)
         locale: TextEditingController(
@@ -193,21 +193,15 @@ class _ChoiceTile extends StatelessWidget {
         title: Text(context.tr('Edit Choice')),
         content: SizedBox(
           width: 400,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                for (final locale in formContentLocaleCodes) ...[
-                  TextField(
-                    controller: controllers[locale],
-                    decoration: InputDecoration(
-                      labelText:
-                          '${context.tr('Choice text')} (${formContentLocaleLabels[locale]!})',
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                ],
-              ],
+          child: Form(
+            key: formKey,
+            child: SingleChildScrollView(
+              child: LocalizedTextFieldGroup(
+                controllers: controllers,
+                primaryLocale: primaryLocale,
+                labelText: context.tr('Choice text'),
+                requiredMessage: context.tr('Choice text is required'),
+              ),
             ),
           ),
         ),
@@ -218,14 +212,12 @@ class _ChoiceTile extends StatelessWidget {
           ),
           FilledButton(
             onPressed: () {
-              if (controllers.values.every(
-                (controller) => controller.text.trim().isNotEmpty,
-              )) {
+              if (formKey.currentState?.validate() ?? false) {
                 onUpdate(
-                  LocalizedText({
-                    for (final locale in formContentLocaleCodes)
-                      locale: controllers[locale]!.text.trim(),
-                  }),
+                  localizedTextFromControllers(
+                    controllers,
+                    primaryLocale: primaryLocale,
+                  ),
                 );
                 Navigator.pop(context);
               }

@@ -13,6 +13,7 @@ class QuestionList extends StatelessWidget {
   final List<Question> questions;
   final Map<int, List<Choice>> choicesByQuestion;
   final List<QuestionVisibilityRule> visibilityRules;
+  final String primaryLocale;
   final bool isLoading;
   final bool enabled;
   final void Function({
@@ -59,6 +60,7 @@ class QuestionList extends StatelessWidget {
     required this.questions,
     required this.choicesByQuestion,
     required this.visibilityRules,
+    this.primaryLocale = defaultFormContentLocale,
     required this.isLoading,
     required this.enabled,
     required this.onAddQuestion,
@@ -164,6 +166,7 @@ class QuestionList extends StatelessWidget {
                           child: QuestionListTile(
                             question: question,
                             choices: choicesByQuestion[question.id] ?? [],
+                            primaryLocale: primaryLocale,
                             visibilityRules: questionRules,
                             visibilityRuleEditor: VisibilityRuleEditor(
                               surveyId: surveyId,
@@ -214,6 +217,7 @@ class QuestionList extends StatelessWidget {
   void _showAddDialog(BuildContext context) {
     QuestionFormDialog.show(
       context,
+      primaryLocale: primaryLocale,
       onSave:
           ({
             required LocalizedText textTranslations,
@@ -245,6 +249,7 @@ class QuestionList extends StatelessWidget {
     QuestionFormDialog.show(
       context,
       existingQuestion: question,
+      primaryLocale: primaryLocale,
       onSave:
           ({
             required LocalizedText textTranslations,

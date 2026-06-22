@@ -15,11 +15,13 @@ class DraftQuestionsSection extends StatelessWidget {
     required this.formManager,
     required this.formState,
     required this.geminiEnabled,
+    required this.primaryLocale,
   });
 
   final SurveyFormManager formManager;
   final SurveyFormState formState;
   final bool geminiEnabled;
+  final String primaryLocale;
 
   @override
   Widget build(BuildContext context) {
@@ -68,6 +70,7 @@ class DraftQuestionsSection extends StatelessWidget {
             children: [
               DraftQuestionEditor(
                 questions: draftQuestions,
+                primaryLocale: primaryLocale,
                 enabled: !formState.isSaving,
                 onEdit: (question) => _showEditDialog(context, question),
                 onDelete: (question) =>
@@ -104,6 +107,7 @@ class DraftQuestionsSection extends StatelessWidget {
   void _showAddDialog(BuildContext context) {
     QuestionFormDialog.show(
       context,
+      primaryLocale: primaryLocale,
       onSave:
           ({
             required LocalizedText textTranslations,
@@ -149,6 +153,7 @@ class DraftQuestionsSection extends StatelessWidget {
     QuestionFormDialog.show(
       context,
       existingQuestion: tempQuestion,
+      primaryLocale: primaryLocale,
       onSave:
           ({
             required LocalizedText textTranslations,

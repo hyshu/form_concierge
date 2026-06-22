@@ -3,6 +3,7 @@ import 'package:form_concierge_client/form_concierge_client.dart';
 
 import '../../../../core/localization/app_localizations.dart';
 import '../capsules/survey_form_capsule.dart';
+import 'localized_text_field_group.dart';
 
 /// Form widget for creating/editing survey basic info (title, slug, etc.).
 class SurveyForm extends StatefulWidget {
@@ -10,6 +11,7 @@ class SurveyForm extends StatefulWidget {
   final Survey? existingSurvey;
   final bool isSaving;
   final String? error;
+  final void Function(String locale)? onDefaultLocaleChanged;
   final Future<void> Function({
     required String defaultLocale,
     required String slug,
@@ -25,6 +27,7 @@ class SurveyForm extends StatefulWidget {
     this.existingSurvey,
     required this.isSaving,
     this.error,
+    this.onDefaultLocaleChanged,
     required this.onSave,
   });
 
@@ -70,6 +73,7 @@ class _SurveyFormState extends State<SurveyForm> {
                 : (value) {
                     if (value == null) return;
                     setState(() => _defaultLocale = value);
+                    widget.onDefaultLocaleChanged?.call(value);
                   },
           ),
           const SizedBox(height: 16),
@@ -78,25 +82,15 @@ class _SurveyFormState extends State<SurveyForm> {
             style: Theme.of(context).textTheme.titleSmall,
           ),
           const SizedBox(height: 8),
-          for (final locale in formContentLocaleCodes) ...[
-            TextFormField(
-              controller: widget.controllers.titleTranslations[locale],
-              decoration: InputDecoration(
-                labelText:
-                    '${context.tr('Title')} (${formContentLocaleLabels[locale]!})',
-                hintText: context.tr('Enter survey title'),
-              ),
-              enabled: !widget.isSaving,
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return context.tr('Title is required');
-                }
-                return null;
-              },
-              textInputAction: TextInputAction.next,
-            ),
-            const SizedBox(height: 12),
-          ],
+          LocalizedTextFieldGroup(
+            controllers: widget.controllers.titleTranslations,
+            primaryLocale: _defaultLocale,
+            labelText: context.tr('Title'),
+            hintText: context.tr('Enter survey title'),
+            enabled: !widget.isSaving,
+            requiredMessage: context.tr('Title is required'),
+            textInputAction: TextInputAction.next,
+          ),
           const SizedBox(height: 16),
           TextFormField(
             controller: widget.controllers.slug,
@@ -151,19 +145,14 @@ class _SurveyFormState extends State<SurveyForm> {
             style: Theme.of(context).textTheme.titleSmall,
           ),
           const SizedBox(height: 8),
-          for (final locale in formContentLocaleCodes) ...[
-            TextFormField(
-              controller: widget.controllers.descriptionTranslations[locale],
-              decoration: InputDecoration(
-                labelText:
-                    '${context.tr('Description (optional)')} (${formContentLocaleLabels[locale]!})',
-                hintText: context.tr('Brief description of the survey'),
-              ),
-              enabled: !widget.isSaving,
-              maxLines: 2,
-            ),
-            const SizedBox(height: 12),
-          ],
+          LocalizedTextFieldGroup(
+            controllers: widget.controllers.descriptionTranslations,
+            primaryLocale: _defaultLocale,
+            labelText: context.tr('Description (optional)'),
+            hintText: context.tr('Brief description of the survey'),
+            enabled: !widget.isSaving,
+            maxLines: 2,
+          ),
           if (widget.error != null) ...[
             const SizedBox(height: 16),
             Text(
@@ -202,8 +191,15 @@ class _SurveyFormState extends State<SurveyForm> {
         defaultLocale: _defaultLocale,
         slug: widget.controllers.slug.text.trim(),
         customDomain: _customDomainValue(),
-        titleTranslations: widget.controllers.titleValue(),
-        descriptionTranslations: widget.controllers.descriptionValue(),
+        titleTranslations: localizedTextFromControllers(
+          widget.controllers.titleTranslations,
+          primaryLocale: _defaultLocale,
+        ),
+        descriptionTranslations: localizedTextFromControllers(
+          widget.controllers.descriptionTranslations,
+          primaryLocale: _defaultLocale,
+          fallbackEmptyToPrimary: false,
+        ),
       );
     }
   }

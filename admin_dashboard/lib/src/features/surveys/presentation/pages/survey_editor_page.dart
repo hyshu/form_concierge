@@ -28,6 +28,8 @@ class SurveyEditorPage extends RearchConsumer {
     final controllers = use(surveyFormControllersCapsule);
     final publicConfig = use(publicConfigCapsule);
     final client = use(clientCapsule);
+    final (defaultLocaleOverride, setDefaultLocaleOverride) = use
+        .state<String?>(null);
 
     final isNewSurvey = surveyId == null;
     final formState = formManager.getState(surveyId);
@@ -61,6 +63,10 @@ class SurveyEditorPage extends RearchConsumer {
     }
 
     final survey = formState.survey;
+    final activeDefaultLocale =
+        defaultLocaleOverride ??
+        survey?.defaultLocale ??
+        defaultFormContentLocale;
     if (!isNewSurvey && survey == null) {
       return Scaffold(
         appBar: AppBar(title: Text(context.tr('Survey Not Found'))),
@@ -157,6 +163,7 @@ class SurveyEditorPage extends RearchConsumer {
                     formState,
                     survey,
                     isNewSurvey,
+                    onDefaultLocaleChanged: setDefaultLocaleOverride,
                   ),
                   const SizedBox(height: 48),
                   if (isNewSurvey)
@@ -164,6 +171,7 @@ class SurveyEditorPage extends RearchConsumer {
                       formManager: formManager,
                       formState: formState,
                       geminiEnabled: geminiEnabled,
+                      primaryLocale: activeDefaultLocale,
                     )
                   else
                     QuestionList(
@@ -171,6 +179,7 @@ class SurveyEditorPage extends RearchConsumer {
                       questions: questionState!.questions,
                       choicesByQuestion: questionState.choicesByQuestion,
                       visibilityRules: questionState.visibilityRules,
+                      primaryLocale: activeDefaultLocale,
                       isLoading: questionState.isLoading,
                       enabled: canEdit,
                       onAddQuestion:
@@ -288,13 +297,15 @@ class SurveyEditorPage extends RearchConsumer {
     SurveyFormControllers controllers,
     SurveyFormState formState,
     Survey? survey,
-    bool isNewSurvey,
-  ) {
+    bool isNewSurvey, {
+    required void Function(String? locale) onDefaultLocaleChanged,
+  }) {
     return SurveyForm(
       controllers: controllers,
       existingSurvey: survey,
       isSaving: formState.isSaving,
       error: formState.error,
+      onDefaultLocaleChanged: onDefaultLocaleChanged,
       onSave:
           ({
             required String defaultLocale,
