@@ -165,16 +165,14 @@ class SurveyFormManager {
   }) async {
     _setState(null, getState(null).copyWith(isSaving: true, error: null));
     try {
-      final survey = Survey(
-        slug: slug,
-        title: title,
-        description: description,
-        status: SurveyStatus.draft,
-        authRequirement: authRequirement,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
+      final created = await _client.surveyAdmin.create(
+        _draftSurvey(
+          title: title,
+          slug: slug,
+          description: description,
+          authRequirement: authRequirement,
+        ),
       );
-      final created = await _client.surveyAdmin.create(survey);
       _setState(null, getState(null).copyWith(isSaving: false));
       return created;
     } on Exception catch (e) {
@@ -231,19 +229,13 @@ class SurveyFormManager {
     required bool isRequired,
     String? placeholder,
   }) {
-    final state = getState(null);
     final newQuestion = DraftQuestion.create(
       text: text,
       type: type,
       isRequired: isRequired,
       placeholder: placeholder,
     );
-    _setState(
-      null,
-      state.copyWith(
-        draftQuestions: [...state.draftQuestions, newQuestion],
-      ),
-    );
+    _setDraftQuestions((questions) => [...questions, newQuestion]);
   }
 
   /// Update a draft question.
@@ -254,28 +246,22 @@ class SurveyFormManager {
     required bool isRequired,
     String? placeholder,
   }) {
-    final state = getState(null);
-    final updatedQuestions = state.draftQuestions.map((q) {
-      if (q.tempId == tempId) {
-        return q.copyWith(
-          text: text,
-          type: type,
-          isRequired: isRequired,
-          placeholder: placeholder,
-        );
-      }
-      return q;
-    }).toList();
-    _setState(null, state.copyWith(draftQuestions: updatedQuestions));
+    _updateDraftQuestion(
+      tempId,
+      (question) => question.copyWith(
+        text: text,
+        type: type,
+        isRequired: isRequired,
+        placeholder: placeholder,
+      ),
+    );
   }
 
   /// Delete a draft question.
   void deleteDraftQuestion(String tempId) {
-    final state = getState(null);
-    final updatedQuestions = state.draftQuestions
-        .where((q) => q.tempId != tempId)
-        .toList();
-    _setState(null, state.copyWith(draftQuestions: updatedQuestions));
+    _setDraftQuestions(
+      (questions) => questions.where((q) => q.tempId != tempId).toList(),
+    );
   }
 
   /// Reorder draft questions.
@@ -289,19 +275,15 @@ class SurveyFormManager {
 
   /// Add a choice to a draft question.
   void addChoiceToDraftQuestion(String questionTempId, String choiceText) {
-    final state = getState(null);
-    final updatedQuestions = state.draftQuestions.map((q) {
-      if (q.tempId == questionTempId) {
-        return q.copyWith(
-          choices: [
-            ...q.choices,
-            DraftChoice.create(text: choiceText),
-          ],
-        );
-      }
-      return q;
-    }).toList();
-    _setState(null, state.copyWith(draftQuestions: updatedQuestions));
+    _updateDraftQuestion(
+      questionTempId,
+      (question) => question.copyWith(
+        choices: [
+          ...question.choices,
+          DraftChoice.create(text: choiceText),
+        ],
+      ),
+    );
   }
 
   /// Update a choice in a draft question.
@@ -310,35 +292,28 @@ class SurveyFormManager {
     String choiceTempId,
     String newText,
   ) {
-    final state = getState(null);
-    final updatedQuestions = state.draftQuestions.map((q) {
-      if (q.tempId == questionTempId) {
-        final updatedChoices = q.choices.map((c) {
-          if (c.tempId == choiceTempId) {
-            return c.copyWith(text: newText);
-          }
-          return c;
-        }).toList();
-        return q.copyWith(choices: updatedChoices);
-      }
-      return q;
-    }).toList();
-    _setState(null, state.copyWith(draftQuestions: updatedQuestions));
+    _updateDraftQuestion(
+      questionTempId,
+      (question) => question.copyWith(
+        choices: question.choices.map((choice) {
+          return choice.tempId == choiceTempId
+              ? choice.copyWith(text: newText)
+              : choice;
+        }).toList(),
+      ),
+    );
   }
 
   /// Delete a choice from a draft question.
   void deleteDraftChoice(String questionTempId, String choiceTempId) {
-    final state = getState(null);
-    final updatedQuestions = state.draftQuestions.map((q) {
-      if (q.tempId == questionTempId) {
-        final updatedChoices = q.choices
-            .where((c) => c.tempId != choiceTempId)
-            .toList();
-        return q.copyWith(choices: updatedChoices);
-      }
-      return q;
-    }).toList();
-    _setState(null, state.copyWith(draftQuestions: updatedQuestions));
+    _updateDraftQuestion(
+      questionTempId,
+      (question) => question.copyWith(
+        choices: question.choices
+            .where((choice) => choice.tempId != choiceTempId)
+            .toList(),
+      ),
+    );
   }
 
   /// Create a new survey with questions.
@@ -351,21 +326,17 @@ class SurveyFormManager {
     final state = getState(null);
     _setState(null, state.copyWith(isSaving: true, error: null));
     try {
-      final survey = Survey(
-        slug: slug,
-        title: title,
-        description: description,
-        status: SurveyStatus.draft,
-        authRequirement: authRequirement,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      );
       final questions = state.draftQuestions
           .map((q) => q.toQuestionWithChoices())
           .toList();
 
       final created = await _client.surveyAdmin.createWithQuestions(
-        survey,
+        _draftSurvey(
+          title: title,
+          slug: slug,
+          description: description,
+          authRequirement: authRequirement,
+        ),
         questions,
       );
       _setState(
@@ -383,6 +354,45 @@ class SurveyFormManager {
       );
       return null;
     }
+  }
+
+  Survey _draftSurvey({
+    required String title,
+    required String slug,
+    String? description,
+    required AuthRequirement authRequirement,
+  }) {
+    final now = DateTime.now();
+    return Survey(
+      slug: slug,
+      title: title,
+      description: description,
+      status: SurveyStatus.draft,
+      authRequirement: authRequirement,
+      createdAt: now,
+      updatedAt: now,
+    );
+  }
+
+  void _setDraftQuestions(
+    List<DraftQuestion> Function(List<DraftQuestion> questions) update,
+  ) {
+    final state = getState(null);
+    _setState(
+      null,
+      state.copyWith(draftQuestions: update(state.draftQuestions)),
+    );
+  }
+
+  void _updateDraftQuestion(
+    String tempId,
+    DraftQuestion Function(DraftQuestion question) update,
+  ) {
+    _setDraftQuestions(
+      (questions) => questions.map((question) {
+        return question.tempId == tempId ? update(question) : question;
+      }).toList(),
+    );
   }
 
   // AI Generation Methods

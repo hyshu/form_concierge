@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:form_concierge_client/form_concierge_client.dart';
 
+import '../../../../core/extensions/question_type_presentation.dart';
 import '../models/draft_question.dart';
 
 /// Widget for editing draft questions and their choices.
@@ -118,13 +118,13 @@ class _DraftQuestionTileState extends State<_DraftQuestionTile> {
             subtitle: Row(
               children: [
                 Icon(
-                  _iconForType(widget.question.type),
+                  widget.question.type.icon,
                   size: 16,
                   color: colorScheme.onSurfaceVariant,
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  _labelForType(widget.question.type),
+                  widget.question.type.label,
                   style: textTheme.bodySmall?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
@@ -181,24 +181,6 @@ class _DraftQuestionTileState extends State<_DraftQuestionTile> {
         ],
       ),
     );
-  }
-
-  IconData _iconForType(QuestionType type) {
-    return switch (type) {
-      QuestionType.singleChoice => Icons.radio_button_checked,
-      QuestionType.multipleChoice => Icons.check_box,
-      QuestionType.textSingle => Icons.short_text,
-      QuestionType.textMultiLine => Icons.notes,
-    };
-  }
-
-  String _labelForType(QuestionType type) {
-    return switch (type) {
-      QuestionType.singleChoice => 'Single Choice',
-      QuestionType.multipleChoice => 'Multiple Choice',
-      QuestionType.textSingle => 'Short Text',
-      QuestionType.textMultiLine => 'Long Text',
-    };
   }
 }
 

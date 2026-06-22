@@ -4,7 +4,6 @@ import 'package:jaspr/dom.dart';
 
 import '../state/survey_state.dart';
 import '../state/auth_state.dart';
-import '../utils/answer_builder.dart';
 import '../utils/anonymous_storage.dart';
 import '../utils/device_info.dart';
 import '../utils/validation.dart';

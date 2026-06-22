@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:form_concierge_client/form_concierge_client.dart';
 
+import '../../../../core/extensions/question_type_presentation.dart';
 import '../models/draft_question.dart';
 
 /// Dialog for previewing AI-generated questions before applying them.
@@ -139,13 +139,13 @@ class _QuestionPreviewTile extends StatelessWidget {
                 Row(
                   children: [
                     Icon(
-                      _iconForType(question.type),
+                      question.type.icon,
                       size: 16,
                       color: colorScheme.onSurfaceVariant,
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      _labelForType(question.type),
+                      question.type.label,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: colorScheme.onSurfaceVariant,
                       ),
@@ -201,23 +201,5 @@ class _QuestionPreviewTile extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  IconData _iconForType(QuestionType type) {
-    return switch (type) {
-      QuestionType.singleChoice => Icons.radio_button_checked,
-      QuestionType.multipleChoice => Icons.check_box,
-      QuestionType.textSingle => Icons.short_text,
-      QuestionType.textMultiLine => Icons.notes,
-    };
-  }
-
-  String _labelForType(QuestionType type) {
-    return switch (type) {
-      QuestionType.singleChoice => 'Single Choice',
-      QuestionType.multipleChoice => 'Multiple Choice',
-      QuestionType.textSingle => 'Short Text',
-      QuestionType.textMultiLine => 'Long Text',
-    };
   }
 }

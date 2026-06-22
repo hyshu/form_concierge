@@ -453,8 +453,7 @@ class SurveyEditorPage extends RearchConsumer {
     if (state.questions.isEmpty) return false;
 
     for (final question in state.questions) {
-      if (question.type == QuestionType.singleChoice ||
-          question.type == QuestionType.multipleChoice) {
+      if (question.type.usesChoices) {
         final choices = state.choicesByQuestion[question.id] ?? [];
         if (choices.isEmpty) return false;
       }

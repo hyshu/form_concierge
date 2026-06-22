@@ -74,15 +74,8 @@ class QuestionListManager {
     try {
       final questions = await _client.questionAdmin.getForSurvey(surveyId);
 
-      // Load choices for choice questions
-      final choicesByQuestion = <int, List<Choice>>{};
-      for (final question in questions) {
-        if (question.type == QuestionType.singleChoice ||
-            question.type == QuestionType.multipleChoice) {
-          choicesByQuestion[question.id!] = await _client.questionAdmin
-              .getChoicesForQuestion(question.id!);
-        }
-      }
+      final choicesByQuestion = await _client.questionAdmin
+          .getChoicesByQuestion(questions);
 
       _setState(
         surveyId,
@@ -111,78 +104,48 @@ class QuestionListManager {
     bool isRequired = true,
     String? placeholder,
   }) async {
-    try {
-      final question = Question(
-        surveyId: surveyId,
-        text: text,
-        type: type,
-        orderIndex: getState(surveyId).questions.length,
-        isRequired: isRequired,
-        placeholder: placeholder,
-      );
-      final created = await _client.questionAdmin.create(question);
-      await loadQuestions(surveyId);
-      return created;
-    } on Exception catch (e) {
-      _setState(
-        surveyId,
-        getState(surveyId).copyWith(
-          error: 'Failed to create question: $e',
-        ),
-      );
-      return null;
-    }
+    return _runAndReload(
+      surveyId,
+      () {
+        final question = Question(
+          surveyId: surveyId,
+          text: text,
+          type: type,
+          orderIndex: getState(surveyId).questions.length,
+          isRequired: isRequired,
+          placeholder: placeholder,
+        );
+        return _client.questionAdmin.create(question);
+      },
+      'Failed to create question',
+    );
   }
 
   /// Update an existing question.
   Future<Question?> updateQuestion(Question question) async {
-    try {
-      final updated = await _client.questionAdmin.update(question);
-      await loadQuestions(question.surveyId);
-      return updated;
-    } on Exception catch (e) {
-      _setState(
-        question.surveyId,
-        getState(question.surveyId).copyWith(
-          error: 'Failed to update question: $e',
-        ),
-      );
-      return null;
-    }
+    return _runAndReload(
+      question.surveyId,
+      () => _client.questionAdmin.update(question),
+      'Failed to update question',
+    );
   }
 
   /// Delete a question.
   Future<bool> deleteQuestion(int surveyId, int questionId) async {
-    try {
-      await _client.questionAdmin.delete(questionId);
-      await loadQuestions(surveyId);
-      return true;
-    } on Exception catch (e) {
-      _setState(
-        surveyId,
-        getState(surveyId).copyWith(
-          error: 'Failed to delete question: $e',
-        ),
-      );
-      return false;
-    }
+    return _runBoolAndReload(
+      surveyId,
+      () => _client.questionAdmin.delete(questionId),
+      'Failed to delete question',
+    );
   }
 
   /// Reorder questions.
   Future<bool> reorderQuestions(int surveyId, List<int> questionIds) async {
-    try {
-      await _client.questionAdmin.reorder(surveyId, questionIds);
-      await loadQuestions(surveyId);
-      return true;
-    } on Exception catch (e) {
-      _setState(
-        surveyId,
-        getState(surveyId).copyWith(
-          error: 'Failed to reorder questions: $e',
-        ),
-      );
-      return false;
-    }
+    return _runBoolAndReload(
+      surveyId,
+      () => _client.questionAdmin.reorder(surveyId, questionIds),
+      'Failed to reorder questions',
+    );
   }
 
   /// Create a new choice for a question.
@@ -191,25 +154,19 @@ class QuestionListManager {
     required int surveyId,
     required String text,
   }) async {
-    try {
-      final choice = Choice(
-        questionId: questionId,
-        text: text,
-        orderIndex:
-            getState(surveyId).choicesByQuestion[questionId]?.length ?? 0,
-      );
-      final created = await _client.choiceAdmin.create(choice);
-      await loadQuestions(surveyId);
-      return created;
-    } on Exception catch (e) {
-      _setState(
-        surveyId,
-        getState(surveyId).copyWith(
-          error: 'Failed to create choice: $e',
-        ),
-      );
-      return null;
-    }
+    return _runAndReload(
+      surveyId,
+      () {
+        final choice = Choice(
+          questionId: questionId,
+          text: text,
+          orderIndex:
+              getState(surveyId).choicesByQuestion[questionId]?.length ?? 0,
+        );
+        return _client.choiceAdmin.create(choice);
+      },
+      'Failed to create choice',
+    );
   }
 
   /// Update a choice.
@@ -217,40 +174,59 @@ class QuestionListManager {
     Choice choice,
     int surveyId,
   ) async {
-    try {
-      final updated = await _client.choiceAdmin.update(choice);
-      await loadQuestions(surveyId);
-      return updated;
-    } on Exception catch (e) {
-      _setState(
-        surveyId,
-        getState(surveyId).copyWith(
-          error: 'Failed to update choice: $e',
-        ),
-      );
-      return null;
-    }
+    return _runAndReload(
+      surveyId,
+      () => _client.choiceAdmin.update(choice),
+      'Failed to update choice',
+    );
   }
 
   /// Delete a choice.
   Future<bool> deleteChoice(int choiceId, int surveyId) async {
+    return _runBoolAndReload(
+      surveyId,
+      () => _client.choiceAdmin.delete(choiceId),
+      'Failed to delete choice',
+    );
+  }
+
+  Future<T?> _runAndReload<T>(
+    int surveyId,
+    Future<T> Function() action,
+    String errorMessage,
+  ) async {
     try {
-      await _client.choiceAdmin.delete(choiceId);
+      final result = await action();
       await loadQuestions(surveyId);
-      return true;
+      return result;
     } on Exception catch (e) {
-      _setState(
-        surveyId,
-        getState(surveyId).copyWith(
-          error: 'Failed to delete choice: $e',
-        ),
-      );
-      return false;
+      _setError(surveyId, '$errorMessage: $e');
+      return null;
     }
+  }
+
+  Future<bool> _runBoolAndReload(
+    int surveyId,
+    Future<void> Function() action,
+    String errorMessage,
+  ) async {
+    final result = await _runAndReload(
+      surveyId,
+      () async {
+        await action();
+        return true;
+      },
+      errorMessage,
+    );
+    return result ?? false;
   }
 
   /// Clear error for a survey.
   void clearError(int surveyId) {
     _setState(surveyId, getState(surveyId).copyWith(error: null));
+  }
+
+  void _setError(int surveyId, String error) {
+    _setState(surveyId, getState(surveyId).copyWith(error: error));
   }
 }

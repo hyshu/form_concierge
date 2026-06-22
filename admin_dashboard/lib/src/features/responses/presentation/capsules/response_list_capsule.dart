@@ -114,19 +114,11 @@ class ResponseListManager {
 
   /// Delete a response.
   Future<bool> deleteResponse(int surveyId, int responseId) async {
-    try {
-      await _client.responseAnalytics.deleteResponse(responseId);
-      await loadResponses(surveyId, page: getState(surveyId).currentPage);
-      return true;
-    } on Exception catch (e) {
-      _setState(
-        surveyId,
-        getState(surveyId).copyWith(
-          error: 'Failed to delete response: $e',
-        ),
-      );
-      return false;
-    }
+    return _runAndReloadCurrentPage(
+      surveyId,
+      () => _client.responseAnalytics.deleteResponse(responseId),
+      'Failed to delete response',
+    );
   }
 
   /// Send an admin reply to the anonymous account behind a response.
@@ -135,17 +127,25 @@ class ResponseListManager {
     int responseId,
     String body,
   ) async {
+    return _runAndReloadCurrentPage(
+      surveyId,
+      () => _client.responseAnalytics.createReply(responseId, body),
+      'Failed to send reply',
+    );
+  }
+
+  Future<bool> _runAndReloadCurrentPage(
+    int surveyId,
+    Future<void> Function() action,
+    String errorMessage,
+  ) async {
     try {
-      await _client.responseAnalytics.createReply(responseId, body);
-      await loadResponses(surveyId, page: getState(surveyId).currentPage);
+      final page = getState(surveyId).currentPage;
+      await action();
+      await loadResponses(surveyId, page: page);
       return true;
     } on Exception catch (e) {
-      _setState(
-        surveyId,
-        getState(surveyId).copyWith(
-          error: 'Failed to send reply: $e',
-        ),
-      );
+      _setError(surveyId, '$errorMessage: $e');
       return false;
     }
   }
@@ -153,5 +153,9 @@ class ResponseListManager {
   /// Clear error for a survey.
   void clearError(int surveyId) {
     _setState(surveyId, getState(surveyId).copyWith(error: null));
+  }
+
+  void _setError(int surveyId, String error) {
+    _setState(surveyId, getState(surveyId).copyWith(error: error));
   }
 }

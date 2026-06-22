@@ -9,7 +9,6 @@ import 'widgets/survey_error.dart';
 import 'widgets/survey_completed.dart';
 import 'widgets/survey_content.dart';
 import 'widgets/auth/auth_view.dart';
-import 'utils/answer_builder.dart';
 
 class FormConciergeSurvey extends StatefulWidget {
   final Client client;
@@ -69,16 +68,9 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
         survey.id!,
       );
 
-      final choicesByQuestion = <int, List<Choice>>{};
-      for (final question in questions) {
-        if (question.type == QuestionType.singleChoice ||
-            question.type == QuestionType.multipleChoice) {
-          final choices = await widget.client.survey.getChoicesForQuestion(
-            question.id!,
-          );
-          choicesByQuestion[question.id!] = choices;
-        }
-      }
+      final choicesByQuestion = await widget.client.survey.getChoicesByQuestion(
+        questions,
+      );
 
       await _ensureAnonymousSession();
 

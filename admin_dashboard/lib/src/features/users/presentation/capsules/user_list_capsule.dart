@@ -75,18 +75,14 @@ class UserListManager {
     required String password,
     required List<String> scopes,
   }) async {
-    try {
-      await _client.userAdmin.createUser(
+    return _runAndReload(
+      () => _client.userAdmin.createUser(
         email: email,
         password: password,
         scopes: scopes,
-      );
-      await loadUsers();
-      return true;
-    } on Exception catch (e) {
-      _setState(state.copyWith(error: 'Failed to create user: $e'));
-      return false;
-    }
+      ),
+      'Failed to create user',
+    );
   }
 
   /// Delete a user by ID.
@@ -108,12 +104,22 @@ class UserListManager {
 
   /// Toggle user blocked status.
   Future<bool> toggleUserBlocked(UuidValue userId) async {
+    return _runAndReload(
+      () => _client.userAdmin.toggleUserBlocked(userId),
+      'Failed to update user',
+    );
+  }
+
+  Future<bool> _runAndReload(
+    Future<void> Function() action,
+    String errorMessage,
+  ) async {
     try {
-      await _client.userAdmin.toggleUserBlocked(userId);
+      await action();
       await loadUsers();
       return true;
     } on Exception catch (e) {
-      _setState(state.copyWith(error: 'Failed to update user: $e'));
+      _setState(state.copyWith(error: '$errorMessage: $e'));
       return false;
     }
   }

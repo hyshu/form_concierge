@@ -84,6 +84,12 @@ type AnswerRow = {
   selected_choice_ids: string | null;
 };
 
+type AnswerInput = {
+  questionId?: unknown;
+  textValue?: unknown;
+  selectedChoiceIds?: unknown;
+};
+
 type ReplyRow = {
   id: number;
   survey_response_id: number;
@@ -92,6 +98,31 @@ type ReplyRow = {
   body: string;
   created_at: string;
   read_at: string | null;
+};
+
+type AdminRow = {
+  id: string;
+  email: string;
+  scope_names: string;
+  blocked: number;
+  created_at: string;
+};
+
+type AnonymousAccountRow = {
+  id: string;
+  display_name: string | null;
+  created_at: string;
+  last_seen_at: string;
+};
+
+type NotificationSettingsRow = {
+  id: number;
+  survey_id: number;
+  enabled: number;
+  recipient_email: string;
+  send_hour: number;
+  updated_at: string;
+  last_sent_at: string | null;
 };
 
 type QuestionInput = {
@@ -121,6 +152,10 @@ type NormalizedDeviceInfo = {
   devicePixelRatio: number | null;
   rawJson: string | null;
 };
+
+const CHOICE_QUESTION_TYPES = new Set(['singleChoice', 'multipleChoice']);
+const TEXT_QUESTION_TYPES = new Set(['textSingle', 'textMultiLine']);
+const QUESTION_TYPES = new Set([...CHOICE_QUESTION_TYPES, ...TEXT_QUESTION_TYPES]);
 
 const jsonHeaders = {
   'content-type': 'application/json; charset=utf-8',
@@ -447,7 +482,9 @@ async function submitResponse(
   }
 
   const body = await readJson(request);
-  const answers = Array.isArray(body.answers) ? body.answers : [];
+  const answers = Array.isArray(body.answers)
+    ? body.answers.map(requireAnswerInput)
+    : [];
   const questions = await env.DB.prepare(
     `SELECT * FROM questions WHERE survey_id = ? AND is_deleted = 0 ORDER BY order_index`,
   ).bind(surveyId).all<QuestionRow>();
@@ -495,22 +532,20 @@ async function submitResponse(
 
   if (!response) throw new HttpError(500, 'Failed to save response');
 
-  const inserts = answers
-    .filter((answer: unknown) => typeof answer === 'object' && answer !== null)
-    .map((answer: any) =>
-      env.DB.prepare(
-        `INSERT INTO answers
-           (survey_response_id, question_id, text_value, selected_choice_ids)
-         VALUES (?, ?, ?, ?)`,
-      ).bind(
-        response.id,
-        Number(answer.questionId),
-        typeof answer.textValue === 'string' ? answer.textValue : null,
-        Array.isArray(answer.selectedChoiceIds)
-          ? JSON.stringify(answer.selectedChoiceIds.map(Number))
-          : null,
-      ),
-    );
+  const inserts = answers.map((answer) =>
+    env.DB.prepare(
+      `INSERT INTO answers
+         (survey_response_id, question_id, text_value, selected_choice_ids)
+       VALUES (?, ?, ?, ?)`,
+    ).bind(
+      response.id,
+      Number(answer.questionId),
+      typeof answer.textValue === 'string' ? answer.textValue : null,
+      Array.isArray(answer.selectedChoiceIds)
+        ? JSON.stringify(answer.selectedChoiceIds.map(Number))
+        : null,
+    ),
+  );
   if (inserts.length > 0) await env.DB.batch(inserts);
 
   await env.DB.prepare(
@@ -538,10 +573,19 @@ async function getAdminSurvey(env: Env, surveyId: number): Promise<Response> {
 
 async function createSurvey(request: Request, env: Env, admin: AdminContext): Promise<Response> {
   const body = await readJson(request);
+  const row = await insertSurvey(env.DB, body, admin);
+  return json(surveyToJson(row), 201);
+}
+
+async function insertSurvey(
+  db: D1Database,
+  body: Record<string, unknown>,
+  admin: AdminContext,
+): Promise<SurveyRow> {
   const slug = requireSlug(body.slug);
-  await ensureUniqueSlug(env.DB, slug);
+  await ensureUniqueSlug(db, slug);
   const now = nowIso();
-  const row = await env.DB.prepare(
+  const row = await db.prepare(
     `INSERT INTO surveys
        (slug, title, description, status, auth_requirement, created_by_admin_id,
         created_at, updated_at, starts_at, ends_at)
@@ -560,7 +604,7 @@ async function createSurvey(request: Request, env: Env, admin: AdminContext): Pr
       optionalString(body.endsAt),
     )
     .first<SurveyRow>();
-  return json(surveyToJson(requiredRow(row, 'Survey')), 201);
+  return requiredRow(row, 'Survey');
 }
 
 async function createSurveyWithQuestions(
@@ -569,13 +613,9 @@ async function createSurveyWithQuestions(
   admin: AdminContext,
 ): Promise<Response> {
   const body = await readJson(request);
-  const survey = body.survey ?? {};
+  const survey = objectBody(body.survey);
   const questions = parseQuestionInputs(body.questions);
-  const response = await createSurvey(new Request(request.url, {
-    method: 'POST',
-    body: JSON.stringify(survey),
-  }), env, admin);
-  const created = (await response.json()) as any;
+  const created = await insertSurvey(env.DB, survey, admin);
 
   for (let i = 0; i < questions.length; i++) {
     const q = questions[i];
@@ -593,16 +633,11 @@ async function createSurveyWithQuestions(
       q.placeholder,
     ).first<QuestionRow>();
     if (!question) throw new HttpError(500, 'Failed to create question');
-    if (question.type === 'singleChoice' || question.type === 'multipleChoice') {
-      const choices = Array.isArray(q.choices) ? q.choices : [];
-      for (let j = 0; j < choices.length; j++) {
-        await env.DB.prepare(
-          `INSERT INTO choices (question_id, text, order_index) VALUES (?, ?, ?)`,
-        ).bind(question.id, String(choices[j]), j).run();
-      }
+    if (isChoiceQuestionType(question.type)) {
+      await insertChoices(env.DB, question.id, q.choices.map(String));
     }
   }
-  return json(created, 201);
+  return json(surveyToJson(created), 201);
 }
 
 async function updateSurvey(request: Request, env: Env, surveyId: number): Promise<Response> {
@@ -677,13 +712,8 @@ async function createQuestion(request: Request, env: Env): Promise<Response> {
     optionalNumber(body.maxLength),
   ).first<QuestionRow>();
   const question = requiredRow(row, 'Question');
-  if (question.type === 'singleChoice' || question.type === 'multipleChoice') {
-    await env.DB.batch([
-      env.DB.prepare(`INSERT INTO choices (question_id, text, order_index) VALUES (?, ?, ?)`)
-        .bind(question.id, 'Choice 1', 0),
-      env.DB.prepare(`INSERT INTO choices (question_id, text, order_index) VALUES (?, ?, ?)`)
-        .bind(question.id, 'Choice 2', 1),
-    ]);
+  if (isChoiceQuestionType(question.type)) {
+    await insertChoices(env.DB, question.id, ['Choice 1', 'Choice 2']);
   }
   return json(questionToJson(question), 201);
 }
@@ -739,11 +769,7 @@ async function reorderQuestions(request: Request, env: Env, surveyId: number): P
     `SELECT * FROM questions WHERE survey_id = ? AND is_deleted = 0 ORDER BY order_index`,
   ).bind(surveyId).all<QuestionRow>();
   assertExactIds(rows.results.map((row) => row.id), questionIds, 'questionIds');
-  for (let i = 0; i < questionIds.length; i++) {
-    await env.DB.prepare(`UPDATE questions SET order_index = ? WHERE id = ?`)
-      .bind(i, questionIds[i])
-      .run();
-  }
+  await updateOrder(env.DB, 'questions', questionIds);
   return getAdminQuestions(env, surveyId);
 }
 
@@ -764,7 +790,7 @@ async function getQuestion(env: Env, questionId: number): Promise<Response> {
 async function createChoice(request: Request, env: Env): Promise<Response> {
   const body = await readJson(request);
   const question = await mustQuestion(env.DB, Number(body.questionId));
-  if (question.type !== 'singleChoice' && question.type !== 'multipleChoice') {
+  if (!isChoiceQuestionType(question.type)) {
     throw new HttpError(400, 'Only choice questions can have choices');
   }
   const max = await env.DB.prepare(
@@ -810,11 +836,7 @@ async function reorderChoices(request: Request, env: Env, questionId: number): P
     `SELECT * FROM choices WHERE question_id = ? ORDER BY order_index`,
   ).bind(questionId).all<ChoiceRow>();
   assertExactIds(rows.results.map((row) => row.id), choiceIds, 'choiceIds');
-  for (let i = 0; i < choiceIds.length; i++) {
-    await env.DB.prepare(`UPDATE choices SET order_index = ? WHERE id = ?`)
-      .bind(i, choiceIds[i])
-      .run();
-  }
+  await updateOrder(env.DB, 'choices', choiceIds);
   return getChoices(env, questionId);
 }
 
@@ -879,7 +901,7 @@ async function aggregatedResults(env: Env, surveyId: number): Promise<Response> 
     const answers = await env.DB.prepare(
       `SELECT * FROM answers WHERE question_id = ?`,
     ).bind(question.id).all<AnswerRow>();
-    if (question.type === 'singleChoice' || question.type === 'multipleChoice') {
+    if (isChoiceQuestionType(question.type)) {
       const choices = await env.DB.prepare(
         `SELECT * FROM choices WHERE question_id = ?`,
       ).bind(question.id).all<ChoiceRow>();
@@ -979,7 +1001,7 @@ async function notificationSettings(
   if (method === 'GET') {
     const row = await env.DB.prepare(
       `SELECT * FROM notification_settings WHERE survey_id = ?`,
-    ).bind(surveyId).first<any>();
+    ).bind(surveyId).first<NotificationSettingsRow>();
     return json(row ? notificationToJson(row) : null);
   }
   if (method === 'PUT') {
@@ -1000,7 +1022,7 @@ async function notificationSettings(
       requireString(body.recipientEmail, 'recipientEmail'),
       optionalNumber(body.sendHour) ?? 9,
       nowIso(),
-    ).first<any>();
+    ).first<NotificationSettingsRow>();
     return json(notificationToJson(requiredRow(row, 'NotificationSettings')));
   }
   if (method === 'POST' && parts[5] === 'toggle') {
@@ -1008,7 +1030,7 @@ async function notificationSettings(
     const row = await env.DB.prepare(
       `UPDATE notification_settings SET enabled = ?, updated_at = ?
        WHERE survey_id = ? RETURNING *`,
-    ).bind(boolToInt(body.enabled), nowIso(), surveyId).first<any>();
+    ).bind(boolToInt(body.enabled), nowIso(), surveyId).first<NotificationSettingsRow>();
     return json(notificationToJson(requiredRow(row, 'NotificationSettings')));
   }
   if (method === 'DELETE') {
@@ -1023,7 +1045,7 @@ async function notificationSettings(
 async function listUsers(env: Env): Promise<Response> {
   const rows = await env.DB.prepare(
     `SELECT id, email, scope_names, blocked, created_at FROM admins ORDER BY created_at`,
-  ).all<any>();
+  ).all<AdminRow>();
   return json(rows.results.map(adminUserToJson));
 }
 
@@ -1060,9 +1082,9 @@ async function toggleUserBlocked(env: Env, userId: string): Promise<Response> {
 async function validateAnswers(
   env: Env,
   questions: QuestionRow[],
-  answers: any[],
+  answers: AnswerInput[],
 ): Promise<void> {
-  const byQuestion = new Map<number, any>();
+  const byQuestion = new Map<number, AnswerInput>();
   for (const answer of answers) {
     const questionId = Number(answer?.questionId);
     if (!Number.isInteger(questionId)) throw new HttpError(400, 'Invalid questionId');
@@ -1079,7 +1101,7 @@ async function validateAnswers(
       if (question.is_required) throw new HttpError(400, `Question "${question.text}" is required`);
       continue;
     }
-    if (question.type === 'textSingle' || question.type === 'textMultiLine') {
+    if (isTextQuestionType(question.type)) {
       const value = typeof answer.textValue === 'string' ? answer.textValue.trim() : '';
       if (question.is_required && value.length === 0) {
         throw new HttpError(400, `Question "${question.text}" is required`);
@@ -1125,7 +1147,7 @@ async function requireAdmin(request: Request, env: Env): Promise<AdminContext> {
      FROM admin_sessions s
      JOIN admins a ON a.id = s.admin_id
      WHERE s.token_hash = ? AND s.expires_at > ?`,
-  ).bind(tokenHash, nowIso()).first<any>();
+  ).bind(tokenHash, nowIso()).first<AdminRow>();
   if (!row || row.blocked) throw new HttpError(401, 'Admin authentication required');
   const admin = adminRowToContext(row);
   if (!admin.scopeNames.includes('admin')) throw new HttpError(403, 'Admin scope required');
@@ -1140,7 +1162,7 @@ async function requireAnonymous(request: Request, env: Env): Promise<AnonymousCo
     `SELECT id, display_name, created_at, last_seen_at
      FROM anonymous_accounts
      WHERE token_hash = ?`,
-  ).bind(tokenHash).first<any>();
+  ).bind(tokenHash).first<AnonymousAccountRow>();
   if (!row) throw new HttpError(401, 'Anonymous account required');
   return {
     id: row.id,
@@ -1166,7 +1188,7 @@ async function createAdminSession(db: D1Database, user: AdminContext) {
 async function getAdminById(db: D1Database, id: string): Promise<AdminContext | null> {
   const row = await db.prepare(
     `SELECT id, email, scope_names, blocked, created_at FROM admins WHERE id = ?`,
-  ).bind(id).first<any>();
+  ).bind(id).first<AdminRow>();
   return row ? adminRowToContext(row) : null;
 }
 
@@ -1291,7 +1313,7 @@ function replyToJson(row: ReplyRow) {
   };
 }
 
-function notificationToJson(row: any) {
+function notificationToJson(row: NotificationSettingsRow) {
   return {
     id: row.id,
     surveyId: row.survey_id,
@@ -1303,7 +1325,7 @@ function notificationToJson(row: any) {
   };
 }
 
-function adminUserToJson(row: any) {
+function adminUserToJson(row: AdminRow) {
   return adminContextToJson(adminRowToContext(row));
 }
 
@@ -1317,7 +1339,7 @@ function adminContextToJson(user: AdminContext) {
   };
 }
 
-function adminRowToContext(row: any): AdminContext {
+function adminRowToContext(row: AdminRow): AdminContext {
   return {
     id: row.id,
     email: row.email,
@@ -1382,7 +1404,7 @@ async function assertSurveyCanPublish(db: D1Database, surveyId: number): Promise
     throw new HttpError(400, 'Survey must have at least one question');
   }
   for (const question of questions.results) {
-    if (question.type !== 'singleChoice' && question.type !== 'multipleChoice') continue;
+    if (!isChoiceQuestionType(question.type)) continue;
     const choiceCount = await countRows(
       db,
       `SELECT COUNT(*) AS count FROM choices WHERE question_id = ?`,
@@ -1408,15 +1430,31 @@ async function compactQuestionOrder(db: D1Database, surveyId: number): Promise<v
   if (updates.length > 0) await db.batch(updates);
 }
 
-async function readJson(request: Request, optional = false): Promise<any> {
+async function readJson(
+  request: Request,
+  optional = false,
+): Promise<Record<string, unknown>> {
   const text = await request.text();
   if (!text && optional) return {};
   if (!text) throw new HttpError(400, 'JSON body required');
   try {
-    return JSON.parse(text);
+    return objectBody(JSON.parse(text));
   } catch {
     throw new HttpError(400, 'Invalid JSON body');
   }
+}
+
+function objectBody(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+}
+
+function requireAnswerInput(value: unknown): AnswerInput {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new HttpError(400, 'Invalid answer');
+  }
+  return value as AnswerInput;
 }
 
 function json(body: unknown, status = 200): Response {
@@ -1484,9 +1522,40 @@ function assertExactIds(expected: number[], actual: number[], field: string): vo
   }
 }
 
+function isChoiceQuestionType(type: string): boolean {
+  return CHOICE_QUESTION_TYPES.has(type);
+}
+
+function isTextQuestionType(type: string): boolean {
+  return TEXT_QUESTION_TYPES.has(type);
+}
+
+async function insertChoices(
+  db: D1Database,
+  questionId: number,
+  choices: readonly string[],
+): Promise<void> {
+  const inserts = choices.map((choice, index) =>
+    db.prepare(`INSERT INTO choices (question_id, text, order_index) VALUES (?, ?, ?)`)
+      .bind(questionId, choice, index),
+  );
+  if (inserts.length > 0) await db.batch(inserts);
+}
+
+async function updateOrder(
+  db: D1Database,
+  table: 'questions' | 'choices',
+  ids: readonly number[],
+): Promise<void> {
+  const updates = ids.map((id, index) =>
+    db.prepare(`UPDATE ${table} SET order_index = ? WHERE id = ?`).bind(index, id),
+  );
+  if (updates.length > 0) await db.batch(updates);
+}
+
 function normalizeQuestionType(value: unknown): string {
   const type = String(value);
-  if (['singleChoice', 'multipleChoice', 'textSingle', 'textMultiLine'].includes(type)) {
+  if (QUESTION_TYPES.has(type)) {
     return type;
   }
   throw new HttpError(400, 'Invalid question type');
