@@ -66,5 +66,39 @@ void main() {
         'カスタムドメインは forms.example.com のようなホスト名にしてください',
       );
     });
+
+    test(
+      'project dashboard labels are localized for every supported locale',
+      () {
+        const projectKeys = [
+          'New Project',
+          'Project Settings',
+          'Project not found',
+          'Create Project',
+          'Project URL Slug',
+          'Use a dedicated host to open this project without a slug.',
+          'Custom domain (optional)',
+          'Default language',
+          'Localized project names',
+          'Project name',
+          'Enter project name',
+          'Project name is required',
+          'Localized descriptions',
+          'Brief description of the project',
+          'Web public',
+        ];
+
+        for (final locale in AppLocalizations.supportedLocales.skip(1)) {
+          final l10n = AppLocalizations(locale);
+          for (final key in projectKeys) {
+            expect(
+              l10n.text(key),
+              isNot(key),
+              reason: 'Missing $key for $locale',
+            );
+          }
+        }
+      },
+    );
   });
 }
