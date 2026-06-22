@@ -12,7 +12,7 @@ export async function sha256Hex(input: string): Promise<string> {
 export async function hashPassword(password: string): Promise<string> {
   const salt = new Uint8Array(16);
   crypto.getRandomValues(salt);
-  const iterations = 210000;
+  const iterations = 100000;
   const key = await crypto.subtle.importKey(
     'raw',
     new TextEncoder().encode(password),
