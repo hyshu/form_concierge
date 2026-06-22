@@ -15,8 +15,8 @@ class AnonymousAccount {
 
   factory AnonymousAccount.fromJson(Map<String, dynamic> json) =>
       AnonymousAccount(
-        id: json['id'] as String,
-        displayName: json['displayName'] as String?,
+        id: _string(json['id']),
+        displayName: _optionalString(json['displayName']),
         createdAt: _date(json['createdAt']),
         lastSeenAt: _date(json['lastSeenAt']),
       );
@@ -31,7 +31,7 @@ class AnonymousSession {
   factory AnonymousSession.fromJson(Map<String, dynamic> json) =>
       AnonymousSession(
         account: _object(json['account'], AnonymousAccount.fromJson),
-        token: json['token'] as String,
+        token: _string(json['token']),
       );
 }
 
@@ -57,9 +57,9 @@ class AdminReply {
   factory AdminReply.fromJson(Map<String, dynamic> json) => AdminReply(
     id: _int(json['id']),
     surveyResponseId: _int(json['surveyResponseId']),
-    anonymousAccountId: json['anonymousAccountId'] as String,
-    body: json['body'] as String,
-    adminId: json['adminId'] as String?,
+    anonymousAccountId: _string(json['anonymousAccountId']),
+    body: _string(json['body']),
+    adminId: _optionalString(json['adminId']),
     createdAt: _date(json['createdAt']),
     readAt: _optionalDate(json['readAt']),
   );

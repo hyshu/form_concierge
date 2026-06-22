@@ -41,11 +41,14 @@ class LocalizedTextFieldGroup extends StatelessWidget {
         .where((locale) => locale != primary)
         .toList();
 
-    Widget fieldFor(
-      String locale, {
-      String? Function(String?)? validator,
-      TextInputAction? action,
-    }) {
+    String? requiredValidator(String? value) {
+      if (requiredMessage != null && (value == null || value.trim().isEmpty)) {
+        return requiredMessage;
+      }
+      return null;
+    }
+
+    Widget fieldFor(String locale, {TextInputAction? action}) {
       return _LocalizedField(
         controller: controllers[locale],
         label: _localizedLabel(labelText, locale),
@@ -54,24 +57,27 @@ class LocalizedTextFieldGroup extends StatelessWidget {
         maxLines: maxLines,
         textInputAction: action ?? textInputAction,
         autofocus: locale == primary && autofocus,
-        validator: validator,
+        validator: requiredMessage == null ? null : requiredValidator,
       );
     }
 
-    final primaryField = fieldFor(
-      primary,
-      validator: requiredMessage == null
-          ? null
-          : (value) {
-              if (value == null || value.trim().isEmpty) {
-                return requiredMessage;
-              }
-              return null;
-            },
-    );
+    final primaryField = fieldFor(primary);
 
     if (secondaryLocales.isEmpty) {
       return primaryField;
+    }
+
+    if (requiredMessage != null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          primaryField,
+          for (final locale in secondaryLocales) ...[
+            const SizedBox(height: 12),
+            fieldFor(locale),
+          ],
+        ],
+      );
     }
 
     if (secondaryLocales.length == 1) {
@@ -164,22 +170,12 @@ LocalizedText localizedTextFromControllers(
   Map<String, TextEditingController> controllers, {
   required String primaryLocale,
   Iterable<String> locales = formContentLocaleCodes,
-  bool fallbackEmptyToPrimary = true,
 }) {
   final supportedLocales = orderedFormContentLocales(locales);
-  final normalizedPrimary = normalizedPrimaryLocale(primaryLocale);
-  final primary = supportedLocales.contains(normalizedPrimary)
-      ? normalizedPrimary
-      : supportedLocales.first;
-  final primaryValue = controllers[primary]?.text.trim() ?? '';
 
   return LocalizedText({
     for (final locale in supportedLocales)
-      locale: _localizedControllerValue(
-        controllers[locale]?.text.trim() ?? '',
-        primaryValue: primaryValue,
-        fallbackEmptyToPrimary: fallbackEmptyToPrimary,
-      ),
+      locale: controllers[locale]?.text.trim() ?? '',
   });
 }
 
@@ -196,13 +192,4 @@ String normalizedPrimaryLocale(String locale) {
   return formContentLocaleCodes.contains(normalized)
       ? normalized
       : defaultFormContentLocale;
-}
-
-String _localizedControllerValue(
-  String value, {
-  required String primaryValue,
-  required bool fallbackEmptyToPrimary,
-}) {
-  if (value.isNotEmpty) return value;
-  return fallbackEmptyToPrimary ? primaryValue : '';
 }

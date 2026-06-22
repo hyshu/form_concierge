@@ -16,12 +16,10 @@ class AuthUserInfo {
   });
 
   factory AuthUserInfo.fromJson(Map<String, dynamic> json) => AuthUserInfo(
-    id: json['id'].toString(),
-    email: json['email'] as String?,
-    scopeNames: (json['scopeNames'] as List? ?? const [])
-        .map((e) => '$e')
-        .toList(),
-    role: _enum(AdminRole.values, json['role'], AdminRole.viewer),
+    id: _string(json['id']),
+    email: _optionalString(json['email']),
+    scopeNames: _stringList(json['scopeNames']),
+    role: _enum(AdminRole.values, json['role']),
     created: _date(json['created']),
   );
 
@@ -41,7 +39,7 @@ class AuthSuccess {
   const AuthSuccess({required this.token, required this.user});
 
   factory AuthSuccess.fromJson(Map<String, dynamic> json) => AuthSuccess(
-    token: json['token'] as String,
+    token: _string(json['token']),
     user: _object(json['user'], AuthUserInfo.fromJson),
   );
 

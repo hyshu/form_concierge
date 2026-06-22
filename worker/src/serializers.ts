@@ -1,6 +1,6 @@
 import type { AdminContext, AdminRow, AnonymousContext, AnswerRow, ChoiceRow, NotificationSettingsRow, ProjectRow, QuestionRow, ReplyRow, ResponseRow, SurveyRow, VisibilityRuleRow } from './types';
 import { roleFromScopes } from './permissions';
-import { compactObject } from './utils';
+import { HttpError, compactObject } from './utils';
 import { parseLocalizedText } from './localization';
 
 export function projectToJson(row: ProjectRow) {
@@ -9,7 +9,7 @@ export function projectToJson(row: ProjectRow) {
     slug: row.slug,
     customDomain: row.custom_domain,
     defaultLocale: row.default_locale,
-    supportedLocales: parseJsonArray(row.supported_locales),
+    supportedLocales: parseJsonArray(row.supported_locales, 'supportedLocales'),
     nameTranslations: parseLocalizedText(row.name_translations),
     descriptionTranslations: parseLocalizedText(row.description_translations),
     createdByUserId: row.created_by_admin_id,
@@ -91,12 +91,12 @@ export function responseToJson(row: ResponseRow) {
 
 export function metadataToJson(value: string | null) {
   if (!value) return null;
-  const metadata = parseJsonObject(value);
+  const metadata = parseJsonObject(value, 'metadata');
   return Object.keys(metadata).length === 0 ? null : metadata;
 }
 
 export function deviceInfoToJson(row: ResponseRow) {
-  const raw = parseJsonObject(row.device_info);
+  const raw = parseJsonObject(row.device_info, 'deviceInfo');
   const compacted = compactObject({
     ...raw,
     deviceId: row.device_id,
@@ -166,7 +166,7 @@ export function adminRowToContext(row: AdminRow): AdminContext {
   return {
     id: row.id,
     email: row.email,
-    scopeNames: parseJsonArray(row.scope_names),
+    scopeNames: parseJsonArray(row.scope_names, 'scopeNames'),
     created: row.created_at,
   };
 }
@@ -182,40 +182,49 @@ export function anonymousAccountToJson(account: AnonymousContext) {
 
 export function parseChoiceIds(value: string | null): number[] {
   if (!value) return [];
-  try {
-    const decoded = JSON.parse(value);
-    return Array.isArray(decoded) ? decoded.map(Number) : [];
-  } catch {
-    return [];
-  }
+  return parseJsonIntegerArray(value, 'selectedChoiceIds');
 }
 
-function parseJsonObject(value: string | null): Record<string, unknown> {
+function parseJsonObject(value: string | null, field: string): Record<string, unknown> {
   if (!value) return {};
-  try {
-    const decoded = JSON.parse(value);
-    return decoded && typeof decoded === 'object' && !Array.isArray(decoded)
-      ? decoded as Record<string, unknown>
-      : {};
-  } catch {
-    return {};
+  const decoded = parseStoredJson(value, field);
+  if (!decoded || typeof decoded !== 'object' || Array.isArray(decoded)) {
+    throw new HttpError(500, `${field} must be an object`);
   }
+  return decoded as Record<string, unknown>;
 }
 
 function parseJsonValue(value: string | null): unknown {
   if (!value) return null;
+  return parseStoredJson(value, 'visibilityRule.value');
+}
+
+function parseJsonArray(value: string, field: string): string[] {
+  const decoded = parseStoredJson(value, field);
+  if (!Array.isArray(decoded)) throw new HttpError(500, `${field} must be an array`);
+  return decoded.map((item, index) => {
+    if (typeof item !== 'string') {
+      throw new HttpError(500, `${field}[${index}] must be a string`);
+    }
+    return item;
+  });
+}
+
+function parseJsonIntegerArray(value: string, field: string): number[] {
+  const decoded = parseStoredJson(value, field);
+  if (!Array.isArray(decoded)) throw new HttpError(500, `${field} must be an array`);
+  return decoded.map((item, index) => {
+    if (!Number.isInteger(item) || !Number.isSafeInteger(item)) {
+      throw new HttpError(500, `${field}[${index}] must be a safe integer`);
+    }
+    return item;
+  });
+}
+
+function parseStoredJson(value: string, field: string): unknown {
   try {
     return JSON.parse(value);
   } catch {
-    return null;
-  }
-}
-
-function parseJsonArray(value: string): string[] {
-  try {
-    const decoded = JSON.parse(value);
-    return Array.isArray(decoded) ? decoded.map(String) : [];
-  } catch {
-    return [];
+    throw new HttpError(500, `Invalid stored JSON: ${field}`);
   }
 }

@@ -1,5 +1,5 @@
 import type { Env, IntegrationSettingsRow } from './types';
-import { boolToInt, HttpError, json, nowIso, optionalNumber, optionalString, readJson } from './utils';
+import { HttpError, json, nowIso, optionalBoolean, optionalInteger, readJson, requireObject } from './utils';
 
 export type SmtpSecureMode = 'none' | 'starttls' | 'tls';
 export type AiProvider = 'gemini' | 'openai' | 'claude' | 'cerebras';
@@ -22,42 +22,47 @@ export async function getAdminIntegrationSettings(env: Env): Promise<Response> {
 export async function updateAdminIntegrationSettings(request: Request, env: Env): Promise<Response> {
   const body = await readJson(request);
   const existing = await getIntegrationSettingsRow(env);
-  const ai = objectValue(body.ai);
-  const smtp = objectValue(body.smtp);
-  const aiProvider = optionalAiProvider(ai.provider) ?? normalizeAiProvider(existing?.ai_provider ?? 'gemini');
+  const ai = requireObject(body.ai, 'ai');
+  const smtp = requireObject(body.smtp, 'smtp');
+  const aiProvider = requireAiProvider(ai.provider);
 
   const geminiApiKey = secretValue({
     next: ai.geminiApiKey,
     existing: existing?.gemini_api_key ?? null,
-    clear: boolToInt(ai.clearGeminiApiKey) === 1,
+    clear: optionalBoolean(ai.clearGeminiApiKey, 'ai.clearGeminiApiKey') === true,
+    field: 'ai.geminiApiKey',
   });
   const openaiApiKey = secretValue({
     next: ai.openaiApiKey,
     existing: existing?.openai_api_key ?? null,
-    clear: boolToInt(ai.clearOpenaiApiKey) === 1,
+    clear: optionalBoolean(ai.clearOpenaiApiKey, 'ai.clearOpenaiApiKey') === true,
+    field: 'ai.openaiApiKey',
   });
   const claudeApiKey = secretValue({
     next: ai.claudeApiKey,
     existing: existing?.claude_api_key ?? null,
-    clear: boolToInt(ai.clearClaudeApiKey) === 1,
+    clear: optionalBoolean(ai.clearClaudeApiKey, 'ai.clearClaudeApiKey') === true,
+    field: 'ai.claudeApiKey',
   });
   const cerebrasApiKey = secretValue({
     next: ai.cerebrasApiKey,
     existing: existing?.cerebras_api_key ?? null,
-    clear: boolToInt(ai.clearCerebrasApiKey) === 1,
+    clear: optionalBoolean(ai.clearCerebrasApiKey, 'ai.clearCerebrasApiKey') === true,
+    field: 'ai.cerebrasApiKey',
   });
 
   const smtpHost = optionalHost(smtp.host);
   const smtpPort = optionalPort(smtp.port);
-  const smtpUsername = optionalString(smtp.username);
+  const smtpUsername = optionalSettingsString(smtp.username, 'smtp.username');
   const smtpPassword = secretValue({
     next: smtp.password,
     existing: existing?.smtp_password ?? null,
-    clear: boolToInt(smtp.clearPassword) === 1,
+    clear: optionalBoolean(smtp.clearPassword, 'smtp.clearPassword') === true,
+    field: 'smtp.password',
   });
-  const smtpFromEmail = optionalEmail(smtp.fromEmail, 'fromEmail');
-  const smtpFromName = optionalString(smtp.fromName);
-  const smtpSecureMode = optionalSecureMode(smtp.secureMode) ?? existing?.smtp_secure_mode ?? 'starttls';
+  const smtpFromEmail = optionalEmail(smtp.fromEmail, 'smtp.fromEmail');
+  const smtpFromName = optionalSettingsString(smtp.fromName, 'smtp.fromName');
+  const smtpSecureMode = requireSecureMode(smtp.secureMode);
 
   assertSmtpSettingsAreCoherent({
     host: smtpHost,
@@ -181,12 +186,19 @@ function aiProviderToJson(apiKey: string | null, selected: boolean) {
 }
 
 export function normalizeAiProvider(value: string): AiProvider {
-  return AI_PROVIDERS.has(value as AiProvider) ? value as AiProvider : 'gemini';
+  if (!AI_PROVIDERS.has(value as AiProvider)) {
+    throw new HttpError(500, 'Invalid stored AI provider');
+  }
+  return value as AiProvider;
 }
 
-function optionalAiProvider(value: unknown): AiProvider | null {
-  if (value == null || value === '') return null;
-  const provider = String(value) as AiProvider;
+function requireAiProvider(value: unknown): AiProvider {
+  if (value == null || value === '') {
+    throw new HttpError(400, 'ai.provider is required');
+  }
+  if (typeof value !== 'string') throw new HttpError(400, 'ai.provider must be a string');
+  const provider = value.trim() as AiProvider;
+  if (provider.length === 0) throw new HttpError(400, 'ai.provider is required');
   if (!AI_PROVIDERS.has(provider)) throw new HttpError(400, 'ai.provider is invalid');
   return provider;
 }
@@ -204,20 +216,22 @@ export function apiKeyForProvider(row: IntegrationSettingsRow, provider: AiProvi
   }
 }
 
-function objectValue(value: unknown): Record<string, unknown> {
-  return value && typeof value === 'object' && !Array.isArray(value)
-    ? value as Record<string, unknown>
-    : {};
-}
-
-function secretValue(input: { next: unknown; existing: string | null; clear: boolean }): string | null {
+function secretValue(input: {
+  next: unknown;
+  existing: string | null;
+  clear: boolean;
+  field: string;
+}): string | null {
   if (input.clear) return null;
-  if (typeof input.next === 'string' && input.next.trim().length > 0) return input.next.trim();
+  if (input.next == null || input.next === '') return input.existing;
+  if (typeof input.next !== 'string') throw new HttpError(400, `${input.field} must be a string`);
+  const next = input.next.trim();
+  if (next.length > 0) return next;
   return input.existing;
 }
 
 function optionalHost(value: unknown): string | null {
-  const host = optionalString(value);
+  const host = optionalSettingsString(value, 'smtp.host');
   if (host == null) return null;
   if (host.length > 253 || host.includes('://') || host.includes('/') || host.includes('@')) {
     throw new HttpError(400, 'smtp.host must be a hostname');
@@ -226,11 +240,7 @@ function optionalHost(value: unknown): string | null {
 }
 
 function optionalPort(value: unknown): number | null {
-  const port = optionalNumber(value);
-  if (port == null) return null;
-  if (!Number.isInteger(port) || port < 1 || port > 65535) {
-    throw new HttpError(400, 'smtp.port must be between 1 and 65535');
-  }
+  const port = optionalInteger(value, 'smtp.port', { min: 1, max: 65535 });
   if (port === 25) {
     throw new HttpError(400, 'SMTP port 25 is not supported on Cloudflare Workers');
   }
@@ -238,7 +248,7 @@ function optionalPort(value: unknown): number | null {
 }
 
 function optionalEmail(value: unknown, field: string): string | null {
-  const email = optionalString(value);
+  const email = optionalSettingsString(value, field);
   if (email == null) return null;
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     throw new HttpError(400, `${field} must be a valid email address`);
@@ -246,15 +256,29 @@ function optionalEmail(value: unknown, field: string): string | null {
   return email;
 }
 
-function optionalSecureMode(value: unknown): SmtpSecureMode | null {
-  if (value == null || value === '') return null;
-  const mode = String(value) as SmtpSecureMode;
+function requireSecureMode(value: unknown): SmtpSecureMode {
+  if (value == null || value === '') {
+    throw new HttpError(400, 'smtp.secureMode is required');
+  }
+  if (typeof value !== 'string') throw new HttpError(400, 'smtp.secureMode must be a string');
+  const mode = value.trim() as SmtpSecureMode;
+  if (mode.length === 0) throw new HttpError(400, 'smtp.secureMode is required');
   if (!SMTP_SECURE_MODES.has(mode)) throw new HttpError(400, 'smtp.secureMode is invalid');
   return mode;
 }
 
 function normalizeSecureMode(value: string): SmtpSecureMode {
-  return SMTP_SECURE_MODES.has(value as SmtpSecureMode) ? value as SmtpSecureMode : 'starttls';
+  if (!SMTP_SECURE_MODES.has(value as SmtpSecureMode)) {
+    throw new HttpError(500, 'Invalid stored SMTP secure mode');
+  }
+  return value as SmtpSecureMode;
+}
+
+function optionalSettingsString(value: unknown, field: string): string | null {
+  if (value == null || value === '') return null;
+  if (typeof value !== 'string') throw new HttpError(400, `${field} must be a string`);
+  const trimmed = value.trim();
+  return trimmed.length === 0 ? null : trimmed;
 }
 
 function assertSmtpSettingsAreCoherent(settings: {

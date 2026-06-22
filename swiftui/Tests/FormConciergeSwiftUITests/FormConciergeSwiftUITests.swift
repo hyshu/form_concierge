@@ -12,6 +12,17 @@ final class FormConciergeSwiftUITests: XCTestCase {
     XCTAssertEqual(normalizeFormContentLocale("de_DE"), "de")
   }
 
+  func testVisibilityRuleValueAccessorsRejectCoercion() {
+    XCTAssertEqual(VisibilityRuleValue.int(7).intValue, 7)
+    XCTAssertNil(VisibilityRuleValue.string("7").intValue)
+    XCTAssertNil(VisibilityRuleValue.double(7).intValue)
+
+    XCTAssertEqual(VisibilityRuleValue.string("ready").stringValue, "ready")
+    XCTAssertNil(VisibilityRuleValue.int(7).stringValue)
+    XCTAssertNil(VisibilityRuleValue.bool(true).stringValue)
+    XCTAssertNil(VisibilityRuleValue.null.stringValue)
+  }
+
   func testAdminReplyCheckStatusDetectsNewReplies() {
     let latest = Date(timeIntervalSince1970: 100)
 
@@ -181,6 +192,29 @@ final class FormConciergeSwiftUITests: XCTestCase {
     } catch FormConciergeError.api(let status, let message) {
       XCTAssertEqual(status, 403)
       XCTAssertEqual(message, "Forbidden")
+    } catch {
+      XCTFail("Unexpected error: \(error)")
+    }
+  }
+
+  func testApiErrorsRejectBodiesWithoutServerErrorMessage() async throws {
+    let client = makeClient { _ in
+      let data = try! JSONSerialization.data(withJSONObject: ["message": "Forbidden"])
+      let response = HTTPURLResponse(
+        url: URL(string: "https://api.example.com/api/anonymous/replies/latest")!,
+        statusCode: 403,
+        httpVersion: nil,
+        headerFields: ["content-type": "application/json"]
+      )!
+      return (response, data)
+    }
+
+    await client.setAnonymousToken("anon-token")
+
+    do {
+      _ = try await client.latestReplyAt()
+      XCTFail("Expected decoding error")
+    } catch is DecodingError {
     } catch {
       XCTFail("Unexpected error: \(error)")
     }

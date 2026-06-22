@@ -1,4 +1,4 @@
-import { HttpError, objectBody, requireString } from './utils';
+import { HttpError, requireObject, requireString } from './utils';
 
 export const FORM_CONTENT_LOCALES = ['en', 'ja', 'zh-Hans', 'zh-Hant', 'ko', 'de'] as const;
 export const DEFAULT_FORM_CONTENT_LOCALE = 'en';
@@ -7,7 +7,12 @@ export type LocalizedText = Record<string, string>;
 
 export function requireSupportedLocales(value: unknown): string[] {
   if (!Array.isArray(value)) throw new HttpError(400, 'supportedLocales must be an array');
-  const locales = value.map(String);
+  const locales = value.map((locale, index) => {
+    if (typeof locale !== 'string') {
+      throw new HttpError(400, `supportedLocales[${index}] must be a string`);
+    }
+    return locale;
+  });
   if (locales.length === 0) throw new HttpError(400, 'supportedLocales must not be empty');
   for (const locale of locales) {
     if (!FORM_CONTENT_LOCALES.includes(locale as typeof FORM_CONTENT_LOCALES[number])) {
@@ -31,10 +36,7 @@ export function requireLocalizedText(
   locales: readonly string[],
   options: { allowEmpty?: boolean } = {},
 ): LocalizedText {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    throw new HttpError(400, `${field} must be an object`);
-  }
-  const raw = objectBody(value);
+  const raw = requireObject(value, field);
   const localized: LocalizedText = {};
   for (const locale of locales) {
     const rawValue = raw[locale];
@@ -64,7 +66,10 @@ export function parseLocalizedText(value: string): LocalizedText {
     throw new HttpError(500, 'Invalid localized text');
   }
   return Object.fromEntries(
-    Object.entries(decoded).map(([locale, text]) => [locale, String(text)]),
+    Object.entries(decoded).map(([locale, text]) => {
+      if (typeof text !== 'string') throw new HttpError(500, `Invalid localized text for locale: ${locale}`);
+      return [locale, text];
+    }),
   );
 }
 

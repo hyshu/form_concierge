@@ -1,5 +1,5 @@
 import type { AnswerInput, Env, QuestionRow, VisibilityRuleInput, VisibilityRuleRow } from './types';
-import { HttpError, isChoiceQuestionType, isTextQuestionType, json, nowIso, readJson } from './utils';
+import { HttpError, isChoiceQuestionType, isTextQuestionType, json, nowIso, optionalInteger, readJson, requiredInteger } from './utils';
 import { mustSurvey } from './admin_records';
 import { visibilityRuleToJson } from './serializers';
 
@@ -14,7 +14,7 @@ const VISIBILITY_OPERATORS = new Set([
 
 const VALUELESS_OPERATORS = new Set(['isAnswered', 'isNotAnswered']);
 
-type NormalizedVisibilityRule = {
+export type NormalizedVisibilityRule = {
   targetQuestionId: number;
   sourceQuestionId: number;
   operator: string;
@@ -99,8 +99,8 @@ export function visibleQuestionIds(
 ): Set<number> {
   const answerByQuestion = new Map<number, AnswerInput>();
   for (const answer of answers) {
-    const questionId = Number(answer.questionId);
-    if (Number.isInteger(questionId)) answerByQuestion.set(questionId, answer);
+    const questionId = optionalInteger(answer.questionId, 'questionId', { min: 1 });
+    if (questionId != null) answerByQuestion.set(questionId, answer);
   }
   const questionById = new Map(questions.map((question) => [question.id, question]));
   const rulesByTarget = new Map<number, VisibilityRuleRow[]>();
@@ -130,16 +130,15 @@ export function visibleQuestionIds(
   return visible;
 }
 
-function normalizeRuleInput(value: unknown): NormalizedVisibilityRule {
+export function normalizeRuleInput(value: unknown): NormalizedVisibilityRule {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     throw new HttpError(400, 'Invalid visibility rule');
   }
   const raw = value as VisibilityRuleInput;
-  const targetQuestionId = Number(raw.targetQuestionId);
-  const sourceQuestionId = Number(raw.sourceQuestionId);
-  if (!Number.isInteger(targetQuestionId)) throw new HttpError(400, 'targetQuestionId is required');
-  if (!Number.isInteger(sourceQuestionId)) throw new HttpError(400, 'sourceQuestionId is required');
-  const operator = String(raw.operator);
+  const targetQuestionId = requiredInteger(raw.targetQuestionId, 'targetQuestionId', { min: 1 });
+  const sourceQuestionId = requiredInteger(raw.sourceQuestionId, 'sourceQuestionId', { min: 1 });
+  const operator = raw.operator;
+  if (typeof operator !== 'string') throw new HttpError(400, 'Invalid visibility operator');
   if (!VISIBILITY_OPERATORS.has(operator)) throw new HttpError(400, 'Invalid visibility operator');
   return {
     targetQuestionId,
@@ -158,10 +157,7 @@ function validateRuleValue(source: QuestionRow, operator: string, value: unknown
     return;
   }
   if (isChoiceQuestionType(source.type)) {
-    const choiceId = Number(value);
-    if (!Number.isInteger(choiceId)) {
-      throw new HttpError(400, 'Choice visibility rules require a choice id');
-    }
+    requiredInteger(value, 'Choice visibility rule value', { min: 1 });
     return;
   }
   throw new HttpError(400, 'Unsupported source question type');
@@ -180,7 +176,7 @@ function evaluateRule(
   const expected = parseRuleValue(rule);
   if (isTextQuestionType(source.type)) {
     const actual = typeof answer?.textValue === 'string' ? answer.textValue.trim() : '';
-    const expectedText = String(expected);
+    const expectedText = requireTextRuleValue(rule, expected);
     if (rule.operator === 'equals') return actual === expectedText;
     if (rule.operator === 'notEquals') return actual !== expectedText;
     if (rule.operator === 'contains') return actual.includes(expectedText);
@@ -188,9 +184,9 @@ function evaluateRule(
   }
 
   const selected = Array.isArray(answer?.selectedChoiceIds)
-    ? answer.selectedChoiceIds.map(Number)
+    ? answer.selectedChoiceIds.map((choiceId) => requiredInteger(choiceId, 'selectedChoiceIds', { min: 1 }))
     : [];
-  const expectedChoiceId = Number(expected);
+  const expectedChoiceId = requiredInteger(expected, 'Visibility rule choice id', { min: 1 });
   if (rule.operator === 'equals' || rule.operator === 'contains') {
     return selected.includes(expectedChoiceId);
   }
@@ -215,6 +211,13 @@ function parseRuleValue(rule: VisibilityRuleRow): unknown {
   } catch {
     throw new HttpError(500, `Invalid visibility rule value for rule ${rule.id}`);
   }
+}
+
+function requireTextRuleValue(rule: VisibilityRuleRow, value: unknown): string {
+  if (typeof value !== 'string') {
+    throw new HttpError(500, `Invalid visibility rule value for rule ${rule.id}`);
+  }
+  return value;
 }
 
 async function getCurrentQuestions(db: D1Database, surveyId: number): Promise<QuestionRow[]> {

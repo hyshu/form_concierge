@@ -40,7 +40,7 @@ class AiIntegrationSettings {
 
   factory AiIntegrationSettings.fromJson(Map<String, dynamic> json) =>
       AiIntegrationSettings(
-        provider: _enum(AiProvider.values, json['provider'], AiProvider.gemini),
+        provider: _enum(AiProvider.values, json['provider']),
         gemini: _object(json['gemini'], AiProviderKeySettings.fromJson),
         openai: _object(json['openai'], AiProviderKeySettings.fromJson),
         claude: _object(json['claude'], AiProviderKeySettings.fromJson),
@@ -88,17 +88,13 @@ class SmtpIntegrationSettings {
   factory SmtpIntegrationSettings.fromJson(Map<String, dynamic> json) =>
       SmtpIntegrationSettings(
         configured: _bool(json['configured']),
-        host: json['host'] as String?,
+        host: _optionalString(json['host']),
         port: json['port'] == null ? null : _int(json['port']),
-        username: json['username'] as String?,
+        username: _optionalString(json['username']),
         hasPassword: _bool(json['hasPassword']),
-        fromEmail: json['fromEmail'] as String?,
-        fromName: json['fromName'] as String?,
-        secureMode: _enum(
-          SmtpSecureMode.values,
-          json['secureMode'],
-          SmtpSecureMode.starttls,
-        ),
+        fromEmail: _optionalString(json['fromEmail']),
+        fromName: _optionalString(json['fromName']),
+        secureMode: _enum(SmtpSecureMode.values, json['secureMode']),
       );
 }
 

@@ -55,45 +55,21 @@ class Client {
     bool authenticated = false,
     String? bearerToken,
   }) async {
-    final uri = baseUri.replace(
-      path: '${baseUri.path}${path.startsWith('/') ? path : '/$path'}',
-      queryParameters: query == null
-          ? null
-          : Map.fromEntries(
-              query.entries.where((entry) => entry.value.isNotEmpty),
-            ),
+    final response = await _sendRequest(
+      method,
+      path,
+      query: query,
+      body: body,
+      authenticated: authenticated,
+      bearerToken: bearerToken,
+      accept: 'application/json',
     );
-
-    final headers = <String, String>{
-      'accept': 'application/json',
-      if (body != null) 'content-type': 'application/json',
-      if (bearerToken != null) 'authorization': 'Bearer $bearerToken',
-      if (bearerToken == null && authenticated && auth.token != null)
-        'authorization': 'Bearer ${auth.token}',
-    };
-
-    final response = await _httpClient
-        .send(
-          http.Request(method, uri)
-            ..headers.addAll(headers)
-            ..body = body == null ? '' : jsonEncode(body),
-        )
-        .then(http.Response.fromStream);
 
     final text = response.body;
     final decoded = text.isEmpty ? null : jsonDecode(text);
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      String message = 'Request failed';
-      Object? details = decoded;
-      if (decoded is Map<String, dynamic>) {
-        message =
-            decoded['error']?.toString() ??
-            decoded['message']?.toString() ??
-            message;
-        details = decoded['details'];
-      }
-      throw ApiException(response.statusCode, message, details);
+      throw _apiException(response.statusCode, decoded);
     }
 
     return decoded;
@@ -106,45 +82,17 @@ class Client {
     bool authenticated = false,
     String? bearerToken,
   }) async {
-    final uri = baseUri.replace(
-      path: '${baseUri.path}${path.startsWith('/') ? path : '/$path'}',
-      queryParameters: query == null
-          ? null
-          : Map.fromEntries(
-              query.entries.where((entry) => entry.value.isNotEmpty),
-            ),
+    final response = await _sendRequest(
+      method,
+      path,
+      query: query,
+      authenticated: authenticated,
+      bearerToken: bearerToken,
+      accept: '*/*',
     );
 
-    final headers = <String, String>{
-      'accept': '*/*',
-      if (bearerToken != null) 'authorization': 'Bearer $bearerToken',
-      if (bearerToken == null && authenticated && auth.token != null)
-        'authorization': 'Bearer ${auth.token}',
-    };
-
-    final response = await _httpClient
-        .send(http.Request(method, uri)..headers.addAll(headers))
-        .then(http.Response.fromStream);
-
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      Object? details;
-      var message = 'Request failed';
-      try {
-        final decoded = response.body.isEmpty
-            ? null
-            : jsonDecode(response.body);
-        details = decoded;
-        if (decoded is Map<String, dynamic>) {
-          message =
-              decoded['error']?.toString() ??
-              decoded['message']?.toString() ??
-              message;
-          details = decoded['details'];
-        }
-      } on Object {
-        message = response.body.isEmpty ? message : response.body;
-      }
-      throw ApiException(response.statusCode, message, details);
+      throw _rawApiException(response);
     }
 
     return RawResponse(
@@ -157,6 +105,57 @@ class Client {
   }
 
   void close() => _httpClient.close();
+
+  Future<http.Response> _sendRequest(
+    String method,
+    String path, {
+    Map<String, String>? query,
+    Object? body,
+    bool authenticated = false,
+    String? bearerToken,
+    required String accept,
+  }) {
+    final request = http.Request(method, _uriFor(path, query))
+      ..headers.addAll(
+        _headers(
+          accept: accept,
+          hasBody: body != null,
+          authenticated: authenticated,
+          bearerToken: bearerToken,
+        ),
+      );
+    if (body != null) {
+      request.body = jsonEncode(body);
+    }
+
+    return _httpClient.send(request).then(http.Response.fromStream);
+  }
+
+  Uri _uriFor(String path, Map<String, String>? query) {
+    return baseUri.replace(
+      path: '${baseUri.path}${path.startsWith('/') ? path : '/$path'}',
+      queryParameters: query == null
+          ? null
+          : Map.fromEntries(
+              query.entries.where((entry) => entry.value.isNotEmpty),
+            ),
+    );
+  }
+
+  Map<String, String> _headers({
+    required String accept,
+    required bool hasBody,
+    required bool authenticated,
+    required String? bearerToken,
+  }) {
+    return {
+      'accept': accept,
+      if (hasBody) 'content-type': 'application/json',
+      if (bearerToken != null) 'authorization': 'Bearer $bearerToken',
+      if (bearerToken == null && authenticated && auth.token != null)
+        'authorization': 'Bearer ${auth.token}',
+    };
+  }
 }
 
 class RawResponse {
@@ -177,6 +176,26 @@ String? _filenameFromContentDisposition(String? header) {
   if (header == null) return null;
   final match = RegExp(r'filename="?([^";]+)"?').firstMatch(header);
   return match?.group(1);
+}
+
+ApiException _apiException(int statusCode, Object? decoded) {
+  if (decoded is! Map<String, dynamic>) {
+    throw FormatException(
+      'Expected API error object, got ${decoded.runtimeType}',
+    );
+  }
+  final error = decoded['error'];
+  if (error is! String || error.trim().isEmpty) {
+    throw const FormatException('Expected API error string');
+  }
+  final details = decoded['details'];
+  final message = error.trim();
+  return ApiException(statusCode, message, details);
+}
+
+ApiException _rawApiException(http.Response response) {
+  final decoded = jsonDecode(response.body);
+  return _apiException(response.statusCode, decoded);
 }
 
 class ClientAuth {

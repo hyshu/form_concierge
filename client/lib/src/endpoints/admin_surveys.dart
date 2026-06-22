@@ -186,7 +186,7 @@ class QuestionAdminEndpoint {
       '/api/admin/questions/$questionId',
       authenticated: true,
     );
-    return _bool(json['hardDeleted'], true);
+    return _bool(json['hardDeleted']);
   }
 
   Future<List<Question>> reorder(int surveyId, List<int> questionIds) async {

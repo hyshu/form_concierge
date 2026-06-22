@@ -1,5 +1,5 @@
 import type { AdminContext, AdminRow, Env } from './types';
-import { HttpError, json, nowIso, readJson, requireString } from './utils';
+import { HttpError, countRows, json, nowIso, readJson, requireString } from './utils';
 import { hashPassword } from './crypto';
 import { adminContextToJson, adminUserToJson } from './serializers';
 import { getAdminById } from './auth';
@@ -56,9 +56,10 @@ async function isLastActiveAdmin(db: D1Database, userId: string): Promise<boolea
     `SELECT scope_names FROM admins WHERE id = ?`,
   ).bind(userId).first<{ scope_names: string }>();
   if (!target || !target.scope_names.includes('"admin"')) return false;
-  const row = await db.prepare(
+  const count = await countRows(
+    db,
     `SELECT COUNT(*) AS count FROM admins
      WHERE scope_names LIKE '%"admin"%'`,
-  ).first<{ count: number }>();
-  return Number(row?.count ?? 0) <= 1;
+  );
+  return count <= 1;
 }

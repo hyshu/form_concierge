@@ -199,27 +199,17 @@ public enum VisibilityRuleValue: Codable, Equatable, Sendable {
     switch self {
     case .int(let value):
       value
-    case .double(let value):
-      Int(value)
-    case .string(let value):
-      Int(value)
-    case .bool, .null:
+    case .string, .double, .bool, .null:
       nil
     }
   }
 
-  var stringValue: String {
+  var stringValue: String? {
     switch self {
     case .string(let value):
       value
-    case .int(let value):
-      "\(value)"
-    case .double(let value):
-      "\(value)"
-    case .bool(let value):
-      "\(value)"
-    case .null:
-      ""
+    case .int, .double, .bool, .null:
+      nil
     }
   }
 }

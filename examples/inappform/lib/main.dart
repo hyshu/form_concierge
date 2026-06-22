@@ -62,10 +62,14 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  void _openSurvey(BuildContext context) {
-    Navigator.of(
+  Future<void> _openSurvey(BuildContext context) async {
+    final submitted = await Navigator.of(
       context,
-    ).push(MaterialPageRoute(builder: (context) => const SurveyPage()));
+    ).push<bool>(MaterialPageRoute(builder: (context) => const SurveyPage()));
+    if (!context.mounted || submitted != true) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Survey submitted!')));
   }
 }
 
@@ -83,10 +87,7 @@ class SurveyPage extends StatelessWidget {
         locale: _locale.isEmpty ? null : _locale,
         metadata: const {'source': 'inappform-example'},
         onSubmitted: () {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Survey submitted!')));
-          Navigator.of(context).pop();
+          Navigator.of(context).pop(true);
         },
       ),
     );

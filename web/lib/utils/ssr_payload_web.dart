@@ -15,8 +15,10 @@ Map<String, dynamic>? readSsrSurveyPayload({
     if (decoded is! Map<String, dynamic>) return null;
     final project = decoded['project'];
     if (project is! Map<String, dynamic>) return null;
-    final projectSlug = project['slug']?.toString();
-    final projectDomain = project['customDomain']?.toString();
+    final projectSlug = project['slug'];
+    final projectDomain = project['customDomain'];
+    if (projectSlug is! String) return null;
+    if (projectDomain != null && projectDomain is! String) return null;
     if (slug != null && slug.isNotEmpty && projectSlug != slug) return null;
     if (domain != null &&
         domain.isNotEmpty &&

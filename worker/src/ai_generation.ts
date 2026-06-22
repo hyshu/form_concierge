@@ -285,7 +285,6 @@ function extractClaudeText(payload: unknown): string {
 function parseGeneratedQuestions(text: string, provider: AiProvider): unknown[] {
   try {
     const decoded = JSON.parse(text);
-    if (Array.isArray(decoded)) return decoded;
     const questions = (decoded as { questions?: unknown })?.questions;
     if (Array.isArray(questions)) return questions;
     throw new Error('not questions');
@@ -308,43 +307,64 @@ function normalizeGeneratedQuestion(value: unknown, provider: AiProvider) {
     throw new HttpError(502, `${providerLabel(provider)} returned a text question with choices`);
   }
   return {
-    textTranslations: normalizeLocalizedText(input.textTranslations, 'Question', provider),
+    textTranslations: normalizeLocalizedText(input.textTranslations, provider),
     type,
-    isRequired: input.isRequired !== false,
-    placeholderTranslations: normalizeLocalizedText(input.placeholderTranslations, '', provider),
-    minLength: nullableInteger(input.minLength),
-    maxLength: nullableInteger(input.maxLength),
-    minSelected: nullableInteger(input.minSelected),
-    maxSelected: nullableInteger(input.maxSelected),
-    visibilityConditionMode: input.visibilityConditionMode === 'any' ? 'any' : 'all',
+    isRequired: normalizeRequiredBoolean(input.isRequired, 'isRequired', provider),
+    placeholderTranslations: normalizeLocalizedText(input.placeholderTranslations, provider),
+    minLength: nullableInteger(input.minLength, 'minLength', provider),
+    maxLength: nullableInteger(input.maxLength, 'maxLength', provider),
+    minSelected: nullableInteger(input.minSelected, 'minSelected', provider),
+    maxSelected: nullableInteger(input.maxSelected, 'maxSelected', provider),
+    visibilityConditionMode: normalizeVisibilityConditionMode(input.visibilityConditionMode, provider),
     choiceTranslations: choices,
   };
 }
 
 function normalizeChoiceTranslations(value: unknown, provider: AiProvider): Record<string, string>[] {
-  if (!Array.isArray(value)) return [];
-  return value.map((item) => normalizeLocalizedText(item, 'Choice', provider));
+  if (!Array.isArray(value)) {
+    throw new HttpError(502, `${providerLabel(provider)} returned invalid choice translations`);
+  }
+  return value.map((item) => normalizeLocalizedText(item, provider));
 }
 
-function normalizeLocalizedText(value: unknown, fallback: string, provider: AiProvider): Record<string, string> {
+function normalizeLocalizedText(value: unknown, provider: AiProvider): Record<string, string> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     throw new HttpError(502, `${providerLabel(provider)} returned invalid localized text`);
   }
   const raw = value as Record<string, unknown>;
-  const primary = stringValue(raw.en) || fallback;
   return Object.fromEntries(
-    LOCALES.map((locale) => [locale, stringValue(raw[locale]) || primary]),
+    LOCALES.map((locale) => {
+      const text = localizedStringValue(raw[locale], locale, provider);
+      return [locale, text];
+    }),
   );
 }
 
-function nullableInteger(value: unknown): number | null {
-  if (value == null || value === '') return null;
-  const number = Number(value);
-  return Number.isInteger(number) ? number : null;
+function normalizeRequiredBoolean(value: unknown, field: string, provider: AiProvider): boolean {
+  if (typeof value !== 'boolean') {
+    throw new HttpError(502, `${providerLabel(provider)} returned invalid boolean for ${field}`);
+  }
+  return value;
 }
 
-function stringValue(value: unknown): string {
-  return typeof value === 'string' ? value.trim() : '';
+function normalizeVisibilityConditionMode(value: unknown, provider: AiProvider): 'all' | 'any' {
+  if (value === 'all' || value === 'any') return value;
+  throw new HttpError(502, `${providerLabel(provider)} returned invalid visibility condition mode`);
+}
+
+function nullableInteger(value: unknown, field: string, provider: AiProvider): number | null {
+  if (value == null) return null;
+  if (typeof value !== 'number' || !Number.isSafeInteger(value)) {
+    throw new HttpError(502, `${providerLabel(provider)} returned invalid integer for ${field}`);
+  }
+  return value;
+}
+
+function localizedStringValue(value: unknown, locale: string, provider: AiProvider): string {
+  if (typeof value !== 'string') {
+    throw new HttpError(502, `${providerLabel(provider)} returned missing localized text for ${locale}`);
+  }
+  return value.trim();
 }
 
 function providerLabel(provider: AiProvider): string {

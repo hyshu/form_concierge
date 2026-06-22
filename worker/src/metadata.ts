@@ -1,5 +1,5 @@
 import type { NormalizedDeviceInfo } from './types';
-import { compactObject, HttpError } from './utils';
+import { compactObject, HttpError, optionalInteger } from './utils';
 
 export function normalizeDeviceInfo(value: unknown): NormalizedDeviceInfo {
   const empty: NormalizedDeviceInfo = {
@@ -128,19 +128,13 @@ function optionalLimitedString(value: unknown, field: string, maxLength = 160): 
 }
 
 function optionalPositiveInteger(value: unknown, field: string): number | null {
-  if (value == null || value === '') return null;
-  const number = Number(value);
-  if (!Number.isInteger(number) || number < 0 || number > 100000) {
-    throw new HttpError(400, `${field} must be a positive integer`);
-  }
-  return number;
+  return optionalInteger(value, field, { min: 0, max: 100000 });
 }
 
 function optionalPositiveNumber(value: unknown, field: string): number | null {
-  if (value == null || value === '') return null;
-  const number = Number(value);
-  if (!Number.isFinite(number) || number < 0 || number > 1000) {
+  if (value == null) return null;
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 1000) {
     throw new HttpError(400, `${field} must be a positive number`);
   }
-  return number;
+  return value;
 }

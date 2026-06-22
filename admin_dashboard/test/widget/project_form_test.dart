@@ -38,6 +38,10 @@ void main() {
         find.byType(TextFormField).at(2),
         'Customer Feedback',
       );
+      await tester.enterText(
+        find.byType(TextFormField).at(3),
+        '顧客フィードバック',
+      );
       await tester.ensureVisible(find.text('Create Project'));
       await tester.tap(find.text('Create Project'));
       await tester.pumpAndSettle();
@@ -48,7 +52,7 @@ void main() {
       expect(savedProject!.nameTranslations.values.keys, ['en', 'ja']);
       expect(
         savedProject!.nameTranslations.valueFor('ja'),
-        'Customer Feedback',
+        '顧客フィードバック',
       );
     });
 

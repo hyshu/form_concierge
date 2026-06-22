@@ -1,9 +1,7 @@
 import type { ChoiceRow, Env, ProjectRow, QuestionRow, SurveyRow } from './types';
 import { choiceToJson, projectToJson, questionToJson, surveyToJson, visibilityRuleToJson } from './serializers';
-import { optionalCustomDomain } from './utils';
+import { HttpError, optionalCustomDomain, requiredIntegerParam } from './utils';
 import { getVisibilityRules } from './visibility_rules';
-
-const DEFAULT_FORM_ASSET_BASE_URL = 'http://localhost:8081';
 
 type PublicFormData = {
   project: ReturnType<typeof projectToJson>;
@@ -34,9 +32,15 @@ export function isPublicFormHtmlRequest(request: Request, path: string): boolean
 export async function renderPublicForm(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const pathParts = pathPartsFromPath(url.pathname);
+  const surveyId = isApiHost(env, url)
+    ? surveyIdFromPathPart(pathParts[1])
+    : surveyIdFromPathPart(pathParts[0]);
+  if (!surveyId.valid) {
+    return html(request, renderNotFoundHtml(env, url), 404);
+  }
   const data = isApiHost(env, url)
-    ? await loadProjectBySlug(env, pathParts[0] ?? null, surveyIdFromPathPart(pathParts[1]))
-    : await loadProjectByDomain(env, url.hostname, surveyIdFromPathPart(pathParts[0]));
+    ? await loadProjectBySlug(env, pathParts[0] ?? null, surveyId.value)
+    : await loadProjectByDomain(env, url.hostname, surveyId.value);
 
   if (!data) {
     if (pathParts.length === 0 && isApiHost(env, url)) {
@@ -135,9 +139,7 @@ async function loadChoicesByQuestion(
     const rows = await env.DB.prepare(
       `SELECT * FROM choices WHERE question_id = ? ORDER BY order_index`,
     ).bind(question.id).all<ChoiceRow>();
-    if (rows.results.length > 0) {
-      choicesByQuestion[String(question.id)] = rows.results.map(choiceToJson);
-    }
+    choicesByQuestion[String(question.id)] = rows.results.map(choiceToJson);
   }
   return choicesByQuestion;
 }
@@ -147,7 +149,7 @@ function renderSurveyHtml(env: Env, url: URL, data: PublicFormData): string {
   const title = textFor(data.survey.titleTranslations, locale);
   const description = textFor(data.survey.descriptionTranslations, locale);
   const assetBaseUrl = publicFormAssetBaseUrl(env);
-  const apiUrl = publicApiUrl(env, url);
+  const apiUrl = publicApiUrl(env);
   const payload = { ...data, apiUrl };
 
   return documentHtml({
@@ -180,7 +182,7 @@ function renderProjectListHtml(env: Env, url: URL, data: PublicProjectData): str
   const title = textFor(data.project.nameTranslations, locale);
   const description = textFor(data.project.descriptionTranslations, locale);
   const assetBaseUrl = publicFormAssetBaseUrl(env);
-  const apiUrl = publicApiUrl(env, url);
+  const apiUrl = publicApiUrl(env);
   const payload = { ...data, apiUrl };
 
   return documentHtml({
@@ -220,7 +222,7 @@ function renderNotFoundHtml(env: Env, url: URL): string {
     lang: 'en',
     title: 'Survey Not Found',
     description: 'The survey you are looking for does not exist or is not available.',
-    apiUrl: publicApiUrl(env, url),
+    apiUrl: publicApiUrl(env),
     assetBaseUrl: publicFormAssetBaseUrl(env),
     payload: null,
     body: `
@@ -234,7 +236,7 @@ function renderNotFoundHtml(env: Env, url: URL): string {
 }
 
 function renderServiceRootHtml(env: Env, url: URL): string {
-  const apiUrl = publicApiUrl(env, url);
+  const apiUrl = publicApiUrl(env);
   return documentHtml({
     lang: 'en',
     title: 'Form Concierge API',
@@ -302,7 +304,8 @@ function renderQuestion(
 ): string {
   const label = textFor(question.textTranslations, locale);
   const required = question.isRequired ? '<span class="ml-1 text-red-500">*</span>' : '';
-  const choices = choicesByQuestion[String(question.id)] ?? [];
+  const choices = choicesByQuestion[String(question.id)];
+  if (!choices) throw new HttpError(500, `Missing choices for question ${question.id}`);
   return `
     <article class="bg-white rounded-xl shadow-md border border-slate-200 p-5">
       <h2 class="font-medium text-slate-900">${escapeHtml(label)}${required}</h2>
@@ -339,17 +342,32 @@ function renderQuestionInput(
 }
 
 function textFor(translations: Record<string, string>, locale: string): string {
-  return translations[locale] ?? translations.en ?? Object.values(translations)[0] ?? '';
+  const text = translations[locale];
+  if (typeof text !== 'string') {
+    throw new HttpError(500, `Missing localized text for locale: ${locale}`);
+  }
+  return text;
 }
 
 function pathPartsFromPath(pathname: string): string[] {
   return pathname.split('/').filter(Boolean).map(decodeURIComponent);
 }
 
-function surveyIdFromPathPart(value: string | undefined): number | null {
-  if (value == null || value.length === 0) return null;
-  const id = Number(value);
-  return Number.isInteger(id) && id > 0 ? id : null;
+type SurveyIdPathPart = {
+  valid: true;
+  value: number | null;
+} | {
+  valid: false;
+};
+
+function surveyIdFromPathPart(value: string | undefined): SurveyIdPathPart {
+  if (value == null || value.length === 0) return { valid: true, value: null };
+  try {
+    return { valid: true, value: requiredIntegerParam(value, 'surveyId', { min: 1 }) };
+  } catch (error) {
+    if (error instanceof HttpError) return { valid: false };
+    throw error;
+  }
 }
 
 function surveyHref(env: Env, url: URL, projectSlug: string, surveyId: number): string {
@@ -365,20 +383,16 @@ function isAccepting(survey: SurveyRow): boolean {
   return true;
 }
 
-function publicApiUrl(env: Env, url: URL): string {
-  return removeTrailingSlash(env.PUBLIC_BASE_URL ?? url.origin);
+function publicApiUrl(env: Env): string {
+  return removeTrailingSlash(env.PUBLIC_BASE_URL);
 }
 
 function isApiHost(env: Env, url: URL): boolean {
-  try {
-    return new URL(publicApiUrl(env, url)).hostname === url.hostname;
-  } catch {
-    return false;
-  }
+  return new URL(publicApiUrl(env)).hostname === url.hostname;
 }
 
 function publicFormAssetBaseUrl(env: Env): string {
-  return removeTrailingSlash(env.PUBLIC_FORM_ASSET_BASE_URL ?? DEFAULT_FORM_ASSET_BASE_URL);
+  return removeTrailingSlash(env.PUBLIC_FORM_ASSET_BASE_URL);
 }
 
 function removeTrailingSlash(value: string): string {
