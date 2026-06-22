@@ -3,7 +3,6 @@ import {
   HttpError,
   boolToInt,
   countRows,
-  insertChoices,
   isChoiceQuestionType,
   json,
   normalizeQuestionType,
@@ -15,7 +14,7 @@ import {
 } from './utils';
 import { surveyToJson } from './serializers';
 import { mustProject, mustSurvey } from './admin_records';
-import { normalizeQuestionValidation, normalizeVisibilityConditionMode } from './admin_questions';
+import { insertQuestion, normalizeQuestionValidation, normalizeVisibilityConditionMode } from './admin_questions';
 import {
   DEFAULT_FORM_CONTENT_LOCALE,
   FORM_CONTENT_LOCALES,
@@ -87,30 +86,11 @@ export async function createSurveyWithQuestions(
   const created = await insertSurvey(env.DB, survey, admin);
 
   for (let i = 0; i < questions.length; i++) {
-    const q = questions[i];
-    const question = await env.DB.prepare(
-      `INSERT INTO questions
-         (survey_id, text_translations, type, order_index, is_required, placeholder_translations,
-          min_length, max_length, min_selected, max_selected, visibility_condition_mode)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-       RETURNING *`,
-    ).bind(
-      created.id,
-      JSON.stringify(q.textTranslations),
-      q.type,
-      i,
-      boolToInt(q.isRequired),
-      JSON.stringify(q.placeholderTranslations),
-      q.minLength,
-      q.maxLength,
-      q.minSelected,
-      q.maxSelected,
-      q.visibilityConditionMode,
-    ).first<QuestionRow>();
-    if (!question) throw new HttpError(500, 'Failed to create question');
-    if (isChoiceQuestionType(question.type)) {
-      await insertChoices(env.DB, question.id, q.choiceTranslations);
-    }
+    await insertQuestion(env.DB, {
+      ...questions[i],
+      surveyId: created.id,
+      orderIndex: i,
+    });
   }
   return json(surveyToJson(created), 201);
 }
