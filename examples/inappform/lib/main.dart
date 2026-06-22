@@ -4,10 +4,21 @@ import 'package:form_concierge_survey_widget/form_concierge_survey_widget.dart';
 
 late final Client client;
 
+const _apiUrl = String.fromEnvironment(
+  'FORM_CONCIERGE_API_URL',
+  defaultValue: 'http://localhost:8787',
+);
+const _projectSlug = String.fromEnvironment(
+  'FORM_CONCIERGE_PROJECT_SLUG',
+  defaultValue: 'demo-project',
+);
+const _surveyIdValue = int.fromEnvironment('FORM_CONCIERGE_SURVEY_ID');
+const _locale = String.fromEnvironment('FORM_CONCIERGE_LOCALE');
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  client = Client('http://localhost:8787');
+  client = Client(_apiUrl);
 
   runApp(const MainApp());
 }
@@ -67,7 +78,10 @@ class SurveyPage extends StatelessWidget {
       appBar: AppBar(title: const Text('Survey')),
       body: FormConciergeSurvey(
         client: client,
-        projectSlug: 'demo-project',
+        projectSlug: _projectSlug,
+        surveyId: _surveyIdValue == 0 ? null : _surveyIdValue,
+        locale: _locale.isEmpty ? null : _locale,
+        metadata: const {'source': 'inappform-example'},
         onSubmitted: () {
           ScaffoldMessenger.of(
             context,
