@@ -11,7 +11,7 @@ class SurveyListState {
 
   const SurveyListState({
     this.surveys = const [],
-    this.isLoading = false,
+    this.isLoading = true,
     this.error,
   });
 

@@ -3,6 +3,7 @@ import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:hux/hux.dart';
 
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/widgets/hux_states.dart';
 
 /// View for configuring response email notifications.
 class NotificationSettingsView extends StatefulWidget {
@@ -97,7 +98,10 @@ class _NotificationSettingsViewState extends State<NotificationSettingsView> {
   @override
   Widget build(BuildContext context) {
     if (widget.isLoading && widget.settings == null) {
-      return const Center(child: HuxLoading(size: HuxLoadingSize.large));
+      return HuxLoadingState(
+        message: context.tr('Loading...'),
+        padding: const EdgeInsets.only(top: 16, bottom: 16),
+      );
     }
 
     return SingleChildScrollView(

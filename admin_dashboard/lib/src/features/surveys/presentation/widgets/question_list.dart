@@ -90,7 +90,13 @@ class QuestionList extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16),
-        if (questions.isEmpty)
+        if (isLoading && questions.isEmpty)
+          HuxLoadingState(
+            message: context.tr('Loading...'),
+            size: HuxLoadingSize.medium,
+            padding: EdgeInsets.zero,
+          )
+        else if (questions.isEmpty)
           HuxEmptyState(
             icon: LucideIcons.circleHelp,
             title: context.tr('No questions yet'),

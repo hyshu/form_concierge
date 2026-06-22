@@ -26,7 +26,10 @@ class AggregatedResultsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (isLoading && results == null) {
-      return const Center(child: HuxLoading(size: HuxLoadingSize.large));
+      return HuxLoadingState(
+        message: context.tr('Loading...'),
+        padding: const EdgeInsets.only(top: 16, bottom: 16),
+      );
     }
 
     if (error != null && results == null) {

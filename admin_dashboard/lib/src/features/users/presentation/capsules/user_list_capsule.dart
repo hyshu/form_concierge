@@ -11,7 +11,7 @@ class UserListState {
 
   const UserListState({
     this.users = const [],
-    this.isLoading = false,
+    this.isLoading = true,
     this.error,
   });
 

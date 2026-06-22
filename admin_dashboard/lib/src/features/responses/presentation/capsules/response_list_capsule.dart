@@ -18,7 +18,7 @@ class ResponseListState {
   const ResponseListState({
     this.responses = const [],
     this.totalCount = 0,
-    this.isLoading = false,
+    this.isLoading = true,
     this.isExporting = false,
     this.error,
     this.currentPage = 0,

@@ -79,6 +79,64 @@ class HuxEmptyState extends StatelessWidget {
   }
 }
 
+class HuxLoadingState extends StatelessWidget {
+  const HuxLoadingState({
+    super.key,
+    this.message,
+    this.size = HuxLoadingSize.large,
+    this.maxWidth = 960,
+    this.padding = const EdgeInsets.all(24),
+  });
+
+  final String? message;
+  final HuxLoadingSize size;
+  final double maxWidth;
+  final EdgeInsetsGeometry padding;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: padding,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compactWidth = maxWidth < 280 ? maxWidth : 280.0;
+          final width = constraints.maxWidth.isFinite
+              ? constraints.maxWidth.clamp(0.0, compactWidth).toDouble()
+              : compactWidth;
+
+          return Align(
+            alignment: Alignment.topCenter,
+            child: SizedBox(
+              width: width,
+              child: HuxCard(
+                child: SizedBox(
+                  width: double.infinity,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      HuxLoading(size: size),
+                      if (message != null && message!.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        Text(
+                          message!,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: HuxTokens.textSecondary(context),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
 class HuxErrorState extends StatelessWidget {
   const HuxErrorState({
     super.key,

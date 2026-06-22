@@ -73,7 +73,7 @@ class DashboardPage extends RearchConsumer {
     bool canWrite,
   ) {
     if (manager.state.isLoading && manager.state.surveys.isEmpty) {
-      return const Center(child: HuxLoading(size: HuxLoadingSize.large));
+      return HuxLoadingState(message: context.tr('Loading...'));
     }
 
     if (manager.state.error != null && manager.state.surveys.isEmpty) {

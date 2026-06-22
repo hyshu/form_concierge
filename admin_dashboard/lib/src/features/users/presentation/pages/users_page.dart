@@ -57,7 +57,7 @@ class UsersPage extends RearchConsumer {
     UuidValue? currentUserId,
   ) {
     if (manager.state.isLoading && manager.state.users.isEmpty) {
-      return const Center(child: HuxLoading(size: HuxLoadingSize.large));
+      return HuxLoadingState(message: context.tr('Loading...'));
     }
 
     if (manager.state.error != null) {
