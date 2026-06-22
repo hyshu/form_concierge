@@ -6,11 +6,6 @@
 
 import 'package:jaspr/client.dart';
 
-import 'package:form_concierge_web/components/domain_redirect_client.dart'
-    deferred as _domain_redirect_client;
-import 'package:form_concierge_web/components/survey_client.dart'
-    deferred as _survey_client;
-
 /// Default [ClientOptions] for use with your Jaspr project.
 ///
 /// Use this to initialize Jaspr **before** calling [runApp].
@@ -27,35 +22,4 @@ import 'package:form_concierge_web/components/survey_client.dart'
 ///   runApp(...);
 /// }
 /// ```
-ClientOptions get defaultClientOptions => ClientOptions(
-  clients: {
-    'domain_redirect_client': ClientLoader(
-      (p) => _domain_redirect_client.DomainRedirectClient(
-        serverUrl: p['serverUrl'] as String,
-      ),
-      loader: _domain_redirect_client.loadLibrary,
-    ),
-    'survey_client': ClientLoader(
-      (p) => _survey_client.SurveyClient(
-        surveyJson: (p['surveyJson'] as Map<String, Object?>),
-        questionsJson: (p['questionsJson'] as List<Object?>)
-            .map((i) => (i as Map<String, Object?>))
-            .toList(),
-        visibilityRulesJson: (p['visibilityRulesJson'] as List<Object?>)
-            .map((i) => (i as Map<String, Object?>))
-            .toList(),
-        choicesByQuestionJson:
-            (p['choicesByQuestionJson'] as Map<String, Object?>).map(
-              (k, v) => MapEntry(
-                k,
-                (v as List<Object?>)
-                    .map((i) => (i as Map<String, Object?>))
-                    .toList(),
-              ),
-            ),
-        serverUrl: p['serverUrl'] as String,
-      ),
-      loader: _survey_client.loadLibrary,
-    ),
-  },
-);
+ClientOptions get defaultClientOptions => ClientOptions();

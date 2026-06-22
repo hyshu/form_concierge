@@ -20,14 +20,20 @@ class LoginPage extends RearchConsumer {
     final controllers = use(loginFormControllersCapsule);
     final colorScheme = Theme.of(context).colorScheme;
 
-    // Check for first user and load config on mount
+    // Load login prerequisites after stored auth restoration has completed.
     use.effect(
       () {
-        authManager.checkFirstUser();
-        configManager.loadConfig();
+        if (authManager.state.hasCheckedAuth &&
+            !authManager.state.isAuthenticated) {
+          authManager.checkFirstUser();
+          configManager.loadConfig();
+        }
         return null;
       },
-      [],
+      [
+        authManager.state.hasCheckedAuth,
+        authManager.state.isAuthenticated,
+      ],
     );
 
     final isFirstUser = authManager.state.isFirstUser == true;

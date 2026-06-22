@@ -1,13 +1,11 @@
 import 'package:jaspr/client.dart';
 
-import 'main.client.options.dart';
+import 'app.dart';
+
+const _serverUrl = 'http://localhost:8787';
 
 void main() {
-  Jaspr.initializeApp(
-    options: defaultClientOptions,
-  );
-
   runApp(
-    const ClientApp(),
+    const App(serverUrl: _serverUrl),
   );
 }

@@ -6,7 +6,6 @@ import 'survey_error.dart';
 import 'survey_loading.dart';
 import '../utils/domain_location.dart';
 
-@client
 class DomainRedirectClient extends StatefulComponent {
   const DomainRedirectClient({
     required this.serverUrl,
