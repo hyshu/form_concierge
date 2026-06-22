@@ -1,12 +1,12 @@
 import type { AdminContext, AnswerRow, ChoiceRow, Env, ProjectRow, QuestionRow, ReplyRow, ResponseRow } from './types';
 import { mustProject, mustSurvey } from './admin_records';
-import { HttpError, countRows, isChoiceQuestionType, json, nowIso, readJson, requireString, requiredRow } from './utils';
+import { HttpError, countRows, integerParam, isChoiceQuestionType, json, nowIso, readJson, requireString, requiredRow } from './utils';
 import { answerToJson, choiceToJson, parseChoiceIds, projectToJson, questionToJson, replyToJson, responseToJson, surveyToJson } from './serializers';
 import { DEFAULT_FORM_CONTENT_LOCALE, localizedTextFor } from './localization';
 
 export async function listResponses(env: Env, surveyId: number, url: URL): Promise<Response> {
-  const limit = Math.min(Number(url.searchParams.get('limit') ?? '50'), 100);
-  const offset = Math.max(Number(url.searchParams.get('offset') ?? '0'), 0);
+  const limit = integerParam(url.searchParams.get('limit'), 'limit', 50, { min: 1, max: 100 });
+  const offset = integerParam(url.searchParams.get('offset'), 'offset', 0, { min: 0 });
   const rows = await env.DB.prepare(
     `SELECT id, survey_id, anonymous_account_id, anonymous_id, submitted_at, user_agent,
        device_id, device_label, device_platform, device_os, device_os_version,
@@ -59,7 +59,7 @@ export async function aggregatedResults(env: Env, surveyId: number): Promise<Res
       for (const choice of choices.results) counts[String(choice.id)] = 0;
       for (const answer of answers.results) {
         const selected = parseChoiceIds(answer.selected_choice_ids);
-        for (const choiceId of selected) counts[String(choiceId)] = (counts[String(choiceId)] ?? 0) + 1;
+        for (const choiceId of selected) incrementChoiceCount(counts, choiceId);
       }
       questionResults.push({
         questionId: question.id,
@@ -84,7 +84,7 @@ export async function aggregatedResults(env: Env, surveyId: number): Promise<Res
 }
 
 export async function responseTrends(env: Env, surveyId: number, url: URL): Promise<Response> {
-  const days = Math.min(Math.max(Number(url.searchParams.get('days') ?? '30'), 1), 365);
+  const days = integerParam(url.searchParams.get('days'), 'days', 30, { min: 1, max: 365 });
   const start = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
   const rows = await env.DB.prepare(
     `SELECT submitted_at FROM survey_responses WHERE survey_id = ? AND submitted_at >= ?`,
@@ -332,7 +332,7 @@ function toExportCsv(data: ExportData): string {
   return `${lines.join('\n')}\n`;
 }
 
-function formatAnswerForCsv(
+export function formatAnswerForCsv(
   question: QuestionRow,
   answer: AnswerRow | undefined,
   choiceTextById: Map<number, string>,
@@ -340,8 +340,24 @@ function formatAnswerForCsv(
   if (!answer) return '';
   if (!isChoiceQuestionType(question.type)) return answer.text_value ?? '';
   return parseChoiceIds(answer.selected_choice_ids)
-    .map((choiceId) => choiceTextById.get(choiceId) ?? String(choiceId))
+    .map((choiceId) => requireChoiceText(choiceTextById, choiceId))
     .join('; ');
+}
+
+export function incrementChoiceCount(counts: Record<string, number>, choiceId: number): void {
+  const key = String(choiceId);
+  if (!Object.hasOwn(counts, key)) {
+    throw new HttpError(500, `Unknown choice id ${choiceId}`);
+  }
+  counts[key] += 1;
+}
+
+function requireChoiceText(choiceTextById: Map<number, string>, choiceId: number): string {
+  const text = choiceTextById.get(choiceId);
+  if (text == null) {
+    throw new HttpError(500, `Unknown choice id ${choiceId}`);
+  }
+  return text;
 }
 
 function questionColumnName(question: QuestionRow): string {

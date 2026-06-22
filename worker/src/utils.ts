@@ -3,6 +3,7 @@ import type { AnswerInput } from './types';
 export const CHOICE_QUESTION_TYPES = new Set(['singleChoice', 'multipleChoice']);
 export const TEXT_QUESTION_TYPES = new Set(['textSingle', 'textMultiLine']);
 export const QUESTION_TYPES = new Set([...CHOICE_QUESTION_TYPES, ...TEXT_QUESTION_TYPES]);
+const JSON_BODY_MAX_BYTES = 1024 * 1024;
 
 export const jsonHeaders = {
   'content-type': 'application/json; charset=utf-8',
@@ -15,20 +16,57 @@ export async function readJson(
   request: Request,
   optional = false,
 ): Promise<Record<string, unknown>> {
-  const text = await request.text();
+  const text = await readTextWithLimit(request, JSON_BODY_MAX_BYTES);
   if (!text && optional) return {};
   if (!text) throw new HttpError(400, 'JSON body required');
+  let decoded: unknown;
   try {
-    return objectBody(JSON.parse(text));
+    decoded = JSON.parse(text);
   } catch {
     throw new HttpError(400, 'Invalid JSON body');
   }
+  if (!decoded || typeof decoded !== 'object' || Array.isArray(decoded)) {
+    throw new HttpError(400, 'JSON body must be an object');
+  }
+  return decoded as Record<string, unknown>;
 }
 
-export function objectBody(value: unknown): Record<string, unknown> {
-  return value && typeof value === 'object' && !Array.isArray(value)
-    ? value as Record<string, unknown>
-    : {};
+async function readTextWithLimit(request: Request, maxBytes: number): Promise<string> {
+  const contentLength = request.headers.get('content-length');
+  if (contentLength != null) {
+    if (!/^\d+$/.test(contentLength)) throw new HttpError(400, 'Invalid Content-Length');
+    if (Number(contentLength) > maxBytes) throw new HttpError(413, 'JSON body too large');
+  }
+  if (!request.body) return '';
+
+  const reader = request.body.getReader();
+  const decoder = new TextDecoder();
+  let bytesRead = 0;
+  let text = '';
+
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      bytesRead += value.byteLength;
+      if (bytesRead > maxBytes) {
+        await reader.cancel();
+        throw new HttpError(413, 'JSON body too large');
+      }
+      text += decoder.decode(value, { stream: true });
+    }
+    text += decoder.decode();
+    return text;
+  } finally {
+    reader.releaseLock();
+  }
+}
+
+export function requireObject(value: unknown, field: string): Record<string, unknown> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new HttpError(400, `${field} must be an object`);
+  }
+  return value as Record<string, unknown>;
 }
 
 export function requireAnswerInput(value: unknown): AnswerInput {
@@ -52,9 +90,40 @@ export class HttpError extends Error {
   }
 }
 
+export function logError(event: string, error: unknown, context: Record<string, unknown> = {}): void {
+  console.error(JSON.stringify({
+    level: 'error',
+    event,
+    ...context,
+    error: errorToLogObject(error),
+  }));
+}
+
+export function logWarn(event: string, context: Record<string, unknown> = {}): void {
+  console.warn(JSON.stringify({
+    level: 'warn',
+    event,
+    ...context,
+  }));
+}
+
+function errorToLogObject(error: unknown): Record<string, string> {
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: error.message,
+      stack: error.stack ?? '',
+    };
+  }
+  return { message: String(error) };
+}
+
 export async function countRows(db: D1Database, sql: string, ...binds: unknown[]): Promise<number> {
-  const row = await db.prepare(sql).bind(...binds).first<{ count: number }>();
-  return Number(row?.count ?? 0);
+  const row = await db.prepare(sql).bind(...binds).first<{ count: unknown }>();
+  if (!row || typeof row.count !== 'number' || !Number.isSafeInteger(row.count)) {
+    throw new HttpError(500, 'Count query failed');
+  }
+  return row.count;
 }
 
 export function requiredRow<T>(row: T | null, name: string): T {
@@ -69,8 +138,23 @@ export function requireString(value: unknown, field: string): string {
   return value.trim();
 }
 
-export function optionalString(value: unknown): string | null {
-  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+export function optionalString(value: unknown, field: string): string | null {
+  if (value == null || value === '') return null;
+  if (typeof value !== 'string') throw new HttpError(400, `${field} must be a string`);
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+export function optionalBoolean(value: unknown, field: string): boolean | null {
+  if (value == null) return null;
+  if (typeof value !== 'boolean') throw new HttpError(400, `${field} must be a boolean`);
+  return value;
+}
+
+export function requiredBoolean(value: unknown, field: string): boolean {
+  const boolean = optionalBoolean(value, field);
+  if (boolean == null) throw new HttpError(400, `${field} is required`);
+  return boolean;
 }
 
 export function optionalCustomDomain(value: unknown): string | null {
@@ -91,10 +175,75 @@ export function optionalCustomDomain(value: unknown): string | null {
   return domain;
 }
 
-export function optionalNumber(value: unknown): number | null {
-  if (value == null || value === '') return null;
-  const number = Number(value);
-  return Number.isFinite(number) ? number : null;
+type IntegerParamOptions = {
+  min?: number;
+  max?: number;
+};
+
+export function optionalIntegerParam(
+  value: string | null,
+  field: string,
+  options: IntegerParamOptions = {},
+): number | null {
+  if (value == null) return null;
+  if (value.trim().length === 0) return null;
+  if (!/^-?\d+$/.test(value)) throw new HttpError(400, `${field} must be an integer`);
+  return validateInteger(Number(value), field, options);
+}
+
+export function optionalInteger(
+  value: unknown,
+  field: string,
+  options: IntegerParamOptions = {},
+): number | null {
+  if (value == null) return null;
+  if (typeof value !== 'number') throw new HttpError(400, `${field} must be an integer`);
+  return validateInteger(value, field, options);
+}
+
+function validateInteger(
+  number: number,
+  field: string,
+  options: IntegerParamOptions,
+): number {
+  if (!Number.isInteger(number)) throw new HttpError(400, `${field} must be an integer`);
+  if (!Number.isSafeInteger(number)) throw new HttpError(400, `${field} must be a safe integer`);
+  if (options.min != null && number < options.min) {
+    throw new HttpError(400, `${field} must be at least ${options.min}`);
+  }
+  if (options.max != null && number > options.max) {
+    throw new HttpError(400, `${field} must be at most ${options.max}`);
+  }
+  return number;
+}
+
+export function integerParam(
+  value: string | null,
+  field: string,
+  defaultValue: number,
+  options: IntegerParamOptions = {},
+): number {
+  return optionalIntegerParam(value, field, options) ?? defaultValue;
+}
+
+export function requiredInteger(
+  value: unknown,
+  field: string,
+  options: IntegerParamOptions = {},
+): number {
+  const number = optionalInteger(value, field, options);
+  if (number == null) throw new HttpError(400, `${field} is required`);
+  return number;
+}
+
+export function requiredIntegerParam(
+  value: string | null | undefined,
+  field: string,
+  options: IntegerParamOptions = {},
+): number {
+  const number = optionalIntegerParam(value ?? null, field, options);
+  if (number == null) throw new HttpError(400, `${field} is required`);
+  return number;
 }
 
 export function requireSlug(value: unknown): string {
@@ -103,11 +252,13 @@ export function requireSlug(value: unknown): string {
   return slug;
 }
 
-export function requireNumberList(value: unknown, field: string): number[] {
+export function requireNumberList(
+  value: unknown,
+  field: string,
+  options: IntegerParamOptions = {},
+): number[] {
   if (!Array.isArray(value)) throw new HttpError(400, `${field} must be an array`);
-  const numbers = value.map(Number);
-  if (!numbers.every(Number.isInteger)) throw new HttpError(400, `${field} must contain integers`);
-  return numbers;
+  return value.map((item, index) => requiredInteger(item, `${field}[${index}]`, options));
 }
 
 export function assertExactIds(expected: number[], actual: number[], field: string): void {
@@ -153,15 +304,18 @@ export async function updateOrder(
 }
 
 export function normalizeQuestionType(value: unknown): string {
-  const type = String(value);
+  if (typeof value !== 'string') {
+    throw new HttpError(400, 'Invalid question type');
+  }
+  const type = value;
   if (QUESTION_TYPES.has(type)) {
     return type;
   }
   throw new HttpError(400, 'Invalid question type');
 }
 
-export function boolToInt(value: unknown): number {
-  return value === true || value === 1 || value === 'true' ? 1 : 0;
+export function boolToInt(value: boolean): number {
+  return value ? 1 : 0;
 }
 
 export function compactObject(source: Record<string, unknown>): Record<string, unknown> {

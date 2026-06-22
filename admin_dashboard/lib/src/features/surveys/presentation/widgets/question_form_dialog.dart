@@ -312,7 +312,6 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
             ? localizedTextFromControllers(
                 _placeholderControllers,
                 primaryLocale: widget.primaryLocale,
-                fallbackEmptyToPrimary: false,
               )
             : LocalizedText.filled(''),
         minLength: _parseInt(_minLengthController.text),

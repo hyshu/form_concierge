@@ -125,7 +125,6 @@ class _SurveyFormState extends State<SurveyForm> {
           widget.controllers.descriptionTranslations,
           primaryLocale: widget.primaryLocale,
           locales: widget.locales,
-          fallbackEmptyToPrimary: false,
         ),
       );
     }

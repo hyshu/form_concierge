@@ -30,44 +30,68 @@ extension QuestionTypeProperties on QuestionType {
 String _enumName(Object value) => value.toString().split('.').last;
 
 DateTime _date(dynamic value) =>
-    value is DateTime ? value : DateTime.parse(value as String);
+    value is DateTime ? value : DateTime.parse(_string(value));
 
 DateTime? _optionalDate(dynamic value) => value == null ? null : _date(value);
 
-int _int(dynamic value) => value is int ? value : int.parse(value.toString());
-
-double _double(dynamic value) =>
-    value is double ? value : double.parse(value.toString());
-
-bool _bool(dynamic value, [bool fallback = false]) {
-  if (value == null) return fallback;
-  if (value is bool) return value;
-  if (value is num) return value != 0;
-  return value.toString() == 'true';
+String _string(dynamic value) {
+  if (value is String) return value;
+  throw FormatException('Expected string, got ${value.runtimeType}');
 }
 
-T _enum<T>(Iterable<T> values, dynamic value, T fallback) {
-  if (value == null) return fallback;
-  final name = value.toString();
+String? _optionalString(dynamic value) => value == null ? null : _string(value);
+
+List<String> _stringList(dynamic value) {
+  if (value is! List) {
+    throw FormatException('Expected string list, got ${value.runtimeType}');
+  }
+  return value.map(_string).toList();
+}
+
+int _int(dynamic value) {
+  if (value is int) return value;
+  throw FormatException('Expected integer, got ${value.runtimeType}');
+}
+
+double _double(dynamic value) {
+  if (value is num) return value.toDouble();
+  throw FormatException('Expected number, got ${value.runtimeType}');
+}
+
+bool _bool(dynamic value) {
+  if (value is bool) return value;
+  throw FormatException('Expected boolean, got ${value.runtimeType}');
+}
+
+T _enum<T extends Object>(Iterable<T> values, dynamic value) {
+  if (value is! String) {
+    throw FormatException('Expected enum string, got ${value.runtimeType}');
+  }
+  final name = value;
   return values.firstWhere(
-    (v) => _enumName(v as Object) == name,
-    orElse: () => fallback,
+    (v) => _enumName(v) == name,
+    orElse: () => throw FormatException('Unknown enum value: $name'),
   );
+}
+
+int _intStringKey(Object? key) {
+  final value = _string(key);
+  if (!RegExp(r'^-?\d+$').hasMatch(value)) {
+    throw FormatException('Expected integer key, got $value');
+  }
+  return int.parse(value);
 }
 
 List<int>? _intList(dynamic value) {
   if (value == null) return null;
   if (value is List) return value.map(_int).toList();
-  if (value is String && value.isNotEmpty) {
-    final decoded = jsonDecode(value);
-    if (decoded is List) return decoded.map(_int).toList();
-  }
-  return null;
+  throw FormatException('Expected integer list, got ${value.runtimeType}');
 }
 
 Map<String, dynamic>? _map(dynamic value) {
+  if (value == null) return null;
   if (value is Map) return Map<String, dynamic>.from(value);
-  return null;
+  throw FormatException('Expected JSON object, got ${value.runtimeType}');
 }
 
 Map<String, dynamic> _requiredMap(dynamic value) {
@@ -94,7 +118,10 @@ List<T> _objectList<T>(
   dynamic value,
   T Function(Map<String, dynamic>) fromJson,
 ) {
-  final list = value as List? ?? const [];
+  if (value is! List) {
+    throw FormatException('Expected JSON array, got ${value.runtimeType}');
+  }
+  final list = value;
   return list.map((item) => _object(item, fromJson)).toList();
 }
 

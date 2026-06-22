@@ -1,8 +1,8 @@
 import type { Env, NotificationSettingsRow } from './types';
-import { boolToInt, json, nowIso, readJson, requireString, requiredRow } from './utils';
+import { boolToInt, json, logWarn, nowIso, readJson, requireString, requiredBoolean, requiredRow } from './utils';
 import { notificationToJson } from './serializers';
-import { getIntegrationSettingsRow, isSmtpConfigured, requireSmtpSettings } from './admin_settings';
-import { sendEmail } from './smtp';
+import { getIntegrationSettingsRow, isSmtpConfigured, requireSmtpSettings, type RequiredSmtpSettings } from './admin_settings';
+import type { EmailMessage } from './smtp';
 import { DEFAULT_FORM_CONTENT_LOCALE, localizedTextFor } from './localization';
 import type { ProjectRow, ResponseRow, SurveyRow } from './types';
 
@@ -32,7 +32,7 @@ export async function notificationSettings(
        RETURNING *`,
     ).bind(
       surveyId,
-      boolToInt(body.enabled),
+      boolToInt(requiredBoolean(body.enabled, 'enabled')),
       requireString(body.recipientEmail, 'recipientEmail'),
       nowIso(),
     ).first<NotificationSettingsRow>();
@@ -43,7 +43,7 @@ export async function notificationSettings(
     const row = await env.DB.prepare(
       `UPDATE notification_settings SET enabled = ?, updated_at = ?
        WHERE survey_id = ? RETURNING *`,
-    ).bind(boolToInt(body.enabled), nowIso(), surveyId).first<NotificationSettingsRow>();
+    ).bind(boolToInt(requiredBoolean(body.enabled, 'enabled')), nowIso(), surveyId).first<NotificationSettingsRow>();
     return json(notificationToJson(requiredRow(row, 'NotificationSettings')));
   }
   if (method === 'POST' && parts[5] === 'test') {
@@ -52,7 +52,7 @@ export async function notificationSettings(
       `SELECT * FROM notification_settings WHERE survey_id = ?`,
     ).bind(surveyId).first<NotificationSettingsRow>();
     const notification = requiredRow(row, 'NotificationSettings');
-    await sendEmail(settings, {
+    await sendEmailMessage(settings, {
       to: notification.recipient_email,
       subject: 'Form Concierge test notification',
       text: [
@@ -85,7 +85,10 @@ export async function sendResponseNotification(
 
   const integrationSettings = await getIntegrationSettingsRow(env);
   if (!isSmtpConfigured(integrationSettings)) {
-    console.error('SMTP settings are not configured');
+    logWarn('smtp_settings_not_configured', {
+      surveyId: survey.id,
+      responseId: response.id,
+    });
     return;
   }
 
@@ -97,7 +100,7 @@ export async function sendResponseNotification(
     survey.title_translations,
     project?.default_locale ?? DEFAULT_FORM_CONTENT_LOCALE,
   );
-  await sendEmail(settings, {
+  await sendEmailMessage(settings, {
     to: notification.recipient_email,
     subject: `New response: ${surveyTitle}`,
     text: [
@@ -108,4 +111,9 @@ export async function sendResponseNotification(
       `Submitted at: ${response.submitted_at}`,
     ].join('\n'),
   });
+}
+
+async function sendEmailMessage(settings: RequiredSmtpSettings, message: EmailMessage): Promise<void> {
+  const { sendEmail } = await import('./smtp');
+  await sendEmail(settings, message);
 }

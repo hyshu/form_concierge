@@ -6,12 +6,18 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "typecheck": "tsc --noEmit",
+    "types:worker": "wrangler types src/worker-env.d.ts --env-interface WorkerEnv --include-runtime false --strict-vars false",
+    "check:worker-types": "wrangler types src/worker-env.d.ts --env-interface WorkerEnv --include-runtime false --strict-vars false --check",
+    "typecheck": "npm run check:worker-types && tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
+    "test:typecheck": "tsc --noEmit -p tsconfig.test.json",
+    "test": "tsx --test \"src/**/*.test.ts\"",
     "d1:migrate:local": "wrangler d1 migrations apply form_concierge --local",
     "d1:migrate:remote": "wrangler d1 migrations apply form_concierge --remote"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260620.0",
+    "@types/node": "^26.0.0",
+    "tsx": "^4.22.4",
     "typescript": "^5.8.3",
     "wrangler": "^4.21.0"
   }

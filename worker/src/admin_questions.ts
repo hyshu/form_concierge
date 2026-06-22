@@ -8,10 +8,12 @@ import {
   isChoiceQuestionType,
   json,
   normalizeQuestionType,
-  optionalNumber,
+  optionalBoolean,
+  optionalInteger,
   optionalString,
   readJson,
   requireNumberList,
+  requiredInteger,
   requiredRow,
   updateOrder,
 } from './utils';
@@ -36,7 +38,7 @@ type InsertQuestionInput = {
 
 export async function createQuestion(request: Request, env: Env): Promise<Response> {
   const body = await readJson(request);
-  const surveyId = Number(body.surveyId);
+  const surveyId = requiredInteger(body.surveyId, 'surveyId', { min: 1 });
   await mustSurvey(env.DB, surveyId);
   const type = normalizeQuestionType(body.type);
   const validation = normalizeQuestionValidation(body, type);
@@ -48,7 +50,7 @@ export async function createQuestion(request: Request, env: Env): Promise<Respon
     textTranslations: requireLocalizedText(body.textTranslations, 'textTranslations', FORM_CONTENT_LOCALES),
     type,
     orderIndex: (max?.max_order ?? -1) + 1,
-    isRequired: body.isRequired !== false,
+    isRequired: optionalBoolean(body.isRequired, 'isRequired') ?? true,
     placeholderTranslations: requireLocalizedText(
       body.placeholderTranslations,
       'placeholderTranslations',
@@ -115,8 +117,8 @@ export async function updateQuestion(request: Request, env: Env, questionId: num
   ).bind(
     JSON.stringify(requireLocalizedText(body.textTranslations, 'textTranslations', FORM_CONTENT_LOCALES)),
     type,
-    optionalNumber(body.orderIndex) ?? existing.order_index,
-    boolToInt(body.isRequired ?? existing.is_required === 1),
+    optionalInteger(body.orderIndex, 'orderIndex', { min: 0 }) ?? existing.order_index,
+    boolToInt(optionalBoolean(body.isRequired, 'isRequired') ?? (existing.is_required === 1)),
     JSON.stringify(requireLocalizedText(
       body.placeholderTranslations,
       'placeholderTranslations',
@@ -128,14 +130,16 @@ export async function updateQuestion(request: Request, env: Env, questionId: num
     validation.minSelected,
     validation.maxSelected,
     normalizeVisibilityConditionMode(body.visibilityConditionMode ?? existing.visibility_condition_mode),
-    boolToInt(body.isDeleted ?? existing.is_deleted === 1),
+    boolToInt(optionalBoolean(body.isDeleted, 'isDeleted') ?? (existing.is_deleted === 1)),
     questionId,
   ).first<QuestionRow>();
   return json(questionToJson(requiredRow(row, 'Question')));
 }
 
 export function normalizeVisibilityConditionMode(value: unknown): string {
-  const mode = String(value ?? 'all');
+  if (value == null) return 'all';
+  if (typeof value !== 'string') throw new HttpError(400, 'Invalid visibility condition mode');
+  const mode = value;
   if (mode === 'all' || mode === 'any') return mode;
   throw new HttpError(400, 'Invalid visibility condition mode');
 }
@@ -149,15 +153,10 @@ export function normalizeQuestionValidation(
   minSelected: number | null;
   maxSelected: number | null;
 } {
-  const minLength = optionalNumber(body.minLength);
-  const maxLength = optionalNumber(body.maxLength);
-  const minSelected = optionalNumber(body.minSelected);
-  const maxSelected = optionalNumber(body.maxSelected);
-  for (const [field, value] of Object.entries({ minLength, maxLength, minSelected, maxSelected })) {
-    if (value != null && (!Number.isInteger(value) || value < 0)) {
-      throw new HttpError(400, `${field} must be a non-negative integer`);
-    }
-  }
+  const minLength = optionalInteger(body.minLength, 'minLength', { min: 0 });
+  const maxLength = optionalInteger(body.maxLength, 'maxLength', { min: 0 });
+  const minSelected = optionalInteger(body.minSelected, 'minSelected', { min: 0 });
+  const maxSelected = optionalInteger(body.maxSelected, 'maxSelected', { min: 0 });
   if (minLength != null && maxLength != null && minLength > maxLength) {
     throw new HttpError(400, 'minLength cannot be greater than maxLength');
   }
@@ -202,7 +201,7 @@ export async function deleteQuestion(env: Env, questionId: number): Promise<Resp
 
 export async function reorderQuestions(request: Request, env: Env, surveyId: number): Promise<Response> {
   const body = await readJson(request);
-  const questionIds = requireNumberList(body.questionIds, 'questionIds');
+  const questionIds = requireNumberList(body.questionIds, 'questionIds', { min: 1 });
   const rows = await env.DB.prepare(
     `SELECT * FROM questions WHERE survey_id = ? AND is_deleted = 0 ORDER BY order_index`,
   ).bind(surveyId).all<QuestionRow>();
@@ -227,7 +226,7 @@ export async function getQuestion(env: Env, questionId: number): Promise<Respons
 
 export async function createChoice(request: Request, env: Env): Promise<Response> {
   const body = await readJson(request);
-  const question = await mustQuestion(env.DB, Number(body.questionId));
+  const question = await mustQuestion(env.DB, requiredInteger(body.questionId, 'questionId', { min: 1 }));
   if (!isChoiceQuestionType(question.type)) {
     throw new HttpError(400, 'Only choice questions can have choices');
   }
@@ -242,7 +241,7 @@ export async function createChoice(request: Request, env: Env): Promise<Response
     question.id,
     JSON.stringify(requireLocalizedText(body.textTranslations, 'textTranslations', FORM_CONTENT_LOCALES)),
     (max?.max_order ?? -1) + 1,
-    optionalString(body.value),
+    optionalString(body.value, 'value'),
   ).first<ChoiceRow>();
   return json(choiceToJson(requiredRow(row, 'Choice')), 201);
 }
@@ -254,8 +253,8 @@ export async function updateChoice(request: Request, env: Env, choiceId: number)
     `UPDATE choices SET text_translations = ?, order_index = ?, value = ? WHERE id = ? RETURNING *`,
   ).bind(
     JSON.stringify(requireLocalizedText(body.textTranslations, 'textTranslations', FORM_CONTENT_LOCALES)),
-    optionalNumber(body.orderIndex) ?? existing.order_index,
-    optionalString(body.value ?? existing.value),
+    optionalInteger(body.orderIndex, 'orderIndex', { min: 0 }) ?? existing.order_index,
+    optionalString(body.value ?? existing.value, 'value'),
     choiceId,
   ).first<ChoiceRow>();
   return json(choiceToJson(requiredRow(row, 'Choice')));
@@ -269,7 +268,7 @@ export async function deleteChoice(env: Env, choiceId: number): Promise<Response
 
 export async function reorderChoices(request: Request, env: Env, questionId: number): Promise<Response> {
   const body = await readJson(request);
-  const choiceIds = requireNumberList(body.choiceIds, 'choiceIds');
+  const choiceIds = requireNumberList(body.choiceIds, 'choiceIds', { min: 1 });
   const rows = await env.DB.prepare(
     `SELECT * FROM choices WHERE question_id = ? ORDER BY order_index`,
   ).bind(questionId).all<ChoiceRow>();

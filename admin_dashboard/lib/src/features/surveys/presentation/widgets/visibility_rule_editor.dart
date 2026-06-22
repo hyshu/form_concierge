@@ -376,13 +376,13 @@ class _ValueFieldState extends State<_ValueField> {
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(text: widget.value?.toString() ?? '');
+    _controller = TextEditingController(text: _textValue(widget.value));
   }
 
   @override
   void didUpdateWidget(_ValueField oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final nextText = widget.value?.toString() ?? '';
+    final nextText = _textValue(widget.value);
     if (oldWidget.value != widget.value && _controller.text != nextText) {
       _controller.text = nextText;
     }
@@ -400,15 +400,11 @@ class _ValueFieldState extends State<_ValueField> {
       final choiceIds = widget.choices
           .map((choice) => choice.id)
           .whereType<int>();
-      final current = widget.value == null
-          ? null
-          : int.tryParse(widget.value.toString());
+      final current = widget.value is int ? widget.value as int : null;
       return _LabeledControl(
         label: context.tr('Choice'),
         child: HuxDropdown<int>(
-          value: choiceIds.contains(current)
-              ? current
-              : _firstOrNull(widget.choices)?.id,
+          value: choiceIds.contains(current) ? current : null,
           useItemWidgetAsValue: true,
           enabled: widget.enabled,
           items: [
@@ -426,6 +422,8 @@ class _ValueFieldState extends State<_ValueField> {
       onChanged: widget.onChanged,
     );
   }
+
+  String _textValue(Object? value) => value is String ? value : '';
 }
 
 List<VisibilityOperator> _operatorsFor(Question source) {

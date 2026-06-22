@@ -110,17 +110,30 @@ class SurveyClientState extends State<SurveyClient> {
       return;
     }
 
-    final choicesByQuestion = (payload['choicesByQuestion'] as Map? ?? {})
-        .map<String, List<Choice>>(
-          (key, value) => MapEntry(
-            key.toString(),
-            (value as List? ?? const [])
-                .whereType<Map>()
-                .map((item) => Choice.fromJson(Map<String, dynamic>.from(item)))
-                .toList(),
-          ),
-        )
-        .map((key, value) => MapEntry(int.parse(key), value));
+    final choicesPayload = payload['choicesByQuestion'];
+    if (choicesPayload != null && choicesPayload is! Map) {
+      throw const FormatException('Expected choicesByQuestion object');
+    }
+    final choicesByQuestion = (choicesPayload as Map? ?? const {})
+        .map<int, List<Choice>>((key, value) {
+      if (key is! String) {
+        throw FormatException(
+            'Expected choice question id key, got ${key.runtimeType}');
+      }
+      if (value is! List) {
+        throw FormatException('Expected choice list, got ${value.runtimeType}');
+      }
+      return MapEntry(
+        int.parse(key),
+        value.map((item) {
+          if (item is! Map) {
+            throw FormatException(
+                'Expected choice object, got ${item.runtimeType}');
+          }
+          return Choice.fromJson(Map<String, dynamic>.from(item));
+        }).toList(),
+      );
+    });
 
     _hydrateSurvey(
       project,

@@ -4,12 +4,16 @@ import {
   boolToInt,
   countRows,
   isChoiceQuestionType,
+  isTextQuestionType,
   json,
   normalizeQuestionType,
   nowIso,
-  objectBody,
+  optionalBoolean,
   optionalString,
   readJson,
+  requireObject,
+  requiredBoolean,
+  requiredInteger,
   requiredRow,
 } from './utils';
 import { surveyToJson } from './serializers';
@@ -64,12 +68,12 @@ async function insertSurvey(
       projectId,
       JSON.stringify(content.titleTranslations),
       JSON.stringify(content.descriptionTranslations),
-      Object.hasOwn(body, 'webEnabled') ? boolToInt(body.webEnabled) : 1,
+      Object.hasOwn(body, 'webEnabled') ? boolToInt(requiredBoolean(body.webEnabled, 'webEnabled')) : 1,
       admin.id,
       now,
       now,
-      optionalString(body.startsAt),
-      optionalString(body.endsAt),
+      optionalString(body.startsAt, 'startsAt'),
+      optionalString(body.endsAt, 'endsAt'),
     )
     .first<SurveyRow>();
   return requiredRow(row, 'Survey');
@@ -81,7 +85,7 @@ export async function createSurveyWithQuestions(
   admin: AdminContext,
 ): Promise<Response> {
   const body = await readJson(request);
-  const survey = objectBody(body.survey);
+  const survey = requireObject(body.survey, 'survey');
   const questions = parseQuestionInputs(body.questions);
   const created = await insertSurvey(env.DB, survey, admin);
 
@@ -109,9 +113,9 @@ export async function updateSurvey(request: Request, env: Env, surveyId: number)
   ).bind(
     JSON.stringify(content.titleTranslations),
     JSON.stringify(content.descriptionTranslations),
-    Object.hasOwn(body, 'webEnabled') ? boolToInt(body.webEnabled) : existing.web_enabled,
-    optionalString(body.startsAt ?? existing.starts_at),
-    optionalString(body.endsAt ?? existing.ends_at),
+    Object.hasOwn(body, 'webEnabled') ? boolToInt(requiredBoolean(body.webEnabled, 'webEnabled')) : existing.web_enabled,
+    optionalString(body.startsAt ?? existing.starts_at, 'startsAt'),
+    optionalString(body.endsAt ?? existing.ends_at, 'endsAt'),
     nowIso(),
     surveyId,
   ).first<SurveyRow>();
@@ -144,17 +148,27 @@ export async function updateSurveyStatus(
 }
 
 function parseQuestionInputs(value: unknown): QuestionInput[] {
-  if (!Array.isArray(value)) return [];
+  if (!Array.isArray(value)) throw new HttpError(400, 'questions must be an array');
   return value.map((raw, index) => {
-    const question = typeof raw === 'object' && raw !== null ? raw as Record<string, unknown> : {};
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+      throw new HttpError(400, `questions[${index}] must be an object`);
+    }
+    const question = raw as Record<string, unknown>;
     const type = normalizeQuestionType(question.type);
-    const choiceTranslations = Array.isArray(question.choiceTranslations)
-      ? question.choiceTranslations.map((choice, choiceIndex) => requireLocalizedText(
-          choice,
-          `questions[${index}].choiceTranslations[${choiceIndex}]`,
-          FORM_CONTENT_LOCALES,
-        ))
-      : [];
+    if (!Array.isArray(question.choiceTranslations)) {
+      throw new HttpError(400, `questions[${index}].choiceTranslations must be an array`);
+    }
+    const choiceTranslations = question.choiceTranslations.map((choice, choiceIndex) => requireLocalizedText(
+      choice,
+      `questions[${index}].choiceTranslations[${choiceIndex}]`,
+      FORM_CONTENT_LOCALES,
+    ));
+    if (isChoiceQuestionType(type) && choiceTranslations.length === 0) {
+      throw new HttpError(400, `questions[${index}].choiceTranslations must not be empty`);
+    }
+    if (isTextQuestionType(type) && choiceTranslations.length > 0) {
+      throw new HttpError(400, `questions[${index}].choiceTranslations must be empty for text questions`);
+    }
     return {
       textTranslations: requireLocalizedText(
         question.textTranslations,
@@ -162,7 +176,7 @@ function parseQuestionInputs(value: unknown): QuestionInput[] {
         FORM_CONTENT_LOCALES,
       ),
       type,
-      isRequired: question.isRequired !== false,
+      isRequired: optionalBoolean(question.isRequired, `questions[${index}].isRequired`) ?? true,
       placeholderTranslations: requireLocalizedText(
         question.placeholderTranslations,
         `questions[${index}].placeholderTranslations`,
@@ -195,16 +209,18 @@ function parseSurveyContent(body: Record<string, unknown>, project: ProjectRow):
 function parseProjectLocales(project: ProjectRow): string[] {
   try {
     const decoded = JSON.parse(project.supported_locales);
-    return Array.isArray(decoded) ? decoded.map(String) : [...FORM_CONTENT_LOCALES];
+    if (!Array.isArray(decoded)) throw new Error('not an array');
+    return decoded.map((locale, index) => {
+      if (typeof locale !== 'string') throw new Error(`locale ${index} is not a string`);
+      return locale;
+    });
   } catch {
-    return [...FORM_CONTENT_LOCALES];
+    throw new HttpError(500, 'Invalid project supported locales');
   }
 }
 
 function requireProjectId(value: unknown): number {
-  const id = Number(value);
-  if (!Number.isInteger(id) || id <= 0) throw new HttpError(400, 'projectId is required');
-  return id;
+  return requiredInteger(value, 'projectId', { min: 1 });
 }
 
 async function assertSurveyCanPublish(db: D1Database, surveyId: number): Promise<void> {

@@ -42,9 +42,9 @@ class SurveyResponse {
   factory SurveyResponse.fromJson(Map<String, dynamic> json) => SurveyResponse(
     id: json['id'] == null ? null : _int(json['id']),
     surveyId: _int(json['surveyId']),
-    userId: json['userId'] as String?,
-    anonymousId: json['anonymousId'] as String?,
-    anonymousAccountId: json['anonymousAccountId'] as String?,
+    userId: _optionalString(json['userId']),
+    anonymousId: _optionalString(json['anonymousId']),
+    anonymousAccountId: _optionalString(json['anonymousAccountId']),
     submittedAt: _date(json['submittedAt']),
     deviceInfo: _optionalObject(json['deviceInfo'], DeviceInfo.fromJson),
     metadata: _map(json['metadata']),
@@ -79,18 +79,14 @@ class QuestionResult {
 
   factory QuestionResult.fromJson(Map<String, dynamic> json) => QuestionResult(
     questionId: _int(json['questionId']),
-    questionText: json['questionText'] as String,
-    questionType: _enum(
-      QuestionType.values,
-      json['questionType'],
-      QuestionType.textSingle,
-    ),
+    questionText: _string(json['questionText']),
+    questionType: _enum(QuestionType.values, json['questionType']),
     choiceCounts: (json['choiceCounts'] as Map?)?.map(
-      (key, value) => MapEntry(_int(key), _int(value)),
+      (key, value) => MapEntry(_intStringKey(key), _int(value)),
     ),
-    textResponses: (json['textResponses'] as List?)
-        ?.map((value) => value.toString())
-        .toList(),
+    textResponses: json['textResponses'] == null
+        ? null
+        : _stringList(json['textResponses']),
   );
 }
 
@@ -108,9 +104,10 @@ class SurveyResults {
   factory SurveyResults.fromJson(Map<String, dynamic> json) => SurveyResults(
     surveyId: _int(json['surveyId']),
     totalResponses: _int(json['totalResponses']),
-    questionResults: (json['questionResults'] as List? ?? const [])
-        .map((value) => _object(value, QuestionResult.fromJson))
-        .toList(),
+    questionResults: _objectList(
+      json['questionResults'],
+      QuestionResult.fromJson,
+    ),
   );
 }
 
@@ -134,7 +131,7 @@ class NotificationSettings {
         id: json['id'] == null ? null : _int(json['id']),
         surveyId: _int(json['surveyId']),
         enabled: _bool(json['enabled']),
-        recipientEmail: json['recipientEmail'] as String,
+        recipientEmail: _string(json['recipientEmail']),
         updatedAt: _date(json['updatedAt']),
       );
 

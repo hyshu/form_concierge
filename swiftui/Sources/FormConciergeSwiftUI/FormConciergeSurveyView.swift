@@ -348,7 +348,7 @@ private func matchesRule(
     } else {
       actual = ""
     }
-    let expected = rule.value?.stringValue ?? ""
+    guard let expected = rule.value?.stringValue else { return false }
     switch rule.operator {
     case .equals:
       return actual == expected

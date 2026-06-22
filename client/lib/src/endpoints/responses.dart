@@ -60,7 +60,7 @@ class ResponseAnalyticsEndpoint {
     );
     return _requiredMap(
       json,
-    ).map((key, value) => MapEntry(key.toString(), _int(value)));
+    ).map((key, value) => MapEntry(key, _int(value)));
   }
 
   Future<ResponseExportFile> exportResponses(

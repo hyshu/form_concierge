@@ -83,7 +83,7 @@ void main() {
     );
 
     scenarioWidget(
-      'primary title is enough and empty secondary titles use primary text',
+      'empty secondary titles block save',
       given: (tester) async {
         await tester.pumpWidget(buildSubject());
         controllers.titleTranslations[defaultFormContentLocale]!.text =
@@ -94,10 +94,8 @@ void main() {
         await _tapCreateSurvey(tester);
       },
       then: (tester) async {
-        expect(saveWasCalled, isTrue);
-        for (final locale in formContentLocaleCodes) {
-          expect(savedTitleTranslations!.valueFor(locale), 'Primary Survey');
-        }
+        expect(saveWasCalled, isFalse);
+        expect(find.text('Title is required'), findsWidgets);
       },
     );
 
@@ -106,13 +104,14 @@ void main() {
         buildSubject(primaryLocale: 'ja', locales: const ['ja', 'de']),
       );
       controllers.titleTranslations['ja']!.text = '調査';
+      controllers.titleTranslations['de']!.text = 'Umfrage';
       await tester.pump();
 
       await _tapCreateSurvey(tester);
 
       expect(savedTitleTranslations!.values.keys, ['ja', 'de']);
       expect(savedTitleTranslations!.valueFor('ja'), '調査');
-      expect(savedTitleTranslations!.valueFor('de'), '調査');
+      expect(savedTitleTranslations!.valueFor('de'), 'Umfrage');
     });
   });
 
@@ -184,19 +183,14 @@ void main() {
       expect(find.text('Create Survey'), findsOneWidget);
     });
 
-    testWidgets('hides secondary language fields behind expansion tiles', (
+    testWidgets('shows required secondary language fields', (
       tester,
     ) async {
       await tester.pumpWidget(buildSubject());
 
       expect(find.text('Title (English)'), findsOneWidget);
-      expect(find.text('Title (日本語)'), findsNothing);
-      expect(find.text('Other languages'), findsNWidgets(2));
-
-      await tester.tap(find.text('Other languages').first);
-      await tester.pumpAndSettle();
-
       expect(find.text('Title (日本語)'), findsOneWidget);
+      expect(find.text('Other languages'), findsOneWidget);
     });
   });
 

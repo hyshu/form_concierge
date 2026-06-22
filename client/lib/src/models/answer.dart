@@ -23,7 +23,7 @@ class Answer {
     id: json['id'] == null ? null : _int(json['id']),
     surveyResponseId: _int(json['surveyResponseId']),
     questionId: _int(json['questionId']),
-    textValue: json['textValue'] as String?,
+    textValue: _optionalString(json['textValue']),
     selectedChoiceIds: _intList(json['selectedChoiceIds']),
   );
 
@@ -301,7 +301,8 @@ bool _matchesValueOperator(
 ) {
   if (source.type.usesTextAnswer) {
     final actual = answer is String ? answer.trim() : '';
-    final expected = rule.value?.toString() ?? '';
+    final expected = rule.value is String ? rule.value as String : null;
+    if (expected == null) return false;
     return switch (rule.operator) {
       VisibilityOperator.equals => actual == expected,
       VisibilityOperator.notEquals => actual != expected,

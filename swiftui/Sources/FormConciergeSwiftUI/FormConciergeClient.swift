@@ -122,10 +122,10 @@ public actor FormConciergeClient {
       throw FormConciergeError.invalidResponse
     }
     if !(200..<300).contains(http.statusCode) {
-      let payload = try? decoder.decode(APIErrorPayload.self, from: data)
+      let payload = try decoder.decode(APIErrorPayload.self, from: data)
       throw FormConciergeError.api(
         status: http.statusCode,
-        message: payload?.error ?? HTTPURLResponse.localizedString(forStatusCode: http.statusCode)
+        message: payload.error
       )
     }
     return try decoder.decode(T.self, from: data)
@@ -133,7 +133,7 @@ public actor FormConciergeClient {
 }
 
 private struct APIErrorPayload: Decodable {
-  let error: String?
+  let error: String
 }
 
 private struct SubmitResponsePayload: Encodable {

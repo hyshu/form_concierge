@@ -47,7 +47,7 @@ import {
   responseCount,
   responseTrends,
 } from './responses';
-import { HttpError, countRows, json, jsonHeaders } from './utils';
+import { HttpError, countRows, json, jsonHeaders, logError, optionalIntegerParam, requiredIntegerParam } from './utils';
 import { anonymousAccountToJson, replyToJson } from './serializers';
 import { requireScope } from './permissions';
 import { isPublicFormHtmlRequest, renderPublicForm } from './public_form_renderer';
@@ -64,11 +64,14 @@ export default {
       if (error instanceof HttpError) {
         return json({ error: error.message, details: error.details }, error.status);
       }
-      console.error(error);
+      logError('unhandled_request_error', error, {
+        method: request.method,
+        path: new URL(request.url).pathname,
+      });
       return json({ error: 'Internal server error' }, 500);
     }
   },
-};
+} satisfies ExportedHandler<Env>;
 
 async function route(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
   const url = new URL(request.url);
@@ -108,7 +111,7 @@ async function route(request: Request, env: Env, ctx: ExecutionContext): Promise
 
   if (path === '/api/anonymous/replies/latest' && method === 'GET') {
     const anonymous = await requireAnonymous(request, env);
-    const responseId = optionalResponseId(url.searchParams.get('responseId'));
+    const responseId = optionalIntegerParam(url.searchParams.get('responseId'), 'responseId', { min: 1 });
     const statement = responseId == null
       ? env.DB.prepare(
           `SELECT MAX(created_at) AS latest_reply_at
@@ -126,13 +129,13 @@ async function route(request: Request, env: Env, ctx: ExecutionContext): Promise
 
   if (path === '/api/anonymous/replies' && method === 'GET') {
     const anonymous = await requireAnonymous(request, env);
-    const responseId = url.searchParams.get('responseId');
-    const statement = responseId
+    const responseId = optionalIntegerParam(url.searchParams.get('responseId'), 'responseId', { min: 1 });
+    const statement = responseId != null
       ? env.DB.prepare(
           `SELECT * FROM admin_replies
            WHERE anonymous_account_id = ? AND survey_response_id = ?
            ORDER BY created_at DESC`,
-        ).bind(anonymous.id, Number(responseId))
+        ).bind(anonymous.id, responseId)
       : env.DB.prepare(
           `SELECT * FROM admin_replies
            WHERE anonymous_account_id = ?
@@ -156,10 +159,10 @@ async function route(request: Request, env: Env, ctx: ExecutionContext): Promise
       return json({ error: 'Not found' }, 404);
     }
     if (parts[2] === 'id' && parts[3] && parts[4] === 'questions') {
-      return getPublicQuestions(env, Number(parts[3]));
+      return getPublicQuestions(env, requiredIntegerParam(parts[3], 'surveyId', { min: 1 }));
     }
     if (parts[2] === 'id' && parts[3] && parts[4] === 'visibility-rules') {
-      return listPublicVisibilityRules(env, Number(parts[3]));
+      return listPublicVisibilityRules(env, requiredIntegerParam(parts[3], 'surveyId', { min: 1 }));
     }
   }
 
@@ -172,7 +175,7 @@ async function route(request: Request, env: Env, ctx: ExecutionContext): Promise
     method === 'POST'
   ) {
     const anonymous = await requireAnonymous(request, env);
-    return submitResponse(request, env, Number(parts[3]), anonymous, ctx);
+    return submitResponse(request, env, requiredIntegerParam(parts[3], 'surveyId', { min: 1 }), anonymous, ctx);
   }
 
   if (
@@ -182,7 +185,7 @@ async function route(request: Request, env: Env, ctx: ExecutionContext): Promise
     parts[3] === 'choices' &&
     method === 'GET'
   ) {
-    return getPublicChoices(env, Number(parts[2]));
+    return getPublicChoices(env, requiredIntegerParam(parts[2], 'questionId', { min: 1 }));
   }
 
   if (parts[0] === 'api' && parts[1] === 'admin') {
@@ -195,20 +198,6 @@ async function route(request: Request, env: Env, ctx: ExecutionContext): Promise
   }
 
   return json({ error: 'Not found' }, 404);
-}
-
-function optionalResponseId(value: string | null): number | null {
-  if (value == null || value.length === 0) return null;
-  const responseId = Number(value);
-  if (!Number.isInteger(responseId)) throw new HttpError(400, 'responseId must be an integer');
-  return responseId;
-}
-
-function optionalProjectId(value: string | null): number | undefined {
-  if (value == null || value.length === 0) return undefined;
-  const projectId = Number(value);
-  if (!Number.isInteger(projectId)) throw new HttpError(400, 'projectId must be an integer');
-  return projectId;
 }
 
 async function routeAdmin(
@@ -242,8 +231,8 @@ async function routeAdmin(
     if (method !== 'GET') requireScope(admin, 'survey:write');
     if (method === 'GET' && parts.length === 3) return listProjects(env);
     if (method === 'POST' && parts.length === 3) return createProject(request, env, admin);
-    const projectId = Number(parts[3]);
-    if (Number.isFinite(projectId)) {
+    const projectId = optionalIntegerParam(parts[3] ?? null, 'projectId', { min: 1 });
+    if (projectId != null) {
       if (method === 'GET' && parts.length === 4) return getAdminProject(env, projectId);
       if (method === 'PUT' && parts.length === 4) return updateProject(request, env, projectId);
       if (method === 'DELETE' && parts.length === 4) return deleteProject(env, projectId);
@@ -254,14 +243,16 @@ async function routeAdmin(
   if (parts[2] === 'surveys') {
     if (method === 'GET') requireScope(admin, 'survey:read');
     if (method !== 'GET') requireScope(admin, 'survey:write');
-    if (method === 'GET' && parts.length === 3) return listSurveys(env, optionalProjectId(url.searchParams.get('projectId')));
+    if (method === 'GET' && parts.length === 3) {
+      return listSurveys(env, optionalIntegerParam(url.searchParams.get('projectId'), 'projectId', { min: 1 }) ?? undefined);
+    }
     if (method === 'POST' && parts.length === 3) return createSurvey(request, env, admin);
     if (method === 'POST' && parts[3] === 'with-questions') {
       return createSurveyWithQuestions(request, env, admin);
     }
 
-    const surveyId = Number(parts[3]);
-    if (Number.isFinite(surveyId)) {
+    const surveyId = optionalIntegerParam(parts[3] ?? null, 'surveyId', { min: 1 });
+    if (surveyId != null) {
       if (method === 'GET' && parts.length === 4) return getAdminSurvey(env, surveyId);
       if (method === 'PUT' && parts.length === 4) return updateSurvey(request, env, surveyId);
       if (method === 'DELETE' && parts.length === 4) return deleteSurvey(env, surveyId);
@@ -314,8 +305,8 @@ async function routeAdmin(
     if (method === 'GET') requireScope(admin, 'survey:read');
     if (method !== 'GET') requireScope(admin, 'survey:write');
     if (method === 'POST' && parts.length === 3) return createQuestion(request, env);
-    const questionId = Number(parts[3]);
-    if (Number.isFinite(questionId)) {
+    const questionId = optionalIntegerParam(parts[3] ?? null, 'questionId', { min: 1 });
+    if (questionId != null) {
       if (method === 'GET' && parts.length === 4) return getQuestion(env, questionId);
       if (method === 'PUT' && parts.length === 4) return updateQuestion(request, env, questionId);
       if (method === 'DELETE' && parts.length === 4) return deleteQuestion(env, questionId);
@@ -330,8 +321,8 @@ async function routeAdmin(
     if (method === 'GET') requireScope(admin, 'survey:read');
     if (method !== 'GET') requireScope(admin, 'survey:write');
     if (method === 'POST' && parts.length === 3) return createChoice(request, env);
-    const choiceId = Number(parts[3]);
-    if (Number.isFinite(choiceId)) {
+    const choiceId = optionalIntegerParam(parts[3] ?? null, 'choiceId', { min: 1 });
+    if (choiceId != null) {
       if (method === 'GET' && parts.length === 4) return getChoice(env, choiceId);
       if (method === 'PUT' && parts.length === 4) return updateChoice(request, env, choiceId);
       if (method === 'DELETE' && parts.length === 4) return deleteChoice(env, choiceId);
@@ -339,8 +330,8 @@ async function routeAdmin(
   }
 
   if (parts[2] === 'responses') {
-    const responseId = Number(parts[3]);
-    if (Number.isFinite(responseId)) {
+    const responseId = optionalIntegerParam(parts[3] ?? null, 'responseId', { min: 1 });
+    if (responseId != null) {
       if (method === 'GET') requireScope(admin, 'response:read');
       if (method !== 'GET') requireScope(admin, 'response:write');
       if (method === 'GET' && parts[4] === 'answers') return responseAnswers(env, responseId);

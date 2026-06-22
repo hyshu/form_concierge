@@ -1,5 +1,5 @@
 import type { AnonymousContext, AnswerInput, AnswerRow, ChoiceRow, Env, ProjectRow, QuestionRow, ResponseRow, SurveyRow, VisibilityRuleRow } from './types';
-import { HttpError, isChoiceQuestionType, isTextQuestionType, json, nowIso, optionalCustomDomain, readJson, requireAnswerInput } from './utils';
+import { HttpError, isChoiceQuestionType, isTextQuestionType, json, logError, nowIso, optionalCustomDomain, readJson, requireAnswerInput, requiredInteger } from './utils';
 import { normalizeDeviceInfo, normalizeMetadata } from './metadata';
 import { choiceToJson, parseChoiceIds, projectToJson, questionToJson, responseToJson, surveyToJson } from './serializers';
 import { getVisibilityRules, visibleQuestionIds } from './visibility_rules';
@@ -141,10 +141,10 @@ export async function submitResponse(
        VALUES (?, ?, ?, ?)`,
     ).bind(
       response.id,
-      Number(answer.questionId),
+      requiredInteger(answer.questionId, 'questionId', { min: 1 }),
       typeof answer.textValue === 'string' ? answer.textValue : null,
       Array.isArray(answer.selectedChoiceIds)
-        ? JSON.stringify(answer.selectedChoiceIds.map(Number))
+        ? JSON.stringify(answer.selectedChoiceIds.map((choiceId) => requiredInteger(choiceId, 'selectedChoiceIds', { min: 1 })))
         : null,
     ),
   );
@@ -155,7 +155,10 @@ export async function submitResponse(
   ).bind(now, anonymous.id).run();
 
   const notificationTask = sendResponseNotification(env, survey, response).catch((error) => {
-    console.error('Failed to send response notification', error);
+    logError('response_notification_failed', error, {
+      surveyId: survey.id,
+      responseId: response.id,
+    });
   });
   if (ctx) {
     ctx.waitUntil(notificationTask);
@@ -174,9 +177,9 @@ async function validateAnswers(
 ): Promise<void> {
   const byQuestion = new Map<number, AnswerInput>();
   for (const answer of answers) {
-    const questionId = Number(answer?.questionId);
-    if (!Number.isInteger(questionId)) throw new HttpError(400, 'Invalid questionId');
+    const questionId = requiredInteger(answer?.questionId, 'questionId', { min: 1 });
     if (byQuestion.has(questionId)) throw new HttpError(400, 'Duplicate answer');
+    answer.questionId = questionId;
     byQuestion.set(questionId, answer);
   }
   const questionIds = new Set(questions.map((question) => question.id));
@@ -213,7 +216,7 @@ async function validateAnswers(
     }
 
     const selected = Array.isArray(answer.selectedChoiceIds)
-      ? answer.selectedChoiceIds.map(Number)
+      ? answer.selectedChoiceIds.map((choiceId) => requiredInteger(choiceId, 'selectedChoiceIds', { min: 1 }))
       : [];
     if (question.is_required && selected.length === 0) {
       throw new HttpError(400, `Question "${questionText}" requires a choice`);

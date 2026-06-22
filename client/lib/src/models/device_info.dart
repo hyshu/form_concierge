@@ -40,19 +40,19 @@ class DeviceInfo {
   });
 
   factory DeviceInfo.fromJson(Map<String, dynamic> json) => DeviceInfo(
-    deviceId: json['deviceId'] as String?,
-    label: json['label'] as String?,
-    platform: json['platform'] as String?,
-    os: json['os'] as String?,
-    osVersion: json['osVersion'] as String?,
-    browser: json['browser'] as String?,
-    browserVersion: json['browserVersion'] as String?,
-    appVersion: json['appVersion'] as String?,
-    appBuild: json['appBuild'] as String?,
-    model: json['model'] as String?,
-    manufacturer: json['manufacturer'] as String?,
-    locale: json['locale'] as String?,
-    timezone: json['timezone'] as String?,
+    deviceId: _optionalString(json['deviceId']),
+    label: _optionalString(json['label']),
+    platform: _optionalString(json['platform']),
+    os: _optionalString(json['os']),
+    osVersion: _optionalString(json['osVersion']),
+    browser: _optionalString(json['browser']),
+    browserVersion: _optionalString(json['browserVersion']),
+    appVersion: _optionalString(json['appVersion']),
+    appBuild: _optionalString(json['appBuild']),
+    model: _optionalString(json['model']),
+    manufacturer: _optionalString(json['manufacturer']),
+    locale: _optionalString(json['locale']),
+    timezone: _optionalString(json['timezone']),
     screenWidth: json['screenWidth'] == null ? null : _int(json['screenWidth']),
     screenHeight: json['screenHeight'] == null
         ? null
@@ -60,7 +60,7 @@ class DeviceInfo {
     devicePixelRatio: json['devicePixelRatio'] == null
         ? null
         : _double(json['devicePixelRatio']),
-    userAgent: json['userAgent'] as String?,
+    userAgent: _optionalString(json['userAgent']),
   );
 
   Map<String, dynamic> toJson() => _withoutNulls({

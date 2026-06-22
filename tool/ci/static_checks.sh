@@ -39,6 +39,7 @@ dart format --set-exit-if-changed \
   admin_dashboard/lib \
   admin_dashboard/test \
   client/lib \
+  client/test \
   examples/inappform/lib \
   examples/inappform/integration_test \
   web/lib \
@@ -50,6 +51,7 @@ mkdir -p .tmp
 (
   cd worker
   npm ci
+  npm test
   npm run typecheck
   rm -rf ../.tmp/ci-d1-static
   printf 'y\n' | npx wrangler d1 migrations apply form_concierge \
@@ -61,6 +63,7 @@ mkdir -p .tmp
   cd client
   dart pub get
   dart analyze
+  dart test
 )
 
 (

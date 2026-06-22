@@ -239,7 +239,6 @@ class _ProjectFormState extends State<ProjectForm> {
           _descriptionTranslations,
           primaryLocale: _defaultLocale,
           locales: _supportedLocales,
-          fallbackEmptyToPrimary: false,
         ),
         createdByUserId: existing?.createdByUserId,
         createdAt: existing?.createdAt ?? now,

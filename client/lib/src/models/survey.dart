@@ -46,7 +46,7 @@ class LocalizedText {
   factory LocalizedText.fromJson(Object? json) {
     final map = _requiredMap(json);
     return LocalizedText(
-      map.map((key, value) => MapEntry(key, value as String)),
+      map.map((key, value) => MapEntry(key, _string(value))),
     );
   }
 
@@ -271,17 +271,15 @@ class Project {
 
   factory Project.fromJson(Map<String, dynamic> json) => Project(
     id: json['id'] == null ? null : _int(json['id']),
-    slug: json['slug'] as String,
-    customDomain: json['customDomain'] as String?,
-    defaultLocale: json['defaultLocale'] as String,
-    supportedLocales: (json['supportedLocales'] as List)
-        .map((value) => value as String)
-        .toList(),
+    slug: _string(json['slug']),
+    customDomain: _optionalString(json['customDomain']),
+    defaultLocale: _string(json['defaultLocale']),
+    supportedLocales: _stringList(json['supportedLocales']),
     nameTranslations: LocalizedText.fromJson(json['nameTranslations']),
     descriptionTranslations: LocalizedText.fromJson(
       json['descriptionTranslations'],
     ),
-    createdByUserId: json['createdByUserId'] as String?,
+    createdByUserId: _optionalString(json['createdByUserId']),
     createdAt: _date(json['createdAt']),
     updatedAt: _date(json['updatedAt']),
   );
@@ -348,7 +346,7 @@ class ProjectWithSurveys {
 
   factory ProjectWithSurveys.fromJson(Map<String, dynamic> json) =>
       ProjectWithSurveys(
-        project: Project.fromJson(json['project'] as Map<String, dynamic>),
+        project: _object(json['project'], Project.fromJson),
         surveys: _objectList(json['surveys'], Survey.fromJson),
       );
 }
@@ -360,7 +358,7 @@ class PublicProject {
   const PublicProject({required this.project, required this.surveys});
 
   factory PublicProject.fromJson(Map<String, dynamic> json) => PublicProject(
-    project: Project.fromJson(json['project'] as Map<String, dynamic>),
+    project: _object(json['project'], Project.fromJson),
     surveys: _objectList(json['surveys'], Survey.fromJson),
   );
 }
@@ -399,9 +397,9 @@ class Survey {
     descriptionTranslations: LocalizedText.fromJson(
       json['descriptionTranslations'],
     ),
-    status: _enum(SurveyStatus.values, json['status'], SurveyStatus.draft),
-    webEnabled: _bool(json['webEnabled'], true),
-    createdByUserId: json['createdByUserId'] as String?,
+    status: _enum(SurveyStatus.values, json['status']),
+    webEnabled: _bool(json['webEnabled']),
+    createdByUserId: _optionalString(json['createdByUserId']),
     createdAt: _date(json['createdAt']),
     updatedAt: _date(json['updatedAt']),
     startsAt: _optionalDate(json['startsAt']),
@@ -497,9 +495,9 @@ class Question {
     id: json['id'] == null ? null : _int(json['id']),
     surveyId: _int(json['surveyId']),
     textTranslations: LocalizedText.fromJson(json['textTranslations']),
-    type: _enum(QuestionType.values, json['type'], QuestionType.textSingle),
+    type: _enum(QuestionType.values, json['type']),
     orderIndex: _int(json['orderIndex']),
-    isRequired: _bool(json['isRequired'], true),
+    isRequired: _bool(json['isRequired']),
     placeholderTranslations: LocalizedText.fromJson(
       json['placeholderTranslations'],
     ),
@@ -510,7 +508,6 @@ class Question {
     visibilityConditionMode: _enum(
       VisibilityConditionMode.values,
       json['visibilityConditionMode'],
-      VisibilityConditionMode.all,
     ),
     isDeleted: _bool(json['isDeleted']),
   );
@@ -603,11 +600,7 @@ class QuestionVisibilityRule {
         surveyId: _int(json['surveyId']),
         targetQuestionId: _int(json['targetQuestionId']),
         sourceQuestionId: _int(json['sourceQuestionId']),
-        operator: _enum(
-          VisibilityOperator.values,
-          json['operator'],
-          VisibilityOperator.equals,
-        ),
+        operator: _enum(VisibilityOperator.values, json['operator']),
         value: json['value'],
         createdAt: _optionalDate(json['createdAt']),
         updatedAt: _optionalDate(json['updatedAt']),
@@ -668,7 +661,7 @@ class Choice {
     questionId: _int(json['questionId']),
     textTranslations: LocalizedText.fromJson(json['textTranslations']),
     orderIndex: _int(json['orderIndex']),
-    value: json['value'] as String?,
+    value: _optionalString(json['value']),
   );
 
   Map<String, dynamic> toJson() => _withoutNulls({
@@ -728,8 +721,8 @@ class QuestionWithChoices {
     Map<String, dynamic> json,
   ) => QuestionWithChoices(
     textTranslations: LocalizedText.fromJson(json['textTranslations']),
-    type: _enum(QuestionType.values, json['type'], QuestionType.textSingle),
-    isRequired: _bool(json['isRequired'], true),
+    type: _enum(QuestionType.values, json['type']),
+    isRequired: _bool(json['isRequired']),
     placeholderTranslations: LocalizedText.fromJson(
       json['placeholderTranslations'],
     ),
@@ -740,11 +733,11 @@ class QuestionWithChoices {
     visibilityConditionMode: _enum(
       VisibilityConditionMode.values,
       json['visibilityConditionMode'],
-      VisibilityConditionMode.all,
     ),
-    choiceTranslations: (json['choiceTranslations'] as List? ?? const [])
-        .map(LocalizedText.fromJson)
-        .toList(),
+    choiceTranslations: _objectList(
+      json['choiceTranslations'],
+      LocalizedText.fromJson,
+    ),
   );
 
   Map<String, dynamic> toJson() => _withoutNulls({
