@@ -6,6 +6,7 @@ import 'package:rearch/rearch.dart';
 
 import '../../../../core/capsules/auth_state_capsule.dart';
 import '../../../../core/capsules/client_capsule.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/confirm_delete_dialog.dart';
 import '../capsules/user_list_capsule.dart';
 import '../widgets/create_user_dialog.dart';
@@ -30,10 +31,11 @@ class UsersPage extends RearchConsumer {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('User Management'),
+        title: Text(context.tr('User Management')),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.go('/admin'),
+          tooltip: context.tr('Back'),
         ),
       ),
       body: SafeArea(
@@ -42,7 +44,7 @@ class UsersPage extends RearchConsumer {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showCreateUserDialog(context, manager),
         icon: const Icon(Icons.person_add),
-        label: const Text('Add User'),
+        label: Text(context.tr('Add User')),
       ),
     );
   }
@@ -67,7 +69,7 @@ class UsersPage extends RearchConsumer {
             Icon(Icons.error_outline, size: 48, color: colorScheme.error),
             const SizedBox(height: 16),
             Text(
-              manager.state.error!,
+              context.trMessage(manager.state.error!),
               style: TextStyle(color: colorScheme.error),
               textAlign: TextAlign.center,
             ),
@@ -77,7 +79,7 @@ class UsersPage extends RearchConsumer {
                 manager.clearError();
                 manager.loadUsers();
               },
-              child: const Text('Retry'),
+              child: Text(context.tr('Retry')),
             ),
           ],
         ),
@@ -92,14 +94,14 @@ class UsersPage extends RearchConsumer {
             Icon(Icons.people_outline, size: 64, color: colorScheme.outline),
             const SizedBox(height: 16),
             Text(
-              'No users yet',
+              context.tr('No users yet'),
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Add your first user to get started',
+              context.tr('Add your first user to get started'),
               style: TextStyle(color: colorScheme.onSurfaceVariant),
             ),
           ],
@@ -160,12 +162,10 @@ class UsersPage extends RearchConsumer {
   ) async {
     final confirmed = await ConfirmDeleteDialog.show(
       context,
-      title: isCurrentUser ? 'Delete Your Account' : 'Delete User',
+      title: context.tr(isCurrentUser ? 'Delete Your Account' : 'Delete User'),
       content: isCurrentUser
-          ? 'You are about to delete your currently logged-in account. '
-                'You will be logged out immediately after deletion.\n\n'
-                'Are you sure you want to proceed?'
-          : 'Are you sure you want to delete ${user.email}?',
+          ? context.tr('Delete your account confirmation')
+          : context.tr('Delete user confirmation', {'email': user.email}),
     );
 
     if (confirmed) {

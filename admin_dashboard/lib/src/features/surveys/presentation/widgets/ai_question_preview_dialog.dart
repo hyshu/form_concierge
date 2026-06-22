@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/extensions/question_type_presentation.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../models/draft_question.dart';
 
 /// Dialog for previewing AI-generated questions before applying them.
@@ -42,7 +43,7 @@ class AiQuestionPreviewDialog extends StatelessWidget {
         children: [
           Icon(Icons.auto_awesome, color: colorScheme.primary),
           const SizedBox(width: 8),
-          const Text('Generated Questions'),
+          Text(context.tr('Generated Questions')),
         ],
       ),
       content: SizedBox(
@@ -52,7 +53,12 @@ class AiQuestionPreviewDialog extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '${questions.length} questions generated. Review and apply to your survey.',
+              context.tr(
+                '{count} questions generated. Review and apply to your survey.',
+                {
+                  'count': questions.length,
+                },
+              ),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),
@@ -80,7 +86,7 @@ class AiQuestionPreviewDialog extends StatelessWidget {
             Navigator.pop(context);
             onCancel();
           },
-          child: const Text('Cancel'),
+          child: Text(context.tr('Cancel')),
         ),
         FilledButton.icon(
           onPressed: () {
@@ -88,7 +94,7 @@ class AiQuestionPreviewDialog extends StatelessWidget {
             onApply();
           },
           icon: const Icon(Icons.check),
-          label: const Text('Apply'),
+          label: Text(context.tr('Apply')),
         ),
       ],
     );
@@ -145,7 +151,7 @@ class _QuestionPreviewTile extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      question.type.label,
+                      context.tr(question.type.label),
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: colorScheme.onSurfaceVariant,
                       ),
@@ -162,7 +168,7 @@ class _QuestionPreviewTile extends StatelessWidget {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          'Required',
+                          context.tr('Required'),
                           style: TextStyle(
                             color: colorScheme.onErrorContainer,
                             fontSize: 10,

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 
+import '../../../../core/localization/app_localizations.dart';
+
 class UserListTile extends StatelessWidget {
   const UserListTile({
     super.key,
@@ -35,11 +37,11 @@ class UserListTile extends StatelessWidget {
       ),
       title: Row(
         children: [
-          Text(user.email ?? 'No email'),
+          Text(user.email ?? context.tr('No email')),
           if (isCurrentUser) ...[
             const SizedBox(width: 8),
             Chip(
-              label: const Text('You'),
+              label: Text(context.tr('You')),
               padding: EdgeInsets.zero,
               labelPadding: const EdgeInsets.symmetric(horizontal: 8),
               visualDensity: VisualDensity.compact,
@@ -53,7 +55,7 @@ class UserListTile extends StatelessWidget {
         ],
       ),
       subtitle: Text(
-        _roleLabel(user.role),
+        context.tr(_roleLabel(user.role)),
         style: TextStyle(color: colorScheme.onSurfaceVariant),
       ),
       trailing: Row(
@@ -61,7 +63,7 @@ class UserListTile extends StatelessWidget {
         children: [
           if (user.blocked)
             Chip(
-              label: const Text('Blocked'),
+              label: Text(context.tr('Blocked')),
               backgroundColor: colorScheme.errorContainer,
               labelStyle: TextStyle(color: colorScheme.onErrorContainer),
             ),
@@ -81,27 +83,27 @@ class UserListTile extends StatelessWidget {
               }
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'role_admin',
                 child: ListTile(
-                  leading: Icon(Icons.admin_panel_settings_outlined),
-                  title: Text('Make admin'),
+                  leading: const Icon(Icons.admin_panel_settings_outlined),
+                  title: Text(context.tr('Make admin')),
                   contentPadding: EdgeInsets.zero,
                 ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'role_editor',
                 child: ListTile(
-                  leading: Icon(Icons.edit_note_outlined),
-                  title: Text('Make editor'),
+                  leading: const Icon(Icons.edit_note_outlined),
+                  title: Text(context.tr('Make editor')),
                   contentPadding: EdgeInsets.zero,
                 ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'role_viewer',
                 child: ListTile(
-                  leading: Icon(Icons.visibility_outlined),
-                  title: Text('Make viewer'),
+                  leading: const Icon(Icons.visibility_outlined),
+                  title: Text(context.tr('Make viewer')),
                   contentPadding: EdgeInsets.zero,
                 ),
               ),
@@ -115,7 +117,7 @@ class UserListTile extends StatelessWidget {
                         ? colorScheme.primary
                         : colorScheme.error,
                   ),
-                  title: Text(user.blocked ? 'Unblock' : 'Block'),
+                  title: Text(context.tr(user.blocked ? 'Unblock' : 'Block')),
                   contentPadding: EdgeInsets.zero,
                 ),
               ),
@@ -123,7 +125,7 @@ class UserListTile extends StatelessWidget {
                 value: 'delete',
                 child: ListTile(
                   leading: Icon(Icons.delete, color: colorScheme.error),
-                  title: const Text('Delete'),
+                  title: Text(context.tr('Delete')),
                   contentPadding: EdgeInsets.zero,
                 ),
               ),

@@ -63,13 +63,15 @@ class DraftQuestion {
     int? maxLength,
     int? minSelected,
     int? maxSelected,
+    String firstChoiceText = 'Choice 1',
+    String secondChoiceText = 'Choice 2',
   }) {
     // Add default choices for choice-type questions
     final choices = <DraftChoice>[];
     if (type.usesChoices) {
       choices.addAll([
-        DraftChoice.create(text: 'Choice 1'),
-        DraftChoice.create(text: 'Choice 2'),
+        DraftChoice.create(text: firstChoiceText),
+        DraftChoice.create(text: secondChoiceText),
       ]);
     }
 

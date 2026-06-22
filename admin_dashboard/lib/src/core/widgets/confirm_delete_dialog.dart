@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../localization/app_localizations.dart';
+
 class ConfirmDeleteDialog extends StatelessWidget {
   final String title;
   final String content;
@@ -41,14 +43,14 @@ class ConfirmDeleteDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context, false),
-          child: Text(cancelLabel),
+          child: Text(context.tr(cancelLabel)),
         ),
         FilledButton(
           onPressed: () => Navigator.pop(context, true),
           style: FilledButton.styleFrom(
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
-          child: Text(confirmLabel),
+          child: Text(context.tr(confirmLabel)),
         ),
       ],
     );

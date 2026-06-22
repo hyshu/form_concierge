@@ -4,6 +4,7 @@ import 'package:form_concierge_flutter/src/features/surveys/presentation/capsule
 import 'package:form_concierge_flutter/src/features/surveys/presentation/widgets/survey_form.dart';
 
 import '../support/given_when_then.dart';
+import '../support/localized_test_app.dart';
 
 void main() {
   group('SurveyForm validation', () {
@@ -28,7 +29,7 @@ void main() {
     });
 
     Widget buildSubject({bool isSaving = false, String? error}) {
-      return MaterialApp(
+      return localizedTestApp(
         home: Scaffold(
           body: SingleChildScrollView(
             child: SurveyForm(
@@ -180,7 +181,7 @@ void main() {
     });
 
     Widget buildSubject({bool isSaving = false, String? error}) {
-      return MaterialApp(
+      return localizedTestApp(
         home: Scaffold(
           body: SingleChildScrollView(
             child: SurveyForm(

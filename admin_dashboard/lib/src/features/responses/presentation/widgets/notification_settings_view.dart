@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 
+import '../../../../core/localization/app_localizations.dart';
+
 /// View for configuring daily email notifications.
 class NotificationSettingsView extends StatefulWidget {
   final int surveyId;
@@ -133,7 +135,9 @@ class _NotificationSettingsViewState extends State<NotificationSettingsView> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Email service is not configured. Contact your administrator to enable SMTP settings.',
+                        context.tr(
+                          'Email service is not configured. Contact your administrator to enable SMTP settings.',
+                        ),
                         style: TextStyle(color: colorScheme.onErrorContainer),
                       ),
                     ),
@@ -156,7 +160,7 @@ class _NotificationSettingsViewState extends State<NotificationSettingsView> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        widget.error!,
+                        context.trMessage(widget.error!),
                         style: TextStyle(color: colorScheme.onErrorContainer),
                       ),
                     ),
@@ -187,7 +191,7 @@ class _NotificationSettingsViewState extends State<NotificationSettingsView> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        widget.successMessage!,
+                        context.trMessage(widget.successMessage!),
                         style: TextStyle(color: colorScheme.onPrimaryContainer),
                       ),
                     ),
@@ -220,14 +224,16 @@ class _NotificationSettingsViewState extends State<NotificationSettingsView> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'Daily Email Notifications',
+                          context.tr('Daily Email Notifications'),
                           style: textTheme.titleMedium,
                         ),
                       ],
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Receive a daily summary of new survey responses via email.',
+                      context.tr(
+                        'Receive a daily summary of new survey responses via email.',
+                      ),
                       style: textTheme.bodyMedium?.copyWith(
                         color: colorScheme.onSurfaceVariant,
                       ),
@@ -237,21 +243,21 @@ class _NotificationSettingsViewState extends State<NotificationSettingsView> {
                     // Email field
                     TextFormField(
                       controller: _emailController,
-                      decoration: const InputDecoration(
-                        labelText: 'Recipient Email',
+                      decoration: InputDecoration(
+                        labelText: context.tr('Recipient Email'),
                         hintText: 'email@example.com',
-                        prefixIcon: Icon(Icons.email_outlined),
-                        border: OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.email_outlined),
+                        border: const OutlineInputBorder(),
                       ),
                       keyboardType: TextInputType.emailAddress,
                       enabled: widget.isEmailConfigured,
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Email is required';
+                          return context.tr('Email is required');
                         }
                         final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
                         if (!emailRegex.hasMatch(value.trim())) {
-                          return 'Enter a valid email address';
+                          return context.tr('Enter a valid email address');
                         }
                         return null;
                       },
@@ -261,10 +267,10 @@ class _NotificationSettingsViewState extends State<NotificationSettingsView> {
                     // Time selector
                     DropdownButtonFormField<int>(
                       initialValue: _selectedHour,
-                      decoration: const InputDecoration(
-                        labelText: 'Send Time (UTC)',
-                        prefixIcon: Icon(Icons.schedule),
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: context.tr('Send Time (UTC)'),
+                        prefixIcon: const Icon(Icons.schedule),
+                        border: const OutlineInputBorder(),
                       ),
                       items: List.generate(24, (hour) {
                         final label =
@@ -301,9 +307,11 @@ class _NotificationSettingsViewState extends State<NotificationSettingsView> {
                               )
                             : const Icon(Icons.save),
                         label: Text(
-                          widget.settings == null
-                              ? 'Create Settings'
-                              : 'Save Changes',
+                          context.tr(
+                            widget.settings == null
+                                ? 'Create Settings'
+                                : 'Save Changes',
+                          ),
                         ),
                       ),
                     ),
@@ -321,11 +329,13 @@ class _NotificationSettingsViewState extends State<NotificationSettingsView> {
                 children: [
                   // Enable/Disable toggle
                   SwitchListTile(
-                    title: const Text('Enable Notifications'),
+                    title: Text(context.tr('Enable Notifications')),
                     subtitle: Text(
-                      widget.settings!.enabled
-                          ? 'Daily notifications are active'
-                          : 'Daily notifications are paused',
+                      context.tr(
+                        widget.settings!.enabled
+                            ? 'Daily notifications are active'
+                            : 'Daily notifications are paused',
+                      ),
                     ),
                     value: widget.settings!.enabled,
                     onChanged: widget.isEmailConfigured && !widget.isSaving
@@ -349,7 +359,7 @@ class _NotificationSettingsViewState extends State<NotificationSettingsView> {
                         Icons.history,
                         color: colorScheme.onSurfaceVariant,
                       ),
-                      title: const Text('Last Sent'),
+                      title: Text(context.tr('Last Sent')),
                       subtitle: Text(
                         _formatDateTime(widget.settings!.lastSentAt!),
                       ),
@@ -376,7 +386,7 @@ class _NotificationSettingsViewState extends State<NotificationSettingsView> {
                                 ),
                               )
                             : const Icon(Icons.send),
-                        label: const Text('Send Test Notification'),
+                        label: Text(context.tr('Send Test Notification')),
                       ),
                     ),
                   ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 
+import '../../../../core/localization/app_localizations.dart';
+
 class CreateUserDialog extends StatefulWidget {
   const CreateUserDialog({super.key});
 
@@ -38,7 +40,7 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return AlertDialog(
-      title: const Text('Create User'),
+      title: Text(context.tr('Create User')),
       content: Form(
         key: _formKey,
         child: Column(
@@ -46,18 +48,18 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
           children: [
             TextFormField(
               controller: _emailController,
-              decoration: const InputDecoration(
-                labelText: 'Email',
+              decoration: InputDecoration(
+                labelText: context.tr('Email'),
                 hintText: 'user@example.com',
               ),
               keyboardType: TextInputType.emailAddress,
               autofocus: true,
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return 'Email is required';
+                  return context.tr('Email is required');
                 }
                 if (!value.contains('@')) {
-                  return 'Please enter a valid email';
+                  return context.tr('Please enter a valid email');
                 }
                 return null;
               },
@@ -65,16 +67,16 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
             const SizedBox(height: 16),
             TextFormField(
               controller: _passwordController,
-              decoration: const InputDecoration(
-                labelText: 'Password',
+              decoration: InputDecoration(
+                labelText: context.tr('Password'),
               ),
               obscureText: true,
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Password is required';
+                  return context.tr('Password is required');
                 }
                 if (value.length < 8) {
-                  return 'Password must be at least 8 characters';
+                  return context.tr('Password must be at least 8 characters');
                 }
                 return null;
               },
@@ -82,19 +84,19 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
             const SizedBox(height: 16),
             DropdownButtonFormField<AdminRole>(
               initialValue: _role,
-              decoration: const InputDecoration(labelText: 'Role'),
-              items: const [
+              decoration: InputDecoration(labelText: context.tr('Role')),
+              items: [
                 DropdownMenuItem(
                   value: AdminRole.viewer,
-                  child: Text('Viewer'),
+                  child: Text(context.tr('Viewer')),
                 ),
                 DropdownMenuItem(
                   value: AdminRole.editor,
-                  child: Text('Editor'),
+                  child: Text(context.tr('Editor')),
                 ),
                 DropdownMenuItem(
                   value: AdminRole.admin,
-                  child: Text('Admin'),
+                  child: Text(context.tr('Admin')),
                 ),
               ],
               onChanged: (value) {
@@ -103,7 +105,7 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
             ),
             const SizedBox(height: 8),
             Text(
-              _roleDescription(_role),
+              context.tr(_roleDescription(_role)),
               style: TextStyle(color: colorScheme.onSurfaceVariant),
             ),
           ],
@@ -112,7 +114,7 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
       actions: [
         TextButton(
           onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(context.tr('Cancel')),
         ),
         FilledButton(
           onPressed: _isSubmitting ? null : _submit,
@@ -122,7 +124,7 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
                   height: 16,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : const Text('Create'),
+              : Text(context.tr('Create')),
         ),
       ],
     );

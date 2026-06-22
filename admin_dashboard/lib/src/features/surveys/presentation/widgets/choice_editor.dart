@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 
+import '../../../../core/localization/app_localizations.dart';
+
 /// Widget for editing question choices.
 class ChoiceEditor extends StatelessWidget {
   final List<Choice> choices;
@@ -37,12 +39,12 @@ class ChoiceEditor extends StatelessWidget {
         OutlinedButton.icon(
           onPressed: enabled ? () => _showAddDialog(context) : null,
           icon: const Icon(Icons.add),
-          label: const Text('Add Choice'),
+          label: Text(context.tr('Add Choice')),
         ),
         if (choices.isEmpty) ...[
           const SizedBox(height: 8),
           Text(
-            'Add at least one choice for choice questions',
+            context.tr('Add at least one choice for choice questions'),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: colorScheme.onSurfaceVariant,
             ),
@@ -57,11 +59,11 @@ class ChoiceEditor extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Add Choice'),
+        title: Text(context.tr('Add Choice')),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'Choice text',
+          decoration: InputDecoration(
+            labelText: context.tr('Choice text'),
           ),
           autofocus: true,
           onSubmitted: (value) {
@@ -74,7 +76,7 @@ class ChoiceEditor extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(context.tr('Cancel')),
           ),
           FilledButton(
             onPressed: () {
@@ -83,7 +85,7 @@ class ChoiceEditor extends StatelessWidget {
                 Navigator.pop(context);
               }
             },
-            child: const Text('Add'),
+            child: Text(context.tr('Add')),
           ),
         ],
       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 
+import '../../../../core/localization/app_localizations.dart';
 import '../capsules/survey_form_capsule.dart';
 
 /// Form widget for creating/editing survey basic info (title, slug, etc.).
@@ -51,14 +52,14 @@ class _SurveyFormState extends State<SurveyForm> {
         children: [
           TextFormField(
             controller: widget.controllers.title,
-            decoration: const InputDecoration(
-              labelText: 'Title',
-              hintText: 'Enter survey title',
+            decoration: InputDecoration(
+              labelText: context.tr('Title'),
+              hintText: context.tr('Enter survey title'),
             ),
             enabled: !widget.isSaving,
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return 'Title is required';
+                return context.tr('Title is required');
               }
               return null;
             },
@@ -68,7 +69,7 @@ class _SurveyFormState extends State<SurveyForm> {
           TextFormField(
             controller: widget.controllers.slug,
             decoration: InputDecoration(
-              labelText: 'URL Slug',
+              labelText: context.tr('URL Slug'),
               hintText: 'my-survey',
               prefixText: '/',
               prefixStyle: TextStyle(color: colorScheme.onSurfaceVariant),
@@ -76,10 +77,12 @@ class _SurveyFormState extends State<SurveyForm> {
             enabled: !widget.isSaving,
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return 'Slug is required';
+                return context.tr('Slug is required');
               }
               if (!RegExp(r'^[a-z0-9-]+$').hasMatch(value)) {
-                return 'Only lowercase letters, numbers, and hyphens allowed';
+                return context.tr(
+                  'Only lowercase letters, numbers, and hyphens allowed',
+                );
               }
               return null;
             },
@@ -88,9 +91,9 @@ class _SurveyFormState extends State<SurveyForm> {
           const SizedBox(height: 16),
           TextFormField(
             controller: widget.controllers.description,
-            decoration: const InputDecoration(
-              labelText: 'Description (optional)',
-              hintText: 'Brief description of the survey',
+            decoration: InputDecoration(
+              labelText: context.tr('Description (optional)'),
+              hintText: context.tr('Brief description of the survey'),
             ),
             enabled: !widget.isSaving,
             maxLines: 3,
@@ -98,7 +101,7 @@ class _SurveyFormState extends State<SurveyForm> {
           if (widget.error != null) ...[
             const SizedBox(height: 16),
             Text(
-              widget.error!,
+              context.trMessage(widget.error!),
               style: TextStyle(color: colorScheme.error),
             ),
           ],
@@ -115,9 +118,11 @@ class _SurveyFormState extends State<SurveyForm> {
                     ),
                   )
                 : Text(
-                    widget.existingSurvey != null
-                        ? 'Save Changes'
-                        : 'Create Survey',
+                    context.tr(
+                      widget.existingSurvey != null
+                          ? 'Save Changes'
+                          : 'Create Survey',
+                    ),
                   ),
           ),
         ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 
 import '../../../../core/constants/pagination.dart';
+import '../../../../core/localization/app_localizations.dart';
 
 /// Widget showing a paginated list of individual responses.
 class ResponseList extends StatelessWidget {
@@ -49,11 +50,11 @@ class ResponseList extends StatelessWidget {
               color: colorScheme.error,
             ),
             const SizedBox(height: 16),
-            Text(error!),
+            Text(context.trMessage(error!)),
             const SizedBox(height: 16),
             FilledButton(
               onPressed: () => onPageChange(0),
-              child: const Text('Retry'),
+              child: Text(context.tr('Retry')),
             ),
           ],
         ),
@@ -72,7 +73,7 @@ class ResponseList extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'No responses yet',
+              context.tr('No responses yet'),
               style: Theme.of(context).textTheme.headlineSmall,
             ),
           ],
@@ -115,11 +116,14 @@ class ResponseList extends StatelessWidget {
                       ? () => onPageChange(currentPage - 1)
                       : null,
                   icon: const Icon(Icons.chevron_left),
-                  tooltip: 'Previous page',
+                  tooltip: context.tr('Previous page'),
                 ),
                 const SizedBox(width: 16),
                 Text(
-                  'Page ${currentPage + 1} of $totalPages',
+                  context.tr('Page {currentPage} of {totalPages}', {
+                    'currentPage': currentPage + 1,
+                    'totalPages': totalPages,
+                  }),
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(width: 16),
@@ -128,7 +132,7 @@ class ResponseList extends StatelessWidget {
                       ? () => onPageChange(currentPage + 1)
                       : null,
                   icon: const Icon(Icons.chevron_right),
-                  tooltip: 'Next page',
+                  tooltip: context.tr('Next page'),
                 ),
               ],
             ),
@@ -205,8 +209,8 @@ class _ResponseTile extends StatelessWidget {
                       const SizedBox(width: 4),
                       Text(
                         response.userId != null
-                            ? 'User #${response.userId}'
-                            : 'Anonymous',
+                            ? context.tr('User #{id}', {'id': response.userId})
+                            : context.tr('Anonymous'),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),
@@ -258,12 +262,12 @@ class _ResponseTile extends StatelessWidget {
                   IconButton(
                     icon: const Icon(Icons.reply_outlined),
                     onPressed: onReply,
-                    tooltip: 'Reply',
+                    tooltip: context.tr('Reply'),
                   ),
                   IconButton(
                     icon: Icon(Icons.delete_outline, color: colorScheme.error),
                     onPressed: onDelete,
-                    tooltip: 'Delete response',
+                    tooltip: context.tr('Delete response'),
                   ),
                 ],
               ),

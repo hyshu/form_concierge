@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 
 import '../../../../core/extensions/question_type_presentation.dart';
+import '../../../../core/localization/app_localizations.dart';
 import 'choice_editor.dart';
 
 /// List tile for displaying a question with its choices.
@@ -35,6 +36,7 @@ class QuestionListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final usesChoices = question.type.usesChoices;
+    final validationSummary = _validationSummary(context);
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8),
@@ -77,15 +79,15 @@ class QuestionListTile extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        question.type.label,
+                        context.tr(question.type.label),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),
                       ),
-                      if (_validationSummary != null) ...[
+                      if (validationSummary != null) ...[
                         const SizedBox(height: 4),
                         Text(
-                          _validationSummary!,
+                          validationSummary,
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: colorScheme.onSurfaceVariant),
                         ),
@@ -93,7 +95,12 @@ class QuestionListTile extends StatelessWidget {
                       if (visibilityRules.isNotEmpty) ...[
                         const SizedBox(height: 4),
                         Text(
-                          'Visible when ${visibilityRules.length} ${visibilityRules.length == 1 ? 'rule matches' : 'rules match'}',
+                          context.tr(
+                            visibilityRules.length == 1
+                                ? 'Visible when {count} rule matches'
+                                : 'Visible when {count} rules match',
+                            {'count': visibilityRules.length},
+                          ),
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: colorScheme.primary),
                         ),
@@ -105,13 +112,13 @@ class QuestionListTile extends StatelessWidget {
                   IconButton(
                     icon: const Icon(Icons.edit),
                     onPressed: onEdit,
-                    tooltip: 'Edit question',
+                    tooltip: context.tr('Edit question'),
                     visualDensity: VisualDensity.compact,
                   ),
                   IconButton(
                     icon: Icon(Icons.delete_outline, color: colorScheme.error),
                     onPressed: onDelete,
-                    tooltip: 'Delete question',
+                    tooltip: context.tr('Delete question'),
                     visualDensity: VisualDensity.compact,
                   ),
                 ],
@@ -130,7 +137,9 @@ class QuestionListTile extends StatelessWidget {
             if (!usesChoices && question.placeholder != null) ...[
               const SizedBox(height: 8),
               Text(
-                'Placeholder: ${question.placeholder}',
+                context.tr('Placeholder: {placeholder}', {
+                  'placeholder': question.placeholder,
+                }),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                   fontStyle: FontStyle.italic,
@@ -145,20 +154,28 @@ class QuestionListTile extends StatelessWidget {
     );
   }
 
-  String? get _validationSummary {
+  String? _validationSummary(BuildContext context) {
     if (question.type.usesTextAnswer) {
       final parts = [
-        if (question.minLength != null) 'min ${question.minLength}',
-        if (question.maxLength != null) 'max ${question.maxLength}',
+        if (question.minLength != null)
+          context.tr('min {value}', {'value': question.minLength}),
+        if (question.maxLength != null)
+          context.tr('max {value}', {'value': question.maxLength}),
       ];
-      return parts.isEmpty ? null : 'Length: ${parts.join(', ')}';
+      return parts.isEmpty
+          ? null
+          : context.tr('Length: {summary}', {'summary': parts.join(', ')});
     }
     if (question.type == QuestionType.multipleChoice) {
       final parts = [
-        if (question.minSelected != null) 'min ${question.minSelected}',
-        if (question.maxSelected != null) 'max ${question.maxSelected}',
+        if (question.minSelected != null)
+          context.tr('min {value}', {'value': question.minSelected}),
+        if (question.maxSelected != null)
+          context.tr('max {value}', {'value': question.maxSelected}),
       ];
-      return parts.isEmpty ? null : 'Selections: ${parts.join(', ')}';
+      return parts.isEmpty
+          ? null
+          : context.tr('Selections: {summary}', {'summary': parts.join(', ')});
     }
     return null;
   }
