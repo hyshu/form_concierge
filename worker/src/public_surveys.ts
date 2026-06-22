@@ -33,7 +33,7 @@ export async function getPublicProjectByDomain(env: Env, domainValue: string | n
 async function publicProjectPayload(env: Env, project: ProjectRow) {
   const rows = await env.DB.prepare(
     `SELECT * FROM surveys
-     WHERE project_id = ? AND status = 'published'
+     WHERE project_id = ? AND status = 'published' AND web_enabled = 1
      ORDER BY updated_at DESC`,
   ).bind(project.id).all<SurveyRow>();
   return {
@@ -44,7 +44,7 @@ async function publicProjectPayload(env: Env, project: ProjectRow) {
 
 export async function getPublicQuestions(env: Env, surveyId: number): Promise<Response> {
   const survey = await env.DB.prepare(
-    `SELECT * FROM surveys WHERE id = ? AND status = 'published'`,
+    `SELECT * FROM surveys WHERE id = ? AND status = 'published' AND web_enabled = 1`,
   ).bind(surveyId).first<SurveyRow>();
   if (!survey || !isAccepting(survey)) return json([]);
   const rows = await env.DB.prepare(
@@ -59,7 +59,7 @@ export async function getPublicChoices(env: Env, questionId: number): Promise<Re
   const question = await env.DB.prepare(
     `SELECT q.* FROM questions q
      JOIN surveys s ON s.id = q.survey_id
-     WHERE q.id = ? AND q.is_deleted = 0 AND s.status = 'published'`,
+     WHERE q.id = ? AND q.is_deleted = 0 AND s.status = 'published' AND s.web_enabled = 1`,
   ).bind(questionId).first<QuestionRow>();
   if (!question) return json([]);
   const rows = await env.DB.prepare(
@@ -78,7 +78,7 @@ export async function submitResponse(
   const survey = await env.DB.prepare(`SELECT * FROM surveys WHERE id = ?`)
     .bind(surveyId)
     .first<SurveyRow>();
-  if (!survey || survey.status !== 'published' || !isAccepting(survey)) {
+  if (!survey || survey.status !== 'published' || survey.web_enabled !== 1 || !isAccepting(survey)) {
     throw new HttpError(400, 'Survey is not accepting responses');
   }
 

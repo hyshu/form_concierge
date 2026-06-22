@@ -154,6 +154,7 @@ Map<String, Object?> _surveyJson() => {
   'titleTranslations': {'en': 'Customer feedback'},
   'descriptionTranslations': {'en': 'Tell us what you think'},
   'status': 'published',
+  'webEnabled': true,
   'createdAt': '2026-06-22T10:00:00.000Z',
   'updatedAt': '2026-06-22T10:00:00.000Z',
   'startsAt': null,

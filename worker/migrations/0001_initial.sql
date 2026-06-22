@@ -50,6 +50,7 @@ CREATE TABLE surveys (
   title_translations TEXT NOT NULL,
   description_translations TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'draft',
+  web_enabled INTEGER NOT NULL DEFAULT 1,
   auth_requirement TEXT NOT NULL DEFAULT 'anonymous',
   created_by_admin_id TEXT REFERENCES admins(id) ON DELETE SET NULL,
   created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),

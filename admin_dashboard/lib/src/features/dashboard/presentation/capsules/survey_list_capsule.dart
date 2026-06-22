@@ -150,6 +150,15 @@ class SurveyListManager {
     );
   }
 
+  Future<bool> updateSurveyWebEnabled(Survey survey, bool enabled) async {
+    return _runAndReload(
+      () => _client.surveyAdmin.update(
+        survey.copyWith(webEnabled: enabled, updatedAt: DateTime.now()),
+      ),
+      'Failed to update web publication',
+    );
+  }
+
   Future<bool> _runAndReload(
     Future<void> Function() action,
     String errorMessage,

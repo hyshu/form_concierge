@@ -23,9 +23,9 @@ type NormalizedVisibilityRule = {
 
 export async function listPublicVisibilityRules(env: Env, surveyId: number): Promise<Response> {
   const rows = await env.DB.prepare(
-    `SELECT r.* FROM question_visibility_rules r
+     `SELECT r.* FROM question_visibility_rules r
      JOIN surveys s ON s.id = r.survey_id
-     WHERE r.survey_id = ? AND s.status = 'published'
+     WHERE r.survey_id = ? AND s.status = 'published' AND s.web_enabled = 1
      ORDER BY r.target_question_id, r.id`,
   ).bind(surveyId).all<VisibilityRuleRow>();
   return json(rows.results.map(visibilityRuleToJson));
