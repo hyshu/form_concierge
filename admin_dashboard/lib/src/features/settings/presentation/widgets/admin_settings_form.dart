@@ -1,0 +1,605 @@
+import 'package:flutter/material.dart';
+import 'package:form_concierge_client/form_concierge_client.dart';
+import 'package:hux/hux.dart';
+
+import '../../../../core/localization/app_localizations.dart';
+
+class AdminSettingsForm extends StatefulWidget {
+  const AdminSettingsForm({
+    super.key,
+    required this.settings,
+    required this.isSaving,
+    this.error,
+    this.successMessage,
+    required this.onSave,
+    required this.onClearMessages,
+  });
+
+  final AdminIntegrationSettings settings;
+  final bool isSaving;
+  final String? error;
+  final String? successMessage;
+  final Future<bool> Function(AdminIntegrationSettingsInput input) onSave;
+  final VoidCallback onClearMessages;
+
+  @override
+  State<AdminSettingsForm> createState() => _AdminSettingsFormState();
+}
+
+class _AdminSettingsFormState extends State<AdminSettingsForm> {
+  final _formKey = GlobalKey<FormState>();
+  final _geminiKeyController = TextEditingController();
+  final _smtpHostController = TextEditingController();
+  final _smtpPortController = TextEditingController();
+  final _smtpUsernameController = TextEditingController();
+  final _smtpPasswordController = TextEditingController();
+  final _smtpFromEmailController = TextEditingController();
+  final _smtpFromNameController = TextEditingController();
+
+  late SmtpSecureMode _secureMode;
+  bool _clearGeminiKey = false;
+  bool _clearSmtpPassword = false;
+  bool _hasChanges = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _populate(widget.settings);
+    for (final controller in _controllers) {
+      controller.addListener(_markChanged);
+    }
+  }
+
+  @override
+  void didUpdateWidget(AdminSettingsForm oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.settings != widget.settings) {
+      _populate(widget.settings);
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final controller in _controllers) {
+      controller.removeListener(_markChanged);
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  List<TextEditingController> get _controllers => [
+    _geminiKeyController,
+    _smtpHostController,
+    _smtpPortController,
+    _smtpUsernameController,
+    _smtpPasswordController,
+    _smtpFromEmailController,
+    _smtpFromNameController,
+  ];
+
+  void _populate(AdminIntegrationSettings settings) {
+    _geminiKeyController.clear();
+    _smtpHostController.text = settings.smtp.host ?? '';
+    _smtpPortController.text = settings.smtp.port?.toString() ?? '';
+    _smtpUsernameController.text = settings.smtp.username ?? '';
+    _smtpPasswordController.clear();
+    _smtpFromEmailController.text = settings.smtp.fromEmail ?? '';
+    _smtpFromNameController.text = settings.smtp.fromName ?? '';
+    _secureMode = settings.smtp.secureMode;
+    _clearGeminiKey = false;
+    _clearSmtpPassword = false;
+    _hasChanges = false;
+  }
+
+  void _markChanged() {
+    if (!_hasChanges) setState(() => _hasChanges = true);
+  }
+
+  void _setClearGeminiKey(bool value) {
+    setState(() {
+      _clearGeminiKey = value;
+      _hasChanges = true;
+      if (value) _geminiKeyController.clear();
+    });
+  }
+
+  void _setClearSmtpPassword(bool value) {
+    setState(() {
+      _clearSmtpPassword = value;
+      _hasChanges = true;
+      if (value) _smtpPasswordController.clear();
+    });
+  }
+
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
+    final success = await widget.onSave(
+      AdminIntegrationSettingsInput(
+        geminiApiKey: _nullIfBlank(_geminiKeyController.text),
+        clearGeminiApiKey: _clearGeminiKey,
+        smtpHost: _nullIfBlank(_smtpHostController.text),
+        smtpPort: _smtpPortController.text.trim().isEmpty
+            ? null
+            : int.parse(_smtpPortController.text.trim()),
+        smtpUsername: _nullIfBlank(_smtpUsernameController.text),
+        smtpPassword: _nullIfBlank(_smtpPasswordController.text),
+        clearSmtpPassword: _clearSmtpPassword,
+        smtpFromEmail: _nullIfBlank(_smtpFromEmailController.text),
+        smtpFromName: _nullIfBlank(_smtpFromNameController.text),
+        smtpSecureMode: _secureMode,
+      ),
+    );
+    if (success && mounted) setState(() => _hasChanges = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final settings = widget.settings;
+    return Form(
+      key: _formKey,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 88),
+        children: [
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 880),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (widget.error != null) ...[
+                    _MessageCard(
+                      icon: LucideIcons.circleAlert,
+                      message: context.trMessage(widget.error!),
+                      destructive: true,
+                      onClose: widget.onClearMessages,
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  if (widget.successMessage != null) ...[
+                    _MessageCard(
+                      icon: LucideIcons.circleCheck,
+                      message: context.trMessage(widget.successMessage!),
+                      onClose: widget.onClearMessages,
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  _GeminiSection(
+                    hasApiKey: settings.gemini.hasApiKey,
+                    clearApiKey: _clearGeminiKey,
+                    apiKeyController: _geminiKeyController,
+                    onClearChanged: _setClearGeminiKey,
+                  ),
+                  const SizedBox(height: 16),
+                  _SmtpSection(
+                    settings: settings.smtp,
+                    hostController: _smtpHostController,
+                    portController: _smtpPortController,
+                    usernameController: _smtpUsernameController,
+                    passwordController: _smtpPasswordController,
+                    fromEmailController: _smtpFromEmailController,
+                    fromNameController: _smtpFromNameController,
+                    secureMode: _secureMode,
+                    clearPassword: _clearSmtpPassword,
+                    onSecureModeChanged: (mode) {
+                      setState(() {
+                        _secureMode = mode;
+                        _hasChanges = true;
+                      });
+                    },
+                    onClearPasswordChanged: _setClearSmtpPassword,
+                  ),
+                  const SizedBox(height: 20),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: HuxButton(
+                      onPressed: widget.isSaving ? null : _save,
+                      isLoading: widget.isSaving,
+                      icon: LucideIcons.save,
+                      child: Text(context.tr('Save Changes')),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GeminiSection extends StatelessWidget {
+  const _GeminiSection({
+    required this.hasApiKey,
+    required this.clearApiKey,
+    required this.apiKeyController,
+    required this.onClearChanged,
+  });
+
+  final bool hasApiKey;
+  final bool clearApiKey;
+  final TextEditingController apiKeyController;
+  final ValueChanged<bool> onClearChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return HuxCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _SectionHeader(
+            icon: LucideIcons.sparkles,
+            title: context.tr('Gemini'),
+            configured: hasApiKey && !clearApiKey,
+          ),
+          const SizedBox(height: 16),
+          HuxInput(
+            controller: apiKeyController,
+            label: context.tr('Gemini API Key'),
+            hint: hasApiKey
+                ? context.tr('Leave blank to keep the saved key')
+                : 'AIza...',
+            prefixIcon: const Icon(LucideIcons.keyRound),
+            obscureText: true,
+            enabled: !clearApiKey,
+          ),
+          if (hasApiKey) ...[
+            const SizedBox(height: 12),
+            _SwitchRow(
+              label: context.tr('Clear saved Gemini API key'),
+              value: clearApiKey,
+              onChanged: onClearChanged,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _SmtpSection extends StatelessWidget {
+  const _SmtpSection({
+    required this.settings,
+    required this.hostController,
+    required this.portController,
+    required this.usernameController,
+    required this.passwordController,
+    required this.fromEmailController,
+    required this.fromNameController,
+    required this.secureMode,
+    required this.clearPassword,
+    required this.onSecureModeChanged,
+    required this.onClearPasswordChanged,
+  });
+
+  final SmtpIntegrationSettings settings;
+  final TextEditingController hostController;
+  final TextEditingController portController;
+  final TextEditingController usernameController;
+  final TextEditingController passwordController;
+  final TextEditingController fromEmailController;
+  final TextEditingController fromNameController;
+  final SmtpSecureMode secureMode;
+  final bool clearPassword;
+  final ValueChanged<SmtpSecureMode> onSecureModeChanged;
+  final ValueChanged<bool> onClearPasswordChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return HuxCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _SectionHeader(
+            icon: LucideIcons.mail,
+            title: context.tr('SMTP Server'),
+            configured: settings.configured,
+          ),
+          const SizedBox(height: 16),
+          _ResponsiveFields(
+            children: [
+              HuxInput(
+                controller: hostController,
+                label: context.tr('SMTP Host'),
+                hint: 'smtp.example.com',
+                prefixIcon: const Icon(LucideIcons.server),
+                validator: (_) => _smtpRequiredError(
+                  context,
+                  hostController.text.trim().isEmpty,
+                  'Host is required when SMTP settings are present',
+                ),
+              ),
+              HuxInput(
+                controller: portController,
+                label: context.tr('SMTP Port'),
+                hint: '587',
+                prefixIcon: const Icon(LucideIcons.network),
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  final trimmed = value?.trim() ?? '';
+                  if (trimmed.isEmpty) {
+                    return _smtpRequiredError(
+                      context,
+                      true,
+                      'Port is required when SMTP settings are present',
+                    );
+                  }
+                  final port = int.tryParse(trimmed);
+                  if (port == null || port < 1 || port > 65535 || port == 25) {
+                    return context.tr('Port must be between 1 and 65535');
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _ResponsiveFields(
+            children: [
+              HuxInput(
+                controller: usernameController,
+                label: context.tr('Username (optional)'),
+                prefixIcon: const Icon(LucideIcons.user),
+              ),
+              HuxInput(
+                controller: passwordController,
+                label: context.tr('SMTP Password'),
+                hint: settings.hasPassword
+                    ? context.tr('Leave blank to keep the saved password')
+                    : null,
+                prefixIcon: const Icon(LucideIcons.lock),
+                obscureText: true,
+                enabled: !clearPassword,
+              ),
+            ],
+          ),
+          if (settings.hasPassword) ...[
+            const SizedBox(height: 12),
+            _SwitchRow(
+              label: context.tr('Clear saved SMTP password'),
+              value: clearPassword,
+              onChanged: onClearPasswordChanged,
+            ),
+          ],
+          const SizedBox(height: 16),
+          _ResponsiveFields(
+            children: [
+              HuxInput(
+                controller: fromEmailController,
+                label: context.tr('From Email'),
+                hint: 'forms@example.com',
+                prefixIcon: const Icon(LucideIcons.mailCheck),
+                keyboardType: TextInputType.emailAddress,
+                validator: (value) {
+                  final trimmed = value?.trim() ?? '';
+                  if (trimmed.isEmpty) {
+                    return _smtpRequiredError(
+                      context,
+                      true,
+                      'From email is required when SMTP settings are present',
+                    );
+                  }
+                  if (!RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(trimmed)) {
+                    return context.tr('Enter a valid email address');
+                  }
+                  return null;
+                },
+              ),
+              HuxInput(
+                controller: fromNameController,
+                label: context.tr('From Name (optional)'),
+                hint: 'Form Concierge',
+                prefixIcon: const Icon(LucideIcons.signature),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _LabeledControl(
+            label: context.tr('Security'),
+            child: HuxDropdown<SmtpSecureMode>(
+              value: secureMode,
+              useItemWidgetAsValue: true,
+              items: [
+                HuxDropdownItem(
+                  value: SmtpSecureMode.starttls,
+                  child: Text(context.tr('STARTTLS')),
+                ),
+                HuxDropdownItem(
+                  value: SmtpSecureMode.tls,
+                  child: Text(context.tr('TLS')),
+                ),
+                HuxDropdownItem(
+                  value: SmtpSecureMode.none,
+                  child: Text(context.tr('None')),
+                ),
+              ],
+              onChanged: onSecureModeChanged,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String? _smtpRequiredError(
+    BuildContext context,
+    bool currentFieldEmpty,
+    String messageKey,
+  ) {
+    if (!currentFieldEmpty) return null;
+    final anySmtpField = [
+      hostController.text,
+      portController.text,
+      usernameController.text,
+      passwordController.text,
+      fromEmailController.text,
+      fromNameController.text,
+    ].any((value) => value.trim().isNotEmpty);
+    return anySmtpField ? context.tr(messageKey) : null;
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({
+    required this.icon,
+    required this.title,
+    required this.configured,
+  });
+
+  final IconData icon;
+  final String title;
+  final bool configured;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, color: HuxTokens.primary(context)),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            title,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        HuxBadge(
+          label: context.tr(configured ? 'Configured' : 'Not configured'),
+          variant: configured
+              ? HuxBadgeVariant.success
+              : HuxBadgeVariant.secondary,
+          size: HuxBadgeSize.small,
+        ),
+      ],
+    );
+  }
+}
+
+class _SwitchRow extends StatelessWidget {
+  const _SwitchRow({
+    required this.label,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final String label;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(child: Text(label)),
+        HuxSwitch(value: value, onChanged: onChanged),
+      ],
+    );
+  }
+}
+
+class _ResponsiveFields extends StatelessWidget {
+  const _ResponsiveFields({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 620) {
+          return Column(
+            children: [
+              for (var index = 0; index < children.length; index++) ...[
+                children[index],
+                if (index != children.length - 1) const SizedBox(height: 16),
+              ],
+            ],
+          );
+        }
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (var index = 0; index < children.length; index++) ...[
+              Expanded(child: children[index]),
+              if (index != children.length - 1) const SizedBox(width: 16),
+            ],
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _LabeledControl extends StatelessWidget {
+  const _LabeledControl({required this.label, required this.child});
+
+  final String label;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            color: HuxTokens.textSecondary(context),
+          ),
+        ),
+        const SizedBox(height: 6),
+        SizedBox(width: double.infinity, child: child),
+      ],
+    );
+  }
+}
+
+class _MessageCard extends StatelessWidget {
+  const _MessageCard({
+    required this.icon,
+    required this.message,
+    this.destructive = false,
+    this.onClose,
+  });
+
+  final IconData icon;
+  final String message;
+  final bool destructive;
+  final VoidCallback? onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = destructive
+        ? HuxTokens.textDestructive(context)
+        : HuxTokens.textSuccess(context);
+    return HuxCard(
+      backgroundColor: destructive
+          ? HuxTokens.surfaceDestructive(context)
+          : HuxTokens.surfaceSuccess(context),
+      child: Row(
+        children: [
+          Icon(icon, color: color),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(message, style: TextStyle(color: color)),
+          ),
+          if (onClose != null)
+            HuxButton(
+              onPressed: onClose,
+              variant: HuxButtonVariant.ghost,
+              size: HuxButtonSize.small,
+              icon: LucideIcons.x,
+              textColor: color,
+              child: const SizedBox(width: 0),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+String? _nullIfBlank(String value) {
+  final trimmed = value.trim();
+  return trimmed.isEmpty ? null : trimmed;
+}

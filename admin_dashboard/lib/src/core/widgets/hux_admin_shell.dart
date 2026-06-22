@@ -13,6 +13,7 @@ class HuxAdminShell extends StatelessWidget {
     this.actions = const [],
     this.onBack,
     this.showUsers = false,
+    this.showSettings = false,
   });
 
   final String title;
@@ -21,6 +22,7 @@ class HuxAdminShell extends StatelessWidget {
   final List<Widget> actions;
   final VoidCallback? onBack;
   final bool showUsers;
+  final bool showSettings;
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +33,11 @@ class HuxAdminShell extends StatelessWidget {
         child: Row(
           children: [
             if (isWide)
-              _Sidebar(selectedItemId: selectedItemId, showUsers: showUsers),
+              _Sidebar(
+                selectedItemId: selectedItemId,
+                showUsers: showUsers,
+                showSettings: showSettings,
+              ),
             Expanded(
               child: Column(
                 children: [
@@ -42,6 +48,7 @@ class HuxAdminShell extends StatelessWidget {
                     showMenu: !isWide,
                     selectedItemId: selectedItemId,
                     showUsers: showUsers,
+                    showSettings: showSettings,
                   ),
                   Expanded(child: child),
                 ],
@@ -55,10 +62,15 @@ class HuxAdminShell extends StatelessWidget {
 }
 
 class _Sidebar extends StatelessWidget {
-  const _Sidebar({required this.selectedItemId, required this.showUsers});
+  const _Sidebar({
+    required this.selectedItemId,
+    required this.showUsers,
+    required this.showSettings,
+  });
 
   final String? selectedItemId;
   final bool showUsers;
+  final bool showSettings;
 
   @override
   Widget build(BuildContext context) {
@@ -92,6 +104,12 @@ class _Sidebar extends StatelessWidget {
             icon: LucideIcons.users,
             label: context.tr('User Management'),
           ),
+        if (showSettings)
+          HuxSidebarItemData(
+            id: 'settings',
+            icon: LucideIcons.settings,
+            label: context.tr('Settings'),
+          ),
       ],
     );
   }
@@ -102,6 +120,8 @@ class _Sidebar extends StatelessWidget {
         context.go('/admin');
       case 'users':
         context.go('/admin/users');
+      case 'settings':
+        context.go('/admin/settings');
     }
   }
 }
@@ -113,6 +133,7 @@ class _TopBar extends StatelessWidget {
     required this.showMenu,
     required this.selectedItemId,
     required this.showUsers,
+    required this.showSettings,
     this.onBack,
   });
 
@@ -121,6 +142,7 @@ class _TopBar extends StatelessWidget {
   final bool showMenu;
   final String? selectedItemId;
   final bool showUsers;
+  final bool showSettings;
   final VoidCallback? onBack;
 
   @override
@@ -161,6 +183,11 @@ class _TopBar extends StatelessWidget {
                         value: 'users',
                         child: Text(context.tr('User Management')),
                       ),
+                    if (showSettings)
+                      HuxDropdownItem(
+                        value: 'settings',
+                        child: Text(context.tr('Settings')),
+                      ),
                   ],
                   onChanged: (itemId) {
                     switch (itemId) {
@@ -168,6 +195,8 @@ class _TopBar extends StatelessWidget {
                         context.go('/admin');
                       case 'users':
                         context.go('/admin/users');
+                      case 'settings':
+                        context.go('/admin/settings');
                     }
                   },
                 ),

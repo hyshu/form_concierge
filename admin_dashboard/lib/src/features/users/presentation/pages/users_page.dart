@@ -36,6 +36,7 @@ class UsersPage extends RearchConsumer {
       title: context.tr('User Management'),
       selectedItemId: 'users',
       showUsers: true,
+      showSettings: true,
       actions: [
         HuxButton(
           onPressed: () => _showCreateUserDialog(context, manager),

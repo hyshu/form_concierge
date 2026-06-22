@@ -119,18 +119,14 @@ class NotificationSettings {
   final int surveyId;
   final bool enabled;
   final String recipientEmail;
-  final int sendHour;
   final DateTime updatedAt;
-  final DateTime? lastSentAt;
 
   const NotificationSettings({
     this.id,
     required this.surveyId,
     this.enabled = false,
     required this.recipientEmail,
-    this.sendHour = 9,
     required this.updatedAt,
-    this.lastSentAt,
   });
 
   factory NotificationSettings.fromJson(Map<String, dynamic> json) =>
@@ -139,9 +135,7 @@ class NotificationSettings {
         surveyId: _int(json['surveyId']),
         enabled: _bool(json['enabled']),
         recipientEmail: json['recipientEmail'] as String,
-        sendHour: _int(json['sendHour']),
         updatedAt: _date(json['updatedAt']),
-        lastSentAt: _optionalDate(json['lastSentAt']),
       );
 
   Map<String, dynamic> toJson() => _withoutNulls({
@@ -149,8 +143,6 @@ class NotificationSettings {
     'surveyId': surveyId,
     'enabled': enabled,
     'recipientEmail': recipientEmail,
-    'sendHour': sendHour,
     'updatedAt': updatedAt.toIso8601String(),
-    'lastSentAt': lastSentAt?.toIso8601String(),
   });
 }

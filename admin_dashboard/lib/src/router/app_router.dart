@@ -8,6 +8,7 @@ import '../features/auth/presentation/pages/reset_password_page.dart';
 import '../features/auth/presentation/pages/verify_reset_code_page.dart';
 import '../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../features/responses/presentation/pages/responses_page.dart';
+import '../features/settings/presentation/pages/admin_settings_page.dart';
 import '../features/surveys/presentation/pages/survey_editor_page.dart';
 import '../features/users/presentation/pages/users_page.dart';
 
@@ -76,6 +77,10 @@ GoRouter appRouterCapsule(CapsuleHandle use) {
             GoRoute(
               path: 'users',
               builder: (context, state) => const UsersPage(),
+            ),
+            GoRoute(
+              path: 'settings',
+              builder: (context, state) => const AdminSettingsPage(),
             ),
             GoRoute(
               path: 'surveys/:id',

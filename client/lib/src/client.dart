@@ -10,6 +10,7 @@ class Client {
   late final ChoiceAdminEndpoint choiceAdmin;
   late final ResponseAnalyticsEndpoint responseAnalytics;
   late final NotificationSettingsEndpoint notificationSettings;
+  late final AdminSettingsEndpoint adminSettings;
   late final ConfigEndpoint config;
   late final UserAdminEndpoint userAdmin;
   late final AiAdminEndpoint aiAdmin;
@@ -36,6 +37,7 @@ class Client {
     choiceAdmin = ChoiceAdminEndpoint(this);
     responseAnalytics = ResponseAnalyticsEndpoint(this);
     notificationSettings = NotificationSettingsEndpoint(this);
+    adminSettings = AdminSettingsEndpoint(this);
     config = ConfigEndpoint(this);
     userAdmin = UserAdminEndpoint(this);
     aiAdmin = AiAdminEndpoint(this);

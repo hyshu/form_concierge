@@ -150,7 +150,20 @@ CREATE TABLE notification_settings (
   survey_id INTEGER NOT NULL UNIQUE REFERENCES surveys(id) ON DELETE CASCADE,
   enabled INTEGER NOT NULL DEFAULT 0,
   recipient_email TEXT NOT NULL,
-  send_hour INTEGER NOT NULL DEFAULT 9,
+  updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+);
+
+CREATE TABLE integration_settings (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  gemini_api_key TEXT,
+  smtp_host TEXT,
+  smtp_port INTEGER,
+  smtp_username TEXT,
+  smtp_password TEXT,
+  smtp_from_email TEXT,
+  smtp_from_name TEXT,
+  smtp_secure_mode TEXT NOT NULL DEFAULT 'starttls',
   updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
-  last_sent_at TEXT
+  CHECK (smtp_secure_mode IN ('none', 'starttls', 'tls')),
+  CHECK (smtp_port IS NULL OR (smtp_port BETWEEN 1 AND 65535))
 );
