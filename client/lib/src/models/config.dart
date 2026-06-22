@@ -3,23 +3,23 @@ part of form_concierge_client;
 class PublicConfig {
   final bool passwordResetEnabled;
   final bool requireEmailVerification;
-  final bool geminiEnabled;
+  final bool aiGenerationEnabled;
 
   const PublicConfig({
     required this.passwordResetEnabled,
     required this.requireEmailVerification,
-    required this.geminiEnabled,
+    required this.aiGenerationEnabled,
   });
 
   factory PublicConfig.fromJson(Map<String, dynamic> json) => PublicConfig(
     passwordResetEnabled: _bool(json['passwordResetEnabled']),
     requireEmailVerification: _bool(json['requireEmailVerification']),
-    geminiEnabled: _bool(json['geminiEnabled']),
+    aiGenerationEnabled: _bool(json['aiGenerationEnabled']),
   );
 
   Map<String, dynamic> toJson() => {
     'passwordResetEnabled': passwordResetEnabled,
     'requireEmailVerification': requireEmailVerification,
-    'geminiEnabled': geminiEnabled,
+    'aiGenerationEnabled': aiGenerationEnabled,
   };
 }

@@ -141,7 +141,11 @@ export type NotificationSettingsRow = {
 
 export type IntegrationSettingsRow = {
   id: number;
+  ai_provider: string;
   gemini_api_key: string | null;
+  openai_api_key: string | null;
+  claude_api_key: string | null;
+  cerebras_api_key: string | null;
   smtp_host: string | null;
   smtp_port: number | null;
   smtp_username: string | null;

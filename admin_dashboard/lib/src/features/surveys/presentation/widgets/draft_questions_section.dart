@@ -16,13 +16,13 @@ class DraftQuestionsSection extends StatelessWidget {
     super.key,
     required this.formManager,
     required this.formState,
-    required this.geminiEnabled,
+    required this.aiGenerationEnabled,
     required this.primaryLocale,
   });
 
   final SurveyFormManager formManager;
   final SurveyFormState formState;
-  final bool geminiEnabled;
+  final bool aiGenerationEnabled;
   final String primaryLocale;
 
   @override
@@ -54,7 +54,7 @@ class DraftQuestionsSection extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16),
-        if (draftQuestions.isEmpty && geminiEnabled)
+        if (draftQuestions.isEmpty && aiGenerationEnabled)
           AiPromptInput(
             isGenerating: formState.isGenerating,
             error: formState.generationError,

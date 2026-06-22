@@ -33,7 +33,7 @@ import {
 } from './admin_questions';
 import { notificationSettings } from './notification_settings';
 import { generateSurveyQuestions } from './ai_generation';
-import { getAdminIntegrationSettings, isEmailConfiguredResponse, isGeminiConfigured, updateAdminIntegrationSettings } from './admin_settings';
+import { getAdminIntegrationSettings, isAiGenerationConfigured, isEmailConfiguredResponse, updateAdminIntegrationSettings } from './admin_settings';
 import { getPublicChoices, getPublicProject, getPublicProjectByDomain, getPublicQuestions, submitResponse } from './public_surveys';
 import { listAdminVisibilityRules, listPublicVisibilityRules, replaceAdminVisibilityRules } from './visibility_rules';
 import {
@@ -80,7 +80,7 @@ async function route(request: Request, env: Env, ctx: ExecutionContext): Promise
     return json({
       passwordResetEnabled: false,
       requireEmailVerification: false,
-      geminiEnabled: await isGeminiConfigured(env),
+      aiGenerationEnabled: await isAiGenerationConfigured(env),
     });
   }
 

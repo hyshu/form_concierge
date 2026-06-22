@@ -30,17 +30,24 @@ void main() {
       );
     }
 
-    testWidgets('saves Gemini key without requiring SMTP fields', (
+    testWidgets('saves AI keys without requiring SMTP fields', (
       tester,
     ) async {
       await tester.pumpWidget(buildSubject(_settings()));
       await _enterText(tester, 'Gemini API Key', 'gemini-key');
+      await _enterText(tester, 'OpenAI API Key', 'openai-key');
+      await _enterText(tester, 'Claude API Key', 'claude-key');
+      await _enterText(tester, 'Cerebras API Key', 'cerebras-key');
       await tester.pump();
 
       await _tapSave(tester);
 
       expect(savedInput, isNotNull);
+      expect(savedInput!.aiProvider, AiProvider.gemini);
       expect(savedInput!.geminiApiKey, 'gemini-key');
+      expect(savedInput!.openaiApiKey, 'openai-key');
+      expect(savedInput!.claudeApiKey, 'claude-key');
+      expect(savedInput!.cerebrasApiKey, 'cerebras-key');
       expect(savedInput!.smtpHost, isNull);
       expect(savedInput!.smtpPort, isNull);
     });
@@ -65,7 +72,8 @@ void main() {
       await tester.pumpWidget(
         buildSubject(
           _settings(
-            hasGeminiKey: true,
+            aiProvider: AiProvider.openai,
+            hasOpenaiKey: true,
             hasSmtpPassword: true,
             smtpHost: 'smtp.example.com',
             smtpPort: 587,
@@ -79,8 +87,11 @@ void main() {
       await _tapSave(tester);
 
       expect(savedInput, isNotNull);
+      expect(savedInput!.aiProvider, AiProvider.openai);
       expect(savedInput!.geminiApiKey, isNull);
       expect(savedInput!.clearGeminiApiKey, isFalse);
+      expect(savedInput!.openaiApiKey, isNull);
+      expect(savedInput!.clearOpenaiApiKey, isFalse);
       expect(savedInput!.smtpPassword, isNull);
       expect(savedInput!.clearSmtpPassword, isFalse);
       expect(savedInput!.smtpFromName, 'Forms');
@@ -112,16 +123,35 @@ Future<void> _enterText(
 }
 
 AdminIntegrationSettings _settings({
+  AiProvider aiProvider = AiProvider.gemini,
   bool hasGeminiKey = false,
+  bool hasOpenaiKey = false,
+  bool hasClaudeKey = false,
+  bool hasCerebrasKey = false,
   bool hasSmtpPassword = false,
   String? smtpHost,
   int? smtpPort,
   String? smtpFromEmail,
 }) {
   return AdminIntegrationSettings(
-    gemini: GeminiIntegrationSettings(
-      enabled: hasGeminiKey,
-      hasApiKey: hasGeminiKey,
+    ai: AiIntegrationSettings(
+      provider: aiProvider,
+      gemini: AiProviderKeySettings(
+        enabled: aiProvider == AiProvider.gemini && hasGeminiKey,
+        hasApiKey: hasGeminiKey,
+      ),
+      openai: AiProviderKeySettings(
+        enabled: aiProvider == AiProvider.openai && hasOpenaiKey,
+        hasApiKey: hasOpenaiKey,
+      ),
+      claude: AiProviderKeySettings(
+        enabled: aiProvider == AiProvider.claude && hasClaudeKey,
+        hasApiKey: hasClaudeKey,
+      ),
+      cerebras: AiProviderKeySettings(
+        enabled: aiProvider == AiProvider.cerebras && hasCerebrasKey,
+        hasApiKey: hasCerebrasKey,
+      ),
     ),
     smtp: SmtpIntegrationSettings(
       configured: smtpHost != null && smtpPort != null && smtpFromEmail != null,

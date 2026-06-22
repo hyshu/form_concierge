@@ -29,6 +29,9 @@ class AdminSettingsForm extends StatefulWidget {
 class _AdminSettingsFormState extends State<AdminSettingsForm> {
   final _formKey = GlobalKey<FormState>();
   final _geminiKeyController = TextEditingController();
+  final _openaiKeyController = TextEditingController();
+  final _claudeKeyController = TextEditingController();
+  final _cerebrasKeyController = TextEditingController();
   final _smtpHostController = TextEditingController();
   final _smtpPortController = TextEditingController();
   final _smtpUsernameController = TextEditingController();
@@ -36,8 +39,12 @@ class _AdminSettingsFormState extends State<AdminSettingsForm> {
   final _smtpFromEmailController = TextEditingController();
   final _smtpFromNameController = TextEditingController();
 
+  late AiProvider _aiProvider;
   late SmtpSecureMode _secureMode;
   bool _clearGeminiKey = false;
+  bool _clearOpenaiKey = false;
+  bool _clearClaudeKey = false;
+  bool _clearCerebrasKey = false;
   bool _clearSmtpPassword = false;
   bool _hasChanges = false;
 
@@ -69,6 +76,9 @@ class _AdminSettingsFormState extends State<AdminSettingsForm> {
 
   List<TextEditingController> get _controllers => [
     _geminiKeyController,
+    _openaiKeyController,
+    _claudeKeyController,
+    _cerebrasKeyController,
     _smtpHostController,
     _smtpPortController,
     _smtpUsernameController,
@@ -79,14 +89,21 @@ class _AdminSettingsFormState extends State<AdminSettingsForm> {
 
   void _populate(AdminIntegrationSettings settings) {
     _geminiKeyController.clear();
+    _openaiKeyController.clear();
+    _claudeKeyController.clear();
+    _cerebrasKeyController.clear();
     _smtpHostController.text = settings.smtp.host ?? '';
     _smtpPortController.text = settings.smtp.port?.toString() ?? '';
     _smtpUsernameController.text = settings.smtp.username ?? '';
     _smtpPasswordController.clear();
     _smtpFromEmailController.text = settings.smtp.fromEmail ?? '';
     _smtpFromNameController.text = settings.smtp.fromName ?? '';
+    _aiProvider = settings.ai.provider;
     _secureMode = settings.smtp.secureMode;
     _clearGeminiKey = false;
+    _clearOpenaiKey = false;
+    _clearClaudeKey = false;
+    _clearCerebrasKey = false;
     _clearSmtpPassword = false;
     _hasChanges = false;
   }
@@ -103,6 +120,30 @@ class _AdminSettingsFormState extends State<AdminSettingsForm> {
     });
   }
 
+  void _setClearOpenaiKey(bool value) {
+    setState(() {
+      _clearOpenaiKey = value;
+      _hasChanges = true;
+      if (value) _openaiKeyController.clear();
+    });
+  }
+
+  void _setClearClaudeKey(bool value) {
+    setState(() {
+      _clearClaudeKey = value;
+      _hasChanges = true;
+      if (value) _claudeKeyController.clear();
+    });
+  }
+
+  void _setClearCerebrasKey(bool value) {
+    setState(() {
+      _clearCerebrasKey = value;
+      _hasChanges = true;
+      if (value) _cerebrasKeyController.clear();
+    });
+  }
+
   void _setClearSmtpPassword(bool value) {
     setState(() {
       _clearSmtpPassword = value;
@@ -115,8 +156,15 @@ class _AdminSettingsFormState extends State<AdminSettingsForm> {
     if (!_formKey.currentState!.validate()) return;
     final success = await widget.onSave(
       AdminIntegrationSettingsInput(
+        aiProvider: _aiProvider,
         geminiApiKey: _nullIfBlank(_geminiKeyController.text),
         clearGeminiApiKey: _clearGeminiKey,
+        openaiApiKey: _nullIfBlank(_openaiKeyController.text),
+        clearOpenaiApiKey: _clearOpenaiKey,
+        claudeApiKey: _nullIfBlank(_claudeKeyController.text),
+        clearClaudeApiKey: _clearClaudeKey,
+        cerebrasApiKey: _nullIfBlank(_cerebrasKeyController.text),
+        clearCerebrasApiKey: _clearCerebrasKey,
         smtpHost: _nullIfBlank(_smtpHostController.text),
         smtpPort: _smtpPortController.text.trim().isEmpty
             ? null
@@ -163,11 +211,27 @@ class _AdminSettingsFormState extends State<AdminSettingsForm> {
                     ),
                     const SizedBox(height: 16),
                   ],
-                  _GeminiSection(
-                    hasApiKey: settings.gemini.hasApiKey,
-                    clearApiKey: _clearGeminiKey,
-                    apiKeyController: _geminiKeyController,
-                    onClearChanged: _setClearGeminiKey,
+                  _AiSection(
+                    settings: settings.ai,
+                    provider: _aiProvider,
+                    geminiKeyController: _geminiKeyController,
+                    openaiKeyController: _openaiKeyController,
+                    claudeKeyController: _claudeKeyController,
+                    cerebrasKeyController: _cerebrasKeyController,
+                    clearGeminiKey: _clearGeminiKey,
+                    clearOpenaiKey: _clearOpenaiKey,
+                    clearClaudeKey: _clearClaudeKey,
+                    clearCerebrasKey: _clearCerebrasKey,
+                    onProviderChanged: (provider) {
+                      setState(() {
+                        _aiProvider = provider;
+                        _hasChanges = true;
+                      });
+                    },
+                    onClearGeminiChanged: _setClearGeminiKey,
+                    onClearOpenaiChanged: _setClearOpenaiKey,
+                    onClearClaudeChanged: _setClearClaudeKey,
+                    onClearCerebrasChanged: _setClearCerebrasKey,
                   ),
                   const SizedBox(height: 16),
                   _SmtpSection(
@@ -208,18 +272,40 @@ class _AdminSettingsFormState extends State<AdminSettingsForm> {
   }
 }
 
-class _GeminiSection extends StatelessWidget {
-  const _GeminiSection({
-    required this.hasApiKey,
-    required this.clearApiKey,
-    required this.apiKeyController,
-    required this.onClearChanged,
+class _AiSection extends StatelessWidget {
+  const _AiSection({
+    required this.settings,
+    required this.provider,
+    required this.geminiKeyController,
+    required this.openaiKeyController,
+    required this.claudeKeyController,
+    required this.cerebrasKeyController,
+    required this.clearGeminiKey,
+    required this.clearOpenaiKey,
+    required this.clearClaudeKey,
+    required this.clearCerebrasKey,
+    required this.onProviderChanged,
+    required this.onClearGeminiChanged,
+    required this.onClearOpenaiChanged,
+    required this.onClearClaudeChanged,
+    required this.onClearCerebrasChanged,
   });
 
-  final bool hasApiKey;
-  final bool clearApiKey;
-  final TextEditingController apiKeyController;
-  final ValueChanged<bool> onClearChanged;
+  final AiIntegrationSettings settings;
+  final AiProvider provider;
+  final TextEditingController geminiKeyController;
+  final TextEditingController openaiKeyController;
+  final TextEditingController claudeKeyController;
+  final TextEditingController cerebrasKeyController;
+  final bool clearGeminiKey;
+  final bool clearOpenaiKey;
+  final bool clearClaudeKey;
+  final bool clearCerebrasKey;
+  final ValueChanged<AiProvider> onProviderChanged;
+  final ValueChanged<bool> onClearGeminiChanged;
+  final ValueChanged<bool> onClearOpenaiChanged;
+  final ValueChanged<bool> onClearClaudeChanged;
+  final ValueChanged<bool> onClearCerebrasChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -229,30 +315,140 @@ class _GeminiSection extends StatelessWidget {
         children: [
           _SectionHeader(
             icon: LucideIcons.sparkles,
-            title: context.tr('Gemini'),
-            configured: hasApiKey && !clearApiKey,
+            title: context.tr('AI Generation'),
+            configured:
+                _selectedProviderSettings.hasApiKey &&
+                !_selectedProviderClearFlag,
           ),
           const SizedBox(height: 16),
-          HuxInput(
-            controller: apiKeyController,
-            label: context.tr('Gemini API Key'),
-            hint: hasApiKey
-                ? context.tr('Leave blank to keep the saved key')
-                : 'AIza...',
-            prefixIcon: const Icon(LucideIcons.keyRound),
-            obscureText: true,
-            enabled: !clearApiKey,
-          ),
-          if (hasApiKey) ...[
-            const SizedBox(height: 12),
-            _SwitchRow(
-              label: context.tr('Clear saved Gemini API key'),
-              value: clearApiKey,
-              onChanged: onClearChanged,
+          _LabeledControl(
+            label: context.tr('AI Provider'),
+            child: HuxDropdown<AiProvider>(
+              value: provider,
+              useItemWidgetAsValue: true,
+              items: [
+                for (final value in AiProvider.values)
+                  HuxDropdownItem(
+                    value: value,
+                    child: Text(context.tr(_aiProviderLabel(value))),
+                  ),
+              ],
+              onChanged: onProviderChanged,
             ),
-          ],
+          ),
+          const SizedBox(height: 16),
+          _ResponsiveFields(
+            children: [
+              _AiProviderKeyField(
+                label: context.tr('Gemini API Key'),
+                hint: 'AIza...',
+                controller: geminiKeyController,
+                hasApiKey: settings.gemini.hasApiKey,
+                clearApiKey: clearGeminiKey,
+                clearLabel: context.tr('Clear saved Gemini API key'),
+                onClearChanged: onClearGeminiChanged,
+              ),
+              _AiProviderKeyField(
+                label: context.tr('OpenAI API Key'),
+                hint: 'sk-...',
+                controller: openaiKeyController,
+                hasApiKey: settings.openai.hasApiKey,
+                clearApiKey: clearOpenaiKey,
+                clearLabel: context.tr('Clear saved OpenAI API key'),
+                onClearChanged: onClearOpenaiChanged,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _ResponsiveFields(
+            children: [
+              _AiProviderKeyField(
+                label: context.tr('Claude API Key'),
+                hint: 'sk-ant-...',
+                controller: claudeKeyController,
+                hasApiKey: settings.claude.hasApiKey,
+                clearApiKey: clearClaudeKey,
+                clearLabel: context.tr('Clear saved Claude API key'),
+                onClearChanged: onClearClaudeChanged,
+              ),
+              _AiProviderKeyField(
+                label: context.tr('Cerebras API Key'),
+                hint: 'csk-...',
+                controller: cerebrasKeyController,
+                hasApiKey: settings.cerebras.hasApiKey,
+                clearApiKey: clearCerebrasKey,
+                clearLabel: context.tr('Clear saved Cerebras API key'),
+                onClearChanged: onClearCerebrasChanged,
+              ),
+            ],
+          ),
         ],
       ),
+    );
+  }
+
+  AiProviderKeySettings get _selectedProviderSettings {
+    return switch (provider) {
+      AiProvider.gemini => settings.gemini,
+      AiProvider.openai => settings.openai,
+      AiProvider.claude => settings.claude,
+      AiProvider.cerebras => settings.cerebras,
+    };
+  }
+
+  bool get _selectedProviderClearFlag {
+    return switch (provider) {
+      AiProvider.gemini => clearGeminiKey,
+      AiProvider.openai => clearOpenaiKey,
+      AiProvider.claude => clearClaudeKey,
+      AiProvider.cerebras => clearCerebrasKey,
+    };
+  }
+}
+
+class _AiProviderKeyField extends StatelessWidget {
+  const _AiProviderKeyField({
+    required this.label,
+    required this.hint,
+    required this.controller,
+    required this.hasApiKey,
+    required this.clearApiKey,
+    required this.clearLabel,
+    required this.onClearChanged,
+  });
+
+  final String label;
+  final String hint;
+  final TextEditingController controller;
+  final bool hasApiKey;
+  final bool clearApiKey;
+  final String clearLabel;
+  final ValueChanged<bool> onClearChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        HuxInput(
+          controller: controller,
+          label: label,
+          hint: hasApiKey
+              ? context.tr('Leave blank to keep the saved key')
+              : hint,
+          prefixIcon: const Icon(LucideIcons.keyRound),
+          obscureText: true,
+          enabled: !clearApiKey,
+        ),
+        if (hasApiKey) ...[
+          const SizedBox(height: 12),
+          _SwitchRow(
+            label: clearLabel,
+            value: clearApiKey,
+            onChanged: onClearChanged,
+          ),
+        ],
+      ],
     );
   }
 }
@@ -602,4 +798,13 @@ class _MessageCard extends StatelessWidget {
 String? _nullIfBlank(String value) {
   final trimmed = value.trim();
   return trimmed.isEmpty ? null : trimmed;
+}
+
+String _aiProviderLabel(AiProvider provider) {
+  return switch (provider) {
+    AiProvider.gemini => 'Gemini',
+    AiProvider.openai => 'OpenAI',
+    AiProvider.claude => 'Claude',
+    AiProvider.cerebras => 'Cerebras',
+  };
 }
