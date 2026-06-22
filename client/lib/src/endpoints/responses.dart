@@ -63,6 +63,35 @@ class ResponseAnalyticsEndpoint {
     ).map((key, value) => MapEntry(key.toString(), _int(value)));
   }
 
+  Future<ResponseExportFile> exportResponses(
+    int surveyId, {
+    ResponseExportFormat format = ResponseExportFormat.csv,
+    DateTime? from,
+    DateTime? to,
+  }) async {
+    final response = await _client.rawRequest(
+      'GET',
+      '/api/admin/surveys/$surveyId/responses/export',
+      query: {
+        'format': _enumName(format),
+        if (from != null) 'from': from.toIso8601String(),
+        if (to != null) 'to': to.toIso8601String(),
+      },
+      authenticated: true,
+    );
+    final extension = format == ResponseExportFormat.csv ? 'csv' : 'json';
+    return ResponseExportFile(
+      bytes: response.bodyBytes,
+      filename: response.filename ?? 'responses.$extension',
+      contentType:
+          response.contentType ??
+          (format == ResponseExportFormat.csv
+              ? 'text/csv; charset=utf-8'
+              : 'application/json; charset=utf-8'),
+      format: format,
+    );
+  }
+
   Future<bool> deleteResponse(int responseId) async {
     await _client.request(
       'DELETE',

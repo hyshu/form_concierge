@@ -10,6 +10,7 @@ class ResponseListState {
   final List<SurveyResponse> responses;
   final int totalCount;
   final bool isLoading;
+  final bool isExporting;
   final String? error;
   final int currentPage;
   final int pageSize;
@@ -18,6 +19,7 @@ class ResponseListState {
     this.responses = const [],
     this.totalCount = 0,
     this.isLoading = false,
+    this.isExporting = false,
     this.error,
     this.currentPage = 0,
     this.pageSize = kDefaultPageSize,
@@ -29,6 +31,7 @@ class ResponseListState {
     List<SurveyResponse>? responses,
     int? totalCount,
     bool? isLoading,
+    bool? isExporting,
     String? error,
     int? currentPage,
     int? pageSize,
@@ -36,6 +39,7 @@ class ResponseListState {
     responses: responses ?? this.responses,
     totalCount: totalCount ?? this.totalCount,
     isLoading: isLoading ?? this.isLoading,
+    isExporting: isExporting ?? this.isExporting,
     error: error,
     currentPage: currentPage ?? this.currentPage,
     pageSize: pageSize ?? this.pageSize,
@@ -132,6 +136,36 @@ class ResponseListManager {
       () => _client.responseAnalytics.createReply(responseId, body),
       'Failed to send reply',
     );
+  }
+
+  Future<ResponseExportFile?> exportResponses(
+    int surveyId,
+    ResponseExportFormat format,
+  ) async {
+    _setState(
+      surveyId,
+      getState(surveyId).copyWith(isExporting: true, error: null),
+    );
+    try {
+      final file = await _client.responseAnalytics.exportResponses(
+        surveyId,
+        format: format,
+      );
+      _setState(
+        surveyId,
+        getState(surveyId).copyWith(isExporting: false),
+      );
+      return file;
+    } on Exception catch (e) {
+      _setState(
+        surveyId,
+        getState(surveyId).copyWith(
+          isExporting: false,
+          error: 'Failed to export responses: $e',
+        ),
+      );
+      return null;
+    }
   }
 
   Future<bool> _runAndReloadCurrentPage(

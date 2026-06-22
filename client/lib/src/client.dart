@@ -95,7 +95,84 @@ class Client {
     return decoded;
   }
 
+  Future<RawResponse> rawRequest(
+    String method,
+    String path, {
+    Map<String, String>? query,
+    bool authenticated = false,
+    String? bearerToken,
+  }) async {
+    final uri = baseUri.replace(
+      path: '${baseUri.path}${path.startsWith('/') ? path : '/$path'}',
+      queryParameters: query == null
+          ? null
+          : Map.fromEntries(
+              query.entries.where((entry) => entry.value.isNotEmpty),
+            ),
+    );
+
+    final headers = <String, String>{
+      'accept': '*/*',
+      if (bearerToken != null) 'authorization': 'Bearer $bearerToken',
+      if (bearerToken == null && authenticated && auth.token != null)
+        'authorization': 'Bearer ${auth.token}',
+    };
+
+    final response = await _httpClient
+        .send(http.Request(method, uri)..headers.addAll(headers))
+        .then(http.Response.fromStream);
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      Object? details;
+      var message = 'Request failed';
+      try {
+        final decoded = response.body.isEmpty
+            ? null
+            : jsonDecode(response.body);
+        details = decoded;
+        if (decoded is Map<String, dynamic>) {
+          message =
+              decoded['error']?.toString() ??
+              decoded['message']?.toString() ??
+              message;
+          details = decoded['details'];
+        }
+      } on Object {
+        message = response.body.isEmpty ? message : response.body;
+      }
+      throw ApiException(response.statusCode, message, details);
+    }
+
+    return RawResponse(
+      bodyBytes: response.bodyBytes,
+      contentType: response.headers['content-type'],
+      filename: _filenameFromContentDisposition(
+        response.headers['content-disposition'],
+      ),
+    );
+  }
+
   void close() => _httpClient.close();
+}
+
+class RawResponse {
+  final List<int> bodyBytes;
+  final String? contentType;
+  final String? filename;
+
+  const RawResponse({
+    required this.bodyBytes,
+    this.contentType,
+    this.filename,
+  });
+
+  String get bodyText => utf8.decode(bodyBytes);
+}
+
+String? _filenameFromContentDisposition(String? header) {
+  if (header == null) return null;
+  final match = RegExp(r'filename="?([^";]+)"?').firstMatch(header);
+  return match?.group(1);
 }
 
 class ClientAuth {
