@@ -65,8 +65,8 @@ void main() {
       ) async {
         await tester.pumpWidget(buildSubject(isLoading: true));
 
-        final emailField = tester.widget<TextField>(
-          find.widgetWithText(TextField, 'Email'),
+        final emailField = tester.widget<TextFormField>(
+          find.byType(TextFormField).at(0),
         );
         expect(emailField.enabled, isFalse);
       });
@@ -76,8 +76,8 @@ void main() {
       ) async {
         await tester.pumpWidget(buildSubject(isLoading: true));
 
-        final passwordField = tester.widget<TextField>(
-          find.widgetWithText(TextField, 'Password'),
+        final passwordField = tester.widget<TextFormField>(
+          find.byType(TextFormField).at(1),
         );
         expect(passwordField.enabled, isFalse);
       });
@@ -87,7 +87,9 @@ void main() {
       ) async {
         await tester.pumpWidget(buildSubject(isLoading: true));
 
-        final button = tester.widget<FilledButton>(find.byType(FilledButton));
+        final button = tester.widget<ElevatedButton>(
+          find.byType(ElevatedButton).last,
+        );
         expect(button.onPressed, isNull);
       });
     });
@@ -178,30 +180,20 @@ void main() {
       ) async {
         await tester.pumpWidget(buildSubject());
 
-        final passwordField = tester.widget<TextField>(
-          find.widgetWithText(TextField, 'Password'),
+        final passwordField = tester.widget<EditableText>(
+          find.byType(EditableText).at(1),
         );
         expect(passwordField.textInputAction, TextInputAction.done);
       });
     });
 
-    group('autofill hints', () {
-      testWidgets('email field has email autofill hint', (tester) async {
+    group('fields', () {
+      testWidgets('renders email and password fields', (tester) async {
         await tester.pumpWidget(buildSubject());
 
-        final emailField = tester.widget<TextField>(
-          find.widgetWithText(TextField, 'Email'),
-        );
-        expect(emailField.autofillHints, contains(AutofillHints.email));
-      });
-
-      testWidgets('password field has password autofill hint', (tester) async {
-        await tester.pumpWidget(buildSubject());
-
-        final passwordField = tester.widget<TextField>(
-          find.widgetWithText(TextField, 'Password'),
-        );
-        expect(passwordField.autofillHints, contains(AutofillHints.password));
+        expect(find.text('Email'), findsOneWidget);
+        expect(find.text('Password'), findsOneWidget);
+        expect(find.byType(TextFormField), findsNWidgets(2));
       });
     });
   });

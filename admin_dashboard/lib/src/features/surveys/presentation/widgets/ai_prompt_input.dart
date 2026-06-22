@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hux/hux.dart';
 
 import '../../../../core/localization/app_localizations.dart';
 
@@ -34,30 +35,23 @@ class _AiPromptInputState extends State<AiPromptInput> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(12),
-      ),
+    return HuxCard(
+      size: HuxCardSize.large,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Icon(
-                Icons.auto_awesome,
+                LucideIcons.sparkles,
                 size: 24,
-                color: colorScheme.primary,
+                color: HuxTokens.primary(context),
               ),
               const SizedBox(width: 8),
               Text(
                 context.tr('Generate with AI'),
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: colorScheme.primary,
+                  color: HuxTokens.primary(context),
                 ),
               ),
             ],
@@ -68,34 +62,30 @@ class _AiPromptInputState extends State<AiPromptInput> {
               'Describe your survey and AI will generate questions for you.',
             ),
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
+              color: HuxTokens.textSecondary(context),
             ),
           ),
           const SizedBox(height: 16),
-          TextField(
+          HuxTextarea(
             controller: _controller,
-            decoration: InputDecoration(
-              hintText: context.tr(
-                'Example: Onboarding survey for a fitness app asking about exercise experience, target weight, and weekly workout frequency',
-              ),
-              border: const OutlineInputBorder(),
-              filled: true,
-              fillColor: colorScheme.surface,
+            hint: context.tr(
+              'Example: Onboarding survey for a fitness app asking about exercise experience, target weight, and weekly workout frequency',
             ),
-            maxLines: 3,
+            minLines: 3,
+            maxLines: 5,
             enabled: !widget.isGenerating && !widget.isSaving,
           ),
           if (widget.error != null) ...[
             const SizedBox(height: 8),
             Text(
               context.trMessage(widget.error!),
-              style: TextStyle(color: colorScheme.error),
+              style: TextStyle(color: HuxTokens.textDestructive(context)),
             ),
           ],
           const SizedBox(height: 16),
           Row(
             children: [
-              FilledButton.icon(
+              HuxButton(
                 onPressed: widget.isGenerating || widget.isSaving
                     ? null
                     : () {
@@ -104,26 +94,20 @@ class _AiPromptInputState extends State<AiPromptInput> {
                           widget.onGenerate(prompt);
                         }
                       },
-                icon: widget.isGenerating
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : const Icon(Icons.auto_awesome),
-                label: Text(
+                isLoading: widget.isGenerating,
+                icon: LucideIcons.sparkles,
+                child: Text(
                   context.tr(
                     widget.isGenerating ? 'Generating...' : 'Generate',
                   ),
                 ),
               ),
               const SizedBox(width: 12),
-              TextButton(
+              HuxButton(
                 onPressed: widget.isGenerating || widget.isSaving
                     ? null
                     : widget.onAddManually,
+                variant: HuxButtonVariant.secondary,
                 child: Text(context.tr('Add manually')),
               ),
             ],

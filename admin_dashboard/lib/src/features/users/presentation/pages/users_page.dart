@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_rearch/flutter_rearch.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hux/hux.dart';
 import 'package:rearch/rearch.dart';
 
 import '../../../../core/capsules/auth_state_capsule.dart';
 import '../../../../core/capsules/client_capsule.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/confirm_delete_dialog.dart';
+import '../../../../core/widgets/hux_admin_shell.dart';
+import '../../../../core/widgets/hux_states.dart';
 import '../capsules/user_list_capsule.dart';
 import '../widgets/create_user_dialog.dart';
 import '../widgets/user_list_tile.dart';
@@ -29,22 +32,19 @@ class UsersPage extends RearchConsumer {
     // Get current user ID
     final currentUserId = client.auth.signedInUser?.id;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(context.tr('User Management')),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/admin'),
-          tooltip: context.tr('Back'),
+    return HuxAdminShell(
+      title: context.tr('User Management'),
+      selectedItemId: 'users',
+      showUsers: true,
+      actions: [
+        HuxButton(
+          onPressed: () => _showCreateUserDialog(context, manager),
+          icon: LucideIcons.userPlus,
+          child: Text(context.tr('Add User')),
         ),
-      ),
-      body: SafeArea(
+      ],
+      child: SafeArea(
         child: _buildBody(context, manager, authManager, currentUserId),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showCreateUserDialog(context, manager),
-        icon: const Icon(Icons.person_add),
-        label: Text(context.tr('Add User')),
       ),
     );
   }
@@ -55,56 +55,33 @@ class UsersPage extends RearchConsumer {
     AuthStateManager authManager,
     UuidValue? currentUserId,
   ) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     if (manager.state.isLoading && manager.state.users.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: HuxLoading(size: HuxLoadingSize.large));
     }
 
     if (manager.state.error != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline, size: 48, color: colorScheme.error),
-            const SizedBox(height: 16),
-            Text(
-              context.trMessage(manager.state.error!),
-              style: TextStyle(color: colorScheme.error),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            FilledButton.tonal(
-              onPressed: () {
-                manager.clearError();
-                manager.loadUsers();
-              },
-              child: Text(context.tr('Retry')),
-            ),
-          ],
+      return HuxPageBody(
+        child: HuxErrorState(
+          message: context.trMessage(manager.state.error!),
+          onRetry: () {
+            manager.clearError();
+            manager.loadUsers();
+          },
         ),
       );
     }
 
     if (manager.state.users.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.people_outline, size: 64, color: colorScheme.outline),
-            const SizedBox(height: 16),
-            Text(
-              context.tr('No users yet'),
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              context.tr('Add your first user to get started'),
-              style: TextStyle(color: colorScheme.onSurfaceVariant),
-            ),
-          ],
+      return HuxPageBody(
+        child: HuxEmptyState(
+          icon: LucideIcons.users,
+          title: context.tr('No users yet'),
+          message: context.tr('Add your first user to get started'),
+          action: HuxButton(
+            onPressed: () => _showCreateUserDialog(context, manager),
+            icon: LucideIcons.userPlus,
+            child: Text(context.tr('Add User')),
+          ),
         ),
       );
     }
@@ -113,21 +90,27 @@ class UsersPage extends RearchConsumer {
       onRefresh: () => manager.loadUsers(),
       child: ListView.builder(
         itemCount: manager.state.users.length,
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 88),
         itemBuilder: (context, index) {
           final user = manager.state.users[index];
           final isCurrentUser =
               currentUserId != null && user.id == currentUserId;
-          return UserListTile(
-            user: user,
-            isCurrentUser: isCurrentUser,
-            onToggleBlocked: () => manager.toggleUserBlocked(user.id),
-            onRoleChanged: (role) => manager.updateUserRole(user.id, role),
-            onDelete: () => _confirmDelete(
-              context,
-              manager,
-              authManager,
-              user,
-              isCurrentUser,
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 960),
+              child: UserListTile(
+                user: user,
+                isCurrentUser: isCurrentUser,
+                onToggleBlocked: () => manager.toggleUserBlocked(user.id),
+                onRoleChanged: (role) => manager.updateUserRole(user.id, role),
+                onDelete: () => _confirmDelete(
+                  context,
+                  manager,
+                  authManager,
+                  user,
+                  isCurrentUser,
+                ),
+              ),
             ),
           );
         },

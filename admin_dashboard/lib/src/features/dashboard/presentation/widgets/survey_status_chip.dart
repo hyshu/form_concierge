@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
+import 'package:hux/hux.dart';
 
 import '../../../../core/localization/app_localizations.dart';
 
@@ -11,44 +12,17 @@ class SurveyStatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    final (label, backgroundColor, foregroundColor) = switch (status) {
-      SurveyStatus.draft => (
-        'Draft',
-        colorScheme.surfaceContainerHighest,
-        colorScheme.onSurfaceVariant,
-      ),
-      SurveyStatus.published => (
-        'Published',
-        colorScheme.primaryContainer,
-        colorScheme.onPrimaryContainer,
-      ),
-      SurveyStatus.closed => (
-        'Closed',
-        colorScheme.tertiaryContainer,
-        colorScheme.onTertiaryContainer,
-      ),
-      SurveyStatus.archived => (
-        'Archived',
-        colorScheme.surfaceContainerHighest,
-        colorScheme.onSurfaceVariant,
-      ),
+    final (label, variant) = switch (status) {
+      SurveyStatus.draft => ('Draft', HuxBadgeVariant.secondary),
+      SurveyStatus.published => ('Published', HuxBadgeVariant.success),
+      SurveyStatus.closed => ('Closed', HuxBadgeVariant.outline),
+      SurveyStatus.archived => ('Archived', HuxBadgeVariant.secondary),
     };
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Text(
-        context.tr(label),
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: foregroundColor,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
+    return HuxBadge(
+      label: context.tr(label),
+      variant: variant,
+      size: HuxBadgeSize.small,
     );
   }
 }

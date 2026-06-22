@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rearch/flutter_rearch.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hux/hux.dart';
 import 'package:rearch/rearch.dart';
 
 import '../../../../core/capsules/auth_state_capsule.dart';
@@ -18,7 +19,6 @@ class LoginPage extends RearchConsumer {
     final authManager = use(authStateCapsule);
     final configManager = use(publicConfigCapsule);
     final controllers = use(loginFormControllersCapsule);
-    final colorScheme = Theme.of(context).colorScheme;
 
     // Load login prerequisites after stored auth restoration has completed.
     use.effect(
@@ -51,40 +51,35 @@ class LoginPage extends RearchConsumer {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      Icons.assignment_outlined,
+                      LucideIcons.clipboardList,
                       size: 64,
-                      color: colorScheme.primary,
+                      color: HuxTokens.primary(context),
                     ),
                     const SizedBox(height: 16),
                     Text(
                       context.tr('Form Concierge'),
                       style: Theme.of(context).textTheme.headlineMedium
                           ?.copyWith(
-                            color: colorScheme.primary,
+                            color: HuxTokens.primary(context),
                           ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       context.tr('Admin Dashboard'),
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
+                        color: HuxTokens.textSecondary(context),
                       ),
                     ),
                     const SizedBox(height: 48),
                     if (!hasCheckedFirstUser)
-                      const CircularProgressIndicator()
+                      const HuxLoading(size: HuxLoadingSize.large)
                     else if (isFirstUser) ...[
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: colorScheme.primaryContainer,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                      HuxCard(
                         child: Row(
                           children: [
                             Icon(
-                              Icons.info_outline,
-                              color: colorScheme.onPrimaryContainer,
+                              LucideIcons.info,
+                              color: HuxTokens.primary(context),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -93,7 +88,7 @@ class LoginPage extends RearchConsumer {
                                   'Welcome! Create your admin account to get started.',
                                 ),
                                 style: TextStyle(
-                                  color: colorScheme.onPrimaryContainer,
+                                  color: HuxTokens.textSecondary(context),
                                 ),
                               ),
                             ),
@@ -101,30 +96,34 @@ class LoginPage extends RearchConsumer {
                         ),
                       ),
                       const SizedBox(height: 24),
-                      LoginForm(
-                        controllers: controllers,
-                        isLoading: authManager.state.isLoading,
-                        error: authManager.state.error,
-                        isRegistration: true,
-                        onSubmit: () => authManager.registerFirstUser(
-                          controllers.email.text.trim(),
-                          controllers.password.text,
+                      HuxCard(
+                        child: LoginForm(
+                          controllers: controllers,
+                          isLoading: authManager.state.isLoading,
+                          error: authManager.state.error,
+                          isRegistration: true,
+                          onSubmit: () => authManager.registerFirstUser(
+                            controllers.email.text.trim(),
+                            controllers.password.text,
+                          ),
                         ),
                       ),
                     ] else
-                      LoginForm(
-                        controllers: controllers,
-                        isLoading: authManager.state.isLoading,
-                        error: authManager.state.error,
-                        isRegistration: false,
-                        onSubmit: () => authManager.login(
-                          controllers.email.text.trim(),
-                          controllers.password.text,
+                      HuxCard(
+                        child: LoginForm(
+                          controllers: controllers,
+                          isLoading: authManager.state.isLoading,
+                          error: authManager.state.error,
+                          isRegistration: false,
+                          onSubmit: () => authManager.login(
+                            controllers.email.text.trim(),
+                            controllers.password.text,
+                          ),
+                          onForgotPassword:
+                              configManager.state.passwordResetEnabled
+                              ? () => context.push('/forgot-password')
+                              : null,
                         ),
-                        onForgotPassword:
-                            configManager.state.passwordResetEnabled
-                            ? () => context.push('/forgot-password')
-                            : null,
                       ),
                   ],
                 ),

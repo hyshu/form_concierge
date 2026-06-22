@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_rearch/flutter_rearch.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hux/hux.dart';
 import 'package:rearch/rearch.dart';
 
 import '../../../../core/capsules/auth_state_capsule.dart';
 import '../../../../core/capsules/client_capsule.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/confirm_delete_dialog.dart';
+import '../../../../core/widgets/hux_admin_shell.dart';
+import '../../../../core/widgets/hux_states.dart';
 import '../capsules/survey_list_capsule.dart';
 import '../widgets/survey_list_tile.dart';
 
@@ -29,38 +32,37 @@ class DashboardPage extends RearchConsumer {
       surveyManager.loadSurveys();
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(context.tr('Surveys')),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: surveyManager.loadSurveys,
-            tooltip: context.tr('Refresh'),
+    return HuxAdminShell(
+      title: context.tr('Surveys'),
+      selectedItemId: 'surveys',
+      showUsers: canManageUsers,
+      actions: [
+        HuxButton(
+          onPressed: surveyManager.loadSurveys,
+          variant: HuxButtonVariant.secondary,
+          icon: LucideIcons.refreshCw,
+          child: Text(context.tr('Refresh')),
+        ),
+        if (canWrite)
+          HuxButton(
+            onPressed: () => context.go('/admin/surveys/new'),
+            icon: LucideIcons.plus,
+            child: Text(context.tr('New Survey')),
           ),
-          if (canManageUsers)
-            IconButton(
-              icon: const Icon(Icons.people),
-              onPressed: () => context.go('/admin/users'),
-              tooltip: context.tr('User Management'),
-            ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => authManager.logout(),
-            tooltip: context.tr('Logout'),
+        Tooltip(
+          message: context.tr('Logout'),
+          child: HuxButton(
+            onPressed: authManager.logout,
+            variant: HuxButtonVariant.ghost,
+            size: HuxButtonSize.medium,
+            icon: LucideIcons.logOut,
+            child: const SizedBox(width: 0),
           ),
-        ],
-      ),
-      body: SafeArea(
+        ),
+      ],
+      child: SafeArea(
         child: _buildBody(context, surveyManager, canWrite),
       ),
-      floatingActionButton: canWrite
-          ? FloatingActionButton.extended(
-              onPressed: () => context.go('/admin/surveys/new'),
-              icon: const Icon(Icons.add),
-              label: Text(context.tr('New Survey')),
-            )
-          : null,
     );
   }
 
@@ -70,60 +72,31 @@ class DashboardPage extends RearchConsumer {
     bool canWrite,
   ) {
     if (manager.state.isLoading && manager.state.surveys.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: HuxLoading(size: HuxLoadingSize.large));
     }
 
     if (manager.state.error != null && manager.state.surveys.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.error_outline,
-              size: 48,
-              color: Theme.of(context).colorScheme.error,
-            ),
-            const SizedBox(height: 16),
-            Text(context.trMessage(manager.state.error!)),
-            const SizedBox(height: 16),
-            FilledButton(
-              onPressed: manager.loadSurveys,
-              child: Text(context.tr('Retry')),
-            ),
-          ],
+      return HuxPageBody(
+        child: HuxErrorState(
+          message: context.trMessage(manager.state.error!),
+          onRetry: manager.loadSurveys,
         ),
       );
     }
 
     if (manager.state.surveys.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.assignment_outlined,
-              size: 64,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              context.tr('No surveys yet'),
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              context.tr('Create your first survey to get started'),
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: () => context.go('/admin/surveys/new'),
-              icon: const Icon(Icons.add),
-              label: Text(context.tr('Create Survey')),
-            ),
-          ],
+      return HuxPageBody(
+        child: HuxEmptyState(
+          icon: LucideIcons.clipboardList,
+          title: context.tr('No surveys yet'),
+          message: context.tr('Create your first survey to get started'),
+          action: canWrite
+              ? HuxButton(
+                  onPressed: () => context.go('/admin/surveys/new'),
+                  icon: LucideIcons.plus,
+                  child: Text(context.tr('Create Survey')),
+                )
+              : null,
         ),
       );
     }
@@ -132,26 +105,31 @@ class DashboardPage extends RearchConsumer {
       onRefresh: () async => manager.loadSurveys(),
       child: ListView.builder(
         itemCount: manager.state.surveys.length,
-        padding: const EdgeInsets.only(top: 8, bottom: 88),
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 88),
         itemBuilder: (context, index) {
           final survey = manager.state.surveys[index];
-          return SurveyListTile(
-            survey: survey,
-            onTap: () => context.go('/admin/surveys/${survey.id}'),
-            onViewResponses: () =>
-                context.go('/admin/surveys/${survey.id}/responses'),
-            onPublish: canWrite && survey.status == SurveyStatus.draft
-                ? () => manager.publishSurvey(survey.id!)
-                : null,
-            onClose: canWrite && survey.status == SurveyStatus.published
-                ? () => manager.closeSurvey(survey.id!)
-                : null,
-            onReopen: canWrite && survey.status == SurveyStatus.closed
-                ? () => manager.reopenSurvey(survey.id!)
-                : null,
-            onDelete: canWrite
-                ? () => _confirmDelete(context, survey, manager)
-                : null,
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 960),
+              child: SurveyListTile(
+                survey: survey,
+                onTap: () => context.go('/admin/surveys/${survey.id}'),
+                onViewResponses: () =>
+                    context.go('/admin/surveys/${survey.id}/responses'),
+                onPublish: canWrite && survey.status == SurveyStatus.draft
+                    ? () => manager.publishSurvey(survey.id!)
+                    : null,
+                onClose: canWrite && survey.status == SurveyStatus.published
+                    ? () => manager.closeSurvey(survey.id!)
+                    : null,
+                onReopen: canWrite && survey.status == SurveyStatus.closed
+                    ? () => manager.reopenSurvey(survey.id!)
+                    : null,
+                onDelete: canWrite
+                    ? () => _confirmDelete(context, survey, manager)
+                    : null,
+              ),
+            ),
           );
         },
       ),

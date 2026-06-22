@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
+import 'package:hux/hux.dart';
 
 import '../../../../core/extensions/question_type_presentation.dart';
 import '../../../../core/localization/app_localizations.dart';
@@ -104,81 +105,101 @@ class _DraftQuestionTileState extends State<_DraftQuestionTile> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    return Card(
+    return HuxCard(
       margin: const EdgeInsets.only(bottom: 8),
       child: Column(
         children: [
-          ListTile(
-            leading: ReorderableDragStartListener(
-              index: widget.index,
-              enabled: widget.enabled,
-              child: Icon(
-                Icons.drag_indicator,
-                color: colorScheme.onSurfaceVariant,
+          Row(
+            children: [
+              ReorderableDragStartListener(
+                index: widget.index,
+                enabled: widget.enabled,
+                child: Icon(
+                  LucideIcons.gripVertical,
+                  color: HuxTokens.iconSecondary(context),
+                ),
               ),
-            ),
-            title: Text(
-              widget.question.textTranslations.valueFor(widget.primaryLocale),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            subtitle: Row(
-              children: [
-                Icon(
-                  widget.question.type.icon,
-                  size: 16,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  context.tr(widget.question.type.label),
-                  style: textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                if (widget.question.isRequired) ...[
-                  const SizedBox(width: 8),
-                  Text(
-                    context.tr('Required'),
-                    style: textTheme.bodySmall?.copyWith(
-                      color: colorScheme.primary,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.question.textTranslations.valueFor(
+                        widget.primaryLocale,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                ],
-              ],
-            ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (widget.question.hasChoices)
-                  IconButton(
-                    icon: Icon(
-                      _isExpanded ? Icons.expand_less : Icons.expand_more,
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Icon(
+                          widget.question.type.icon,
+                          size: 16,
+                          color: HuxTokens.iconSecondary(context),
+                        ),
+                        Text(
+                          context.tr(widget.question.type.label),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: HuxTokens.textSecondary(context),
+                              ),
+                        ),
+                        if (widget.question.isRequired)
+                          HuxBadge(
+                            label: context.tr('Required'),
+                            variant: HuxBadgeVariant.primary,
+                            size: HuxBadgeSize.small,
+                          ),
+                      ],
                     ),
-                    onPressed: () {
-                      setState(() {
-                        _isExpanded = !_isExpanded;
-                      });
-                    },
+                  ],
+                ),
+              ),
+              if (widget.question.hasChoices)
+                Tooltip(
+                  message: context.tr('Choices'),
+                  child: HuxButton(
+                    onPressed: () => setState(() => _isExpanded = !_isExpanded),
+                    variant: HuxButtonVariant.ghost,
+                    size: HuxButtonSize.small,
+                    icon: _isExpanded
+                        ? LucideIcons.chevronUp
+                        : LucideIcons.chevronDown,
+                    child: const SizedBox(width: 0),
                   ),
-                if (widget.enabled) ...[
-                  IconButton(
-                    icon: const Icon(Icons.edit_outlined),
+                ),
+              if (widget.enabled) ...[
+                Tooltip(
+                  message: context.tr('Edit'),
+                  child: HuxButton(
                     onPressed: widget.onEdit,
+                    variant: HuxButtonVariant.ghost,
+                    size: HuxButtonSize.small,
+                    icon: LucideIcons.pencil,
+                    child: const SizedBox(width: 0),
                   ),
-                  IconButton(
-                    icon: Icon(
-                      Icons.delete_outline,
-                      color: colorScheme.error,
-                    ),
+                ),
+                Tooltip(
+                  message: context.tr('Delete'),
+                  child: HuxButton(
                     onPressed: widget.onDelete,
+                    variant: HuxButtonVariant.ghost,
+                    size: HuxButtonSize.small,
+                    icon: LucideIcons.trash2,
+                    textColor: HuxTokens.textDestructive(context),
+                    child: const SizedBox(width: 0),
                   ),
-                ],
+                ),
               ],
-            ),
+            ],
           ),
           if (_isExpanded && widget.question.hasChoices)
             _ChoicesSection(
@@ -215,14 +236,12 @@ class _ChoicesSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      padding: const EdgeInsets.only(top: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Divider(),
+          Divider(color: HuxTokens.borderSecondary(context)),
           Text(
             context.tr('Choices'),
             style: Theme.of(context).textTheme.titleSmall,
@@ -242,72 +261,25 @@ class _ChoicesSection extends StatelessWidget {
             Text(
               context.tr('No choices yet. Add at least one choice.'),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
+                color: HuxTokens.textSecondary(context),
               ),
             ),
           const SizedBox(height: 8),
           if (enabled)
-            OutlinedButton.icon(
-              onPressed: () => _showAddDialog(context),
-              icon: const Icon(Icons.add),
-              label: Text(context.tr('Add Choice')),
+            HuxButton(
+              onPressed: () => _showChoiceDialog(
+                context,
+                title: context.tr('Add Choice'),
+                primaryLocale: primaryLocale,
+                onSubmit: onAdd,
+              ),
+              variant: HuxButtonVariant.outline,
+              icon: LucideIcons.plus,
+              child: Text(context.tr('Add Choice')),
             ),
         ],
       ),
     );
-  }
-
-  void _showAddDialog(BuildContext context) {
-    final formKey = GlobalKey<FormState>();
-    final controllers = {
-      for (final locale in formContentLocaleCodes)
-        locale: TextEditingController(),
-    };
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(context.tr('Add Choice')),
-        content: SizedBox(
-          width: 400,
-          child: Form(
-            key: formKey,
-            child: SingleChildScrollView(
-              child: LocalizedTextFieldGroup(
-                controllers: controllers,
-                primaryLocale: primaryLocale,
-                labelText: context.tr('Choice text'),
-                requiredMessage: context.tr('Choice text is required'),
-                autofocus: true,
-              ),
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(context.tr('Cancel')),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (formKey.currentState?.validate() ?? false) {
-                onAdd(
-                  localizedTextFromControllers(
-                    controllers,
-                    primaryLocale: primaryLocale,
-                  ),
-                );
-                Navigator.pop(context);
-              }
-            },
-            child: Text(context.tr('Add')),
-          ),
-        ],
-      ),
-    ).whenComplete(() {
-      for (final controller in controllers.values) {
-        controller.dispose();
-      }
-    });
   }
 }
 
@@ -328,45 +300,37 @@ class _DraftChoiceTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Container(
+    return HuxCard(
       margin: const EdgeInsets.symmetric(vertical: 4),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(8),
-      ),
+      backgroundColor: HuxTokens.surfaceSecondary(context),
+      onTap: enabled ? () => _showEditDialog(context) : null,
       child: Row(
         children: [
           Expanded(
-            child: enabled
-                ? InkWell(
-                    onTap: () => _showEditDialog(context),
-                    borderRadius: BorderRadius.circular(4),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Text(
-                        choice.textTranslations.valueFor(primaryLocale),
-                      ),
-                    ),
-                  )
-                : Text(choice.textTranslations.valueFor(primaryLocale)),
+            child: Text(choice.textTranslations.valueFor(primaryLocale)),
           ),
           if (enabled) ...[
-            IconButton(
-              icon: const Icon(Icons.edit, size: 20),
-              onPressed: () => _showEditDialog(context),
-              visualDensity: VisualDensity.compact,
-            ),
-            IconButton(
-              icon: Icon(
-                Icons.delete_outline,
-                size: 20,
-                color: colorScheme.error,
+            Tooltip(
+              message: context.tr('Edit'),
+              child: HuxButton(
+                onPressed: () => _showEditDialog(context),
+                variant: HuxButtonVariant.ghost,
+                size: HuxButtonSize.small,
+                icon: LucideIcons.pencil,
+                child: const SizedBox(width: 0),
               ),
-              onPressed: onDelete,
-              visualDensity: VisualDensity.compact,
+            ),
+            Tooltip(
+              message: context.tr('Delete'),
+              child: HuxButton(
+                onPressed: onDelete,
+                variant: HuxButtonVariant.ghost,
+                size: HuxButtonSize.small,
+                icon: LucideIcons.trash2,
+                textColor: HuxTokens.textDestructive(context),
+                child: const SizedBox(width: 0),
+              ),
             ),
           ],
         ],
@@ -375,56 +339,75 @@ class _DraftChoiceTile extends StatelessWidget {
   }
 
   void _showEditDialog(BuildContext context) {
-    final formKey = GlobalKey<FormState>();
-    final controllers = {
-      for (final locale in formContentLocaleCodes)
-        locale: TextEditingController(
-          text: choice.textTranslations.valueFor(locale),
-        ),
-    };
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(context.tr('Edit Choice')),
-        content: SizedBox(
-          width: 400,
-          child: Form(
-            key: formKey,
-            child: SingleChildScrollView(
-              child: LocalizedTextFieldGroup(
-                controllers: controllers,
-                primaryLocale: primaryLocale,
-                labelText: context.tr('Choice text'),
-                requiredMessage: context.tr('Choice text is required'),
-              ),
+    _showChoiceDialog(
+      context,
+      title: context.tr('Edit Choice'),
+      primaryLocale: primaryLocale,
+      initialText: choice.textTranslations,
+      onSubmit: onUpdate,
+    );
+  }
+}
+
+void _showChoiceDialog(
+  BuildContext context, {
+  required String title,
+  required String primaryLocale,
+  required void Function(LocalizedText textTranslations) onSubmit,
+  LocalizedText? initialText,
+}) {
+  final formKey = GlobalKey<FormState>();
+  final controllers = {
+    for (final locale in formContentLocaleCodes)
+      locale: TextEditingController(text: initialText?.valueFor(locale) ?? ''),
+  };
+
+  showDialog(
+    context: context,
+    builder: (context) => HuxDialog(
+      title: title,
+      size: HuxDialogSize.medium,
+      content: SizedBox(
+        width: 420,
+        child: Form(
+          key: formKey,
+          child: SingleChildScrollView(
+            child: LocalizedTextFieldGroup(
+              controllers: controllers,
+              primaryLocale: primaryLocale,
+              labelText: context.tr('Choice text'),
+              requiredMessage: context.tr('Choice text is required'),
+              autofocus: initialText == null,
             ),
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(context.tr('Cancel')),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (formKey.currentState?.validate() ?? false) {
-                onUpdate(
-                  localizedTextFromControllers(
-                    controllers,
-                    primaryLocale: primaryLocale,
-                  ),
-                );
-                Navigator.pop(context);
-              }
-            },
-            child: Text(context.tr('Save')),
-          ),
-        ],
       ),
-    ).whenComplete(() {
-      for (final controller in controllers.values) {
-        controller.dispose();
-      }
-    });
-  }
+      actions: [
+        HuxButton(
+          onPressed: () => Navigator.pop(context),
+          variant: HuxButtonVariant.secondary,
+          child: Text(context.tr('Cancel')),
+        ),
+        HuxButton(
+          onPressed: () {
+            if (formKey.currentState?.validate() ?? false) {
+              onSubmit(
+                localizedTextFromControllers(
+                  controllers,
+                  primaryLocale: primaryLocale,
+                ),
+              );
+              Navigator.pop(context);
+            }
+          },
+          icon: initialText == null ? LucideIcons.plus : LucideIcons.save,
+          child: Text(context.tr(initialText == null ? 'Add' : 'Save')),
+        ),
+      ],
+    ),
+  ).whenComplete(() {
+    for (final controller in controllers.values) {
+      controller.dispose();
+    }
+  });
 }

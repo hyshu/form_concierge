@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
+import 'package:hux/hux.dart';
 
 import '../../../../core/localization/app_localizations.dart';
 
@@ -37,94 +38,98 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return AlertDialog(
-      title: Text(context.tr('Create User')),
-      content: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextFormField(
-              controller: _emailController,
-              decoration: InputDecoration(
-                labelText: context.tr('Email'),
-                hintText: 'user@example.com',
+    return HuxDialog(
+      title: context.tr('Create User'),
+      size: HuxDialogSize.medium,
+      content: SizedBox(
+        width: 420,
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              HuxInput(
+                controller: _emailController,
+                label: context.tr('Email'),
+                hint: 'user@example.com',
+                prefixIcon: const Icon(LucideIcons.mail),
+                keyboardType: TextInputType.emailAddress,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return context.tr('Email is required');
+                  }
+                  if (!value.contains('@')) {
+                    return context.tr('Please enter a valid email');
+                  }
+                  return null;
+                },
               ),
-              keyboardType: TextInputType.emailAddress,
-              autofocus: true,
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return context.tr('Email is required');
-                }
-                if (!value.contains('@')) {
-                  return context.tr('Please enter a valid email');
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _passwordController,
-              decoration: InputDecoration(
-                labelText: context.tr('Password'),
+              const SizedBox(height: 16),
+              HuxInput(
+                controller: _passwordController,
+                label: context.tr('Password'),
+                prefixIcon: const Icon(LucideIcons.lock),
+                obscureText: true,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return context.tr('Password is required');
+                  }
+                  if (value.length < 8) {
+                    return context.tr('Password must be at least 8 characters');
+                  }
+                  return null;
+                },
               ),
-              obscureText: true,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return context.tr('Password is required');
-                }
-                if (value.length < 8) {
-                  return context.tr('Password must be at least 8 characters');
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<AdminRole>(
-              initialValue: _role,
-              decoration: InputDecoration(labelText: context.tr('Role')),
-              items: [
-                DropdownMenuItem(
-                  value: AdminRole.viewer,
-                  child: Text(context.tr('Viewer')),
+              const SizedBox(height: 16),
+              Text(
+                context.tr('Role'),
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: HuxTokens.textSecondary(context),
                 ),
-                DropdownMenuItem(
-                  value: AdminRole.editor,
-                  child: Text(context.tr('Editor')),
+              ),
+              const SizedBox(height: 6),
+              SizedBox(
+                width: double.infinity,
+                child: HuxDropdown<AdminRole>(
+                  value: _role,
+                  useItemWidgetAsValue: true,
+                  items: [
+                    HuxDropdownItem(
+                      value: AdminRole.viewer,
+                      child: Text(context.tr('Viewer')),
+                    ),
+                    HuxDropdownItem(
+                      value: AdminRole.editor,
+                      child: Text(context.tr('Editor')),
+                    ),
+                    HuxDropdownItem(
+                      value: AdminRole.admin,
+                      child: Text(context.tr('Admin')),
+                    ),
+                  ],
+                  onChanged: (value) => setState(() => _role = value),
                 ),
-                DropdownMenuItem(
-                  value: AdminRole.admin,
-                  child: Text(context.tr('Admin')),
-                ),
-              ],
-              onChanged: (value) {
-                if (value != null) setState(() => _role = value);
-              },
-            ),
-            const SizedBox(height: 8),
-            Text(
-              context.tr(_roleDescription(_role)),
-              style: TextStyle(color: colorScheme.onSurfaceVariant),
-            ),
-          ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                context.tr(_roleDescription(_role)),
+                style: TextStyle(color: HuxTokens.textSecondary(context)),
+              ),
+            ],
+          ),
         ),
       ),
       actions: [
-        TextButton(
+        HuxButton(
           onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
+          variant: HuxButtonVariant.secondary,
           child: Text(context.tr('Cancel')),
         ),
-        FilledButton(
+        HuxButton(
           onPressed: _isSubmitting ? null : _submit,
-          child: _isSubmitting
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : Text(context.tr('Create')),
+          isLoading: _isSubmitting,
+          child: Text(context.tr('Create')),
         ),
       ],
     );

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
+import 'package:hux/hux.dart';
 
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/widgets/hux_states.dart';
 import 'question_result_card.dart';
 
 /// View showing aggregated survey results.
@@ -23,108 +25,68 @@ class AggregatedResultsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     if (isLoading && results == null) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: HuxLoading(size: HuxLoadingSize.large));
     }
 
     if (error != null && results == null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.error_outline,
-              size: 48,
-              color: colorScheme.error,
-            ),
-            const SizedBox(height: 16),
-            Text(context.trMessage(error!)),
-            const SizedBox(height: 16),
-            FilledButton(
-              onPressed: onRefresh,
-              child: Text(context.tr('Retry')),
-            ),
-          ],
-        ),
+      return HuxErrorState(
+        message: context.trMessage(error!),
+        onRetry: onRefresh,
       );
     }
 
     if (results == null || results!.totalResponses == 0) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.analytics_outlined,
-              size: 64,
-              color: colorScheme.onSurfaceVariant,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              context.tr('No responses yet'),
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              context.tr('Share your survey to start collecting responses'),
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
+      return HuxEmptyState(
+        icon: LucideIcons.chartNoAxesColumn,
+        title: context.tr('No responses yet'),
+        message: context.tr('Share your survey to start collecting responses'),
       );
     }
 
     return RefreshIndicator(
       onRefresh: () async => onRefresh(),
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.only(top: 16, bottom: 16),
         children: [
-          // Summary card
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Row(
-                children: [
-                  Container(
-                    width: 64,
-                    height: 64,
-                    decoration: BoxDecoration(
-                      color: colorScheme.primaryContainer,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.people,
-                      size: 32,
-                      color: colorScheme.onPrimaryContainer,
-                    ),
+          HuxCard(
+            size: HuxCardSize.large,
+            child: Row(
+              children: [
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: HuxTokens.primary(context).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  const SizedBox(width: 20),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${results!.totalResponses}',
-                        style: Theme.of(context).textTheme.headlineLarge
-                            ?.copyWith(
-                              color: colorScheme.primary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                      ),
-                      Text(
-                        context.tr('Total Responses'),
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                      ),
-                    ],
+                  child: Icon(
+                    LucideIcons.users,
+                    size: 32,
+                    color: HuxTokens.primary(context),
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(width: 20),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${results!.totalResponses}',
+                      style: Theme.of(context).textTheme.headlineLarge
+                          ?.copyWith(
+                            color: HuxTokens.primary(context),
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    Text(
+                      context.tr('Total Responses'),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: HuxTokens.textSecondary(context),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 24),

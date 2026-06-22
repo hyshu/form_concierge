@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
+import 'package:hux/hux.dart';
 
 import '../../../../core/localization/app_localizations.dart';
 import 'localized_text_field_group.dart';
@@ -25,8 +26,6 @@ class ChoiceEditor extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -40,17 +39,18 @@ class ChoiceEditor extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        OutlinedButton.icon(
+        HuxButton(
           onPressed: enabled ? () => _showAddDialog(context) : null,
-          icon: const Icon(Icons.add),
-          label: Text(context.tr('Add Choice')),
+          variant: HuxButtonVariant.outline,
+          icon: LucideIcons.plus,
+          child: Text(context.tr('Add Choice')),
         ),
         if (choices.isEmpty) ...[
           const SizedBox(height: 8),
           Text(
             context.tr('Add at least one choice for choice questions'),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
+              color: HuxTokens.textSecondary(context),
             ),
           ),
         ],
@@ -59,56 +59,12 @@ class ChoiceEditor extends StatelessWidget {
   }
 
   void _showAddDialog(BuildContext context) {
-    final formKey = GlobalKey<FormState>();
-    final controllers = {
-      for (final locale in formContentLocaleCodes)
-        locale: TextEditingController(),
-    };
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(context.tr('Add Choice')),
-        content: SizedBox(
-          width: 400,
-          child: Form(
-            key: formKey,
-            child: SingleChildScrollView(
-              child: LocalizedTextFieldGroup(
-                controllers: controllers,
-                primaryLocale: primaryLocale,
-                labelText: context.tr('Choice text'),
-                requiredMessage: context.tr('Choice text is required'),
-                autofocus: true,
-              ),
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(context.tr('Cancel')),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (formKey.currentState?.validate() ?? false) {
-                onAdd(
-                  localizedTextFromControllers(
-                    controllers,
-                    primaryLocale: primaryLocale,
-                  ),
-                );
-                Navigator.pop(context);
-              }
-            },
-            child: Text(context.tr('Add')),
-          ),
-        ],
-      ),
-    ).whenComplete(() {
-      for (final controller in controllers.values) {
-        controller.dispose();
-      }
-    });
+    _showChoiceDialog(
+      context,
+      title: context.tr('Add Choice'),
+      primaryLocale: primaryLocale,
+      onSubmit: onAdd,
+    );
   }
 }
 
@@ -129,49 +85,41 @@ class _ChoiceTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Container(
+    return HuxCard(
       margin: const EdgeInsets.symmetric(vertical: 4),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(8),
-      ),
+      backgroundColor: HuxTokens.surfaceSecondary(context),
+      onTap: enabled ? () => _showEditDialog(context) : null,
       child: Row(
         children: [
           Icon(
-            Icons.drag_indicator,
-            size: 20,
-            color: colorScheme.onSurfaceVariant,
+            LucideIcons.gripVertical,
+            size: 18,
+            color: HuxTokens.iconSecondary(context),
           ),
           const SizedBox(width: 8),
-          Expanded(
-            child: enabled
-                ? InkWell(
-                    onTap: () => _showEditDialog(context),
-                    borderRadius: BorderRadius.circular(4),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Text(choice.textFor(primaryLocale)),
-                    ),
-                  )
-                : Text(choice.textFor(primaryLocale)),
-          ),
+          Expanded(child: Text(choice.textFor(primaryLocale))),
           if (enabled) ...[
-            IconButton(
-              icon: const Icon(Icons.edit, size: 20),
-              onPressed: () => _showEditDialog(context),
-              visualDensity: VisualDensity.compact,
-            ),
-            IconButton(
-              icon: Icon(
-                Icons.delete_outline,
-                size: 20,
-                color: colorScheme.error,
+            Tooltip(
+              message: context.tr('Edit'),
+              child: HuxButton(
+                onPressed: () => _showEditDialog(context),
+                variant: HuxButtonVariant.ghost,
+                size: HuxButtonSize.small,
+                icon: LucideIcons.pencil,
+                child: const SizedBox(width: 0),
               ),
-              onPressed: onDelete,
-              visualDensity: VisualDensity.compact,
+            ),
+            Tooltip(
+              message: context.tr('Delete'),
+              child: HuxButton(
+                onPressed: onDelete,
+                variant: HuxButtonVariant.ghost,
+                size: HuxButtonSize.small,
+                icon: LucideIcons.trash2,
+                textColor: HuxTokens.textDestructive(context),
+                child: const SizedBox(width: 0),
+              ),
             ),
           ],
         ],
@@ -180,56 +128,75 @@ class _ChoiceTile extends StatelessWidget {
   }
 
   void _showEditDialog(BuildContext context) {
-    final formKey = GlobalKey<FormState>();
-    final controllers = {
-      for (final locale in formContentLocaleCodes)
-        locale: TextEditingController(
-          text: choice.textTranslations.valueFor(locale),
-        ),
-    };
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(context.tr('Edit Choice')),
-        content: SizedBox(
-          width: 400,
-          child: Form(
-            key: formKey,
-            child: SingleChildScrollView(
-              child: LocalizedTextFieldGroup(
-                controllers: controllers,
-                primaryLocale: primaryLocale,
-                labelText: context.tr('Choice text'),
-                requiredMessage: context.tr('Choice text is required'),
-              ),
+    _showChoiceDialog(
+      context,
+      title: context.tr('Edit Choice'),
+      primaryLocale: primaryLocale,
+      initialText: choice.textTranslations,
+      onSubmit: onUpdate,
+    );
+  }
+}
+
+void _showChoiceDialog(
+  BuildContext context, {
+  required String title,
+  required String primaryLocale,
+  required void Function(LocalizedText textTranslations) onSubmit,
+  LocalizedText? initialText,
+}) {
+  final formKey = GlobalKey<FormState>();
+  final controllers = {
+    for (final locale in formContentLocaleCodes)
+      locale: TextEditingController(text: initialText?.valueFor(locale) ?? ''),
+  };
+
+  showDialog(
+    context: context,
+    builder: (context) => HuxDialog(
+      title: title,
+      size: HuxDialogSize.medium,
+      content: SizedBox(
+        width: 420,
+        child: Form(
+          key: formKey,
+          child: SingleChildScrollView(
+            child: LocalizedTextFieldGroup(
+              controllers: controllers,
+              primaryLocale: primaryLocale,
+              labelText: context.tr('Choice text'),
+              requiredMessage: context.tr('Choice text is required'),
+              autofocus: initialText == null,
             ),
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(context.tr('Cancel')),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (formKey.currentState?.validate() ?? false) {
-                onUpdate(
-                  localizedTextFromControllers(
-                    controllers,
-                    primaryLocale: primaryLocale,
-                  ),
-                );
-                Navigator.pop(context);
-              }
-            },
-            child: Text(context.tr('Save')),
-          ),
-        ],
       ),
-    ).whenComplete(() {
-      for (final controller in controllers.values) {
-        controller.dispose();
-      }
-    });
-  }
+      actions: [
+        HuxButton(
+          onPressed: () => Navigator.pop(context),
+          variant: HuxButtonVariant.secondary,
+          child: Text(context.tr('Cancel')),
+        ),
+        HuxButton(
+          onPressed: () {
+            if (formKey.currentState?.validate() ?? false) {
+              onSubmit(
+                localizedTextFromControllers(
+                  controllers,
+                  primaryLocale: primaryLocale,
+                ),
+              );
+              Navigator.pop(context);
+            }
+          },
+          icon: initialText == null ? LucideIcons.plus : LucideIcons.save,
+          child: Text(context.tr(initialText == null ? 'Add' : 'Save')),
+        ),
+      ],
+    ),
+  ).whenComplete(() {
+    for (final controller in controllers.values) {
+      controller.dispose();
+    }
+  });
 }

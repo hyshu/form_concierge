@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
+import 'package:hux/hux.dart';
 
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/confirm_delete_dialog.dart';
+import '../../../../core/widgets/hux_states.dart';
 import 'question_form_dialog.dart';
 import 'question_list_tile.dart';
 import 'visibility_rule_editor.dart';
@@ -74,8 +76,6 @@ class QuestionList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -86,49 +86,19 @@ class QuestionList extends StatelessWidget {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const Spacer(),
-            if (isLoading)
-              const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
+            if (isLoading) const HuxLoading(size: HuxLoadingSize.small),
           ],
         ),
         const SizedBox(height: 16),
         if (questions.isEmpty)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              children: [
-                Icon(
-                  Icons.help_outline,
-                  size: 48,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  context.tr('No questions yet'),
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  context.tr('Add questions to your survey'),
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                FilledButton.icon(
-                  onPressed: enabled ? () => _showAddDialog(context) : null,
-                  icon: const Icon(Icons.add),
-                  label: Text(context.tr('Add Question')),
-                ),
-              ],
+          HuxEmptyState(
+            icon: LucideIcons.circleHelp,
+            title: context.tr('No questions yet'),
+            message: context.tr('Add questions to your survey'),
+            action: HuxButton(
+              onPressed: enabled ? () => _showAddDialog(context) : null,
+              icon: LucideIcons.plus,
+              child: Text(context.tr('Add Question')),
             ),
           )
         else
@@ -149,14 +119,16 @@ class QuestionList extends StatelessWidget {
                           width: 32,
                           height: 32,
                           decoration: BoxDecoration(
-                            color: colorScheme.primaryContainer,
-                            shape: BoxShape.circle,
+                            color: HuxTokens.primary(
+                              context,
+                            ).withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(16),
                           ),
                           alignment: Alignment.center,
                           child: Text(
                             '${index + 1}',
                             style: TextStyle(
-                              color: colorScheme.onPrimaryContainer,
+                              color: HuxTokens.primary(context),
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -203,10 +175,11 @@ class QuestionList extends StatelessWidget {
                 );
               }),
               const SizedBox(height: 16),
-              OutlinedButton.icon(
+              HuxButton(
                 onPressed: enabled ? () => _showAddDialog(context) : null,
-                icon: const Icon(Icons.add),
-                label: Text(context.tr('Add Question')),
+                variant: HuxButtonVariant.outline,
+                icon: LucideIcons.plus,
+                child: Text(context.tr('Add Question')),
               ),
             ],
           ),

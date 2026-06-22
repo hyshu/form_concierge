@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hux/hux.dart';
 
 import '../localization/app_localizations.dart';
 
@@ -37,19 +38,22 @@ class ConfirmDeleteDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(title),
+    return HuxDialog(
+      title: title,
+      variant: HuxDialogVariant.destructive,
+      size: HuxDialogSize.small,
+      showCloseButton: false,
       content: Text(content),
       actions: [
-        TextButton(
+        HuxButton(
           onPressed: () => Navigator.pop(context, false),
+          variant: HuxButtonVariant.secondary,
           child: Text(context.tr(cancelLabel)),
         ),
-        FilledButton(
+        HuxButton(
           onPressed: () => Navigator.pop(context, true),
-          style: FilledButton.styleFrom(
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
+          variant: HuxButtonVariant.primary,
+          primaryColor: HuxTokens.textDestructive(context),
           child: Text(context.tr(confirmLabel)),
         ),
       ],

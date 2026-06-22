@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
+import 'package:hux/hux.dart';
 
 import '../../../../core/extensions/question_type_presentation.dart';
 import '../../../../core/localization/app_localizations.dart';
@@ -21,45 +22,38 @@ class QuestionResultCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Card(
+    return HuxCard(
       margin: const EdgeInsets.only(bottom: 16),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  result.questionType.icon,
-                  size: 20,
-                  color: colorScheme.primary,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                result.questionType.icon,
+                size: 20,
+                color: HuxTokens.primary(context),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  result.questionText,
+                  style: Theme.of(context).textTheme.titleMedium,
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    result.questionText,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            if (result.choiceCounts != null)
-              _buildChoicesTable(context)
-            else if (result.textResponses != null)
-              _buildTextResponses(context),
-          ],
-        ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (result.choiceCounts != null)
+            _buildChoicesTable(context)
+          else if (result.textResponses != null)
+            _buildTextResponses(context),
+        ],
       ),
     );
   }
 
   Widget _buildChoicesTable(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     // Sort choices by orderIndex
     final sortedChoices = List<Choice>.from(choices)
       ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
@@ -71,12 +65,12 @@ class QuestionResultCard extends StatelessWidget {
         2: FlexColumnWidth(1),
       },
       border: TableBorder(
-        horizontalInside: BorderSide(color: colorScheme.outlineVariant),
+        horizontalInside: BorderSide(color: HuxTokens.borderSecondary(context)),
       ),
       children: [
         TableRow(
           decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerHighest,
+            color: HuxTokens.surfaceSecondary(context),
           ),
           children: [
             Padding(
@@ -154,14 +148,13 @@ class QuestionResultCard extends StatelessWidget {
   }
 
   Widget _buildTextResponses(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final responses = result.textResponses ?? [];
 
     if (responses.isEmpty) {
       return Text(
         context.tr('No text responses'),
         style: TextStyle(
-          color: colorScheme.onSurfaceVariant,
+          color: HuxTokens.textSecondary(context),
           fontStyle: FontStyle.italic,
         ),
       );
@@ -176,7 +169,7 @@ class QuestionResultCard extends StatelessWidget {
             {'count': responses.length},
           ),
           style: Theme.of(context).textTheme.labelMedium?.copyWith(
-            color: colorScheme.onSurfaceVariant,
+            color: HuxTokens.textSecondary(context),
           ),
         ),
         const SizedBox(height: 12),
@@ -188,8 +181,9 @@ class QuestionResultCard extends StatelessWidget {
                 margin: const EdgeInsets.only(bottom: 8),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHighest,
+                  color: HuxTokens.surfaceSecondary(context),
                   borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: HuxTokens.borderSecondary(context)),
                 ),
                 child: Text(response),
               ),
@@ -202,7 +196,7 @@ class QuestionResultCard extends StatelessWidget {
                 'count': responses.length - _kMaxTextResponsesPreview,
               }),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
+                color: HuxTokens.textSecondary(context),
               ),
             ),
           ),

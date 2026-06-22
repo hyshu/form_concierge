@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
+import 'package:hux/hux.dart';
 
 import '../../../../core/localization/app_localizations.dart';
 
@@ -56,12 +57,10 @@ class _VisibilityRuleEditorState extends State<VisibilityRuleEditor> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return ExpansionTile(
       tilePadding: EdgeInsets.zero,
       childrenPadding: const EdgeInsets.only(top: 8),
-      leading: Icon(Icons.account_tree_outlined, color: colorScheme.primary),
+      leading: Icon(LucideIcons.workflow, color: HuxTokens.primary(context)),
       title: Text(
         context.tr('Visibility rules'),
         style: Theme.of(context).textTheme.titleSmall,
@@ -81,26 +80,29 @@ class _VisibilityRuleEditorState extends State<VisibilityRuleEditor> {
             child: Text(
               context.tr('Add an earlier question before creating rules.'),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
+                color: HuxTokens.textSecondary(context),
               ),
             ),
           )
         else ...[
-          SegmentedButton<VisibilityConditionMode>(
-            segments: [
-              ButtonSegment(
-                value: VisibilityConditionMode.all,
-                label: Text(context.tr('All')),
-              ),
-              ButtonSegment(
-                value: VisibilityConditionMode.any,
-                label: Text(context.tr('Any')),
-              ),
-            ],
-            selected: {_mode},
-            onSelectionChanged: widget.enabled
-                ? (selection) => setState(() => _mode = selection.first)
-                : null,
+          SizedBox(
+            width: 220,
+            child: HuxDropdown<VisibilityConditionMode>(
+              value: _mode,
+              useItemWidgetAsValue: true,
+              enabled: widget.enabled,
+              items: [
+                HuxDropdownItem(
+                  value: VisibilityConditionMode.all,
+                  child: Text(context.tr('All')),
+                ),
+                HuxDropdownItem(
+                  value: VisibilityConditionMode.any,
+                  child: Text(context.tr('Any')),
+                ),
+              ],
+              onChanged: (value) => setState(() => _mode = value),
+            ),
           ),
           const SizedBox(height: 12),
           ..._rules.asMap().entries.map((entry) {
@@ -118,22 +120,18 @@ class _VisibilityRuleEditorState extends State<VisibilityRuleEditor> {
           const SizedBox(height: 8),
           Row(
             children: [
-              OutlinedButton.icon(
+              HuxButton(
                 onPressed: widget.enabled && !_isSaving ? _addRule : null,
-                icon: const Icon(Icons.add),
-                label: Text(context.tr('Add rule')),
+                variant: HuxButtonVariant.outline,
+                icon: LucideIcons.plus,
+                child: Text(context.tr('Add rule')),
               ),
               const Spacer(),
-              FilledButton.icon(
+              HuxButton(
                 onPressed: widget.enabled && !_isSaving ? _save : null,
-                icon: _isSaving
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.save_outlined),
-                label: Text(context.tr('Save rules')),
+                isLoading: _isSaving,
+                icon: LucideIcons.save,
+                child: Text(context.tr('Save rules')),
               ),
             ],
           ),
@@ -218,8 +216,10 @@ class _RuleRow extends StatelessWidget {
     );
     final operators = _operatorsFor(source);
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+    return HuxCard(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      backgroundColor: HuxTokens.surfaceSecondary(context),
       child: Column(
         children: [
           Row(
@@ -227,67 +227,73 @@ class _RuleRow extends StatelessWidget {
             children: [
               Expanded(
                 flex: 2,
-                child: DropdownButtonFormField<int>(
-                  initialValue: source.id,
-                  decoration: InputDecoration(
-                    labelText: context.tr('Question'),
-                  ),
-                  items: [
-                    for (final question in sourceQuestions)
-                      DropdownMenuItem(
-                        value: question.id,
-                        child: Text(
-                          question.text,
-                          overflow: TextOverflow.ellipsis,
+                child: _LabeledControl(
+                  label: context.tr('Question'),
+                  child: HuxDropdown<int>(
+                    value: source.id,
+                    useItemWidgetAsValue: true,
+                    enabled: enabled,
+                    items: [
+                      for (final question in sourceQuestions)
+                        HuxDropdownItem(
+                          value: question.id!,
+                          child: Text(
+                            question.text,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
-                  ],
-                  onChanged: enabled
-                      ? (value) {
-                          final nextSource = sourceQuestions.firstWhere(
-                            (question) => question.id == value,
-                          );
-                          onChanged(_forSource(nextSource));
-                        }
-                      : null,
+                    ],
+                    onChanged: (value) {
+                      final nextSource = sourceQuestions.firstWhere(
+                        (question) => question.id == value,
+                      );
+                      onChanged(_forSource(nextSource));
+                    },
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: DropdownButtonFormField<VisibilityOperator>(
-                  initialValue: operators.contains(rule.operator)
-                      ? rule.operator
-                      : operators.first,
-                  decoration: InputDecoration(
-                    labelText: context.tr('Condition'),
+                child: _LabeledControl(
+                  label: context.tr('Condition'),
+                  child: HuxDropdown<VisibilityOperator>(
+                    value: operators.contains(rule.operator)
+                        ? rule.operator
+                        : operators.first,
+                    useItemWidgetAsValue: true,
+                    enabled: enabled,
+                    items: [
+                      for (final operator in operators)
+                        HuxDropdownItem(
+                          value: operator,
+                          child: Text(context.tr(_operatorLabel(operator))),
+                        ),
+                    ],
+                    onChanged: (operator) {
+                      onChanged(
+                        rule.copyWith(
+                          operator: operator,
+                          value: _operatorNeedsValue(operator)
+                              ? rule.value
+                              : null,
+                          clearValue: !_operatorNeedsValue(operator),
+                        ),
+                      );
+                    },
                   ),
-                  items: [
-                    for (final operator in operators)
-                      DropdownMenuItem(
-                        value: operator,
-                        child: Text(context.tr(_operatorLabel(operator))),
-                      ),
-                  ],
-                  onChanged: enabled
-                      ? (operator) {
-                          if (operator == null) return;
-                          onChanged(
-                            rule.copyWith(
-                              operator: operator,
-                              value: _operatorNeedsValue(operator)
-                                  ? rule.value
-                                  : null,
-                              clearValue: !_operatorNeedsValue(operator),
-                            ),
-                          );
-                        }
-                      : null,
                 ),
               ),
-              IconButton(
-                onPressed: enabled ? onDelete : null,
-                icon: const Icon(Icons.delete_outline),
-                tooltip: context.tr('Delete rule'),
+              const SizedBox(width: 8),
+              Tooltip(
+                message: context.tr('Delete rule'),
+                child: HuxButton(
+                  onPressed: enabled ? onDelete : null,
+                  variant: HuxButtonVariant.ghost,
+                  size: HuxButtonSize.small,
+                  icon: LucideIcons.trash2,
+                  textColor: HuxTokens.textDestructive(context),
+                  child: const SizedBox(width: 0),
+                ),
               ),
             ],
           ),
@@ -321,7 +327,31 @@ class _RuleRow extends StatelessWidget {
   }
 }
 
-class _ValueField extends StatelessWidget {
+class _LabeledControl extends StatelessWidget {
+  const _LabeledControl({required this.label, required this.child});
+
+  final String label;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            color: HuxTokens.textSecondary(context),
+          ),
+        ),
+        const SizedBox(height: 6),
+        SizedBox(width: double.infinity, child: child),
+      ],
+    );
+  }
+}
+
+class _ValueField extends StatefulWidget {
   const _ValueField({
     required this.source,
     required this.value,
@@ -337,27 +367,63 @@ class _ValueField extends StatelessWidget {
   final ValueChanged<Object?> onChanged;
 
   @override
+  State<_ValueField> createState() => _ValueFieldState();
+}
+
+class _ValueFieldState extends State<_ValueField> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.value?.toString() ?? '');
+  }
+
+  @override
+  void didUpdateWidget(_ValueField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final nextText = widget.value?.toString() ?? '';
+    if (oldWidget.value != widget.value && _controller.text != nextText) {
+      _controller.text = nextText;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (source.type.usesChoices) {
-      final choiceIds = choices.map((choice) => choice.id).whereType<int>();
-      final current = value == null ? null : int.tryParse(value.toString());
-      return DropdownButtonFormField<int>(
-        initialValue: choiceIds.contains(current)
-            ? current
-            : _firstOrNull(choices)?.id,
-        decoration: InputDecoration(labelText: context.tr('Choice')),
-        items: [
-          for (final choice in choices)
-            DropdownMenuItem(value: choice.id, child: Text(choice.text)),
-        ],
-        onChanged: enabled ? onChanged : null,
+    if (widget.source.type.usesChoices) {
+      final choiceIds = widget.choices
+          .map((choice) => choice.id)
+          .whereType<int>();
+      final current = widget.value == null
+          ? null
+          : int.tryParse(widget.value.toString());
+      return _LabeledControl(
+        label: context.tr('Choice'),
+        child: HuxDropdown<int>(
+          value: choiceIds.contains(current)
+              ? current
+              : _firstOrNull(widget.choices)?.id,
+          useItemWidgetAsValue: true,
+          enabled: widget.enabled,
+          items: [
+            for (final choice in widget.choices)
+              HuxDropdownItem(value: choice.id!, child: Text(choice.text)),
+          ],
+          onChanged: widget.onChanged,
+        ),
       );
     }
-    return TextFormField(
-      initialValue: value?.toString() ?? '',
-      enabled: enabled,
-      decoration: InputDecoration(labelText: context.tr('Value')),
-      onChanged: onChanged,
+    return HuxInput(
+      controller: _controller,
+      enabled: widget.enabled,
+      label: context.tr('Value'),
+      onChanged: widget.onChanged,
     );
   }
 }

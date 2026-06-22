@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
+import 'package:hux/hux.dart';
 
 import '../../../../core/localization/app_localizations.dart';
 
@@ -21,117 +22,192 @@ class UserListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    return HuxCard(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 680;
+          final details = _UserDetails(
+            user: user,
+            isCurrentUser: isCurrentUser,
+          );
+          final controls = _UserControls(
+            user: user,
+            onToggleBlocked: onToggleBlocked,
+            onRoleChanged: onRoleChanged,
+            onDelete: onDelete,
+          );
 
-    return ListTile(
-      leading: CircleAvatar(
-        backgroundColor: user.blocked
-            ? colorScheme.errorContainer
-            : colorScheme.primary,
-        child: Icon(
-          user.blocked ? Icons.block : Icons.person,
-          color: user.blocked
-              ? colorScheme.onErrorContainer
-              : colorScheme.onPrimary,
-        ),
+          if (compact) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    _UserIcon(blocked: user.blocked),
+                    const SizedBox(width: 12),
+                    Expanded(child: details),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                controls,
+              ],
+            );
+          }
+
+          return Row(
+            children: [
+              _UserIcon(blocked: user.blocked),
+              const SizedBox(width: 12),
+              Expanded(child: details),
+              const SizedBox(width: 16),
+              controls,
+            ],
+          );
+        },
       ),
-      title: Row(
-        children: [
-          Text(user.email ?? context.tr('No email')),
-          if (isCurrentUser) ...[
-            const SizedBox(width: 8),
-            Chip(
-              label: Text(context.tr('You')),
-              padding: EdgeInsets.zero,
-              labelPadding: const EdgeInsets.symmetric(horizontal: 8),
-              visualDensity: VisualDensity.compact,
-              backgroundColor: colorScheme.primaryContainer,
-              labelStyle: TextStyle(
-                color: colorScheme.onPrimaryContainer,
-                fontSize: 12,
+    );
+  }
+}
+
+class _UserDetails extends StatelessWidget {
+  const _UserDetails({required this.user, required this.isCurrentUser});
+
+  final AuthUserInfo user;
+  final bool isCurrentUser;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Text(
+              user.email ?? context.tr('No email'),
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
               ),
             ),
+            if (isCurrentUser)
+              HuxBadge(
+                label: context.tr('You'),
+                variant: HuxBadgeVariant.primary,
+                size: HuxBadgeSize.small,
+              ),
+            if (user.blocked)
+              HuxBadge(
+                label: context.tr('Blocked'),
+                variant: HuxBadgeVariant.destructive,
+                size: HuxBadgeSize.small,
+              ),
           ],
-        ],
-      ),
-      subtitle: Text(
-        context.tr(_roleLabel(user.role)),
-        style: TextStyle(color: colorScheme.onSurfaceVariant),
-      ),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (user.blocked)
-            Chip(
-              label: Text(context.tr('Blocked')),
-              backgroundColor: colorScheme.errorContainer,
-              labelStyle: TextStyle(color: colorScheme.onErrorContainer),
-            ),
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              switch (value) {
-                case 'role_admin':
-                  onRoleChanged(AdminRole.admin);
-                case 'role_editor':
-                  onRoleChanged(AdminRole.editor);
-                case 'role_viewer':
-                  onRoleChanged(AdminRole.viewer);
-                case 'toggle_block':
-                  onToggleBlocked();
-                case 'delete':
-                  onDelete();
-              }
-            },
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'role_admin',
-                child: ListTile(
-                  leading: const Icon(Icons.admin_panel_settings_outlined),
-                  title: Text(context.tr('Make admin')),
-                  contentPadding: EdgeInsets.zero,
-                ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          context.tr(_roleLabel(user.role)),
+          style: TextStyle(color: HuxTokens.textSecondary(context)),
+        ),
+      ],
+    );
+  }
+}
+
+class _UserControls extends StatelessWidget {
+  const _UserControls({
+    required this.user,
+    required this.onToggleBlocked,
+    required this.onRoleChanged,
+    required this.onDelete,
+  });
+
+  final AuthUserInfo user;
+  final VoidCallback onToggleBlocked;
+  final ValueChanged<AdminRole> onRoleChanged;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 12,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        SizedBox(
+          width: 180,
+          child: HuxDropdown<AdminRole>(
+            value: user.role,
+            useItemWidgetAsValue: true,
+            items: [
+              HuxDropdownItem(
+                value: AdminRole.admin,
+                child: Text(context.tr('Admin')),
               ),
-              PopupMenuItem(
-                value: 'role_editor',
-                child: ListTile(
-                  leading: const Icon(Icons.edit_note_outlined),
-                  title: Text(context.tr('Make editor')),
-                  contentPadding: EdgeInsets.zero,
-                ),
+              HuxDropdownItem(
+                value: AdminRole.editor,
+                child: Text(context.tr('Editor')),
               ),
-              PopupMenuItem(
-                value: 'role_viewer',
-                child: ListTile(
-                  leading: const Icon(Icons.visibility_outlined),
-                  title: Text(context.tr('Make viewer')),
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
-              const PopupMenuDivider(),
-              PopupMenuItem(
-                value: 'toggle_block',
-                child: ListTile(
-                  leading: Icon(
-                    user.blocked ? Icons.check_circle : Icons.block,
-                    color: user.blocked
-                        ? colorScheme.primary
-                        : colorScheme.error,
-                  ),
-                  title: Text(context.tr(user.blocked ? 'Unblock' : 'Block')),
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
-              PopupMenuItem(
-                value: 'delete',
-                child: ListTile(
-                  leading: Icon(Icons.delete, color: colorScheme.error),
-                  title: Text(context.tr('Delete')),
-                  contentPadding: EdgeInsets.zero,
-                ),
+              HuxDropdownItem(
+                value: AdminRole.viewer,
+                child: Text(context.tr('Viewer')),
               ),
             ],
+            onChanged: onRoleChanged,
           ),
-        ],
+        ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            HuxSwitch(
+              value: !user.blocked,
+              onChanged: (_) => onToggleBlocked(),
+            ),
+            const SizedBox(width: 8),
+            Text(context.tr(user.blocked ? 'Unblock' : 'Block')),
+          ],
+        ),
+        Tooltip(
+          message: context.tr('Delete'),
+          child: HuxButton(
+            onPressed: onDelete,
+            variant: HuxButtonVariant.ghost,
+            size: HuxButtonSize.small,
+            icon: LucideIcons.trash2,
+            textColor: HuxTokens.textDestructive(context),
+            child: const SizedBox(width: 0),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _UserIcon extends StatelessWidget {
+  const _UserIcon({required this.blocked});
+
+  final bool blocked;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        color: blocked
+            ? HuxTokens.surfaceDestructive(context)
+            : HuxTokens.primary(context).withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: HuxTokens.borderPrimary(context)),
+      ),
+      alignment: Alignment.center,
+      child: Icon(
+        blocked ? LucideIcons.userX : LucideIcons.user,
+        color: blocked
+            ? HuxTokens.textDestructive(context)
+            : HuxTokens.primary(context),
       ),
     );
   }
