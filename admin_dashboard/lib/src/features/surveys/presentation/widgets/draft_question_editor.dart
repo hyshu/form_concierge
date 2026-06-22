@@ -4,10 +4,12 @@ import 'package:form_concierge_client/form_concierge_client.dart';
 import '../../../../core/extensions/question_type_presentation.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../models/draft_question.dart';
+import 'localized_text_field_group.dart';
 
 /// Widget for editing draft questions and their choices.
 class DraftQuestionEditor extends StatelessWidget {
   final List<DraftQuestion> questions;
+  final String primaryLocale;
   final bool enabled;
   final void Function(DraftQuestion question) onEdit;
   final void Function(DraftQuestion question) onDelete;
@@ -26,6 +28,7 @@ class DraftQuestionEditor extends StatelessWidget {
   const DraftQuestionEditor({
     super.key,
     required this.questions,
+    this.primaryLocale = defaultFormContentLocale,
     required this.enabled,
     required this.onEdit,
     required this.onDelete,
@@ -53,6 +56,7 @@ class DraftQuestionEditor extends StatelessWidget {
           key: ValueKey(question.tempId),
           index: index,
           question: question,
+          primaryLocale: primaryLocale,
           enabled: enabled,
           onEdit: () => onEdit(question),
           onDelete: () => onDelete(question),
@@ -69,6 +73,7 @@ class DraftQuestionEditor extends StatelessWidget {
 class _DraftQuestionTile extends StatefulWidget {
   final int index;
   final DraftQuestion question;
+  final String primaryLocale;
   final bool enabled;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
@@ -81,6 +86,7 @@ class _DraftQuestionTile extends StatefulWidget {
     super.key,
     required this.index,
     required this.question,
+    required this.primaryLocale,
     required this.enabled,
     required this.onEdit,
     required this.onDelete,
@@ -115,7 +121,7 @@ class _DraftQuestionTileState extends State<_DraftQuestionTile> {
               ),
             ),
             title: Text(
-              widget.question.text,
+              widget.question.textTranslations.valueFor(widget.primaryLocale),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -177,6 +183,7 @@ class _DraftQuestionTileState extends State<_DraftQuestionTile> {
           if (_isExpanded && widget.question.hasChoices)
             _ChoicesSection(
               choices: widget.question.choices,
+              primaryLocale: widget.primaryLocale,
               enabled: widget.enabled,
               onAdd: widget.onAddChoice,
               onUpdate: widget.onUpdateChoice,
@@ -190,6 +197,7 @@ class _DraftQuestionTileState extends State<_DraftQuestionTile> {
 
 class _ChoicesSection extends StatelessWidget {
   final List<DraftChoice> choices;
+  final String primaryLocale;
   final bool enabled;
   final void Function(LocalizedText textTranslations) onAdd;
   final void Function(DraftChoice choice, LocalizedText textTranslations)
@@ -198,6 +206,7 @@ class _ChoicesSection extends StatelessWidget {
 
   const _ChoicesSection({
     required this.choices,
+    required this.primaryLocale,
     required this.enabled,
     required this.onAdd,
     required this.onUpdate,
@@ -222,6 +231,7 @@ class _ChoicesSection extends StatelessWidget {
           ...choices.map(
             (choice) => _DraftChoiceTile(
               choice: choice,
+              primaryLocale: primaryLocale,
               enabled: enabled,
               onUpdate: (textTranslations) =>
                   onUpdate(choice, textTranslations),
@@ -248,6 +258,7 @@ class _ChoicesSection extends StatelessWidget {
   }
 
   void _showAddDialog(BuildContext context) {
+    final formKey = GlobalKey<FormState>();
     final controllers = {
       for (final locale in formContentLocaleCodes)
         locale: TextEditingController(),
@@ -258,22 +269,16 @@ class _ChoicesSection extends StatelessWidget {
         title: Text(context.tr('Add Choice')),
         content: SizedBox(
           width: 400,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                for (final locale in formContentLocaleCodes) ...[
-                  TextField(
-                    controller: controllers[locale],
-                    decoration: InputDecoration(
-                      labelText:
-                          '${context.tr('Choice text')} (${formContentLocaleLabels[locale]!})',
-                    ),
-                    autofocus: locale == defaultFormContentLocale,
-                  ),
-                  const SizedBox(height: 12),
-                ],
-              ],
+          child: Form(
+            key: formKey,
+            child: SingleChildScrollView(
+              child: LocalizedTextFieldGroup(
+                controllers: controllers,
+                primaryLocale: primaryLocale,
+                labelText: context.tr('Choice text'),
+                requiredMessage: context.tr('Choice text is required'),
+                autofocus: true,
+              ),
             ),
           ),
         ),
@@ -284,14 +289,12 @@ class _ChoicesSection extends StatelessWidget {
           ),
           FilledButton(
             onPressed: () {
-              if (controllers.values.every(
-                (controller) => controller.text.trim().isNotEmpty,
-              )) {
+              if (formKey.currentState?.validate() ?? false) {
                 onAdd(
-                  LocalizedText({
-                    for (final locale in formContentLocaleCodes)
-                      locale: controllers[locale]!.text.trim(),
-                  }),
+                  localizedTextFromControllers(
+                    controllers,
+                    primaryLocale: primaryLocale,
+                  ),
                 );
                 Navigator.pop(context);
               }
@@ -310,12 +313,14 @@ class _ChoicesSection extends StatelessWidget {
 
 class _DraftChoiceTile extends StatelessWidget {
   final DraftChoice choice;
+  final String primaryLocale;
   final bool enabled;
   final void Function(LocalizedText textTranslations) onUpdate;
   final VoidCallback onDelete;
 
   const _DraftChoiceTile({
     required this.choice,
+    required this.primaryLocale,
     required this.enabled,
     required this.onUpdate,
     required this.onDelete,
@@ -341,10 +346,12 @@ class _DraftChoiceTile extends StatelessWidget {
                     borderRadius: BorderRadius.circular(4),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Text(choice.text),
+                      child: Text(
+                        choice.textTranslations.valueFor(primaryLocale),
+                      ),
                     ),
                   )
-                : Text(choice.text),
+                : Text(choice.textTranslations.valueFor(primaryLocale)),
           ),
           if (enabled) ...[
             IconButton(
@@ -368,6 +375,7 @@ class _DraftChoiceTile extends StatelessWidget {
   }
 
   void _showEditDialog(BuildContext context) {
+    final formKey = GlobalKey<FormState>();
     final controllers = {
       for (final locale in formContentLocaleCodes)
         locale: TextEditingController(
@@ -380,21 +388,15 @@ class _DraftChoiceTile extends StatelessWidget {
         title: Text(context.tr('Edit Choice')),
         content: SizedBox(
           width: 400,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                for (final locale in formContentLocaleCodes) ...[
-                  TextField(
-                    controller: controllers[locale],
-                    decoration: InputDecoration(
-                      labelText:
-                          '${context.tr('Choice text')} (${formContentLocaleLabels[locale]!})',
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                ],
-              ],
+          child: Form(
+            key: formKey,
+            child: SingleChildScrollView(
+              child: LocalizedTextFieldGroup(
+                controllers: controllers,
+                primaryLocale: primaryLocale,
+                labelText: context.tr('Choice text'),
+                requiredMessage: context.tr('Choice text is required'),
+              ),
             ),
           ),
         ),
@@ -405,14 +407,12 @@ class _DraftChoiceTile extends StatelessWidget {
           ),
           FilledButton(
             onPressed: () {
-              if (controllers.values.every(
-                (controller) => controller.text.trim().isNotEmpty,
-              )) {
+              if (formKey.currentState?.validate() ?? false) {
                 onUpdate(
-                  LocalizedText({
-                    for (final locale in formContentLocaleCodes)
-                      locale: controllers[locale]!.text.trim(),
-                  }),
+                  localizedTextFromControllers(
+                    controllers,
+                    primaryLocale: primaryLocale,
+                  ),
                 );
                 Navigator.pop(context);
               }

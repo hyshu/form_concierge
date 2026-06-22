@@ -3,10 +3,12 @@ import 'package:form_concierge_client/form_concierge_client.dart';
 
 import '../../../../core/extensions/question_type_presentation.dart';
 import '../../../../core/localization/app_localizations.dart';
+import 'localized_text_field_group.dart';
 
 /// Dialog for creating/editing a question.
 class QuestionFormDialog extends StatefulWidget {
   final Question? existingQuestion;
+  final String primaryLocale;
   final void Function({
     required LocalizedText textTranslations,
     required QuestionType type,
@@ -23,12 +25,14 @@ class QuestionFormDialog extends StatefulWidget {
   const QuestionFormDialog({
     super.key,
     this.existingQuestion,
+    this.primaryLocale = defaultFormContentLocale,
     required this.onSave,
   });
 
   static Future<void> show(
     BuildContext context, {
     Question? existingQuestion,
+    String primaryLocale = defaultFormContentLocale,
     required void Function({
       required LocalizedText textTranslations,
       required QuestionType type,
@@ -46,6 +50,7 @@ class QuestionFormDialog extends StatefulWidget {
       context: context,
       builder: (context) => QuestionFormDialog(
         existingQuestion: existingQuestion,
+        primaryLocale: primaryLocale,
         onSave: onSave,
       ),
     );
@@ -143,24 +148,14 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
                 const SizedBox(height: 8),
-                for (final locale in formContentLocaleCodes) ...[
-                  TextFormField(
-                    controller: _textControllers[locale],
-                    decoration: InputDecoration(
-                      labelText:
-                          '${context.tr('Question text')} (${formContentLocaleLabels[locale]!})',
-                      hintText: context.tr('Enter your question'),
-                    ),
-                    maxLines: 2,
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return context.tr('Question text is required');
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                ],
+                LocalizedTextFieldGroup(
+                  controllers: _textControllers,
+                  primaryLocale: widget.primaryLocale,
+                  labelText: context.tr('Question text'),
+                  hintText: context.tr('Enter your question'),
+                  maxLines: 2,
+                  requiredMessage: context.tr('Question text is required'),
+                ),
                 const SizedBox(height: 16),
                 Text(
                   context.tr('Question Type'),
@@ -197,19 +192,14 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      for (final locale in formContentLocaleCodes) ...[
-                        TextFormField(
-                          controller: _placeholderControllers[locale],
-                          decoration: InputDecoration(
-                            labelText:
-                                '${context.tr('Placeholder (optional)')} (${formContentLocaleLabels[locale]!})',
-                            hintText: context.tr(
-                              'Placeholder text for the input',
-                            ),
-                          ),
+                      LocalizedTextFieldGroup(
+                        controllers: _placeholderControllers,
+                        primaryLocale: widget.primaryLocale,
+                        labelText: context.tr('Placeholder (optional)'),
+                        hintText: context.tr(
+                          'Placeholder text for the input',
                         ),
-                        const SizedBox(height: 12),
-                      ],
+                      ),
                       const SizedBox(height: 16),
                       Row(
                         children: [
@@ -307,18 +297,19 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
   void _submit() {
     if (_formKey.currentState?.validate() ?? false) {
       widget.onSave(
-        textTranslations: LocalizedText({
-          for (final locale in formContentLocaleCodes)
-            locale: _textControllers[locale]!.text.trim(),
-        }),
+        textTranslations: localizedTextFromControllers(
+          _textControllers,
+          primaryLocale: widget.primaryLocale,
+        ),
         type: _type,
         isRequired: _isRequired,
-        placeholderTranslations: LocalizedText({
-          for (final locale in formContentLocaleCodes)
-            locale: _type.usesTextAnswer
-                ? _placeholderControllers[locale]!.text.trim()
-                : '',
-        }),
+        placeholderTranslations: _type.usesTextAnswer
+            ? localizedTextFromControllers(
+                _placeholderControllers,
+                primaryLocale: widget.primaryLocale,
+                fallbackEmptyToPrimary: false,
+              )
+            : LocalizedText.filled(''),
         minLength: _parseInt(_minLengthController.text),
         maxLength: _parseInt(_maxLengthController.text),
         minSelected: _parseInt(_minSelectedController.text),

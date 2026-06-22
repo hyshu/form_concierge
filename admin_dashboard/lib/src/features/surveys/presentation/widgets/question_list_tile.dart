@@ -9,6 +9,7 @@ import 'choice_editor.dart';
 class QuestionListTile extends StatelessWidget {
   final Question question;
   final List<Choice> choices;
+  final String primaryLocale;
   final List<QuestionVisibilityRule> visibilityRules;
   final Widget visibilityRuleEditor;
   final bool enabled;
@@ -23,6 +24,7 @@ class QuestionListTile extends StatelessWidget {
     super.key,
     required this.question,
     required this.choices,
+    this.primaryLocale = defaultFormContentLocale,
     required this.visibilityRules,
     required this.visibilityRuleEditor,
     required this.enabled,
@@ -63,7 +65,7 @@ class QuestionListTile extends StatelessWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              question.text,
+                              question.textFor(primaryLocale),
                               style: Theme.of(context).textTheme.titleMedium,
                             ),
                           ),
@@ -129,17 +131,19 @@ class QuestionListTile extends StatelessWidget {
               const SizedBox(height: 16),
               ChoiceEditor(
                 choices: choices,
+                primaryLocale: primaryLocale,
                 enabled: enabled,
                 onAdd: onAddChoice,
                 onUpdate: onUpdateChoice,
                 onDelete: onDeleteChoice,
               ),
             ],
-            if (!usesChoices && question.placeholder != null) ...[
+            if (!usesChoices &&
+                question.placeholderFor(primaryLocale) != null) ...[
               const SizedBox(height: 8),
               Text(
                 context.tr('Placeholder: {placeholder}', {
-                  'placeholder': question.placeholder,
+                  'placeholder': question.placeholderFor(primaryLocale),
                 }),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: colorScheme.onSurfaceVariant,
