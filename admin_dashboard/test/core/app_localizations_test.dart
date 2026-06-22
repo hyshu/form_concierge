@@ -1,0 +1,70 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:form_concierge_flutter/src/core/localization/app_localizations.dart';
+
+void main() {
+  group('AppLocalizations', () {
+    test('localeResolutionCallback normalizes supported language families', () {
+      expect(
+        AppLocalizations.localeResolutionCallback(
+          const Locale('ja', 'JP'),
+          AppLocalizations.supportedLocales,
+        ),
+        const Locale('ja'),
+      );
+      expect(
+        AppLocalizations.localeResolutionCallback(
+          const Locale('zh', 'TW'),
+          AppLocalizations.supportedLocales,
+        ),
+        const Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant'),
+      );
+      expect(
+        AppLocalizations.localeResolutionCallback(
+          const Locale('zh', 'CN'),
+          AppLocalizations.supportedLocales,
+        ),
+        const Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hans'),
+      );
+      expect(
+        AppLocalizations.localeResolutionCallback(
+          const Locale('es', 'ES'),
+          AppLocalizations.supportedLocales,
+        ),
+        const Locale('en'),
+      );
+    });
+
+    test('text interpolates values and falls back to English or key', () {
+      const l10n = AppLocalizations(Locale('en'));
+
+      expect(
+        l10n.text('Page {currentPage} of {totalPages}', {
+          'currentPage': 2,
+          'totalPages': 5,
+        }),
+        'Page 2 of 5',
+      );
+      expect(l10n.text('Unknown key'), 'Unknown key');
+    });
+
+    test('message localizes known error prefixes', () {
+      const l10n = AppLocalizations(Locale('en'));
+
+      expect(
+        l10n.message('Failed to create survey: Domain already exists'),
+        'Failed to create survey: Domain already exists',
+      );
+    });
+
+    test('Japanese translations are available for custom domain labels', () {
+      const l10n = AppLocalizations(Locale('ja'));
+
+      expect(l10n.text('Custom domain (optional)'), 'カスタムドメイン (任意)');
+      expect(
+        l10n.text('Custom domain must be a hostname like forms.example.com'),
+        'カスタムドメインは forms.example.com のようなホスト名にしてください',
+      );
+    });
+  });
+}
