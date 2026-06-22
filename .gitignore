@@ -15,18 +15,16 @@ Thumbs.db
 build/
 *.log
 
-# Serverpod
+# Node / Cloudflare
+node_modules/
+.wrangler/
+
+# SwiftPM
+.build/
+
+# Local secrets
 **/config/passwords.yaml
 **/config/firebase_service_account_key.json
-
-# Generated (optional - uncomment if you don't want to track)
-# **/src/generated/
-# **/lib/src/protocol/
-
-# Docs (serverpod_docs submodule build)
-docs/node_modules/
-docs/.docusaurus/
-docs/build/
 
 # Flutter web build output
 form_concierge_server/web/app/
