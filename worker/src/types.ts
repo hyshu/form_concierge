@@ -8,7 +8,6 @@ export type AdminContext = {
   id: string;
   email: string;
   scopeNames: string[];
-  blocked: boolean;
   created: string;
 };
 
@@ -122,7 +121,6 @@ export type AdminRow = {
   id: string;
   email: string;
   scope_names: string;
-  blocked: number;
   created_at: string;
 };
 

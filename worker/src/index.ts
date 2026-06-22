@@ -1,6 +1,6 @@
 import type { AdminContext, Env, ReplyRow } from './types';
 import { bootstrapAdmin, createAnonymousAccount, loginAdmin, requireAdmin, requireAnonymous } from './auth';
-import { createUser, deleteUser, listUsers, toggleUserBlocked, updateUserRole } from './admin_users';
+import { createUser, deleteUser, listUsers, updateUserRole } from './admin_users';
 import {
   createSurvey,
   createSurveyWithQuestions,
@@ -226,9 +226,6 @@ async function routeAdmin(
     if (method === 'POST' && parts.length === 3) return createUser(request, env);
     if (method === 'PUT' && parts[3] && parts[4] === 'role') return updateUserRole(request, env, parts[3]);
     if (method === 'DELETE' && parts[3]) return deleteUser(env, admin, parts[3]);
-    if (method === 'POST' && parts[3] && parts[4] === 'toggle-blocked') {
-      return toggleUserBlocked(env, parts[3]);
-    }
   }
 
   if (parts[2] === 'settings') {

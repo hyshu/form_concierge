@@ -24,17 +24,16 @@ export async function loginAdmin(request: Request, env: Env): Promise<Response> 
   const email = requireString(body.email, 'email').toLowerCase();
   const password = requireString(body.password, 'password');
   const row = await env.DB.prepare(
-    `SELECT id, email, password_hash, scope_names, blocked, created_at
+    `SELECT id, email, password_hash, scope_names, created_at
      FROM admins WHERE email = ?`,
   ).bind(email).first<{
     id: string;
     email: string;
     password_hash: string;
     scope_names: string;
-    blocked: number;
     created_at: string;
   }>();
-  if (!row || row.blocked || !(await verifyPassword(password, row.password_hash))) {
+  if (!row || !(await verifyPassword(password, row.password_hash))) {
     throw new HttpError(401, 'Invalid email or password');
   }
   const user = adminRowToContext(row);
@@ -66,12 +65,12 @@ export async function requireAdmin(request: Request, env: Env): Promise<AdminCon
   if (!token) throw new HttpError(401, 'Admin authentication required');
   const tokenHash = await sha256Hex(token);
   const row = await env.DB.prepare(
-    `SELECT a.id, a.email, a.scope_names, a.blocked, a.created_at
+    `SELECT a.id, a.email, a.scope_names, a.created_at
      FROM admin_sessions s
      JOIN admins a ON a.id = s.admin_id
      WHERE s.token_hash = ? AND s.expires_at > ?`,
   ).bind(tokenHash, nowIso()).first<AdminRow>();
-  if (!row || row.blocked) throw new HttpError(401, 'Admin authentication required');
+  if (!row) throw new HttpError(401, 'Admin authentication required');
   const admin = adminRowToContext(row);
   if (!admin.scopeNames.includes('admin')) throw new HttpError(403, 'Admin scope required');
   return admin;
@@ -110,7 +109,7 @@ async function createAdminSession(db: D1Database, user: AdminContext) {
 
 export async function getAdminById(db: D1Database, id: string): Promise<AdminContext | null> {
   const row = await db.prepare(
-    `SELECT id, email, scope_names, blocked, created_at FROM admins WHERE id = ?`,
+    `SELECT id, email, scope_names, created_at FROM admins WHERE id = ?`,
   ).bind(id).first<AdminRow>();
   return row ? adminRowToContext(row) : null;
 }
