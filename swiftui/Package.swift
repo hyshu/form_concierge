@@ -15,6 +15,10 @@ let package = Package(
         )
     ],
     targets: [
-        .target(name: "FormConciergeSwiftUI")
+        .target(name: "FormConciergeSwiftUI"),
+        .testTarget(
+            name: "FormConciergeSwiftUITests",
+            dependencies: ["FormConciergeSwiftUI"]
+        )
     ]
 )

@@ -143,12 +143,51 @@ void main() {
     );
 
     scenarioWidget(
+      'empty custom domain saves null',
+      given: (tester) async {
+        await tester.pumpWidget(buildSubject());
+        _fillTitles(controllers, 'My Survey');
+        controllers.slug.text = 'my-survey';
+        controllers.customDomain.text = '   ';
+        await tester.pump();
+      },
+      when: (tester) async {
+        await _tapCreateSurvey(tester);
+      },
+      then: (tester) async {
+        expect(saveWasCalled, isTrue);
+        expect(savedCustomDomain, isNull);
+      },
+    );
+
+    scenarioWidget(
       'invalid custom domain shows validation error',
       given: (tester) async {
         await tester.pumpWidget(buildSubject());
         _fillTitles(controllers, 'My Survey');
         controllers.slug.text = 'my-survey';
         controllers.customDomain.text = 'https://forms.example.com/path';
+        await tester.pump();
+      },
+      when: (tester) async {
+        await _tapCreateSurvey(tester);
+      },
+      then: (tester) async {
+        expect(
+          find.text('Custom domain must be a hostname like forms.example.com'),
+          findsOneWidget,
+        );
+        expect(saveWasCalled, isFalse);
+      },
+    );
+
+    scenarioWidget(
+      'custom domain with leading or trailing hyphen shows validation error',
+      given: (tester) async {
+        await tester.pumpWidget(buildSubject());
+        _fillTitles(controllers, 'My Survey');
+        controllers.slug.text = 'my-survey';
+        controllers.customDomain.text = '-forms.example.com';
         await tester.pump();
       },
       when: (tester) async {
@@ -251,6 +290,59 @@ void main() {
       expect(find.text('Create Survey'), findsOneWidget);
     });
   });
+
+  group('SurveyFormControllers', () {
+    late SurveyFormControllers controllers;
+
+    setUp(() {
+      controllers = _controllers();
+    });
+
+    tearDown(() {
+      controllers.dispose();
+    });
+
+    test(
+      'populateFrom fills slug, custom domain, titles, and descriptions',
+      () {
+        controllers.populateFrom(_survey(customDomain: 'forms.example.com'));
+
+        expect(controllers.slug.text, 'customer-feedback');
+        expect(controllers.customDomain.text, 'forms.example.com');
+        for (final locale in formContentLocaleCodes) {
+          expect(controllers.titleTranslations[locale]!.text, 'Title $locale');
+          expect(
+            controllers.descriptionTranslations[locale]!.text,
+            'Description $locale',
+          );
+        }
+      },
+    );
+
+    test('populateFrom clears custom domain when survey has none', () {
+      controllers.customDomain.text = 'old.example.com';
+
+      controllers.populateFrom(_survey());
+
+      expect(controllers.customDomain.text, isEmpty);
+    });
+
+    test('titleValue and descriptionValue trim every locale', () {
+      for (final locale in formContentLocaleCodes) {
+        controllers.titleTranslations[locale]!.text = ' Title $locale ';
+        controllers.descriptionTranslations[locale]!.text =
+            ' Description $locale ';
+      }
+
+      final titles = controllers.titleValue();
+      final descriptions = controllers.descriptionValue();
+
+      for (final locale in formContentLocaleCodes) {
+        expect(titles.valueFor(locale), 'Title $locale');
+        expect(descriptions.valueFor(locale), 'Description $locale');
+      }
+    });
+  });
 }
 
 SurveyFormControllers _controllers() => SurveyFormControllers(
@@ -277,4 +369,25 @@ Future<void> _tapCreateSurvey(WidgetTester tester) async {
   await tester.ensureVisible(button);
   await tester.tap(button);
   await tester.pumpAndSettle();
+}
+
+Survey _survey({String? customDomain}) {
+  final now = DateTime.utc(2026, 6, 22, 10);
+  return Survey(
+    id: 1,
+    slug: 'customer-feedback',
+    customDomain: customDomain,
+    defaultLocale: defaultFormContentLocale,
+    supportedLocales: formContentLocaleCodes,
+    titleTranslations: LocalizedText({
+      for (final locale in formContentLocaleCodes) locale: 'Title $locale',
+    }),
+    descriptionTranslations: LocalizedText({
+      for (final locale in formContentLocaleCodes)
+        locale: 'Description $locale',
+    }),
+    status: SurveyStatus.draft,
+    createdAt: now,
+    updatedAt: now,
+  );
 }
