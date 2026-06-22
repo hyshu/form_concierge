@@ -16,7 +16,7 @@ class SingleChoiceQuestion extends StatelessComponent {
   final List<Choice> choices;
   final int? value;
   final String locale;
-  final void Function(dynamic value) onChanged;
+  final void Function(AnswerValue value) onChanged;
 
   @override
   Component build(BuildContext context) {

@@ -14,7 +14,7 @@ class TextSingleQuestion extends StatelessComponent {
   final Question question;
   final String? value;
   final String locale;
-  final void Function(dynamic value) onChanged;
+  final void Function(AnswerValue value) onChanged;
 
   @override
   Component build(BuildContext context) {

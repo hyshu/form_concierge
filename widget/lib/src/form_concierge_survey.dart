@@ -115,27 +115,24 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
     return null;
   }
 
-  void _updateAnswer(int questionId, dynamic value) {
+  void _updateAnswer(int questionId, AnswerValue value) {
     setState(() {
-      final newAnswers = Map<int, dynamic>.from(_state.answers)
-        ..[questionId] = value;
-      final visibleQuestions = resolveVisibleQuestions(
-        _state.questions,
-        _state.visibilityRules,
-        newAnswers,
+      final change = applyAnswerChange(
+        answers: _state.answers,
+        validationErrors: _state.validationErrors,
+        questions: _state.questions,
+        visibilityRules: _state.visibilityRules,
+        questionId: questionId,
+        value: value,
       );
-
-      final newErrors = Map<int, String>.from(_state.validationErrors);
-      newErrors.remove(questionId);
-
       _state = _state.copyWith(
-        answers: pruneHiddenAnswers(newAnswers, visibleQuestions),
-        validationErrors: newErrors,
+        answers: change.answers,
+        validationErrors: change.validationErrors,
       );
     });
   }
 
-  Map<int, String> _validate() {
+  ValidationErrors _validate() {
     final visibleQuestions = resolveVisibleQuestions(
       _state.questions,
       _state.visibilityRules,
