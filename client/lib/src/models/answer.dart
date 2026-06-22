@@ -99,3 +99,190 @@ List<Answer> buildAnswers(
 
   return result;
 }
+
+List<Question> resolveVisibleQuestions(
+  List<Question> questions,
+  List<QuestionVisibilityRule> visibilityRules,
+  Map<int, dynamic> answerValues,
+) {
+  final visible = <int>{};
+  final rulesByTarget = <int, List<QuestionVisibilityRule>>{};
+  final questionsById = {
+    for (final question in questions)
+      if (question.id != null) question.id!: question,
+  };
+
+  for (final rule in visibilityRules) {
+    rulesByTarget.putIfAbsent(rule.targetQuestionId, () => []).add(rule);
+  }
+
+  final result = <Question>[];
+  for (final question in questions) {
+    final questionId = question.id;
+    if (questionId == null) continue;
+    final rules = rulesByTarget[questionId] ?? const [];
+    final isVisible =
+        rules.isEmpty ||
+        _matchesVisibilityRules(
+          question,
+          rules,
+          questionsById,
+          visible,
+          answerValues,
+        );
+    if (isVisible) {
+      visible.add(questionId);
+      result.add(question);
+    }
+  }
+
+  return result;
+}
+
+Map<int, dynamic> pruneHiddenAnswers(
+  Map<int, dynamic> answerValues,
+  List<Question> visibleQuestions,
+) {
+  final visibleIds = visibleQuestions
+      .map((question) => question.id)
+      .whereType<int>()
+      .toSet();
+  return Map.fromEntries(
+    answerValues.entries.where((entry) => visibleIds.contains(entry.key)),
+  );
+}
+
+Map<int, String> validateSurveyAnswers(
+  Map<int, dynamic> answerValues,
+  List<Question> questions,
+) {
+  final errors = <int, String>{};
+
+  for (final question in questions) {
+    final questionId = question.id;
+    if (questionId == null) continue;
+    final answer = answerValues[questionId];
+
+    if (question.isRequired) {
+      if (answer == null ||
+          (answer is String && answer.trim().isEmpty) ||
+          (answer is List && answer.isEmpty)) {
+        errors[questionId] = 'This question is required';
+        continue;
+      }
+    }
+
+    if (answer is String && answer.trim().isNotEmpty) {
+      final length = answer.trim().length;
+      if (question.minLength != null && length < question.minLength!) {
+        errors[questionId] =
+            'Minimum ${question.minLength} characters required';
+        continue;
+      }
+      if (question.maxLength != null && length > question.maxLength!) {
+        errors[questionId] = 'Maximum ${question.maxLength} characters allowed';
+        continue;
+      }
+    }
+
+    final selected = answer is List<int>
+        ? answer
+        : answer is int
+        ? [answer]
+        : const <int>[];
+    if (selected.isNotEmpty || question.minSelected != null) {
+      if (question.minSelected != null &&
+          selected.length < question.minSelected!) {
+        errors[questionId] = 'Select at least ${question.minSelected} choices';
+        continue;
+      }
+      if (question.maxSelected != null &&
+          selected.length > question.maxSelected!) {
+        errors[questionId] = 'Select at most ${question.maxSelected} choices';
+      }
+    }
+  }
+
+  return errors;
+}
+
+bool _matchesVisibilityRules(
+  Question target,
+  List<QuestionVisibilityRule> rules,
+  Map<int, Question> questionsById,
+  Set<int> visibleQuestionIds,
+  Map<int, dynamic> answerValues,
+) {
+  final results = rules.map((rule) {
+    final source = questionsById[rule.sourceQuestionId];
+    if (source == null || !visibleQuestionIds.contains(source.id)) {
+      return false;
+    }
+    return _matchesVisibilityRule(source, rule, answerValues[source.id]);
+  }).toList();
+  return target.visibilityConditionMode == VisibilityConditionMode.any
+      ? results.any((result) => result)
+      : results.every((result) => result);
+}
+
+bool _matchesVisibilityRule(
+  Question source,
+  QuestionVisibilityRule rule,
+  dynamic answer,
+) {
+  final hasAnswer = _answerHasValue(answer);
+  switch (rule.operator) {
+    case VisibilityOperator.isAnswered:
+      return hasAnswer;
+    case VisibilityOperator.isNotAnswered:
+      return !hasAnswer;
+    case VisibilityOperator.equals:
+    case VisibilityOperator.notEquals:
+    case VisibilityOperator.contains:
+    case VisibilityOperator.notContains:
+      if (!hasAnswer) return false;
+      return _matchesValueOperator(source, rule, answer);
+  }
+}
+
+bool _matchesValueOperator(
+  Question source,
+  QuestionVisibilityRule rule,
+  dynamic answer,
+) {
+  if (source.type.usesTextAnswer) {
+    final actual = answer is String ? answer.trim() : '';
+    final expected = rule.value?.toString() ?? '';
+    return switch (rule.operator) {
+      VisibilityOperator.equals => actual == expected,
+      VisibilityOperator.notEquals => actual != expected,
+      VisibilityOperator.contains => actual.contains(expected),
+      VisibilityOperator.notContains => !actual.contains(expected),
+      _ => false,
+    };
+  }
+
+  final selected = answer is int
+      ? [answer]
+      : answer is List<int>
+      ? answer
+      : const <int>[];
+  final expected = rule.value == null ? null : _int(rule.value);
+  if (expected == null) return false;
+  return switch (rule.operator) {
+    VisibilityOperator.equals ||
+    VisibilityOperator.contains => selected.contains(expected),
+    VisibilityOperator.notEquals ||
+    VisibilityOperator.notContains => !selected.contains(expected),
+    _ => false,
+  };
+}
+
+bool _answerHasValue(dynamic answer) {
+  return switch (answer) {
+    String value => value.trim().isNotEmpty,
+    int _ => true,
+    List value => value.isNotEmpty,
+    _ => false,
+  };
+}

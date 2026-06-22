@@ -33,6 +33,9 @@ ClientOptions get defaultClientOptions => ClientOptions(
         questionsJson: (p['questionsJson'] as List<Object?>)
             .map((i) => (i as Map<String, Object?>))
             .toList(),
+        visibilityRulesJson: (p['visibilityRulesJson'] as List<Object?>)
+            .map((i) => (i as Map<String, Object?>))
+            .toList(),
         choicesByQuestionJson:
             (p['choicesByQuestionJson'] as Map<String, Object?>).map(
               (k, v) => MapEntry(

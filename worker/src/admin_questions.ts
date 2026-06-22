@@ -23,23 +23,29 @@ export async function createQuestion(request: Request, env: Env): Promise<Respon
   const body = await readJson(request);
   const surveyId = Number(body.surveyId);
   await mustSurvey(env.DB, surveyId);
+  const type = normalizeQuestionType(body.type);
+  const validation = normalizeQuestionValidation(body, type);
   const max = await env.DB.prepare(
     `SELECT MAX(order_index) AS max_order FROM questions WHERE survey_id = ?`,
   ).bind(surveyId).first<{ max_order: number | null }>();
   const row = await env.DB.prepare(
     `INSERT INTO questions
-       (survey_id, text, type, order_index, is_required, placeholder, min_length, max_length)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+       (survey_id, text, type, order_index, is_required, placeholder,
+        min_length, max_length, min_selected, max_selected, visibility_condition_mode)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      RETURNING *`,
   ).bind(
     surveyId,
     requireString(body.text, 'text'),
-    normalizeQuestionType(body.type),
+    type,
     (max?.max_order ?? -1) + 1,
     boolToInt(body.isRequired !== false),
     optionalString(body.placeholder),
-    optionalNumber(body.minLength),
-    optionalNumber(body.maxLength),
+    validation.minLength,
+    validation.maxLength,
+    validation.minSelected,
+    validation.maxSelected,
+    normalizeVisibilityConditionMode(body.visibilityConditionMode),
   ).first<QuestionRow>();
   const question = requiredRow(row, 'Question');
   if (isChoiceQuestionType(question.type)) {
@@ -51,24 +57,83 @@ export async function createQuestion(request: Request, env: Env): Promise<Respon
 export async function updateQuestion(request: Request, env: Env, questionId: number): Promise<Response> {
   const existing = await mustQuestion(env.DB, questionId);
   const body = await readJson(request);
+  const type = normalizeQuestionType(body.type ?? existing.type);
+  const validation = normalizeQuestionValidation(
+    {
+      minLength: body.minLength ?? existing.min_length,
+      maxLength: body.maxLength ?? existing.max_length,
+      minSelected: body.minSelected ?? existing.min_selected,
+      maxSelected: body.maxSelected ?? existing.max_selected,
+    },
+    type,
+  );
   const row = await env.DB.prepare(
     `UPDATE questions
      SET text = ?, type = ?, order_index = ?, is_required = ?, placeholder = ?,
-         min_length = ?, max_length = ?, is_deleted = ?
+         min_length = ?, max_length = ?, min_selected = ?, max_selected = ?,
+         visibility_condition_mode = ?, is_deleted = ?
      WHERE id = ?
      RETURNING *`,
   ).bind(
     requireString(body.text ?? existing.text, 'text'),
-    normalizeQuestionType(body.type ?? existing.type),
+    type,
     optionalNumber(body.orderIndex) ?? existing.order_index,
     boolToInt(body.isRequired ?? existing.is_required === 1),
     optionalString(body.placeholder ?? existing.placeholder),
-    optionalNumber(body.minLength ?? existing.min_length),
-    optionalNumber(body.maxLength ?? existing.max_length),
+    validation.minLength,
+    validation.maxLength,
+    validation.minSelected,
+    validation.maxSelected,
+    normalizeVisibilityConditionMode(body.visibilityConditionMode ?? existing.visibility_condition_mode),
     boolToInt(body.isDeleted ?? existing.is_deleted === 1),
     questionId,
   ).first<QuestionRow>();
   return json(questionToJson(requiredRow(row, 'Question')));
+}
+
+export function normalizeVisibilityConditionMode(value: unknown): string {
+  const mode = String(value ?? 'all');
+  if (mode === 'all' || mode === 'any') return mode;
+  throw new HttpError(400, 'Invalid visibility condition mode');
+}
+
+export function normalizeQuestionValidation(
+  body: Record<string, unknown>,
+  type: string,
+): {
+  minLength: number | null;
+  maxLength: number | null;
+  minSelected: number | null;
+  maxSelected: number | null;
+} {
+  const minLength = optionalNumber(body.minLength);
+  const maxLength = optionalNumber(body.maxLength);
+  const minSelected = optionalNumber(body.minSelected);
+  const maxSelected = optionalNumber(body.maxSelected);
+  for (const [field, value] of Object.entries({ minLength, maxLength, minSelected, maxSelected })) {
+    if (value != null && (!Number.isInteger(value) || value < 0)) {
+      throw new HttpError(400, `${field} must be a non-negative integer`);
+    }
+  }
+  if (minLength != null && maxLength != null && minLength > maxLength) {
+    throw new HttpError(400, 'minLength cannot be greater than maxLength');
+  }
+  if (minSelected != null && maxSelected != null && minSelected > maxSelected) {
+    throw new HttpError(400, 'minSelected cannot be greater than maxSelected');
+  }
+  if (type === 'singleChoice' && maxSelected != null && maxSelected > 1) {
+    throw new HttpError(400, 'singleChoice maxSelected cannot be greater than 1');
+  }
+  return {
+    minLength: isTextQuestionTypeName(type) ? minLength : null,
+    maxLength: isTextQuestionTypeName(type) ? maxLength : null,
+    minSelected: isChoiceQuestionType(type) ? minSelected : null,
+    maxSelected: isChoiceQuestionType(type) ? maxSelected : null,
+  };
+}
+
+function isTextQuestionTypeName(type: string): boolean {
+  return type === 'textSingle' || type === 'textMultiLine';
 }
 
 export async function deleteQuestion(env: Env, questionId: number): Promise<Response> {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:form_concierge_client/form_concierge_client.dart';
 
 class CreateUserDialog extends StatefulWidget {
   const CreateUserDialog({super.key});
@@ -11,7 +12,7 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _isAdmin = false;
+  AdminRole _role = AdminRole.viewer;
   bool _isSubmitting = false;
 
   @override
@@ -24,14 +25,10 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
   void _submit() {
     if (_formKey.currentState?.validate() ?? false) {
       setState(() => _isSubmitting = true);
-      final scopes = ['user'];
-      if (_isAdmin) {
-        scopes.add('admin');
-      }
       Navigator.of(context).pop({
         'email': _emailController.text.trim(),
         'password': _passwordController.text,
-        'scopes': scopes,
+        'role': _role,
       });
     }
   }
@@ -83,15 +80,31 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
               },
             ),
             const SizedBox(height: 16),
-            CheckboxListTile(
-              title: const Text('Admin privileges'),
-              subtitle: Text(
-                'Can manage users and surveys',
-                style: TextStyle(color: colorScheme.onSurfaceVariant),
-              ),
-              value: _isAdmin,
-              onChanged: (value) => setState(() => _isAdmin = value ?? false),
-              contentPadding: EdgeInsets.zero,
+            DropdownButtonFormField<AdminRole>(
+              initialValue: _role,
+              decoration: const InputDecoration(labelText: 'Role'),
+              items: const [
+                DropdownMenuItem(
+                  value: AdminRole.viewer,
+                  child: Text('Viewer'),
+                ),
+                DropdownMenuItem(
+                  value: AdminRole.editor,
+                  child: Text('Editor'),
+                ),
+                DropdownMenuItem(
+                  value: AdminRole.admin,
+                  child: Text('Admin'),
+                ),
+              ],
+              onChanged: (value) {
+                if (value != null) setState(() => _role = value);
+              },
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _roleDescription(_role),
+              style: TextStyle(color: colorScheme.onSurfaceVariant),
             ),
           ],
         ),
@@ -114,4 +127,12 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
       ],
     );
   }
+}
+
+String _roleDescription(AdminRole role) {
+  return switch (role) {
+    AdminRole.admin => 'Can manage users, surveys, responses, and settings.',
+    AdminRole.editor => 'Can create surveys and manage responses.',
+    AdminRole.viewer => 'Can view surveys and responses only.',
+  };
 }

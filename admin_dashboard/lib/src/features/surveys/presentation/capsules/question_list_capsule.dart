@@ -8,12 +8,14 @@ import '../../../../core/capsules/keyed_state.dart';
 class QuestionListState {
   final List<Question> questions;
   final Map<int, List<Choice>> choicesByQuestion;
+  final List<QuestionVisibilityRule> visibilityRules;
   final bool isLoading;
   final String? error;
 
   const QuestionListState({
     this.questions = const [],
     this.choicesByQuestion = const {},
+    this.visibilityRules = const [],
     this.isLoading = false,
     this.error,
   });
@@ -23,11 +25,13 @@ class QuestionListState {
   QuestionListState copyWith({
     List<Question>? questions,
     Map<int, List<Choice>>? choicesByQuestion,
+    List<QuestionVisibilityRule>? visibilityRules,
     bool? isLoading,
     String? error,
   }) => QuestionListState(
     questions: questions ?? this.questions,
     choicesByQuestion: choicesByQuestion ?? this.choicesByQuestion,
+    visibilityRules: visibilityRules ?? this.visibilityRules,
     isLoading: isLoading ?? this.isLoading,
     error: error,
   );
@@ -76,12 +80,16 @@ class QuestionListManager {
 
       final choicesByQuestion = await _client.questionAdmin
           .getChoicesByQuestion(questions);
+      final visibilityRules = await _client.surveyAdmin.getVisibilityRules(
+        surveyId,
+      );
 
       _setState(
         surveyId,
         getState(surveyId).copyWith(
           questions: questions,
           choicesByQuestion: choicesByQuestion,
+          visibilityRules: visibilityRules,
           isLoading: false,
         ),
       );
@@ -103,6 +111,12 @@ class QuestionListManager {
     required QuestionType type,
     bool isRequired = true,
     String? placeholder,
+    int? minLength,
+    int? maxLength,
+    int? minSelected,
+    int? maxSelected,
+    VisibilityConditionMode visibilityConditionMode =
+        VisibilityConditionMode.all,
   }) async {
     return _runAndReload(
       surveyId,
@@ -114,6 +128,11 @@ class QuestionListManager {
           orderIndex: getState(surveyId).questions.length,
           isRequired: isRequired,
           placeholder: placeholder,
+          minLength: minLength,
+          maxLength: maxLength,
+          minSelected: minSelected,
+          maxSelected: maxSelected,
+          visibilityConditionMode: visibilityConditionMode,
         );
         return _client.questionAdmin.create(question);
       },
@@ -188,6 +207,33 @@ class QuestionListManager {
       () => _client.choiceAdmin.delete(choiceId),
       'Failed to delete choice',
     );
+  }
+
+  Future<bool> saveVisibilityRules({
+    required int surveyId,
+    required Question targetQuestion,
+    required VisibilityConditionMode conditionMode,
+    required List<QuestionVisibilityRule> targetRules,
+  }) async {
+    try {
+      final updatedQuestion = targetQuestion.copyWith(
+        visibilityConditionMode: conditionMode,
+      );
+      await _client.questionAdmin.update(updatedQuestion);
+      final currentRules = getState(surveyId).visibilityRules;
+      final otherRules = currentRules.where(
+        (rule) => rule.targetQuestionId != targetQuestion.id,
+      );
+      await _client.surveyAdmin.replaceVisibilityRules(
+        surveyId,
+        [...otherRules, ...targetRules],
+      );
+      await loadQuestions(surveyId);
+      return true;
+    } on Exception catch (e) {
+      _setError(surveyId, 'Failed to save visibility rules: $e');
+      return false;
+    }
   }
 
   Future<T?> _runAndReload<T>(

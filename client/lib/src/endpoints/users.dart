@@ -33,12 +33,26 @@ class UserAdminEndpoint {
   Future<AuthUserInfo> createUser({
     required String email,
     required String password,
-    required List<String> scopes,
+    required AdminRole role,
   }) async {
     final json = await _client.request(
       'POST',
       '/api/admin/users',
-      body: {'email': email, 'password': password, 'scopes': scopes},
+      body: {
+        'email': email,
+        'password': password,
+        'role': _enumName(role),
+      },
+      authenticated: true,
+    );
+    return AuthUserInfo.fromJson(json);
+  }
+
+  Future<AuthUserInfo> updateRole(UuidValue userId, AdminRole role) async {
+    final json = await _client.request(
+      'PUT',
+      '/api/admin/users/$userId/role',
+      body: {'role': _enumName(role)},
       authenticated: true,
     );
     return AuthUserInfo.fromJson(json);

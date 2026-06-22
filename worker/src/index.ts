@@ -1,6 +1,6 @@
 import type { AdminContext, Env, ReplyRow } from './types';
 import { bootstrapAdmin, createAnonymousAccount, loginAdmin, requireAdmin, requireAnonymous } from './auth';
-import { createUser, deleteUser, listUsers, toggleUserBlocked } from './admin_users';
+import { createUser, deleteUser, listUsers, toggleUserBlocked, updateUserRole } from './admin_users';
 import {
   createSurvey,
   createSurveyWithQuestions,
@@ -26,6 +26,7 @@ import {
 } from './admin_questions';
 import { notificationSettings } from './notification_settings';
 import { getPublicChoices, getPublicQuestions, getPublicSurvey, submitResponse } from './public_surveys';
+import { listAdminVisibilityRules, listPublicVisibilityRules, replaceAdminVisibilityRules } from './visibility_rules';
 import {
   aggregatedResults,
   createReply,
@@ -38,6 +39,7 @@ import {
 } from './responses';
 import { HttpError, countRows, json, jsonHeaders } from './utils';
 import { anonymousAccountToJson, replyToJson } from './serializers';
+import { requireScope } from './permissions';
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -115,6 +117,9 @@ async function route(request: Request, env: Env): Promise<Response> {
     if (parts[2] === 'id' && parts[3] && parts[4] === 'questions') {
       return getPublicQuestions(env, Number(parts[3]));
     }
+    if (parts[2] === 'id' && parts[3] && parts[4] === 'visibility-rules') {
+      return listPublicVisibilityRules(env, Number(parts[3]));
+    }
     return getPublicSurvey(env, parts[2]);
   }
 
@@ -158,8 +163,10 @@ async function routeAdmin(
   const method = request.method.toUpperCase();
 
   if (parts[2] === 'users') {
+    requireScope(admin, 'user:manage');
     if (method === 'GET' && parts.length === 3) return listUsers(env);
     if (method === 'POST' && parts.length === 3) return createUser(request, env);
+    if (method === 'PUT' && parts[3] && parts[4] === 'role') return updateUserRole(request, env, parts[3]);
     if (method === 'DELETE' && parts[3]) return deleteUser(env, admin, parts[3]);
     if (method === 'POST' && parts[3] && parts[4] === 'toggle-blocked') {
       return toggleUserBlocked(env, parts[3]);
@@ -167,6 +174,8 @@ async function routeAdmin(
   }
 
   if (parts[2] === 'surveys') {
+    if (method === 'GET') requireScope(admin, 'survey:read');
+    if (method !== 'GET') requireScope(admin, 'survey:write');
     if (method === 'GET' && parts.length === 3) return listSurveys(env, admin);
     if (method === 'POST' && parts.length === 3) return createSurvey(request, env, admin);
     if (method === 'POST' && parts[3] === 'with-questions') {
@@ -194,16 +203,24 @@ async function routeAdmin(
         return reorderQuestions(request, env, surveyId);
       }
       if (method === 'GET' && parts[4] === 'responses' && parts[5] === 'count') {
+        requireScope(admin, 'response:read');
         return responseCount(env, surveyId);
       }
       if (method === 'GET' && parts[4] === 'responses') {
+        requireScope(admin, 'response:read');
         return listResponses(env, surveyId, url);
       }
       if (method === 'GET' && parts[4] === 'results') {
+        requireScope(admin, 'response:read');
         return aggregatedResults(env, surveyId);
       }
       if (method === 'GET' && parts[4] === 'trends') {
+        requireScope(admin, 'response:read');
         return responseTrends(env, surveyId, url);
+      }
+      if (parts[4] === 'visibility-rules') {
+        if (method === 'GET') return listAdminVisibilityRules(env, surveyId);
+        if (method === 'PUT') return replaceAdminVisibilityRules(request, env, surveyId);
       }
       if (parts[4] === 'notification-settings') {
         return notificationSettings(request, env, surveyId, parts);
@@ -212,6 +229,8 @@ async function routeAdmin(
   }
 
   if (parts[2] === 'questions') {
+    if (method === 'GET') requireScope(admin, 'survey:read');
+    if (method !== 'GET') requireScope(admin, 'survey:write');
     if (method === 'POST' && parts.length === 3) return createQuestion(request, env);
     const questionId = Number(parts[3]);
     if (Number.isFinite(questionId)) {
@@ -226,6 +245,8 @@ async function routeAdmin(
   }
 
   if (parts[2] === 'choices') {
+    if (method === 'GET') requireScope(admin, 'survey:read');
+    if (method !== 'GET') requireScope(admin, 'survey:write');
     if (method === 'POST' && parts.length === 3) return createChoice(request, env);
     const choiceId = Number(parts[3]);
     if (Number.isFinite(choiceId)) {
@@ -238,6 +259,8 @@ async function routeAdmin(
   if (parts[2] === 'responses') {
     const responseId = Number(parts[3]);
     if (Number.isFinite(responseId)) {
+      if (method === 'GET') requireScope(admin, 'response:read');
+      if (method !== 'GET') requireScope(admin, 'response:write');
       if (method === 'GET' && parts[4] === 'answers') return responseAnswers(env, responseId);
       if (method === 'DELETE' && parts.length === 4) return deleteResponse(env, responseId);
       if (method === 'GET' && parts[4] === 'replies') return getReplies(env, responseId);
@@ -248,6 +271,7 @@ async function routeAdmin(
   }
 
   if (parts[2] === 'ai' && parts[3] === 'survey-questions') {
+    requireScope(admin, 'survey:write');
     throw new HttpError(501, 'AI generation is not configured');
   }
 

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:rearch/rearch.dart';
 
 import '../../../../core/capsules/auth_state_capsule.dart';
+import '../../../../core/capsules/client_capsule.dart';
 import '../../../../core/widgets/confirm_delete_dialog.dart';
 import '../capsules/survey_list_capsule.dart';
 import '../widgets/survey_list_tile.dart';
@@ -17,6 +18,10 @@ class DashboardPage extends RearchConsumer {
   Widget build(BuildContext context, WidgetHandle use) {
     final surveyManager = use(surveyListCapsule);
     final authManager = use(authStateCapsule);
+    final client = use(clientCapsule);
+    final role = client.auth.signedInUser?.role;
+    final canWrite = role == AdminRole.admin || role == AdminRole.editor;
+    final canManageUsers = role == AdminRole.admin;
 
     // Load surveys on first build
     if (use.isFirstBuild()) {
@@ -32,11 +37,12 @@ class DashboardPage extends RearchConsumer {
             onPressed: surveyManager.loadSurveys,
             tooltip: 'Refresh',
           ),
-          IconButton(
-            icon: const Icon(Icons.people),
-            onPressed: () => context.go('/admin/users'),
-            tooltip: 'User Management',
-          ),
+          if (canManageUsers)
+            IconButton(
+              icon: const Icon(Icons.people),
+              onPressed: () => context.go('/admin/users'),
+              tooltip: 'User Management',
+            ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () => authManager.logout(),
@@ -45,17 +51,23 @@ class DashboardPage extends RearchConsumer {
         ],
       ),
       body: SafeArea(
-        child: _buildBody(context, surveyManager),
+        child: _buildBody(context, surveyManager, canWrite),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.go('/admin/surveys/new'),
-        icon: const Icon(Icons.add),
-        label: const Text('New Survey'),
-      ),
+      floatingActionButton: canWrite
+          ? FloatingActionButton.extended(
+              onPressed: () => context.go('/admin/surveys/new'),
+              icon: const Icon(Icons.add),
+              label: const Text('New Survey'),
+            )
+          : null,
     );
   }
 
-  Widget _buildBody(BuildContext context, SurveyListManager manager) {
+  Widget _buildBody(
+    BuildContext context,
+    SurveyListManager manager,
+    bool canWrite,
+  ) {
     if (manager.state.isLoading && manager.state.surveys.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -127,16 +139,18 @@ class DashboardPage extends RearchConsumer {
             onTap: () => context.go('/admin/surveys/${survey.id}'),
             onViewResponses: () =>
                 context.go('/admin/surveys/${survey.id}/responses'),
-            onPublish: survey.status == SurveyStatus.draft
+            onPublish: canWrite && survey.status == SurveyStatus.draft
                 ? () => manager.publishSurvey(survey.id!)
                 : null,
-            onClose: survey.status == SurveyStatus.published
+            onClose: canWrite && survey.status == SurveyStatus.published
                 ? () => manager.closeSurvey(survey.id!)
                 : null,
-            onReopen: survey.status == SurveyStatus.closed
+            onReopen: canWrite && survey.status == SurveyStatus.closed
                 ? () => manager.reopenSurvey(survey.id!)
                 : null,
-            onDelete: () => _confirmDelete(context, survey, manager),
+            onDelete: canWrite
+                ? () => _confirmDelete(context, survey, manager)
+                : null,
           );
         },
       ),

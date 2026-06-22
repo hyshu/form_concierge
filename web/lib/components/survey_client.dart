@@ -16,6 +16,7 @@ class SurveyClient extends StatefulComponent {
   const SurveyClient({
     required this.surveyJson,
     required this.questionsJson,
+    required this.visibilityRulesJson,
     required this.choicesByQuestionJson,
     required this.serverUrl,
     super.key,
@@ -23,6 +24,7 @@ class SurveyClient extends StatefulComponent {
 
   final Map<String, dynamic> surveyJson;
   final List<Map<String, dynamic>> questionsJson;
+  final List<Map<String, dynamic>> visibilityRulesJson;
   final Map<String, List<Map<String, dynamic>>> choicesByQuestionJson;
   final String serverUrl;
 
@@ -33,6 +35,7 @@ class SurveyClient extends StatefulComponent {
 class SurveyClientState extends State<SurveyClient> {
   late Survey _survey;
   late List<Question> _questions;
+  late List<QuestionVisibilityRule> _visibilityRules;
   late Map<int, List<Choice>> _choicesByQuestion;
   late Client _client;
   late String _anonymousTokenStorageKey;
@@ -50,6 +53,9 @@ class SurveyClientState extends State<SurveyClient> {
     _survey = Survey.fromJson(component.surveyJson);
     _questions =
         component.questionsJson.map((j) => Question.fromJson(j)).toList();
+    _visibilityRules = component.visibilityRulesJson
+        .map((j) => QuestionVisibilityRule.fromJson(j))
+        .toList();
     _choicesByQuestion = component.choicesByQuestionJson.map(
       (k, v) =>
           MapEntry(int.parse(k), v.map((j) => Choice.fromJson(j)).toList()),
@@ -84,13 +90,25 @@ class SurveyClientState extends State<SurveyClient> {
 
   void _updateAnswer(int questionId, dynamic value) {
     setState(() {
-      _answers = Map.from(_answers)..[questionId] = value;
+      final updatedAnswers = Map<int, dynamic>.from(_answers)
+        ..[questionId] = value;
+      final visible = resolveVisibleQuestions(
+        _questions,
+        _visibilityRules,
+        updatedAnswers,
+      );
+      _answers = pruneHiddenAnswers(updatedAnswers, visible);
       _validationErrors = Map.from(_validationErrors)..remove(questionId);
     });
   }
 
   Future<void> _submit() async {
-    final errors = validateAnswers(_answers, _questions);
+    final visible = resolveVisibleQuestions(
+      _questions,
+      _visibilityRules,
+      _answers,
+    );
+    final errors = validateAnswers(_answers, visible);
 
     if (errors.isNotEmpty) {
       setState(() {
@@ -107,7 +125,7 @@ class SurveyClientState extends State<SurveyClient> {
       final hasAnonymousAccount = await _ensureAnonymousAccount();
       if (!hasAnonymousAccount) return;
 
-      final answers = buildAnswers(_answers, _questions);
+      final answers = buildAnswers(_answers, visible);
       await _client.survey.submitResponse(
         surveyId: _survey.id!,
         answers: answers,
@@ -131,6 +149,11 @@ class SurveyClientState extends State<SurveyClient> {
 
   @override
   Component build(BuildContext context) {
+    final visibleQuestions = resolveVisibleQuestions(
+      _questions,
+      _visibilityRules,
+      _answers,
+    );
     return div(classes: 'survey-wrapper', [
       switch (_viewState) {
         SurveyViewState.loading => const SurveyLoading(),
@@ -140,7 +163,7 @@ class SurveyClientState extends State<SurveyClient> {
           ),
         SurveyViewState.ready || SurveyViewState.submitting => SurveyContent(
             survey: _survey,
-            questions: _questions,
+            questions: visibleQuestions,
             choicesByQuestion: _choicesByQuestion,
             answers: _answers,
             validationErrors: _validationErrors,

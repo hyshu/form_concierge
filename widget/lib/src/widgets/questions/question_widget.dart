@@ -69,6 +69,7 @@ class QuestionWidget extends StatelessWidget {
         onChanged: onChanged,
       ),
       QuestionType.multipleChoice => MultipleChoiceQuestion(
+        question: question,
         choices: choices,
         selectedChoiceIds: (value as List<int>?) ?? [],
         onChanged: onChanged,

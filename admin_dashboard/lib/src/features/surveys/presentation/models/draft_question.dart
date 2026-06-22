@@ -35,6 +35,10 @@ class DraftQuestion {
   final QuestionType type;
   final bool isRequired;
   final String? placeholder;
+  final int? minLength;
+  final int? maxLength;
+  final int? minSelected;
+  final int? maxSelected;
   final List<DraftChoice> choices;
 
   const DraftQuestion({
@@ -43,6 +47,10 @@ class DraftQuestion {
     required this.type,
     required this.isRequired,
     this.placeholder,
+    this.minLength,
+    this.maxLength,
+    this.minSelected,
+    this.maxSelected,
     this.choices = const [],
   });
 
@@ -51,6 +59,10 @@ class DraftQuestion {
     required QuestionType type,
     required bool isRequired,
     String? placeholder,
+    int? minLength,
+    int? maxLength,
+    int? minSelected,
+    int? maxSelected,
   }) {
     // Add default choices for choice-type questions
     final choices = <DraftChoice>[];
@@ -67,6 +79,10 @@ class DraftQuestion {
       type: type,
       isRequired: isRequired,
       placeholder: placeholder,
+      minLength: minLength,
+      maxLength: maxLength,
+      minSelected: minSelected,
+      maxSelected: maxSelected,
       choices: choices,
     );
   }
@@ -79,6 +95,10 @@ class DraftQuestion {
       type: q.type,
       isRequired: q.isRequired,
       placeholder: q.placeholder,
+      minLength: q.minLength,
+      maxLength: q.maxLength,
+      minSelected: q.minSelected,
+      maxSelected: q.maxSelected,
       choices: q.choices.map((c) => DraftChoice.create(text: c)).toList(),
     );
   }
@@ -88,6 +108,10 @@ class DraftQuestion {
     QuestionType? type,
     bool? isRequired,
     String? placeholder,
+    int? minLength,
+    int? maxLength,
+    int? minSelected,
+    int? maxSelected,
     List<DraftChoice>? choices,
   }) {
     return DraftQuestion(
@@ -96,6 +120,10 @@ class DraftQuestion {
       type: type ?? this.type,
       isRequired: isRequired ?? this.isRequired,
       placeholder: placeholder ?? this.placeholder,
+      minLength: minLength ?? this.minLength,
+      maxLength: maxLength ?? this.maxLength,
+      minSelected: minSelected ?? this.minSelected,
+      maxSelected: maxSelected ?? this.maxSelected,
       choices: choices ?? this.choices,
     );
   }
@@ -107,6 +135,10 @@ class DraftQuestion {
       type: type,
       isRequired: isRequired,
       placeholder: placeholder,
+      minLength: minLength,
+      maxLength: maxLength,
+      minSelected: minSelected,
+      maxSelected: maxSelected,
       choices: choices.map((c) => c.text).toList(),
     );
   }

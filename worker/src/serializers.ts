@@ -1,4 +1,5 @@
-import type { AdminContext, AdminRow, AnonymousContext, AnswerRow, ChoiceRow, NotificationSettingsRow, QuestionRow, ReplyRow, ResponseRow, SurveyRow } from './types';
+import type { AdminContext, AdminRow, AnonymousContext, AnswerRow, ChoiceRow, NotificationSettingsRow, QuestionRow, ReplyRow, ResponseRow, SurveyRow, VisibilityRuleRow } from './types';
+import { roleFromScopes } from './permissions';
 import { compactObject } from './utils';
 
 export function surveyToJson(row: SurveyRow) {
@@ -8,6 +9,7 @@ export function surveyToJson(row: SurveyRow) {
     title: row.title,
     description: row.description,
     status: row.status,
+    authRequirement: row.auth_requirement,
     createdByUserId: row.created_by_admin_id,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -27,7 +29,23 @@ export function questionToJson(row: QuestionRow) {
     placeholder: row.placeholder,
     minLength: row.min_length,
     maxLength: row.max_length,
+    minSelected: row.min_selected,
+    maxSelected: row.max_selected,
+    visibilityConditionMode: row.visibility_condition_mode,
     isDeleted: row.is_deleted === 1,
+  };
+}
+
+export function visibilityRuleToJson(row: VisibilityRuleRow) {
+  return {
+    id: row.id,
+    surveyId: row.survey_id,
+    targetQuestionId: row.target_question_id,
+    sourceQuestionId: row.source_question_id,
+    operator: row.operator,
+    value: parseJsonValue(row.value_json),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }
 
@@ -124,6 +142,7 @@ export function adminContextToJson(user: AdminContext) {
     id: user.id,
     email: user.email,
     scopeNames: user.scopeNames,
+    role: roleFromScopes(user.scopeNames),
     blocked: user.blocked,
     created: user.created,
   };
@@ -167,6 +186,15 @@ function parseJsonObject(value: string | null): Record<string, unknown> {
       : {};
   } catch {
     return {};
+  }
+}
+
+function parseJsonValue(value: string | null): unknown {
+  if (!value) return null;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
   }
 }
 

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:rearch/rearch.dart';
 
 import '../../../../core/capsules/public_config_capsule.dart';
+import '../../../../core/capsules/client_capsule.dart';
 import '../../../dashboard/presentation/capsules/survey_list_capsule.dart';
 import '../capsules/question_list_capsule.dart';
 import '../capsules/survey_form_capsule.dart';
@@ -25,6 +26,7 @@ class SurveyEditorPage extends RearchConsumer {
     final surveyListManager = use(surveyListCapsule);
     final controllers = use(surveyFormControllersCapsule);
     final publicConfig = use(publicConfigCapsule);
+    final client = use(clientCapsule);
 
     final isNewSurvey = surveyId == null;
     final formState = formManager.getState(surveyId);
@@ -32,6 +34,8 @@ class SurveyEditorPage extends RearchConsumer {
         ? null
         : questionManager.getState(surveyId!);
     final geminiEnabled = publicConfig.state.geminiEnabled;
+    final role = client.auth.signedInUser?.role;
+    final canWriteSurveys = role == AdminRole.admin || role == AdminRole.editor;
 
     // Load survey and questions on first build (only for existing surveys)
     if (use.isFirstBuild() && !isNewSurvey) {
@@ -81,13 +85,17 @@ class SurveyEditorPage extends RearchConsumer {
       );
     }
 
-    final canEdit = isNewSurvey || survey!.status != SurveyStatus.archived;
+    final canEdit =
+        canWriteSurveys &&
+        (isNewSurvey || survey!.status != SurveyStatus.archived);
 
     return Scaffold(
       appBar: AppBar(
         title: Text(isNewSurvey ? 'New Survey' : survey!.title),
         actions: [
-          if (!isNewSurvey && survey!.status == SurveyStatus.draft)
+          if (!isNewSurvey &&
+              canWriteSurveys &&
+              survey!.status == SurveyStatus.draft)
             TextButton.icon(
               onPressed: _canPublish(questionState!)
                   ? () => _publishSurvey(context, surveyListManager)
@@ -159,6 +167,7 @@ class SurveyEditorPage extends RearchConsumer {
                       surveyId: surveyId!,
                       questions: questionState!.questions,
                       choicesByQuestion: questionState.choicesByQuestion,
+                      visibilityRules: questionState.visibilityRules,
                       isLoading: questionState.isLoading,
                       enabled: canEdit,
                       onAddQuestion:
@@ -167,6 +176,12 @@ class SurveyEditorPage extends RearchConsumer {
                             required QuestionType type,
                             required bool isRequired,
                             String? placeholder,
+                            int? minLength,
+                            int? maxLength,
+                            int? minSelected,
+                            int? maxSelected,
+                            required VisibilityConditionMode
+                            visibilityConditionMode,
                           }) {
                             questionManager.createQuestion(
                               surveyId: surveyId!,
@@ -174,6 +189,11 @@ class SurveyEditorPage extends RearchConsumer {
                               type: type,
                               isRequired: isRequired,
                               placeholder: placeholder,
+                              minLength: minLength,
+                              maxLength: maxLength,
+                              minSelected: minSelected,
+                              maxSelected: maxSelected,
+                              visibilityConditionMode: visibilityConditionMode,
                             );
                           },
                       onEditQuestion:
@@ -183,12 +203,27 @@ class SurveyEditorPage extends RearchConsumer {
                             required QuestionType type,
                             required bool isRequired,
                             String? placeholder,
+                            int? minLength,
+                            int? maxLength,
+                            int? minSelected,
+                            int? maxSelected,
+                            required VisibilityConditionMode
+                            visibilityConditionMode,
                           }) {
-                            final updated = question.copyWith(
+                            final updated = Question(
+                              id: question.id,
+                              surveyId: question.surveyId,
                               text: text,
                               type: type,
+                              orderIndex: question.orderIndex,
                               isRequired: isRequired,
                               placeholder: placeholder,
+                              minLength: minLength,
+                              maxLength: maxLength,
+                              minSelected: minSelected,
+                              maxSelected: maxSelected,
+                              visibilityConditionMode: visibilityConditionMode,
+                              isDeleted: question.isDeleted,
                             );
                             questionManager.updateQuestion(updated);
                           },
@@ -209,6 +244,19 @@ class SurveyEditorPage extends RearchConsumer {
                       onDeleteChoice: (choice) {
                         questionManager.deleteChoice(choice.id!, surveyId!);
                       },
+                      onSaveVisibility:
+                          ({
+                            required question,
+                            required mode,
+                            required rules,
+                          }) async {
+                            await questionManager.saveVisibilityRules(
+                              surveyId: surveyId!,
+                              targetQuestion: question,
+                              conditionMode: mode,
+                              targetRules: rules,
+                            );
+                          },
                     ),
                   if (questionState?.error != null) ...[
                     const SizedBox(height: 16),

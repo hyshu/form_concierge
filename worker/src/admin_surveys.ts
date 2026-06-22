@@ -17,13 +17,13 @@ import {
 } from './utils';
 import { surveyToJson } from './serializers';
 import { mustSurvey } from './admin_records';
+import { normalizeQuestionValidation, normalizeVisibilityConditionMode } from './admin_questions';
 
 export async function listSurveys(env: Env, admin: AdminContext): Promise<Response> {
   const rows = await env.DB.prepare(
     `SELECT * FROM surveys
-     WHERE created_by_admin_id = ?
      ORDER BY updated_at DESC`,
-  ).bind(admin.id).all<SurveyRow>();
+  ).all<SurveyRow>();
   return json(rows.results.map(surveyToJson));
 }
 
@@ -83,8 +83,9 @@ export async function createSurveyWithQuestions(
     const q = questions[i];
     const question = await env.DB.prepare(
       `INSERT INTO questions
-         (survey_id, text, type, order_index, is_required, placeholder)
-       VALUES (?, ?, ?, ?, ?, ?)
+         (survey_id, text, type, order_index, is_required, placeholder,
+          min_length, max_length, min_selected, max_selected, visibility_condition_mode)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        RETURNING *`,
     ).bind(
       created.id,
@@ -93,6 +94,11 @@ export async function createSurveyWithQuestions(
       i,
       boolToInt(q.isRequired),
       q.placeholder,
+      q.minLength,
+      q.maxLength,
+      q.minSelected,
+      q.maxSelected,
+      q.visibilityConditionMode,
     ).first<QuestionRow>();
     if (!question) throw new HttpError(500, 'Failed to create question');
     if (isChoiceQuestionType(question.type)) {
@@ -163,6 +169,8 @@ function parseQuestionInputs(value: unknown): QuestionInput[] {
       type,
       isRequired: question.isRequired !== false,
       placeholder: optionalString(question.placeholder),
+      ...normalizeQuestionValidation(question, type),
+      visibilityConditionMode: normalizeVisibilityConditionMode(question.visibilityConditionMode),
       choices,
     };
   });

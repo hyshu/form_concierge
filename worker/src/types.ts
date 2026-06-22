@@ -24,6 +24,7 @@ export type SurveyRow = {
   title: string;
   description: string | null;
   status: string;
+  auth_requirement: string;
   created_by_admin_id: string | null;
   created_at: string;
   updated_at: string;
@@ -41,6 +42,9 @@ export type QuestionRow = {
   placeholder: string | null;
   min_length: number | null;
   max_length: number | null;
+  min_selected: number | null;
+  max_selected: number | null;
+  visibility_condition_mode: string;
   is_deleted: number;
 };
 
@@ -129,7 +133,30 @@ export type QuestionInput = {
   type: string;
   isRequired: boolean;
   placeholder: string | null;
+  minLength: number | null;
+  maxLength: number | null;
+  minSelected: number | null;
+  maxSelected: number | null;
+  visibilityConditionMode: string;
   choices: string[];
+};
+
+export type VisibilityRuleRow = {
+  id: number;
+  survey_id: number;
+  target_question_id: number;
+  source_question_id: number;
+  operator: string;
+  value_json: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type VisibilityRuleInput = {
+  targetQuestionId?: unknown;
+  sourceQuestionId?: unknown;
+  operator?: unknown;
+  value?: unknown;
 };
 
 export type NormalizedDeviceInfo = {

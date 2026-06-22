@@ -12,6 +12,7 @@ public struct FormConciergeSurveyView: View {
 
   @State private var survey: Survey?
   @State private var questions: [Question] = []
+  @State private var visibilityRules: [QuestionVisibilityRule] = []
   @State private var choicesByQuestion: [Int: [Choice]] = [:]
   @State private var answers: [Int: SurveyAnswerValue] = [:]
   @State private var isLoading = true
@@ -64,12 +65,12 @@ public struct FormConciergeSurveyView: View {
               }
             }
 
-            ForEach(questions) { question in
+            ForEach(visibleQuestions) { question in
               QuestionView(
                 question: question,
                 choices: choicesByQuestion[question.id] ?? [],
                 value: answers[question.id],
-                onChange: { answers[question.id] = $0 }
+                onChange: { updateAnswer(questionId: question.id, value: $0) }
               )
             }
 
@@ -123,6 +124,7 @@ public struct FormConciergeSurveyView: View {
       }
       let loadedSurvey = try await client.survey(slug: surveySlug)
       let loadedQuestions = try await client.questions(surveyId: loadedSurvey.id)
+      let loadedVisibilityRules = try await client.visibilityRules(surveyId: loadedSurvey.id)
       var loadedChoices: [Int: [Choice]] = [:]
       for question in loadedQuestions
       where question.type == .singleChoice || question.type == .multipleChoice {
@@ -130,6 +132,7 @@ public struct FormConciergeSurveyView: View {
       }
       survey = loadedSurvey
       questions = loadedQuestions
+      visibilityRules = loadedVisibilityRules
       choicesByQuestion = loadedChoices
     } catch {
       errorMessage = error.localizedDescription
@@ -148,7 +151,7 @@ public struct FormConciergeSurveyView: View {
     defer { isSubmitting = false }
 
     do {
-      let payload = questions.compactMap { question -> Answer? in
+      let payload = visibleQuestions.compactMap { question -> Answer? in
         guard let value = answers[question.id] else { return nil }
         switch value {
         case .text(let text):
@@ -176,12 +179,58 @@ public struct FormConciergeSurveyView: View {
   }
 
   private func validate() -> String? {
-    for question in questions where question.isRequired {
-      guard let value = answers[question.id], !value.isEmpty else {
+    for question in visibleQuestions {
+      let value = answers[question.id]
+      if question.isRequired, value == nil || value?.isEmpty == true {
         return "\(question.text) is required."
+      }
+      if case .text(let text) = value {
+        let count = text.trimmingCharacters(in: .whitespacesAndNewlines).count
+        if let minLength = question.minLength, count > 0, count < minLength {
+          return "\(question.text) must be at least \(minLength) characters."
+        }
+        if let maxLength = question.maxLength, count > maxLength {
+          return "\(question.text) must be at most \(maxLength) characters."
+        }
+      }
+      let selectedCount: Int
+      switch value {
+      case .single:
+        selectedCount = 1
+      case .multiple(let values):
+        selectedCount = values.count
+      case .text, nil:
+        selectedCount = 0
+      }
+      if let minSelected = question.minSelected, selectedCount < minSelected {
+        return "\(question.text) requires at least \(minSelected) choices."
+      }
+      if let maxSelected = question.maxSelected, selectedCount > maxSelected {
+        return "\(question.text) allows at most \(maxSelected) choices."
       }
     }
     return nil
+  }
+
+  private var visibleQuestions: [Question] {
+    resolveVisibleQuestions(
+      questions: questions,
+      rules: visibilityRules,
+      answers: answers
+    )
+  }
+
+  private func updateAnswer(questionId: Int, value: SurveyAnswerValue) {
+    var next = answers
+    next[questionId] = value
+    let visibleIds = Set(
+      resolveVisibleQuestions(
+        questions: questions,
+        rules: visibilityRules,
+        answers: next
+      ).map(\.id)
+    )
+    answers = next.filter { visibleIds.contains($0.key) }
   }
 }
 
@@ -198,6 +247,100 @@ public enum SurveyAnswerValue: Equatable, Sendable {
       false
     case .multiple(let values):
       values.isEmpty
+    }
+  }
+}
+
+private func resolveVisibleQuestions(
+  questions: [Question],
+  rules: [QuestionVisibilityRule],
+  answers: [Int: SurveyAnswerValue]
+) -> [Question] {
+  let questionsById = Dictionary(uniqueKeysWithValues: questions.map { ($0.id, $0) })
+  let rulesByTarget = Dictionary(grouping: rules, by: \.targetQuestionId)
+  var visibleIds = Set<Int>()
+  var visibleQuestions: [Question] = []
+
+  for question in questions {
+    let questionRules = rulesByTarget[question.id] ?? []
+    let isVisible: Bool
+    if questionRules.isEmpty {
+      isVisible = true
+    } else {
+      let outcomes = questionRules.map { rule -> Bool in
+        guard
+          let source = questionsById[rule.sourceQuestionId],
+          visibleIds.contains(source.id)
+        else { return false }
+        return matchesRule(source: source, rule: rule, answer: answers[source.id])
+      }
+      isVisible = question.visibilityConditionMode == .any
+        ? outcomes.contains(true)
+        : outcomes.allSatisfy { $0 }
+    }
+    if isVisible {
+      visibleIds.insert(question.id)
+      visibleQuestions.append(question)
+    }
+  }
+
+  return visibleQuestions
+}
+
+private func matchesRule(
+  source: Question,
+  rule: QuestionVisibilityRule,
+  answer: SurveyAnswerValue?
+) -> Bool {
+  let hasAnswer = !(answer?.isEmpty ?? true)
+  switch rule.operator {
+  case .isAnswered:
+    return hasAnswer
+  case .isNotAnswered:
+    return !hasAnswer
+  case .equals, .notEquals, .contains, .notContains:
+    guard hasAnswer else { return false }
+  }
+
+  switch source.type {
+  case .textSingle, .textMultiLine:
+    let actual: String
+    if case .text(let value) = answer {
+      actual = value.trimmingCharacters(in: .whitespacesAndNewlines)
+    } else {
+      actual = ""
+    }
+    let expected = rule.value?.stringValue ?? ""
+    switch rule.operator {
+    case .equals:
+      return actual == expected
+    case .notEquals:
+      return actual != expected
+    case .contains:
+      return actual.contains(expected)
+    case .notContains:
+      return !actual.contains(expected)
+    case .isAnswered, .isNotAnswered:
+      return false
+    }
+  case .singleChoice, .multipleChoice:
+    guard let expected = rule.value?.intValue else { return false }
+    let selected: Set<Int>
+    switch answer {
+    case .single(let choiceId):
+      selected = [choiceId]
+    case .multiple(let choiceIds):
+      selected = choiceIds
+    case .text, nil:
+      selected = []
+    }
+    switch rule.operator {
+    case .equals, .contains:
+      return selected.contains(expected)
+    case .notEquals, .notContains:
+      return !selected.contains(expected)
+    case .isAnswered, .isNotAnswered:
+      return false
     }
   }
 }

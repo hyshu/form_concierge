@@ -11,7 +11,7 @@ class SurveyListTile extends StatelessWidget {
   final VoidCallback? onPublish;
   final VoidCallback? onClose;
   final VoidCallback? onReopen;
-  final VoidCallback onDelete;
+  final VoidCallback? onDelete;
 
   const SurveyListTile({
     super.key,
@@ -21,7 +21,7 @@ class SurveyListTile extends StatelessWidget {
     this.onPublish,
     this.onClose,
     this.onReopen,
-    required this.onDelete,
+    this.onDelete,
   });
 
   @override
@@ -131,12 +131,13 @@ class SurveyListTile extends StatelessWidget {
           tooltip: 'View Responses',
           visualDensity: VisualDensity.compact,
         ),
-        IconButton(
-          icon: const Icon(Icons.delete_outline),
-          onPressed: onDelete,
-          tooltip: 'Delete',
-          visualDensity: VisualDensity.compact,
-        ),
+        if (onDelete != null)
+          IconButton(
+            icon: const Icon(Icons.delete_outline),
+            onPressed: onDelete,
+            tooltip: 'Delete',
+            visualDensity: VisualDensity.compact,
+          ),
       ],
     );
   }

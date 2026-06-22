@@ -3,6 +3,7 @@ import { HttpError, json, nowIso, readJson, requireString } from './utils';
 import { hashPassword } from './crypto';
 import { adminContextToJson, adminUserToJson } from './serializers';
 import { getAdminById } from './auth';
+import { scopesForRole } from './permissions';
 
 export async function listUsers(env: Env): Promise<Response> {
   const rows = await env.DB.prepare(
@@ -14,6 +15,7 @@ export async function listUsers(env: Env): Promise<Response> {
 export async function createUser(request: Request, env: Env): Promise<Response> {
   const body = await readJson(request);
   const id = crypto.randomUUID();
+  const role = requireString(body.role, 'role');
   await env.DB.prepare(
     `INSERT INTO admins (id, email, password_hash, scope_names)
      VALUES (?, ?, ?, ?)`,
@@ -21,22 +23,58 @@ export async function createUser(request: Request, env: Env): Promise<Response> 
     id,
     requireString(body.email, 'email').toLowerCase(),
     await hashPassword(requireString(body.password, 'password')),
-    JSON.stringify(Array.isArray(body.scopes) ? body.scopes.map(String) : ['admin']),
+    JSON.stringify(scopesForRole(role)),
   ).run();
   const user = await getAdminById(env.DB, id);
   return json(adminContextToJson(user!), 201);
 }
 
+export async function updateUserRole(request: Request, env: Env, userId: string): Promise<Response> {
+  const body = await readJson(request);
+  const role = requireString(body.role, 'role');
+  if (role !== 'admin' && await isLastActiveAdmin(env.DB, userId)) {
+    throw new HttpError(400, 'Cannot remove the last active admin');
+  }
+  const row = await env.DB.prepare(
+    `UPDATE admins SET scope_names = ?, updated_at = ? WHERE id = ?
+     RETURNING id, email, scope_names, blocked, created_at`,
+  ).bind(JSON.stringify(scopesForRole(role)), nowIso(), userId).first<AdminRow>();
+  if (!row) throw new HttpError(404, 'User not found');
+  return json(adminUserToJson(row));
+}
+
 export async function deleteUser(env: Env, admin: AdminContext, userId: string): Promise<Response> {
+  if (await isLastActiveAdmin(env.DB, userId)) {
+    throw new HttpError(400, 'Cannot delete the last active admin');
+  }
   await env.DB.prepare(`DELETE FROM admins WHERE id = ?`).bind(userId).run();
   return json({ selfDeleted: admin.id === userId });
 }
 
 export async function toggleUserBlocked(env: Env, userId: string): Promise<Response> {
+  const current = await env.DB.prepare(
+    `SELECT blocked FROM admins WHERE id = ?`,
+  ).bind(userId).first<{ blocked: number }>();
+  if (!current) throw new HttpError(404, 'User not found');
+  if (current.blocked === 0 && await isLastActiveAdmin(env.DB, userId)) {
+    throw new HttpError(400, 'Cannot block the last active admin');
+  }
   const row = await env.DB.prepare(
     `UPDATE admins SET blocked = CASE WHEN blocked = 1 THEN 0 ELSE 1 END,
      updated_at = ? WHERE id = ? RETURNING blocked`,
   ).bind(nowIso(), userId).first<{ blocked: number }>();
   if (!row) throw new HttpError(404, 'User not found');
   return json({ blocked: row.blocked === 1 });
+}
+
+async function isLastActiveAdmin(db: D1Database, userId: string): Promise<boolean> {
+  const target = await db.prepare(
+    `SELECT blocked, scope_names FROM admins WHERE id = ?`,
+  ).bind(userId).first<{ blocked: number; scope_names: string }>();
+  if (!target || target.blocked === 1 || !target.scope_names.includes('"admin"')) return false;
+  const row = await db.prepare(
+    `SELECT COUNT(*) AS count FROM admins
+     WHERE blocked = 0 AND scope_names LIKE '%"admin"%'`,
+  ).first<{ count: number }>();
+  return Number(row?.count ?? 0) <= 1;
 }

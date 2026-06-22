@@ -4,6 +4,7 @@ import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:rearch/rearch.dart';
 
 import '../../../../core/widgets/confirm_delete_dialog.dart';
+import '../../../../core/capsules/client_capsule.dart';
 import '../capsules/aggregated_results_capsule.dart';
 import '../capsules/notification_settings_capsule.dart';
 import '../capsules/response_list_capsule.dart';
@@ -22,6 +23,10 @@ class ResponsesPage extends RearchConsumer {
     final responseManager = use(responseListManagerCapsule);
     final resultsManager = use(aggregatedResultsManagerCapsule);
     final notificationManager = use(notificationSettingsManagerCapsule);
+    final client = use(clientCapsule);
+    final role = client.auth.signedInUser?.role;
+    final canManageResponses =
+        role == AdminRole.admin || role == AdminRole.editor;
 
     final responseState = responseManager.getState(surveyId);
     final resultsState = resultsManager.getState(surveyId);
@@ -74,6 +79,7 @@ class ResponsesPage extends RearchConsumer {
                 currentPage: responseState.currentPage,
                 totalPages: responseState.totalPages,
                 isLoading: responseState.isLoading,
+                canManageResponses: canManageResponses,
                 error: responseState.error,
                 onPageChange: (page) =>
                     responseManager.loadResponses(surveyId, page: page),

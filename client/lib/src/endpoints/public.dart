@@ -17,6 +17,16 @@ class SurveyEndpoint {
     return _objectList(json, Question.fromJson);
   }
 
+  Future<List<QuestionVisibilityRule>> getVisibilityRulesForSurvey(
+    int surveyId,
+  ) async {
+    final json = await _client.request(
+      'GET',
+      '/api/surveys/id/$surveyId/visibility-rules',
+    );
+    return _objectList(json, QuestionVisibilityRule.fromJson);
+  }
+
   Future<List<Choice>> getChoicesForQuestion(int questionId) async {
     final json = await _client.request(
       'GET',

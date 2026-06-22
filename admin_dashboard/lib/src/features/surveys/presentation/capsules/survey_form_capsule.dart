@@ -134,12 +134,20 @@ class SurveyFormManager {
     required QuestionType type,
     required bool isRequired,
     String? placeholder,
+    int? minLength,
+    int? maxLength,
+    int? minSelected,
+    int? maxSelected,
   }) {
     final newQuestion = DraftQuestion.create(
       text: text,
       type: type,
       isRequired: isRequired,
       placeholder: placeholder,
+      minLength: minLength,
+      maxLength: maxLength,
+      minSelected: minSelected,
+      maxSelected: maxSelected,
     );
     _setDraftQuestions((questions) => [...questions, newQuestion]);
   }
@@ -151,14 +159,24 @@ class SurveyFormManager {
     required QuestionType type,
     required bool isRequired,
     String? placeholder,
+    int? minLength,
+    int? maxLength,
+    int? minSelected,
+    int? maxSelected,
   }) {
     _updateDraftQuestion(
       tempId,
-      (question) => question.copyWith(
+      (question) => DraftQuestion(
+        tempId: question.tempId,
         text: text,
         type: type,
         isRequired: isRequired,
         placeholder: placeholder,
+        minLength: minLength,
+        maxLength: maxLength,
+        minSelected: minSelected,
+        maxSelected: maxSelected,
+        choices: question.choices,
       ),
     );
   }

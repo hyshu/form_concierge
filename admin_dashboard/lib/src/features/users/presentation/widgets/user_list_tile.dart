@@ -6,12 +6,14 @@ class UserListTile extends StatelessWidget {
     super.key,
     required this.user,
     required this.onToggleBlocked,
+    required this.onRoleChanged,
     required this.onDelete,
     this.isCurrentUser = false,
   });
 
   final AuthUserInfo user;
   final VoidCallback onToggleBlocked;
+  final ValueChanged<AdminRole> onRoleChanged;
   final VoidCallback onDelete;
   final bool isCurrentUser;
 
@@ -51,7 +53,7 @@ class UserListTile extends StatelessWidget {
         ],
       ),
       subtitle: Text(
-        user.scopeNames.join(', '),
+        _roleLabel(user.role),
         style: TextStyle(color: colorScheme.onSurfaceVariant),
       ),
       trailing: Row(
@@ -66,6 +68,12 @@ class UserListTile extends StatelessWidget {
           PopupMenuButton<String>(
             onSelected: (value) {
               switch (value) {
+                case 'role_admin':
+                  onRoleChanged(AdminRole.admin);
+                case 'role_editor':
+                  onRoleChanged(AdminRole.editor);
+                case 'role_viewer':
+                  onRoleChanged(AdminRole.viewer);
                 case 'toggle_block':
                   onToggleBlocked();
                 case 'delete':
@@ -73,6 +81,31 @@ class UserListTile extends StatelessWidget {
               }
             },
             itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'role_admin',
+                child: ListTile(
+                  leading: Icon(Icons.admin_panel_settings_outlined),
+                  title: Text('Make admin'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'role_editor',
+                child: ListTile(
+                  leading: Icon(Icons.edit_note_outlined),
+                  title: Text('Make editor'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'role_viewer',
+                child: ListTile(
+                  leading: Icon(Icons.visibility_outlined),
+                  title: Text('Make viewer'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              const PopupMenuDivider(),
               PopupMenuItem(
                 value: 'toggle_block',
                 child: ListTile(
@@ -100,4 +133,12 @@ class UserListTile extends StatelessWidget {
       ),
     );
   }
+}
+
+String _roleLabel(AdminRole role) {
+  return switch (role) {
+    AdminRole.admin => 'Admin',
+    AdminRole.editor => 'Editor',
+    AdminRole.viewer => 'Viewer',
+  };
 }
