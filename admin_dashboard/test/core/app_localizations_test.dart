@@ -76,7 +76,6 @@ void main() {
           'Project not found',
           'Create Project',
           'Project URL Slug',
-          'Use a dedicated host to open this project without a slug.',
           'Custom domain (optional)',
           'Localized languages',
           'Select languages',

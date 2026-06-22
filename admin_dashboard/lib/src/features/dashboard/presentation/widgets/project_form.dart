@@ -124,15 +124,6 @@ class _ProjectFormState extends State<ProjectForm> {
               },
               textInputAction: TextInputAction.next,
             ),
-            const SizedBox(height: 6),
-            Text(
-              context.tr(
-                'Use a dedicated host to open this project without a slug.',
-              ),
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: HuxTokens.textSecondary(context),
-              ),
-            ),
             const SizedBox(height: 16),
             _LanguageSelector(
               locales: _supportedLocales,

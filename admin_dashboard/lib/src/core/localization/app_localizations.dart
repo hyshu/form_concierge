@@ -213,8 +213,6 @@ const _localizedValues = <String, Map<String, String>>{
     'Project not found': 'Project not found',
     'Create Project': 'Create Project',
     'Project URL Slug': 'Project URL Slug',
-    'Use a dedicated host to open this project without a slug.':
-        'Use a dedicated host to open this project without a slug.',
     'Localized languages': 'Localized languages',
     'Select languages': 'Select languages',
     'Default language': 'Default language',
@@ -580,8 +578,6 @@ const _localizedValues = <String, Map<String, String>>{
     'Project not found': 'プロジェクトが見つかりません',
     'Create Project': 'プロジェクトを作成',
     'Project URL Slug': 'プロジェクトURLスラッグ',
-    'Use a dedicated host to open this project without a slug.':
-        '専用ホストでスラッグなしにこのプロジェクトを開けます。',
     'Localized languages': 'ローカライズ言語',
     'Select languages': '言語を選択',
     'Default language': 'デフォルト言語',
@@ -927,8 +923,6 @@ const _localizedValues = <String, Map<String, String>>{
     'Project not found': '找不到项目',
     'Create Project': '创建项目',
     'Project URL Slug': '项目 URL Slug',
-    'Use a dedicated host to open this project without a slug.':
-        '使用专用主机可不带 slug 打开此项目。',
     'Custom domain (optional)': '自定义域名（可选）',
     'Custom domain must be a hostname like forms.example.com':
         '自定义域名必须是 forms.example.com 这样的主机名',
@@ -1221,8 +1215,6 @@ const _localizedValues = <String, Map<String, String>>{
     'Project not found': '找不到專案',
     'Create Project': '建立專案',
     'Project URL Slug': '專案 URL Slug',
-    'Use a dedicated host to open this project without a slug.':
-        '使用專用主機可不帶 slug 開啟此專案。',
     'Custom domain (optional)': '自訂網域（可選）',
     'Custom domain must be a hostname like forms.example.com':
         '自訂網域必須是 forms.example.com 這樣的主機名稱',
@@ -1516,8 +1508,6 @@ const _localizedValues = <String, Map<String, String>>{
     'Project not found': '프로젝트를 찾을 수 없습니다',
     'Create Project': '프로젝트 만들기',
     'Project URL Slug': '프로젝트 URL 슬러그',
-    'Use a dedicated host to open this project without a slug.':
-        '전용 호스트에서 슬러그 없이 이 프로젝트를 열 수 있습니다.',
     'Custom domain (optional)': '사용자 지정 도메인(선택 사항)',
     'Custom domain must be a hostname like forms.example.com':
         '사용자 지정 도메인은 forms.example.com 같은 호스트 이름이어야 합니다',
@@ -1824,8 +1814,6 @@ const _localizedValues = <String, Map<String, String>>{
     'Project not found': 'Projekt nicht gefunden',
     'Create Project': 'Projekt erstellen',
     'Project URL Slug': 'Projekt-URL-Slug',
-    'Use a dedicated host to open this project without a slug.':
-        'Mit einem eigenen Host kann dieses Projekt ohne Slug geöffnet werden.',
     'Custom domain (optional)': 'Eigene Domain (optional)',
     'Custom domain must be a hostname like forms.example.com':
         'Eigene Domain muss ein Hostname wie forms.example.com sein',
