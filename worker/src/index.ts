@@ -96,6 +96,24 @@ async function route(request: Request, env: Env): Promise<Response> {
     return json(anonymousAccountToJson(anonymous));
   }
 
+  if (path === '/api/anonymous/replies/latest' && method === 'GET') {
+    const anonymous = await requireAnonymous(request, env);
+    const responseId = optionalResponseId(url.searchParams.get('responseId'));
+    const statement = responseId == null
+      ? env.DB.prepare(
+          `SELECT MAX(created_at) AS latest_reply_at
+           FROM admin_replies
+           WHERE anonymous_account_id = ?`,
+        ).bind(anonymous.id)
+      : env.DB.prepare(
+          `SELECT MAX(created_at) AS latest_reply_at
+           FROM admin_replies
+           WHERE anonymous_account_id = ? AND survey_response_id = ?`,
+        ).bind(anonymous.id, responseId);
+    const row = await statement.first<{ latest_reply_at: string | null }>();
+    return json({ latestReplyAt: row?.latest_reply_at ?? null });
+  }
+
   if (path === '/api/anonymous/replies' && method === 'GET') {
     const anonymous = await requireAnonymous(request, env);
     const responseId = url.searchParams.get('responseId');
@@ -155,6 +173,13 @@ async function route(request: Request, env: Env): Promise<Response> {
   }
 
   return json({ error: 'Not found' }, 404);
+}
+
+function optionalResponseId(value: string | null): number | null {
+  if (value == null || value.length === 0) return null;
+  const responseId = Number(value);
+  if (!Number.isInteger(responseId)) throw new HttpError(400, 'responseId must be an integer');
+  return responseId;
 }
 
 async function routeAdmin(

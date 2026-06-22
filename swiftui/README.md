@@ -39,3 +39,20 @@ Use the saved anonymous token to receive admin replies. Submitted answers are re
 await client.setAnonymousToken(savedAnonymousToken)
 let replies = try await client.replies(responseId: responseId)
 ```
+
+To check whether new admin replies exist without downloading the full reply list, use the reply checker. The server returns only the latest reply timestamp; the checker stores the last seen timestamp in `UserDefaults`.
+
+```swift
+let checker = FormConciergeReplyChecker(
+    client: client,
+    anonymousToken: savedAnonymousToken,
+    responseId: responseId
+)
+
+let status = try await checker.check()
+if status.hasNewReplies {
+    // Show your in-app badge or notification.
+}
+
+try await checker.markLatestSeen()
+```
