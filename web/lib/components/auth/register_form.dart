@@ -3,6 +3,7 @@ import 'package:jaspr/jaspr.dart';
 import 'package:jaspr/dom.dart';
 
 import '../../state/auth_state.dart';
+import 'auth_form_controls.dart';
 
 class RegisterForm extends StatefulComponent {
   const RegisterForm({
@@ -47,19 +48,20 @@ class _RegisterFormState extends State<RegisterForm> {
           registrationEmail: _email,
         ),
       );
-    } catch (e) {
-      final errorMessage = _parseError(e.toString());
+    } on Exception catch (error) {
+      final errorMessage = _parseError(error);
       component.onAuthStateChanged(
         component.authState.copyWith(isLoading: false, error: errorMessage),
       );
     }
   }
 
-  String _parseError(String error) {
-    if (error.contains('emailAlreadyInUse')) {
+  String _parseError(Exception error) {
+    final message = error.toString();
+    if (message.contains('emailAlreadyInUse')) {
       return 'This email is already registered. Please sign in instead.';
     }
-    if (error.contains('invalidEmail')) {
+    if (message.contains('invalidEmail')) {
       return 'Please enter a valid email address.';
     }
     return 'Registration failed. Please try again.';
@@ -72,15 +74,7 @@ class _RegisterFormState extends State<RegisterForm> {
     return div(classes: 'space-y-4', [
       // Error message
       if (component.authState.error != null)
-        div(
-            classes:
-                'flex items-start gap-3 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm',
-            [
-              span(classes: 'text-red-500 flex-shrink-0', [
-                Component.text('\u26A0'),
-              ]),
-              span([Component.text(component.authState.error!)]),
-            ]),
+        AuthErrorMessage(component.authState.error!),
 
       // Email field
       div(classes: 'space-y-1.5', [
@@ -92,8 +86,7 @@ class _RegisterFormState extends State<RegisterForm> {
           id: 'email',
           name: 'email',
           value: _email,
-          classes:
-              'w-full px-4 py-3 border border-slate-200 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 focus:outline-none text-sm disabled:bg-slate-50 disabled:cursor-not-allowed placeholder:text-slate-400',
+          classes: authInputClasses,
           disabled: isLoading,
           attributes: {
             'placeholder': 'Enter your email',
@@ -107,8 +100,7 @@ class _RegisterFormState extends State<RegisterForm> {
       div(classes: 'pt-2', [
         button(
           [Component.text(isLoading ? 'Sending...' : 'Continue')],
-          classes:
-              'w-full py-3 px-4 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm',
+          classes: authPrimaryButtonClasses,
           disabled: isLoading,
           onClick: isLoading ? null : () => _submit(),
         ),

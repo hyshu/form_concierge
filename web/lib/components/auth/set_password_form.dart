@@ -3,6 +3,7 @@ import 'package:jaspr/jaspr.dart';
 import 'package:jaspr/dom.dart';
 
 import '../../state/auth_state.dart';
+import 'auth_form_controls.dart';
 
 class SetPasswordForm extends StatefulComponent {
   const SetPasswordForm({
@@ -57,7 +58,13 @@ class _SetPasswordFormState extends State<SetPasswordForm> {
     try {
       final token = component.authState.registrationToken;
       if (token == null) {
-        throw Exception('Registration token not found');
+        component.onAuthStateChanged(
+          component.authState.copyWith(
+            isLoading: false,
+            error: 'Registration session expired. Please start over.',
+          ),
+        );
+        return;
       }
 
       final auth = await component.client.emailIdp.finishRegistration(
@@ -66,16 +73,17 @@ class _SetPasswordFormState extends State<SetPasswordForm> {
       );
       await component.client.auth.updateSignedInUser(auth);
       component.onAuthSuccess();
-    } catch (e) {
-      final errorMessage = _parseError(e.toString());
+    } on Exception catch (error) {
+      final errorMessage = _parseError(error);
       component.onAuthStateChanged(
         component.authState.copyWith(isLoading: false, error: errorMessage),
       );
     }
   }
 
-  String _parseError(String error) {
-    if (error.contains('policyViolation')) {
+  String _parseError(Exception error) {
+    final message = error.toString();
+    if (message.contains('policyViolation')) {
       return 'Password does not meet security requirements.';
     }
     return 'Registration failed. Please try again.';
@@ -88,15 +96,7 @@ class _SetPasswordFormState extends State<SetPasswordForm> {
     return div(classes: 'space-y-4', [
       // Error message
       if (component.authState.error != null)
-        div(
-            classes:
-                'flex items-start gap-3 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm',
-            [
-              span(classes: 'text-red-500 flex-shrink-0', [
-                Component.text('\u26A0'),
-              ]),
-              span([Component.text(component.authState.error!)]),
-            ]),
+        AuthErrorMessage(component.authState.error!),
 
       // Password field
       div(classes: 'space-y-1.5', [
@@ -108,8 +108,7 @@ class _SetPasswordFormState extends State<SetPasswordForm> {
           id: 'password',
           name: 'password',
           value: _password,
-          classes:
-              'w-full px-4 py-3 border border-slate-200 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 focus:outline-none text-sm disabled:bg-slate-50 disabled:cursor-not-allowed placeholder:text-slate-400',
+          classes: authInputClasses,
           disabled: isLoading,
           attributes: {
             'placeholder': 'Enter password (min 8 characters)',
@@ -129,8 +128,7 @@ class _SetPasswordFormState extends State<SetPasswordForm> {
           id: 'confirmPassword',
           name: 'confirmPassword',
           value: _confirmPassword,
-          classes:
-              'w-full px-4 py-3 border border-slate-200 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 focus:outline-none text-sm disabled:bg-slate-50 disabled:cursor-not-allowed placeholder:text-slate-400',
+          classes: authInputClasses,
           disabled: isLoading,
           attributes: {
             'placeholder': 'Confirm your password',
@@ -146,8 +144,7 @@ class _SetPasswordFormState extends State<SetPasswordForm> {
           [
             Component.text(isLoading ? 'Creating Account...' : 'Create Account')
           ],
-          classes:
-              'w-full py-3 px-4 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm',
+          classes: authPrimaryButtonClasses,
           disabled: isLoading,
           onClick: isLoading ? null : () => _submit(),
         ),

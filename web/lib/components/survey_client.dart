@@ -70,16 +70,18 @@ class SurveyClientState extends State<SurveyClient> {
     _ensureAnonymousAccount();
   }
 
-  Future<void> _ensureAnonymousAccount() async {
-    if (_client.anonymous.isAuthenticated) return;
+  Future<bool> _ensureAnonymousAccount() async {
+    if (_client.anonymous.isAuthenticated) return true;
     try {
       final session = await _client.anonymous.createAccount();
       writeAnonymousToken(_anonymousTokenStorageKey, session.token);
-    } catch (_) {
+      return true;
+    } on Exception catch (_) {
       setState(() {
         _viewState = SurveyViewState.error;
         _errorMessage = 'Failed to start anonymous session.';
       });
+      return false;
     }
   }
 
@@ -105,7 +107,9 @@ class SurveyClientState extends State<SurveyClient> {
     });
 
     try {
-      await _ensureAnonymousAccount();
+      final hasAnonymousAccount = await _ensureAnonymousAccount();
+      if (!hasAnonymousAccount) return;
+
       final answers = buildAnswers(_answers, _questions);
       await _client.survey.submitResponse(
         surveyId: _survey.id!,
