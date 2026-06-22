@@ -1,7 +1,7 @@
-import type { AdminContext, AnswerRow, ChoiceRow, Env, QuestionRow, ReplyRow, ResponseRow } from './types';
-import { mustSurvey } from './admin_records';
+import type { AdminContext, AnswerRow, ChoiceRow, Env, ProjectRow, QuestionRow, ReplyRow, ResponseRow } from './types';
+import { mustProject, mustSurvey } from './admin_records';
 import { HttpError, countRows, isChoiceQuestionType, json, nowIso, readJson, requireString, requiredRow } from './utils';
-import { answerToJson, choiceToJson, parseChoiceIds, questionToJson, replyToJson, responseToJson, surveyToJson } from './serializers';
+import { answerToJson, choiceToJson, parseChoiceIds, projectToJson, questionToJson, replyToJson, responseToJson, surveyToJson } from './serializers';
 import { DEFAULT_FORM_CONTENT_LOCALE, localizedTextFor } from './localization';
 
 export async function listResponses(env: Env, surveyId: number, url: URL): Promise<Response> {
@@ -111,7 +111,7 @@ export async function exportResponses(env: Env, surveyId: number, url: URL): Pro
 
   const data = await loadExportData(env, surveyId, url);
   const timestamp = nowIso().replace(/[:.]/g, '-');
-  const filename = `${safeFilename(data.survey.slug)}-responses-${timestamp}.${format}`;
+  const filename = `${safeFilename(data.project.slug)}-survey-${data.survey.id}-responses-${timestamp}.${format}`;
 
   if (format === 'json') {
     return new Response(JSON.stringify(toExportJson(data), null, 2), {
@@ -164,6 +164,7 @@ export async function getReplies(env: Env, responseId: number): Promise<Response
 
 type ExportData = {
   survey: Awaited<ReturnType<typeof mustSurvey>>;
+  project: ProjectRow;
   questions: QuestionRow[];
   choicesByQuestion: Map<number, ChoiceRow[]>;
   responses: ResponseRow[];
@@ -173,6 +174,7 @@ type ExportData = {
 
 async function loadExportData(env: Env, surveyId: number, url: URL): Promise<ExportData> {
   const survey = await mustSurvey(env.DB, surveyId);
+  const project = await mustProject(env.DB, survey.project_id);
   const questions = await env.DB.prepare(
     `SELECT * FROM questions WHERE survey_id = ? ORDER BY order_index`,
   ).bind(surveyId).all<QuestionRow>();
@@ -203,6 +205,7 @@ async function loadExportData(env: Env, surveyId: number, url: URL): Promise<Exp
 
   return {
     survey,
+    project,
     questions: questions.results,
     choicesByQuestion: groupBy(choices.results, (choice) => choice.question_id),
     responses,
@@ -239,6 +242,7 @@ async function selectExportResponses(env: Env, surveyId: number, url: URL): Prom
 function toExportJson(data: ExportData) {
   return {
     exportedAt: nowIso(),
+    project: projectToJson(data.project),
     survey: surveyToJson(data.survey),
     responseCount: data.responses.length,
     questions: data.questions.map((question) => ({

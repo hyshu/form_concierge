@@ -1,5 +1,11 @@
-import type { ChoiceRow, QuestionRow, SurveyRow } from './types';
+import type { ChoiceRow, ProjectRow, QuestionRow, SurveyRow } from './types';
 import { HttpError } from './utils';
+
+export async function mustProject(db: D1Database, id: number): Promise<ProjectRow> {
+  const row = await db.prepare(`SELECT * FROM projects WHERE id = ?`).bind(id).first<ProjectRow>();
+  if (!row) throw new HttpError(404, 'Project not found');
+  return row;
+}
 
 export async function mustSurvey(db: D1Database, id: number): Promise<SurveyRow> {
   const row = await db.prepare(`SELECT * FROM surveys WHERE id = ?`).bind(id).first<SurveyRow>();

@@ -18,7 +18,7 @@ void main() {
     final client = _client((request) {
       requests.add(request);
       return switch ((request.method, request.url.path)) {
-        ('GET', '/api/surveys/customer-feedback') => _json(_surveyJson()),
+        ('GET', '/api/projects/customer-feedback') => _json(_projectJson()),
         ('GET', '/api/surveys/id/1/questions') => _json([]),
         ('GET', '/api/surveys/id/1/visibility-rules') => _json([]),
         ('POST', '/api/anonymous/accounts') => _json(_anonymousSessionJson()),
@@ -34,7 +34,7 @@ void main() {
       MaterialApp(
         home: FormConciergeSurvey(
           client: client,
-          surveySlug: 'customer-feedback',
+          projectSlug: 'customer-feedback',
           onAnonymousSession: (session) => anonymousSession = session,
           onResponseSubmitted: (response) => submittedResponse = response,
         ),
@@ -58,7 +58,7 @@ void main() {
     expect(
       requests.map((request) => '${request.method} ${request.url.path}'),
       containsAllInOrder([
-        'GET /api/surveys/customer-feedback',
+        'GET /api/projects/customer-feedback',
         'GET /api/surveys/id/1/questions',
         'GET /api/surveys/id/1/visibility-rules',
         'POST /api/anonymous/accounts',
@@ -74,7 +74,7 @@ void main() {
       final client = _client((request) {
         paths.add('${request.method} ${request.url.path}');
         return switch ((request.method, request.url.path)) {
-          ('GET', '/api/surveys/customer-feedback') => _json(_surveyJson()),
+          ('GET', '/api/projects/customer-feedback') => _json(_projectJson()),
           ('GET', '/api/surveys/id/1/questions') => _json([]),
           ('GET', '/api/surveys/id/1/visibility-rules') => _json([]),
           _ => http.Response(
@@ -88,7 +88,7 @@ void main() {
         MaterialApp(
           home: FormConciergeSurvey(
             client: client,
-            surveySlug: 'customer-feedback',
+            projectSlug: 'customer-feedback',
             anonymousToken: 'existing-token',
           ),
         ),
@@ -108,7 +108,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: FormConciergeSurvey(client: client, surveySlug: 'missing'),
+        home: FormConciergeSurvey(client: client, projectSlug: 'missing'),
       ),
     );
     await tester.pumpAndSettle();
@@ -133,12 +133,24 @@ http.Response _json(Object? body) {
   );
 }
 
+Map<String, Object?> _projectJson() => {
+  'project': {
+    'id': 1,
+    'slug': 'customer-feedback',
+    'customDomain': null,
+    'defaultLocale': 'en',
+    'supportedLocales': ['en'],
+    'nameTranslations': {'en': 'Customer feedback'},
+    'descriptionTranslations': {'en': ''},
+    'createdAt': '2026-06-22T10:00:00.000Z',
+    'updatedAt': '2026-06-22T10:00:00.000Z',
+  },
+  'surveys': [_surveyJson()],
+};
+
 Map<String, Object?> _surveyJson() => {
   'id': 1,
-  'slug': 'customer-feedback',
-  'customDomain': null,
-  'defaultLocale': 'en',
-  'supportedLocales': ['en'],
+  'projectId': 1,
   'titleTranslations': {'en': 'Customer feedback'},
   'descriptionTranslations': {'en': 'Tell us what you think'},
   'status': 'published',

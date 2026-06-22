@@ -4,6 +4,7 @@ import 'package:form_concierge_client/form_concierge_client.dart';
 import 'questions/question_widget.dart';
 
 class SurveyContent extends StatelessWidget {
+  final Project project;
   final Survey survey;
   final List<Question> questions;
   final Map<int, List<Choice>> choicesByQuestion;
@@ -18,6 +19,7 @@ class SurveyContent extends StatelessWidget {
 
   const SurveyContent({
     super.key,
+    required this.project,
     required this.survey,
     required this.questions,
     required this.choicesByQuestion,
@@ -51,7 +53,7 @@ class SurveyContent extends StatelessWidget {
               style: Theme.of(context).textTheme.bodyMedium,
             ),
           ],
-          if (survey.supportedLocales.length > 1) ...[
+          if (project.supportedLocales.length > 1) ...[
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               initialValue: locale,
@@ -60,7 +62,7 @@ class SurveyContent extends StatelessWidget {
                 border: OutlineInputBorder(),
               ),
               items: [
-                for (final option in survey.supportedLocales)
+                for (final option in project.supportedLocales)
                   DropdownMenuItem(
                     value: option,
                     child: Text(formContentLocaleLabels[option]!),

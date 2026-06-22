@@ -10,7 +10,8 @@ import 'widgets/survey_content.dart';
 
 class FormConciergeSurvey extends StatefulWidget {
   final Client client;
-  final String surveySlug;
+  final String projectSlug;
+  final int? surveyId;
   final VoidCallback? onSubmitted;
   final ValueChanged<SurveyResponse>? onResponseSubmitted;
   final ValueChanged<AnonymousSession>? onAnonymousSession;
@@ -23,7 +24,8 @@ class FormConciergeSurvey extends StatefulWidget {
   const FormConciergeSurvey({
     super.key,
     required this.client,
-    required this.surveySlug,
+    required this.projectSlug,
+    this.surveyId,
     this.onSubmitted,
     this.onResponseSubmitted,
     this.onAnonymousSession,
@@ -50,9 +52,12 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
 
   Future<void> _loadSurvey() async {
     try {
-      final survey = await widget.client.survey.getBySlug(widget.surveySlug);
+      final project = await widget.client.survey.getProjectBySlug(
+        widget.projectSlug,
+      );
 
-      if (survey == null) {
+      final survey = _selectSurvey(project);
+      if (project == null || survey == null) {
         setState(() {
           _state = _state.copyWith(
             viewState: SurveyViewState.error,
@@ -79,10 +84,11 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
 
       setState(() {
         _selectedLocale = normalizeFormContentLocale(
-          widget.locale ?? survey.defaultLocale,
+          widget.locale ?? project.project.defaultLocale,
         );
         _state = _state.copyWith(
           viewState: SurveyViewState.ready,
+          project: project.project,
           survey: survey,
           questions: questions,
           visibilityRules: visibilityRules,
@@ -97,6 +103,16 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
         );
       });
     }
+  }
+
+  Survey? _selectSurvey(PublicProject? project) {
+    if (project == null || project.surveys.isEmpty) return null;
+    final surveyId = widget.surveyId;
+    if (surveyId == null) return project.surveys.first;
+    for (final survey in project.surveys) {
+      if (survey.id == surveyId) return survey;
+    }
+    return null;
   }
 
   void _updateAnswer(int questionId, dynamic value) {
@@ -226,6 +242,7 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
         onRetry: _loadSurvey,
       ),
       SurveyViewState.ready || SurveyViewState.submitting => SurveyContent(
+        project: _state.project!,
         survey: _state.survey!,
         questions: visibleQuestions,
         choicesByQuestion: _state.choicesByQuestion,
@@ -256,7 +273,7 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
   String get _locale => normalizeFormContentLocale(
     _selectedLocale ??
         widget.locale ??
-        _state.survey?.defaultLocale ??
+        _state.project?.defaultLocale ??
         defaultFormContentLocale,
   );
 }

@@ -1,5 +1,57 @@
 part of form_concierge_client;
 
+class ProjectAdminEndpoint {
+  final Client _client;
+  ProjectAdminEndpoint(this._client);
+
+  Future<Project> create(Project project) async {
+    final json = await _client.request(
+      'POST',
+      '/api/admin/projects',
+      body: project.toJson(),
+      authenticated: true,
+    );
+    return Project.fromJson(json);
+  }
+
+  Future<Project> update(Project project) async {
+    final json = await _client.request(
+      'PUT',
+      '/api/admin/projects/${project.id}',
+      body: project.toJson(),
+      authenticated: true,
+    );
+    return Project.fromJson(json);
+  }
+
+  Future<bool> delete(int projectId) async {
+    await _client.request(
+      'DELETE',
+      '/api/admin/projects/$projectId',
+      authenticated: true,
+    );
+    return true;
+  }
+
+  Future<List<ProjectWithSurveys>> list() async {
+    final json = await _client.request(
+      'GET',
+      '/api/admin/projects',
+      authenticated: true,
+    );
+    return _objectList(json, ProjectWithSurveys.fromJson);
+  }
+
+  Future<ProjectWithSurveys?> getById(int projectId) async {
+    final json = await _client.request(
+      'GET',
+      '/api/admin/projects/$projectId',
+      authenticated: true,
+    );
+    return json == null ? null : ProjectWithSurveys.fromJson(json);
+  }
+}
+
 class SurveyAdminEndpoint {
   final Client _client;
   SurveyAdminEndpoint(this._client);
@@ -49,10 +101,11 @@ class SurveyAdminEndpoint {
     return true;
   }
 
-  Future<List<Survey>> list() async {
+  Future<List<Survey>> list({int? projectId}) async {
     final json = await _client.request(
       'GET',
       '/api/admin/surveys',
+      query: {'projectId': projectId?.toString() ?? ''},
       authenticated: true,
     );
     return _objectList(json, Survey.fromJson);

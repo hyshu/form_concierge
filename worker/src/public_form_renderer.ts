@@ -1,15 +1,22 @@
-import type { ChoiceRow, Env, QuestionRow, SurveyRow } from './types';
-import { choiceToJson, questionToJson, surveyToJson, visibilityRuleToJson } from './serializers';
+import type { ChoiceRow, Env, ProjectRow, QuestionRow, SurveyRow } from './types';
+import { choiceToJson, projectToJson, questionToJson, surveyToJson, visibilityRuleToJson } from './serializers';
 import { optionalCustomDomain } from './utils';
 import { getVisibilityRules } from './visibility_rules';
 
 const DEFAULT_FORM_ASSET_BASE_URL = 'http://localhost:8081';
 
 type PublicFormData = {
+  project: ReturnType<typeof projectToJson>;
   survey: ReturnType<typeof surveyToJson>;
   questions: ReturnType<typeof questionToJson>[];
   visibilityRules: ReturnType<typeof visibilityRuleToJson>[];
   choicesByQuestion: Record<string, ReturnType<typeof choiceToJson>[]>;
+};
+
+type PublicProjectData = {
+  project: ReturnType<typeof projectToJson>;
+  surveys: ReturnType<typeof surveyToJson>[];
+  selected: PublicFormData | null;
 };
 
 export function isPublicFormHtmlRequest(request: Request, path: string): boolean {
@@ -17,38 +24,50 @@ export function isPublicFormHtmlRequest(request: Request, path: string): boolean
   if (method !== 'GET' && method !== 'HEAD') return false;
   if (path.startsWith('/api')) return false;
   const parts = path.split('/').filter(Boolean);
-  if (parts.length > 1) return false;
+  if (parts.length > 2) return false;
   if (parts[0]?.includes('.')) return false;
+  if (parts[1]?.includes('.')) return false;
   const accept = request.headers.get('accept') ?? '';
   return accept.length === 0 || accept.includes('text/html') || accept.includes('*/*');
 }
 
 export async function renderPublicForm(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
-  const slug = slugFromPath(url.pathname);
-  const data = slug
-    ? await loadPublicFormBySlug(env, slug)
-    : await loadPublicFormByDomain(env, url.hostname);
+  const pathParts = pathPartsFromPath(url.pathname);
+  const data = isApiHost(env, url)
+    ? await loadProjectBySlug(env, pathParts[0] ?? null, surveyIdFromPathPart(pathParts[1]))
+    : await loadProjectByDomain(env, url.hostname, surveyIdFromPathPart(pathParts[0]));
 
   if (!data) {
-    if (!slug && isApiHost(env, url)) {
+    if (pathParts.length === 0 && isApiHost(env, url)) {
       return html(request, renderServiceRootHtml(env, url));
     }
     return html(request, renderNotFoundHtml(env, url), 404);
   }
 
-  return html(request, renderSurveyHtml(env, url, data));
+  return html(request, data.selected
+    ? renderSurveyHtml(env, url, data.selected)
+    : renderProjectListHtml(env, url, data));
 }
 
-async function loadPublicFormBySlug(env: Env, slug: string): Promise<PublicFormData | null> {
-  const survey = await env.DB.prepare(
-    `SELECT * FROM surveys WHERE slug = ? AND status = 'published'`,
-  ).bind(slug).first<SurveyRow>();
-  if (!survey || !isAccepting(survey)) return null;
-  return loadPublicFormData(env, survey);
+async function loadProjectBySlug(
+  env: Env,
+  slug: string | null,
+  surveyId: number | null,
+): Promise<PublicProjectData | null> {
+  if (!slug) return null;
+  const project = await env.DB.prepare(
+    `SELECT * FROM projects WHERE slug = ?`,
+  ).bind(slug).first<ProjectRow>();
+  if (!project) return null;
+  return loadProjectData(env, project, surveyId);
 }
 
-async function loadPublicFormByDomain(env: Env, host: string): Promise<PublicFormData | null> {
+async function loadProjectByDomain(
+  env: Env,
+  host: string,
+  surveyId: number | null,
+): Promise<PublicProjectData | null> {
   let customDomain: string | null = null;
   try {
     customDomain = optionalCustomDomain(host);
@@ -57,14 +76,39 @@ async function loadPublicFormByDomain(env: Env, host: string): Promise<PublicFor
   }
   if (!customDomain) return null;
 
-  const survey = await env.DB.prepare(
-    `SELECT * FROM surveys WHERE custom_domain = ? AND status = 'published'`,
-  ).bind(customDomain).first<SurveyRow>();
-  if (!survey || !isAccepting(survey)) return null;
-  return loadPublicFormData(env, survey);
+  const project = await env.DB.prepare(
+    `SELECT * FROM projects WHERE custom_domain = ?`,
+  ).bind(customDomain).first<ProjectRow>();
+  if (!project) return null;
+  return loadProjectData(env, project, surveyId);
 }
 
-async function loadPublicFormData(env: Env, survey: SurveyRow): Promise<PublicFormData> {
+async function loadProjectData(
+  env: Env,
+  project: ProjectRow,
+  surveyId: number | null,
+): Promise<PublicProjectData | null> {
+  const rows = await env.DB.prepare(
+    `SELECT * FROM surveys
+     WHERE project_id = ? AND status = 'published'
+     ORDER BY updated_at DESC`,
+  ).bind(project.id).all<SurveyRow>();
+  const surveys = rows.results.filter(isAccepting);
+  if (surveys.length === 0) return null;
+
+  const selectedSurvey = surveyId == null
+    ? surveys.length === 1 ? surveys[0] : null
+    : surveys.find((survey) => survey.id === surveyId) ?? null;
+  if (surveyId != null && !selectedSurvey) return null;
+
+  return {
+    project: projectToJson(project),
+    surveys: surveys.map(surveyToJson),
+    selected: selectedSurvey ? await loadPublicFormData(env, project, selectedSurvey) : null,
+  };
+}
+
+async function loadPublicFormData(env: Env, project: ProjectRow, survey: SurveyRow): Promise<PublicFormData> {
   const questions = await env.DB.prepare(
     `SELECT * FROM questions
      WHERE survey_id = ? AND is_deleted = 0
@@ -74,6 +118,7 @@ async function loadPublicFormData(env: Env, survey: SurveyRow): Promise<PublicFo
   const choicesByQuestion = await loadChoicesByQuestion(env, questions.results);
 
   return {
+    project: projectToJson(project),
     survey: surveyToJson(survey),
     questions: questions.results.map(questionToJson),
     visibilityRules: visibilityRules.map(visibilityRuleToJson),
@@ -98,7 +143,7 @@ async function loadChoicesByQuestion(
 }
 
 function renderSurveyHtml(env: Env, url: URL, data: PublicFormData): string {
-  const locale = data.survey.defaultLocale;
+  const locale = data.project.defaultLocale;
   const title = textFor(data.survey.titleTranslations, locale);
   const description = textFor(data.survey.descriptionTranslations, locale);
   const assetBaseUrl = publicFormAssetBaseUrl(env);
@@ -117,13 +162,53 @@ function renderSurveyHtml(env: Env, url: URL, data: PublicFormData): string {
         <section class="max-w-xl mx-auto bg-white rounded-xl shadow-md border border-slate-200 p-6">
           <h1 class="text-2xl font-semibold text-slate-900">${escapeHtml(title)}</h1>
           ${description ? `<p class="mt-4 text-slate-600 leading-relaxed">${escapeHtml(description)}</p>` : ''}
-          ${renderLocaleList(data.survey.supportedLocales)}
+          ${renderLocaleList(data.project.supportedLocales)}
         </section>
         <section class="max-w-xl mx-auto mt-6 space-y-4">
           ${data.questions.map((question) => renderQuestion(question, data.choicesByQuestion, locale)).join('')}
           <button class="w-full px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg disabled:opacity-50" disabled>
             ${locale === 'ja' ? '送信' : 'Submit'}
           </button>
+        </section>
+      </main>
+    `,
+  });
+}
+
+function renderProjectListHtml(env: Env, url: URL, data: PublicProjectData): string {
+  const locale = data.project.defaultLocale;
+  const title = textFor(data.project.nameTranslations, locale);
+  const description = textFor(data.project.descriptionTranslations, locale);
+  const assetBaseUrl = publicFormAssetBaseUrl(env);
+  const apiUrl = publicApiUrl(env, url);
+  const payload = { ...data, apiUrl };
+
+  return documentHtml({
+    lang: locale,
+    title,
+    description,
+    apiUrl,
+    assetBaseUrl,
+    payload,
+    body: `
+      <main id="form-concierge-ssr-root" class="survey-wrapper">
+        <section class="max-w-xl mx-auto bg-white rounded-xl shadow-md border border-slate-200 p-6">
+          <h1 class="text-2xl font-semibold text-slate-900">${escapeHtml(title)}</h1>
+          ${description ? `<p class="mt-4 text-slate-600 leading-relaxed">${escapeHtml(description)}</p>` : ''}
+          ${renderLocaleList(data.project.supportedLocales)}
+        </section>
+        <section class="max-w-xl mx-auto mt-6 space-y-3">
+          ${data.surveys.map((survey) => {
+            const surveyTitle = textFor(survey.titleTranslations, locale);
+            const surveyDescription = textFor(survey.descriptionTranslations, locale);
+            return `
+              <a class="block bg-white rounded-xl shadow-md border border-slate-200 p-5 hover:border-indigo-300"
+                 href="${escapeAttribute(surveyHref(env, url, data.project.slug, survey.id))}">
+                <h2 class="font-medium text-slate-900">${escapeHtml(surveyTitle)}</h2>
+                ${surveyDescription ? `<p class="mt-2 text-sm text-slate-600">${escapeHtml(surveyDescription)}</p>` : ''}
+              </a>
+            `;
+          }).join('')}
         </section>
       </main>
     `,
@@ -257,9 +342,20 @@ function textFor(translations: Record<string, string>, locale: string): string {
   return translations[locale] ?? translations.en ?? Object.values(translations)[0] ?? '';
 }
 
-function slugFromPath(pathname: string): string | null {
-  const parts = pathname.split('/').filter(Boolean);
-  return parts.length === 1 ? decodeURIComponent(parts[0]) : null;
+function pathPartsFromPath(pathname: string): string[] {
+  return pathname.split('/').filter(Boolean).map(decodeURIComponent);
+}
+
+function surveyIdFromPathPart(value: string | undefined): number | null {
+  if (value == null || value.length === 0) return null;
+  const id = Number(value);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
+function surveyHref(env: Env, url: URL, projectSlug: string, surveyId: number): string {
+  return isApiHost(env, url)
+    ? `/${encodeURIComponent(projectSlug)}/${surveyId}`
+    : `/${surveyId}`;
 }
 
 function isAccepting(survey: SurveyRow): boolean {

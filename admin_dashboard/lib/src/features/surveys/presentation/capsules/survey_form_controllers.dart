@@ -4,21 +4,15 @@ import 'package:rearch/rearch.dart';
 
 /// Form controllers for survey editing.
 class SurveyFormControllers {
-  final TextEditingController slug;
-  final TextEditingController customDomain;
   final Map<String, TextEditingController> titleTranslations;
   final Map<String, TextEditingController> descriptionTranslations;
 
   SurveyFormControllers({
-    required this.slug,
-    required this.customDomain,
     required this.titleTranslations,
     required this.descriptionTranslations,
   });
 
   void dispose() {
-    slug.dispose();
-    customDomain.dispose();
     for (final controller in titleTranslations.values) {
       controller.dispose();
     }
@@ -28,8 +22,6 @@ class SurveyFormControllers {
   }
 
   void populateFrom(Survey survey) {
-    slug.text = survey.slug;
-    customDomain.text = survey.customDomain ?? '';
     for (final locale in formContentLocaleCodes) {
       titleTranslations[locale]!.text = survey.titleTranslations.valueFor(
         locale,
@@ -58,8 +50,6 @@ class SurveyFormControllers {
 SurveyFormControllers surveyFormControllersCapsule(CapsuleHandle use) {
   final controllers = use.memo(
     () => SurveyFormControllers(
-      slug: TextEditingController(),
-      customDomain: TextEditingController(),
       titleTranslations: {
         for (final locale in formContentLocaleCodes)
           locale: TextEditingController(),

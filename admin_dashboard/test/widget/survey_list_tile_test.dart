@@ -8,14 +8,13 @@ import '../support/localized_test_app.dart';
 void main() {
   group('SurveyListTile', () {
     testWidgets(
-      'renders title, description, slug, custom domain, and updated date',
+      'renders title, description, status, and updated date',
       (
         tester,
       ) async {
         await tester.pumpWidget(
           _subject(
             survey: _survey(
-              customDomain: 'forms.example.com',
               description: 'Short survey description',
             ),
           ),
@@ -23,8 +22,6 @@ void main() {
 
         expect(find.text('Customer feedback'), findsOneWidget);
         expect(find.text('Short survey description'), findsOneWidget);
-        expect(find.text('/customer-feedback'), findsOneWidget);
-        expect(find.text('forms.example.com'), findsOneWidget);
         expect(find.text('2026-06-22'), findsOneWidget);
         expect(find.text('Draft'), findsOneWidget);
       },
@@ -35,9 +32,7 @@ void main() {
     ) async {
       await tester.pumpWidget(_subject(survey: _survey()));
 
-      expect(find.text('forms.example.com'), findsNothing);
       expect(find.text('Short survey description'), findsNothing);
-      expect(find.text('/customer-feedback'), findsOneWidget);
     });
 
     testWidgets('tapping tile and action buttons dispatches callbacks', (
@@ -52,7 +47,7 @@ void main() {
 
       await tester.pumpWidget(
         _subject(
-          survey: _survey(customDomain: 'forms.example.com'),
+          survey: _survey(),
           onTap: () => tapped = true,
           onViewResponses: () => viewedResponses = true,
           onPublish: () => published = true,
@@ -95,6 +90,7 @@ Widget _subject({
     home: Scaffold(
       body: SurveyListTile(
         survey: survey,
+        locale: defaultFormContentLocale,
         onTap: onTap ?? () {},
         onViewResponses: onViewResponses ?? () {},
         onPublish: onPublish,
@@ -106,17 +102,11 @@ Widget _subject({
   );
 }
 
-Survey _survey({
-  String? customDomain,
-  String description = '',
-}) {
+Survey _survey({String description = ''}) {
   final now = DateTime.utc(2026, 6, 22, 10);
   return Survey(
     id: 1,
-    slug: 'customer-feedback',
-    customDomain: customDomain,
-    defaultLocale: defaultFormContentLocale,
-    supportedLocales: formContentLocaleCodes,
+    projectId: 1,
     titleTranslations: LocalizedText({
       for (final locale in formContentLocaleCodes)
         locale: locale == 'en' ? 'Customer feedback' : 'Title $locale',

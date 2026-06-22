@@ -4,7 +4,7 @@ import { notificationToJson } from './serializers';
 import { getIntegrationSettingsRow, isSmtpConfigured, requireSmtpSettings } from './admin_settings';
 import { sendEmail } from './smtp';
 import { DEFAULT_FORM_CONTENT_LOCALE, localizedTextFor } from './localization';
-import type { ResponseRow, SurveyRow } from './types';
+import type { ProjectRow, ResponseRow, SurveyRow } from './types';
 
 export async function notificationSettings(
   request: Request,
@@ -90,9 +90,12 @@ export async function sendResponseNotification(
   }
 
   const settings = requireSmtpSettings(integrationSettings);
+  const project = await env.DB.prepare(
+    `SELECT * FROM projects WHERE id = ?`,
+  ).bind(survey.project_id).first<ProjectRow>();
   const surveyTitle = localizedTextFor(
     survey.title_translations,
-    survey.default_locale || DEFAULT_FORM_CONTENT_LOCALE,
+    project?.default_locale ?? DEFAULT_FORM_CONTENT_LOCALE,
   );
   await sendEmail(settings, {
     to: notification.recipient_email,

@@ -12,7 +12,8 @@ import '../../../../core/widgets/confirm_delete_dialog.dart';
 import '../../../../core/widgets/hux_admin_shell.dart';
 import '../../../../core/widgets/hux_states.dart';
 import '../capsules/survey_list_capsule.dart';
-import '../widgets/survey_list_tile.dart';
+import '../widgets/project_form.dart';
+import '../widgets/survey_status_chip.dart';
 
 /// Main dashboard page showing list of surveys.
 class DashboardPage extends RearchConsumer {
@@ -26,10 +27,10 @@ class DashboardPage extends RearchConsumer {
     final role = client.auth.signedInUser?.role;
     final canWrite = role == AdminRole.admin || role == AdminRole.editor;
     final canManageUsers = role == AdminRole.admin;
+    final (isSavingProject, setSavingProject) = use.state(false);
 
-    // Load surveys on first build
     if (use.isFirstBuild()) {
-      surveyManager.loadSurveys();
+      surveyManager.loadProjects();
     }
 
     return HuxAdminShell(
@@ -39,17 +40,11 @@ class DashboardPage extends RearchConsumer {
       showSettings: canManageUsers,
       actions: [
         HuxButton(
-          onPressed: surveyManager.loadSurveys,
+          onPressed: surveyManager.loadProjects,
           variant: HuxButtonVariant.secondary,
           icon: LucideIcons.refreshCw,
           child: Text(context.tr('Refresh')),
         ),
-        if (canWrite)
-          HuxButton(
-            onPressed: () => context.go('/admin/surveys/new'),
-            icon: LucideIcons.plus,
-            child: Text(context.tr('New Survey')),
-          ),
         Tooltip(
           message: context.tr('Logout'),
           child: HuxButton(
@@ -62,7 +57,13 @@ class DashboardPage extends RearchConsumer {
         ),
       ],
       child: SafeArea(
-        child: _buildBody(context, surveyManager, canWrite),
+        child: _buildBody(
+          context,
+          surveyManager,
+          canWrite,
+          isSavingProject,
+          setSavingProject,
+        ),
       ),
     );
   }
@@ -71,64 +72,84 @@ class DashboardPage extends RearchConsumer {
     BuildContext context,
     SurveyListManager manager,
     bool canWrite,
+    bool isSavingProject,
+    void Function(bool) setSavingProject,
   ) {
-    if (manager.state.isLoading && manager.state.surveys.isEmpty) {
+    if (manager.state.isLoading && manager.state.projects.isEmpty) {
       return HuxLoadingState(message: context.tr('Loading...'));
     }
 
-    if (manager.state.error != null && manager.state.surveys.isEmpty) {
+    if (manager.state.error != null && manager.state.projects.isEmpty) {
       return HuxPageBody(
         child: HuxErrorState(
           message: context.trMessage(manager.state.error!),
-          onRetry: manager.loadSurveys,
+          onRetry: manager.loadProjects,
         ),
       );
     }
 
-    if (manager.state.surveys.isEmpty) {
+    if (manager.state.projects.isEmpty) {
       return HuxPageBody(
-        child: HuxEmptyState(
-          icon: LucideIcons.clipboardList,
-          title: context.tr('No surveys yet'),
-          message: context.tr('Create your first survey to get started'),
-          action: canWrite
-              ? HuxButton(
-                  onPressed: () => context.go('/admin/surveys/new'),
-                  icon: LucideIcons.plus,
-                  child: Text(context.tr('Create Survey')),
-                )
-              : null,
+        maxWidth: 720,
+        child: ProjectForm(
+          isSaving: isSavingProject,
+          error: manager.state.error,
+          onSave: (project) async {
+            setSavingProject(true);
+            final created = await manager.createProject(project);
+            setSavingProject(false);
+            if (created != null && context.mounted) {
+              context.go('/admin');
+            }
+          },
         ),
       );
     }
 
     return RefreshIndicator(
-      onRefresh: () async => manager.loadSurveys(),
+      onRefresh: () async => manager.loadProjects(),
       child: ListView.builder(
-        itemCount: manager.state.surveys.length,
+        itemCount: manager.state.projects.length + 1,
         padding: const EdgeInsets.fromLTRB(24, 24, 24, 88),
         itemBuilder: (context, index) {
-          final survey = manager.state.surveys[index];
+          if (index == manager.state.projects.length) {
+            return Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 960),
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: HuxButton(
+                    onPressed: canWrite
+                        ? () => context.go('/admin/projects/new')
+                        : null,
+                    variant: HuxButtonVariant.secondary,
+                    width: HuxButtonWidth.expand,
+                    icon: LucideIcons.plus,
+                    child: Text(context.tr('Create Project')),
+                  ),
+                ),
+              ),
+            );
+          }
+          final item = manager.state.projects[index];
           return Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 960),
-              child: SurveyListTile(
-                survey: survey,
-                onTap: () => context.go('/admin/surveys/${survey.id}'),
-                onViewResponses: () =>
+              child: _ProjectCard(
+                item: item,
+                canWrite: canWrite,
+                manager: manager,
+                onEditProject: () =>
+                    context.go('/admin/projects/${item.project.id}'),
+                onCreateSurvey: () => context.go(
+                  '/admin/projects/${item.project.id}/surveys/new',
+                ),
+                onOpenSurvey: (survey) =>
+                    context.go('/admin/surveys/${survey.id}'),
+                onViewResponses: (survey) =>
                     context.go('/admin/surveys/${survey.id}/responses'),
-                onPublish: canWrite && survey.status == SurveyStatus.draft
-                    ? () => manager.publishSurvey(survey.id!)
-                    : null,
-                onClose: canWrite && survey.status == SurveyStatus.published
-                    ? () => manager.closeSurvey(survey.id!)
-                    : null,
-                onReopen: canWrite && survey.status == SurveyStatus.closed
-                    ? () => manager.reopenSurvey(survey.id!)
-                    : null,
-                onDelete: canWrite
-                    ? () => _confirmDelete(context, survey, manager)
-                    : null,
+                onDeleteSurvey: (survey) =>
+                    _confirmDelete(context, item.project, survey, manager),
               ),
             ),
           );
@@ -139,6 +160,7 @@ class DashboardPage extends RearchConsumer {
 
   Future<void> _confirmDelete(
     BuildContext context,
+    Project project,
     Survey survey,
     SurveyListManager manager,
   ) async {
@@ -146,12 +168,327 @@ class DashboardPage extends RearchConsumer {
       context,
       title: context.tr('Delete Survey'),
       content: context.tr('Delete survey confirmation', {
-        'title': survey.title,
+        'title': survey.titleFor(project.defaultLocale),
       }),
     );
 
     if (confirmed) {
       await manager.deleteSurvey(survey.id!);
     }
+  }
+}
+
+class _ProjectCard extends StatelessWidget {
+  final ProjectWithSurveys item;
+  final bool canWrite;
+  final SurveyListManager manager;
+  final VoidCallback onEditProject;
+  final VoidCallback onCreateSurvey;
+  final void Function(Survey survey) onOpenSurvey;
+  final void Function(Survey survey) onViewResponses;
+  final void Function(Survey survey) onDeleteSurvey;
+
+  const _ProjectCard({
+    required this.item,
+    required this.canWrite,
+    required this.manager,
+    required this.onEditProject,
+    required this.onCreateSurvey,
+    required this.onOpenSurvey,
+    required this.onViewResponses,
+    required this.onDeleteSurvey,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final project = item.project;
+    return HuxCard(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      project.nameFor(project.defaultLocale),
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    if ((project.description ?? '').isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        project.description!,
+                        style: TextStyle(
+                          color: HuxTokens.textSecondary(context),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              HuxButton(
+                onPressed: onEditProject,
+                variant: HuxButtonVariant.secondary,
+                size: HuxButtonSize.small,
+                icon: LucideIcons.settings,
+                child: Text(context.tr('Settings')),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 16,
+            runSpacing: 8,
+            children: [
+              _MetadataItem(icon: LucideIcons.link, text: '/${project.slug}'),
+              if (project.customDomain != null)
+                _MetadataItem(
+                  icon: LucideIcons.globe,
+                  text: project.customDomain!,
+                ),
+              _MetadataItem(
+                icon: LucideIcons.languages,
+                text:
+                    formContentLocaleLabels[project.defaultLocale] ??
+                    project.defaultLocale,
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          if (item.surveys.isEmpty)
+            Text(
+              context.tr('No surveys yet'),
+              style: TextStyle(color: HuxTokens.textSecondary(context)),
+            )
+          else
+            Column(
+              children: [
+                for (final survey in item.surveys)
+                  _SurveyRow(
+                    survey: survey,
+                    locale: project.defaultLocale,
+                    onTap: () => onOpenSurvey(survey),
+                    onViewResponses: () => onViewResponses(survey),
+                    onPublish: canWrite && survey.status == SurveyStatus.draft
+                        ? () => manager.publishSurvey(survey.id!)
+                        : null,
+                    onClose: canWrite && survey.status == SurveyStatus.published
+                        ? () => manager.closeSurvey(survey.id!)
+                        : null,
+                    onReopen: canWrite && survey.status == SurveyStatus.closed
+                        ? () => manager.reopenSurvey(survey.id!)
+                        : null,
+                    onDelete: canWrite ? () => onDeleteSurvey(survey) : null,
+                  ),
+              ],
+            ),
+          const SizedBox(height: 16),
+          HuxButton(
+            onPressed: canWrite ? onCreateSurvey : null,
+            variant: HuxButtonVariant.secondary,
+            width: HuxButtonWidth.expand,
+            icon: LucideIcons.plus,
+            child: Text(context.tr('Create Survey')),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SurveyRow extends StatelessWidget {
+  final Survey survey;
+  final String locale;
+  final VoidCallback onTap;
+  final VoidCallback onViewResponses;
+  final VoidCallback? onPublish;
+  final VoidCallback? onClose;
+  final VoidCallback? onReopen;
+  final VoidCallback? onDelete;
+
+  const _SurveyRow({
+    required this.survey,
+    required this.locale,
+    required this.onTap,
+    required this.onViewResponses,
+    this.onPublish,
+    this.onClose,
+    this.onReopen,
+    this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final description = survey.descriptionFor(locale).trim();
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          survey.titleFor(locale),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      SurveyStatusChip(status: survey.status),
+                    ],
+                  ),
+                  if (description.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      description,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: HuxTokens.textSecondary(context),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 8),
+                  _MetadataItem(
+                    icon: LucideIcons.clock3,
+                    text: survey.updatedAt.toIsoDateString(),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            _SurveyActions(
+              onPublish: onPublish,
+              onClose: onClose,
+              onReopen: onReopen,
+              onViewResponses: onViewResponses,
+              onDelete: onDelete,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SurveyActions extends StatelessWidget {
+  final VoidCallback? onPublish;
+  final VoidCallback? onClose;
+  final VoidCallback? onReopen;
+  final VoidCallback onViewResponses;
+  final VoidCallback? onDelete;
+
+  const _SurveyActions({
+    this.onPublish,
+    this.onClose,
+    this.onReopen,
+    required this.onViewResponses,
+    this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (onPublish != null)
+          _ActionButton(
+            icon: LucideIcons.upload,
+            onPressed: onPublish,
+            tooltip: context.tr('Publish'),
+          ),
+        if (onClose != null)
+          _ActionButton(
+            icon: LucideIcons.circleStop,
+            onPressed: onClose,
+            tooltip: context.tr('Close'),
+          ),
+        if (onReopen != null)
+          _ActionButton(
+            icon: LucideIcons.circlePlay,
+            onPressed: onReopen,
+            tooltip: context.tr('Reopen'),
+          ),
+        _ActionButton(
+          icon: LucideIcons.chartNoAxesColumn,
+          onPressed: onViewResponses,
+          tooltip: context.tr('View Responses'),
+        ),
+        if (onDelete != null)
+          _ActionButton(
+            icon: LucideIcons.trash2,
+            onPressed: onDelete,
+            tooltip: context.tr('Delete'),
+            destructive: true,
+          ),
+      ],
+    );
+  }
+}
+
+class _ActionButton extends StatelessWidget {
+  const _ActionButton({
+    required this.icon,
+    required this.onPressed,
+    required this.tooltip,
+    this.destructive = false,
+  });
+
+  final IconData icon;
+  final VoidCallback? onPressed;
+  final String tooltip;
+  final bool destructive;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: HuxButton(
+        onPressed: onPressed,
+        variant: HuxButtonVariant.ghost,
+        size: HuxButtonSize.small,
+        icon: icon,
+        textColor: destructive ? HuxTokens.textDestructive(context) : null,
+        child: const SizedBox(width: 0),
+      ),
+    );
+  }
+}
+
+class _MetadataItem extends StatelessWidget {
+  final IconData icon;
+  final String text;
+
+  const _MetadataItem({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = HuxTokens.textSecondary(context);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 16, color: color),
+        const SizedBox(width: 4),
+        Text(
+          text,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: color),
+        ),
+      ],
+    );
   }
 }

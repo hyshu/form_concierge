@@ -34,9 +34,7 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('In-App Survey Example'),
-      ),
+      appBar: AppBar(title: const Text('In-App Survey Example')),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -54,11 +52,9 @@ class HomePage extends StatelessWidget {
   }
 
   void _openSurvey(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const SurveyPage(),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => const SurveyPage()));
   }
 }
 
@@ -68,16 +64,14 @@ class SurveyPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Survey'),
-      ),
+      appBar: AppBar(title: const Text('Survey')),
       body: FormConciergeSurvey(
         client: client,
-        surveySlug: 'demo-survey',
+        projectSlug: 'demo-project',
         onSubmitted: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Survey submitted!')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Survey submitted!')));
           Navigator.of(context).pop();
         },
       ),

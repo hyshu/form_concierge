@@ -7,6 +7,7 @@ import '../features/auth/presentation/pages/login_page.dart';
 import '../features/auth/presentation/pages/reset_password_page.dart';
 import '../features/auth/presentation/pages/verify_reset_code_page.dart';
 import '../features/dashboard/presentation/pages/dashboard_page.dart';
+import '../features/dashboard/presentation/pages/project_editor_page.dart';
 import '../features/responses/presentation/pages/responses_page.dart';
 import '../features/settings/presentation/pages/admin_settings_page.dart';
 import '../features/surveys/presentation/pages/survey_editor_page.dart';
@@ -76,9 +77,31 @@ GoRouter appRouterCapsule(CapsuleHandle use) {
               const NoTransitionPage<void>(child: DashboardPage()),
           routes: [
             GoRoute(
-              path: 'surveys/new',
+              path: 'projects/new',
               pageBuilder: (context, state) =>
-                  const NoTransitionPage<void>(child: SurveyEditorPage()),
+                  const NoTransitionPage<void>(child: ProjectEditorPage()),
+            ),
+            GoRoute(
+              path: 'projects/:projectId',
+              pageBuilder: (context, state) {
+                final id = int.parse(state.pathParameters['projectId']!);
+                return NoTransitionPage<void>(
+                  child: ProjectEditorPage(projectId: id),
+                );
+              },
+              routes: [
+                GoRoute(
+                  path: 'surveys/new',
+                  pageBuilder: (context, state) {
+                    final projectId = int.parse(
+                      state.pathParameters['projectId']!,
+                    );
+                    return NoTransitionPage<void>(
+                      child: SurveyEditorPage(projectId: projectId),
+                    );
+                  },
+                ),
+              ],
             ),
             GoRoute(
               path: 'users',

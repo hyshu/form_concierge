@@ -11,6 +11,13 @@ import {
   updateSurveyStatus,
 } from './admin_surveys';
 import {
+  createProject,
+  deleteProject,
+  getAdminProject,
+  listProjects,
+  updateProject,
+} from './admin_projects';
+import {
   createChoice,
   createQuestion,
   deleteChoice,
@@ -27,7 +34,7 @@ import {
 import { notificationSettings } from './notification_settings';
 import { generateSurveyQuestions } from './ai_generation';
 import { getAdminIntegrationSettings, isEmailConfiguredResponse, isGeminiConfigured, updateAdminIntegrationSettings } from './admin_settings';
-import { getPublicChoices, getPublicQuestions, getPublicSurvey, getPublicSurveyByDomain, submitResponse } from './public_surveys';
+import { getPublicChoices, getPublicProject, getPublicProjectByDomain, getPublicQuestions, submitResponse } from './public_surveys';
 import { listAdminVisibilityRules, listPublicVisibilityRules, replaceAdminVisibilityRules } from './visibility_rules';
 import {
   aggregatedResults,
@@ -135,9 +142,18 @@ async function route(request: Request, env: Env, ctx: ExecutionContext): Promise
     return json(rows.results.map(replyToJson));
   }
 
-  if (parts[0] === 'api' && parts[1] === 'surveys' && parts[2] && method === 'GET') {
+  if (parts[0] === 'api' && parts[1] === 'projects' && parts[2] && method === 'GET') {
     if (parts[2] === 'domain' && parts.length === 3) {
-      return getPublicSurveyByDomain(env, url.searchParams.get('host'));
+      return getPublicProjectByDomain(env, url.searchParams.get('host'));
+    }
+    if (parts.length === 3) {
+      return getPublicProject(env, parts[2]);
+    }
+  }
+
+  if (parts[0] === 'api' && parts[1] === 'surveys' && parts[2] && method === 'GET') {
+    if (parts[2] !== 'id') {
+      return json({ error: 'Not found' }, 404);
     }
     if (parts[2] === 'id' && parts[3] && parts[4] === 'questions') {
       return getPublicQuestions(env, Number(parts[3]));
@@ -145,7 +161,6 @@ async function route(request: Request, env: Env, ctx: ExecutionContext): Promise
     if (parts[2] === 'id' && parts[3] && parts[4] === 'visibility-rules') {
       return listPublicVisibilityRules(env, Number(parts[3]));
     }
-    return getPublicSurvey(env, parts[2]);
   }
 
   if (
@@ -189,6 +204,13 @@ function optionalResponseId(value: string | null): number | null {
   return responseId;
 }
 
+function optionalProjectId(value: string | null): number | undefined {
+  if (value == null || value.length === 0) return undefined;
+  const projectId = Number(value);
+  if (!Number.isInteger(projectId)) throw new HttpError(400, 'projectId must be an integer');
+  return projectId;
+}
+
 async function routeAdmin(
   request: Request,
   env: Env,
@@ -218,10 +240,24 @@ async function routeAdmin(
     if (method === 'PUT' && parts.length === 3) return updateAdminIntegrationSettings(request, env);
   }
 
+  if (parts[2] === 'projects') {
+    if (method === 'GET') requireScope(admin, 'survey:read');
+    if (method !== 'GET') requireScope(admin, 'survey:write');
+    if (method === 'GET' && parts.length === 3) return listProjects(env);
+    if (method === 'POST' && parts.length === 3) return createProject(request, env, admin);
+    const projectId = Number(parts[3]);
+    if (Number.isFinite(projectId)) {
+      if (method === 'GET' && parts.length === 4) return getAdminProject(env, projectId);
+      if (method === 'PUT' && parts.length === 4) return updateProject(request, env, projectId);
+      if (method === 'DELETE' && parts.length === 4) return deleteProject(env, projectId);
+      if (method === 'GET' && parts[4] === 'surveys') return listSurveys(env, projectId);
+    }
+  }
+
   if (parts[2] === 'surveys') {
     if (method === 'GET') requireScope(admin, 'survey:read');
     if (method !== 'GET') requireScope(admin, 'survey:write');
-    if (method === 'GET' && parts.length === 3) return listSurveys(env, admin);
+    if (method === 'GET' && parts.length === 3) return listSurveys(env, optionalProjectId(url.searchParams.get('projectId')));
     if (method === 'POST' && parts.length === 3) return createSurvey(request, env, admin);
     if (method === 'POST' && parts[3] === 'with-questions') {
       return createSurveyWithQuestions(request, env, admin);

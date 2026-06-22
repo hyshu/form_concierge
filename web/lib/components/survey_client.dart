@@ -20,17 +20,21 @@ class SurveyClient extends StatefulComponent {
     this.questionsJson = const [],
     this.visibilityRulesJson = const [],
     this.choicesByQuestionJson = const {},
-    this.slug,
+    this.projectJson,
+    this.projectSlug,
+    this.surveyId,
     this.domain,
     super.key,
   });
 
+  final Map<String, dynamic>? projectJson;
   final Map<String, dynamic>? surveyJson;
   final List<Map<String, dynamic>> questionsJson;
   final List<Map<String, dynamic>> visibilityRulesJson;
   final Map<String, List<Map<String, dynamic>>> choicesByQuestionJson;
   final String serverUrl;
-  final String? slug;
+  final String? projectSlug;
+  final int? surveyId;
   final String? domain;
 
   @override
@@ -39,7 +43,9 @@ class SurveyClient extends StatefulComponent {
 
 class SurveyClientState extends State<SurveyClient> {
   late Client _client;
+  Project? _project;
   Survey? _survey;
+  List<Survey> _surveys = [];
   List<Question> _questions = [];
   List<QuestionVisibilityRule> _visibilityRules = [];
   Map<int, List<Choice>> _choicesByQuestion = {};
@@ -59,7 +65,7 @@ class SurveyClientState extends State<SurveyClient> {
     final surveyJson = component.surveyJson;
     if (surveyJson == null) {
       final payload = readSsrSurveyPayload(
-        slug: component.slug,
+        slug: component.projectSlug,
         domain: component.domain,
       );
       if (payload != null) {
@@ -74,6 +80,7 @@ class SurveyClientState extends State<SurveyClient> {
     }
 
     _hydrateSurvey(
+      Project.fromJson(component.projectJson!),
       Survey.fromJson(surveyJson),
       component.questionsJson.map((j) => Question.fromJson(j)).toList(),
       component.visibilityRulesJson
@@ -89,6 +96,20 @@ class SurveyClientState extends State<SurveyClient> {
   }
 
   void _hydratePayload(Map<String, dynamic> payload) {
+    final project = Project.fromJson(
+      Map<String, dynamic>.from(payload['project'] as Map),
+    );
+    final surveys = (payload['surveys'] as List? ?? const [])
+        .whereType<Map>()
+        .map((item) => Survey.fromJson(Map<String, dynamic>.from(item)))
+        .toList();
+    if (payload['survey'] == null) {
+      _project = project;
+      _surveys = surveys;
+      _locale = project.defaultLocale;
+      return;
+    }
+
     final choicesByQuestion = (payload['choicesByQuestion'] as Map? ?? {})
         .map<String, List<Choice>>(
           (key, value) => MapEntry(
@@ -102,6 +123,7 @@ class SurveyClientState extends State<SurveyClient> {
         .map((key, value) => MapEntry(int.parse(key), value));
 
     _hydrateSurvey(
+      project,
       Survey.fromJson(Map<String, dynamic>.from(payload['survey'] as Map)),
       (payload['questions'] as List? ?? const [])
           .whereType<Map>()
@@ -126,9 +148,20 @@ class SurveyClientState extends State<SurveyClient> {
     });
 
     try {
-      final survey = await _resolveSurvey();
-      if (survey == null) {
+      final project = await _resolveProject();
+      if (project == null || project.surveys.isEmpty) {
         setState(() => _viewState = SurveyViewState.notFound);
+        return;
+      }
+
+      final survey = _selectSurvey(project);
+      if (survey == null) {
+        setState(() {
+          _project = project.project;
+          _surveys = project.surveys;
+          _locale = project.project.defaultLocale;
+          _viewState = SurveyViewState.ready;
+        });
         return;
       }
 
@@ -140,6 +173,7 @@ class SurveyClientState extends State<SurveyClient> {
 
       setState(() {
         _hydrateSurvey(
+          project.project,
           survey,
           questions,
           visibilityRules,
@@ -158,33 +192,48 @@ class SurveyClientState extends State<SurveyClient> {
     }
   }
 
-  Future<Survey?> _resolveSurvey() {
-    final slug = component.slug?.trim();
+  Future<PublicProject?> _resolveProject() async {
+    final slug = component.projectSlug?.trim();
     if (slug != null && slug.isNotEmpty) {
-      return _client.survey.getBySlug(slug);
+      final project = await _client.survey.getProjectBySlug(slug);
+      if (project != null) return project;
     }
 
     final domain = component.domain?.trim().toLowerCase();
     if (domain != null && domain.isNotEmpty) {
-      return _client.survey.getByDomain(domain);
+      return _client.survey.getProjectByDomain(domain);
     }
 
-    return Future.value(null);
+    return null;
+  }
+
+  Survey? _selectSurvey(PublicProject project) {
+    final surveyId = component.surveyId;
+    if (surveyId == null) {
+      return project.surveys.length == 1 ? project.surveys.first : null;
+    }
+    for (final survey in project.surveys) {
+      if (survey.id == surveyId) return survey;
+    }
+    return null;
   }
 
   void _hydrateSurvey(
+    Project project,
     Survey survey,
     List<Question> questions,
     List<QuestionVisibilityRule> visibilityRules,
     Map<int, List<Choice>> choicesByQuestion,
   ) {
+    _project = project;
     _survey = survey;
-    _locale = survey.defaultLocale;
+    _surveys = [survey];
+    _locale = project.defaultLocale;
     _questions = questions;
     _visibilityRules = visibilityRules;
     _choicesByQuestion = choicesByQuestion;
     _anonymousTokenStorageKey =
-        'form_concierge.anonymous_token.${component.serverUrl}.${survey.slug}';
+        'form_concierge.anonymous_token.${component.serverUrl}.${project.slug}.${survey.id}';
   }
 
   Future<bool> _ensureAnonymousAccount() async {
@@ -278,6 +327,7 @@ class SurveyClientState extends State<SurveyClient> {
   @override
   Component build(BuildContext context) {
     final survey = _survey;
+    final project = _project;
     final visibleQuestions = resolveVisibleQuestions(
       _questions,
       _visibilityRules,
@@ -294,8 +344,15 @@ class SurveyClientState extends State<SurveyClient> {
             onRetry: _loadSurvey,
           ),
         SurveyViewState.ready || SurveyViewState.submitting => survey == null
-            ? const SurveyLoading()
+            ? project == null
+                ? const SurveyLoading()
+                : _ProjectSurveyList(
+                    project: project,
+                    surveys: _surveys,
+                    locale: _locale,
+                  )
             : SurveyContent(
+                project: project!,
                 survey: survey,
                 questions: visibleQuestions,
                 choicesByQuestion: _choicesByQuestion,
@@ -321,6 +378,53 @@ class SurveyClientState extends State<SurveyClient> {
                 locale: _locale,
               ),
       },
+    ]);
+  }
+}
+
+class _ProjectSurveyList extends StatelessComponent {
+  const _ProjectSurveyList({
+    required this.project,
+    required this.surveys,
+    required this.locale,
+  });
+
+  final Project project;
+  final List<Survey> surveys;
+  final String locale;
+
+  @override
+  Component build(BuildContext context) {
+    return div(classes: 'max-w-xl mx-auto', [
+      div(
+          classes:
+              'bg-white rounded-xl shadow-md border border-slate-200 p-6 mb-6',
+          [
+            h1(classes: 'text-xl font-semibold text-slate-900', [
+              Component.text(project.nameFor(locale)),
+            ]),
+            if ((project.description ?? '').isNotEmpty)
+              p(classes: 'mt-2 text-sm text-slate-600 leading-relaxed', [
+                Component.text(project.description!),
+              ]),
+          ]),
+      div(classes: 'space-y-3', [
+        for (final survey in surveys)
+          a(
+            [
+              h2(classes: 'font-medium text-slate-900', [
+                Component.text(survey.titleFor(locale)),
+              ]),
+              if (survey.descriptionFor(locale).trim().isNotEmpty)
+                p(classes: 'mt-2 text-sm text-slate-600', [
+                  Component.text(survey.descriptionFor(locale)),
+                ]),
+            ],
+            href: '/${project.slug}/${survey.id}',
+            classes:
+                'block bg-white rounded-xl shadow-md border border-slate-200 p-5 hover:border-indigo-300',
+          ),
+      ]),
     ]);
   }
 }

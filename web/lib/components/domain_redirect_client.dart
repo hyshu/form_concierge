@@ -35,14 +35,16 @@ class DomainRedirectClientState extends State<DomainRedirectClient> {
         setState(() => _state = _DomainRedirectState.notFound);
         return;
       }
-      final survey = await Client(component.serverUrl).survey.getByDomain(
-            domain,
-          );
-      if (survey == null) {
+      final project =
+          await Client(component.serverUrl).survey.getProjectByDomain(
+                domain,
+              );
+      if (project == null || project.surveys.isEmpty) {
         setState(() => _state = _DomainRedirectState.notFound);
         return;
       }
-      replaceLocation('/${survey.slug}');
+      replaceLocation(
+          project.surveys.length == 1 ? '/${project.surveys.first.id}' : '/');
     } on Exception catch (_) {
       setState(() => _state = _DomainRedirectState.error);
     }

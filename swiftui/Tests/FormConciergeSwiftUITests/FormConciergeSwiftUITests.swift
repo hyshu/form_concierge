@@ -1,6 +1,7 @@
 import Foundation
-@testable import FormConciergeSwiftUI
 import XCTest
+
+@testable import FormConciergeSwiftUI
 
 final class FormConciergeSwiftUITests: XCTestCase {
   func testNormalizeFormContentLocaleHandlesCommonRegionTags() {
@@ -22,7 +23,8 @@ final class FormConciergeSwiftUITests: XCTestCase {
         lastSeenReplyAt: latest.addingTimeInterval(-1)
       ).hasNewReplies
     )
-    XCTAssertFalse(AdminReplyCheckStatus(latestReplyAt: latest, lastSeenReplyAt: latest).hasNewReplies)
+    XCTAssertFalse(
+      AdminReplyCheckStatus(latestReplyAt: latest, lastSeenReplyAt: latest).hasNewReplies)
     XCTAssertFalse(
       AdminReplyCheckStatus(
         latestReplyAt: latest,
@@ -54,7 +56,7 @@ final class FormConciergeSwiftUITests: XCTestCase {
       XCTAssertEqual(body["displayName"] as? String, "Respondent")
       return self.jsonResponse([
         "account": self.anonymousAccountJson(),
-        "token": "created-token"
+        "token": "created-token",
       ])
     }
 
@@ -65,18 +67,19 @@ final class FormConciergeSwiftUITests: XCTestCase {
     XCTAssertTrue(hasToken)
   }
 
-  func testSurveyByDomainEncodesHostQuery() async throws {
+  func testProjectByDomainEncodesHostQuery() async throws {
     let client = makeClient { request in
       XCTAssertEqual(request.httpMethod, "GET")
-      XCTAssertEqual(request.url?.path, "/api/surveys/domain")
+      XCTAssertEqual(request.url?.path, "/api/projects/domain")
       XCTAssertEqual(request.url?.query, "host=forms.example.com")
-      return self.jsonResponse(self.surveyJson())
+      return self.jsonResponse(self.projectJson())
     }
 
-    let survey = try await client.survey(domain: "forms.example.com")
+    let project = try await client.project(domain: "forms.example.com")
 
-    XCTAssertEqual(survey.slug, "customer-feedback")
-    XCTAssertEqual(survey.customDomain, "forms.example.com")
+    XCTAssertEqual(project.project.slug, "customer-feedback")
+    XCTAssertEqual(project.project.customDomain, "forms.example.com")
+    XCTAssertEqual(project.surveys.first?.projectId, 1)
   }
 
   func testRepliesUsesBearerTokenAndResponseQuery() async throws {
@@ -93,7 +96,7 @@ final class FormConciergeSwiftUITests: XCTestCase {
           "adminId": "admin-1",
           "body": "Thanks",
           "createdAt": "2026-06-22T10:15:30Z",
-          "readAt": NSNull()
+          "readAt": NSNull(),
         ]
       ])
     }
@@ -124,7 +127,7 @@ final class FormConciergeSwiftUITests: XCTestCase {
         XCTAssertNil(request.value(forHTTPHeaderField: "Authorization"))
         return self.jsonResponse([
           "account": self.anonymousAccountJson(),
-          "token": "created-token"
+          "token": "created-token",
         ])
       }
 
@@ -148,10 +151,12 @@ final class FormConciergeSwiftUITests: XCTestCase {
     )
     let hasToken = await client.hasAnonymousToken()
 
-    XCTAssertEqual(paths, [
-      "POST /api/anonymous/accounts",
-      "POST /api/surveys/id/1/responses"
-    ])
+    XCTAssertEqual(
+      paths,
+      [
+        "POST /api/anonymous/accounts",
+        "POST /api/surveys/id/1/responses",
+      ])
     XCTAssertEqual(response.id, 99)
     XCTAssertTrue(hasToken)
   }
@@ -293,22 +298,36 @@ final class FormConciergeSwiftUITests: XCTestCase {
       "id": "anon-1",
       "displayName": "Respondent",
       "createdAt": "2026-06-22T10:00:00Z",
-      "lastSeenAt": "2026-06-22T10:00:00Z"
+      "lastSeenAt": "2026-06-22T10:00:00Z",
     ]
   }
 
   private func surveyJson() -> [String: Any?] {
     [
       "id": 1,
-      "slug": "customer-feedback",
-      "customDomain": "forms.example.com",
-      "defaultLocale": "en",
-      "supportedLocales": ["en", "ja"],
+      "projectId": 1,
       "titleTranslations": ["en": "Customer feedback", "ja": "顧客フィードバック"],
       "descriptionTranslations": ["en": "Tell us", "ja": "ご意見をお聞かせください"],
       "status": "published",
       "createdAt": "2026-06-22T10:00:00Z",
-      "updatedAt": "2026-06-22T10:00:00Z"
+      "updatedAt": "2026-06-22T10:00:00Z",
+    ]
+  }
+
+  private func projectJson() -> [String: Any?] {
+    [
+      "project": [
+        "id": 1,
+        "slug": "customer-feedback",
+        "customDomain": "forms.example.com",
+        "defaultLocale": "en",
+        "supportedLocales": ["en", "ja"],
+        "nameTranslations": ["en": "Customer feedback", "ja": "顧客フィードバック"],
+        "descriptionTranslations": ["en": "", "ja": ""],
+        "createdAt": "2026-06-22T10:00:00Z",
+        "updatedAt": "2026-06-22T10:00:00Z",
+      ],
+      "surveys": [surveyJson()],
     ]
   }
 
@@ -320,7 +339,7 @@ final class FormConciergeSwiftUITests: XCTestCase {
       "anonymousAccountId": "anon-1",
       "submittedAt": "2026-06-22T10:02:00Z",
       "deviceInfo": NSNull(),
-      "metadata": NSNull()
+      "metadata": NSNull(),
     ]
   }
 }

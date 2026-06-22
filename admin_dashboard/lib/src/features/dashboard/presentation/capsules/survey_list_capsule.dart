@@ -5,24 +5,27 @@ import '../../../../core/capsules/client_capsule.dart';
 
 /// State for the survey list.
 class SurveyListState {
-  final List<Survey> surveys;
+  final List<ProjectWithSurveys> projects;
   final bool isLoading;
   final String? error;
 
   const SurveyListState({
-    this.surveys = const [],
+    this.projects = const [],
     this.isLoading = true,
     this.error,
   });
 
   factory SurveyListState.initial() => const SurveyListState();
 
+  List<Survey> get surveys =>
+      projects.expand((project) => project.surveys).toList();
+
   SurveyListState copyWith({
-    List<Survey>? surveys,
+    List<ProjectWithSurveys>? projects,
     bool? isLoading,
     String? error,
   }) => SurveyListState(
-    surveys: surveys ?? this.surveys,
+    projects: projects ?? this.projects,
     isLoading: isLoading ?? this.isLoading,
     error: error,
   );
@@ -53,20 +56,66 @@ class SurveyListManager {
   }) : _setState = setState,
        _client = client;
 
-  /// Load all surveys for the current user.
-  Future<void> loadSurveys() async {
+  /// Load all projects and surveys for the current user.
+  Future<void> loadProjects() async {
     _setState(state.copyWith(isLoading: true, error: null));
     try {
-      final surveys = await _client.surveyAdmin.list();
-      _setState(state.copyWith(surveys: surveys, isLoading: false));
+      final projects = await _client.projectAdmin.list();
+      _setState(state.copyWith(projects: projects, isLoading: false));
     } on Exception catch (e) {
       _setState(
         state.copyWith(
           isLoading: false,
-          error: 'Failed to load surveys: $e',
+          error: 'Failed to load projects: $e',
         ),
       );
     }
+  }
+
+  Future<void> loadSurveys() async {
+    await loadProjects();
+  }
+
+  Future<ProjectWithSurveys?> getProject(int projectId) async {
+    try {
+      return _client.projectAdmin.getById(projectId);
+    } on Exception catch (e) {
+      _setState(
+        state.copyWith(
+          error: 'Failed to load project: $e',
+        ),
+      );
+      return null;
+    }
+  }
+
+  Future<Project?> createProject(Project project) async {
+    try {
+      final created = await _client.projectAdmin.create(project);
+      await loadProjects();
+      return created;
+    } on Exception catch (e) {
+      _setState(state.copyWith(error: 'Failed to create project: $e'));
+      return null;
+    }
+  }
+
+  Future<Project?> updateProject(Project project) async {
+    try {
+      final updated = await _client.projectAdmin.update(project);
+      await loadProjects();
+      return updated;
+    } on Exception catch (e) {
+      _setState(state.copyWith(error: 'Failed to update project: $e'));
+      return null;
+    }
+  }
+
+  Future<bool> deleteProject(int projectId) async {
+    return _runAndReload(
+      () => _client.projectAdmin.delete(projectId),
+      'Failed to delete project',
+    );
   }
 
   /// Delete a survey by ID.

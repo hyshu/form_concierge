@@ -157,6 +157,7 @@ Widget _subject({
   return MaterialApp(
     home: Scaffold(
       body: SurveyContent(
+        project: _project(),
         survey: _survey(),
         questions:
             questions ?? [_question(id: 1, type: QuestionType.textSingle)],
@@ -178,9 +179,7 @@ Survey _survey() {
   final now = DateTime.utc(2026, 6, 22, 10);
   return Survey(
     id: 1,
-    slug: 'customer-feedback',
-    defaultLocale: 'en',
-    supportedLocales: const ['en', 'ja'],
+    projectId: 1,
     titleTranslations: const LocalizedText({
       'en': 'Customer feedback',
       'ja': '顧客フィードバック',
@@ -190,6 +189,23 @@ Survey _survey() {
       'ja': 'ご意見をお聞かせください',
     }),
     status: SurveyStatus.published,
+    createdAt: now,
+    updatedAt: now,
+  );
+}
+
+Project _project() {
+  final now = DateTime.utc(2026, 6, 22, 10);
+  return Project(
+    id: 1,
+    slug: 'customer-feedback',
+    defaultLocale: 'en',
+    supportedLocales: const ['en', 'ja'],
+    nameTranslations: const LocalizedText({
+      'en': 'Customer feedback',
+      'ja': '顧客フィードバック',
+    }),
+    descriptionTranslations: const LocalizedText({'en': '', 'ja': ''}),
     createdAt: now,
     updatedAt: now,
   );

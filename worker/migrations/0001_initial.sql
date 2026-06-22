@@ -28,12 +28,25 @@ CREATE TABLE anonymous_accounts (
   last_seen_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 );
 
-CREATE TABLE surveys (
+CREATE TABLE projects (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   slug TEXT NOT NULL UNIQUE,
   custom_domain TEXT,
   default_locale TEXT NOT NULL DEFAULT 'en',
   supported_locales TEXT NOT NULL,
+  name_translations TEXT NOT NULL,
+  description_translations TEXT NOT NULL,
+  created_by_admin_id TEXT REFERENCES admins(id) ON DELETE SET NULL,
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+  updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+);
+
+CREATE INDEX projects_created_by_admin_id ON projects(created_by_admin_id);
+CREATE UNIQUE INDEX projects_custom_domain_unique ON projects(custom_domain);
+
+CREATE TABLE surveys (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
   title_translations TEXT NOT NULL,
   description_translations TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'draft',
@@ -45,9 +58,9 @@ CREATE TABLE surveys (
   ends_at TEXT
 );
 
+CREATE INDEX surveys_project_id ON surveys(project_id);
 CREATE INDEX surveys_status ON surveys(status);
 CREATE INDEX surveys_created_by_admin_id ON surveys(created_by_admin_id);
-CREATE UNIQUE INDEX surveys_custom_domain_unique ON surveys(custom_domain);
 
 CREATE TABLE questions (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

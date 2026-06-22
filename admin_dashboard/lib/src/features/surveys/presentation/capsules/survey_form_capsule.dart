@@ -46,10 +46,14 @@ class SurveyFormManager {
     _setState(surveyId, getState(surveyId).copyWith(isLoading: true));
     try {
       final survey = await _client.surveyAdmin.getById(surveyId);
+      final project = survey == null
+          ? null
+          : (await _client.projectAdmin.getById(survey.projectId))?.project;
       _setState(
         surveyId,
         getState(surveyId).copyWith(
           survey: survey,
+          project: project,
           isLoading: false,
         ),
       );
@@ -64,11 +68,31 @@ class SurveyFormManager {
     }
   }
 
+  Future<void> loadProject(int projectId, {int? surveyId}) async {
+    _setState(surveyId, getState(surveyId).copyWith(isLoading: true));
+    try {
+      final project = await _client.projectAdmin.getById(projectId);
+      _setState(
+        surveyId,
+        getState(surveyId).copyWith(
+          project: project?.project,
+          isLoading: false,
+        ),
+      );
+    } on Exception catch (e) {
+      _setState(
+        surveyId,
+        getState(surveyId).copyWith(
+          isLoading: false,
+          error: 'Failed to load project: $e',
+        ),
+      );
+    }
+  }
+
   /// Create a new survey.
   Future<Survey?> createSurvey({
-    required String defaultLocale,
-    required String slug,
-    required String? customDomain,
+    required int projectId,
     required LocalizedText titleTranslations,
     required LocalizedText descriptionTranslations,
   }) async {
@@ -76,9 +100,7 @@ class SurveyFormManager {
     try {
       final created = await _client.surveyAdmin.create(
         _draftSurvey(
-          defaultLocale: defaultLocale,
-          slug: slug,
-          customDomain: customDomain,
+          projectId: projectId,
           titleTranslations: titleTranslations,
           descriptionTranslations: descriptionTranslations,
         ),
@@ -253,9 +275,7 @@ class SurveyFormManager {
 
   /// Create a new survey with questions.
   Future<Survey?> createSurveyWithQuestions({
-    required String defaultLocale,
-    required String slug,
-    required String? customDomain,
+    required int projectId,
     required LocalizedText titleTranslations,
     required LocalizedText descriptionTranslations,
   }) async {
@@ -268,9 +288,7 @@ class SurveyFormManager {
 
       final created = await _client.surveyAdmin.createWithQuestions(
         _draftSurvey(
-          defaultLocale: defaultLocale,
-          slug: slug,
-          customDomain: customDomain,
+          projectId: projectId,
           titleTranslations: titleTranslations,
           descriptionTranslations: descriptionTranslations,
         ),
@@ -294,18 +312,13 @@ class SurveyFormManager {
   }
 
   Survey _draftSurvey({
-    required String defaultLocale,
-    required String slug,
-    required String? customDomain,
+    required int projectId,
     required LocalizedText titleTranslations,
     required LocalizedText descriptionTranslations,
   }) {
     final now = DateTime.now();
     return Survey(
-      slug: slug,
-      customDomain: customDomain,
-      defaultLocale: defaultLocale,
-      supportedLocales: formContentLocaleCodes,
+      projectId: projectId,
       titleTranslations: titleTranslations,
       descriptionTranslations: descriptionTranslations,
       status: SurveyStatus.draft,
