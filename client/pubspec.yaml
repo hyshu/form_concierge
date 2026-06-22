@@ -1,10 +1,8 @@
 name: form_concierge_client
-description: Starting point for a Serverpod client.
+description: REST client for Form Concierge Workers API.
 
 environment:
   sdk: '^3.8.0'
 
 dependencies:
-  serverpod_auth_idp_client: 3.2.3
-  serverpod_client: 3.2.3
-
+  http: ^1.2.2
