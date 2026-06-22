@@ -168,7 +168,11 @@ CREATE TABLE notification_settings (
 
 CREATE TABLE integration_settings (
   id INTEGER PRIMARY KEY CHECK (id = 1),
+  ai_provider TEXT NOT NULL DEFAULT 'gemini',
   gemini_api_key TEXT,
+  openai_api_key TEXT,
+  claude_api_key TEXT,
+  cerebras_api_key TEXT,
   smtp_host TEXT,
   smtp_port INTEGER,
   smtp_username TEXT,
@@ -177,6 +181,7 @@ CREATE TABLE integration_settings (
   smtp_from_name TEXT,
   smtp_secure_mode TEXT NOT NULL DEFAULT 'starttls',
   updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+  CHECK (ai_provider IN ('gemini', 'openai', 'claude', 'cerebras')),
   CHECK (smtp_secure_mode IN ('none', 'starttls', 'tls')),
   CHECK (smtp_port IS NULL OR (smtp_port BETWEEN 1 AND 65535))
 );

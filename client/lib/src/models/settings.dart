@@ -1,37 +1,64 @@
 part of form_concierge_client;
 
+enum AiProvider { gemini, openai, claude, cerebras }
+
 enum SmtpSecureMode { none, starttls, tls }
 
 class AdminIntegrationSettings {
-  final GeminiIntegrationSettings gemini;
+  final AiIntegrationSettings ai;
   final SmtpIntegrationSettings smtp;
   final DateTime? updatedAt;
 
   const AdminIntegrationSettings({
-    required this.gemini,
+    required this.ai,
     required this.smtp,
     this.updatedAt,
   });
 
   factory AdminIntegrationSettings.fromJson(Map<String, dynamic> json) =>
       AdminIntegrationSettings(
-        gemini: _object(json['gemini'], GeminiIntegrationSettings.fromJson),
+        ai: _object(json['ai'], AiIntegrationSettings.fromJson),
         smtp: _object(json['smtp'], SmtpIntegrationSettings.fromJson),
         updatedAt: _optionalDate(json['updatedAt']),
       );
 }
 
-class GeminiIntegrationSettings {
+class AiIntegrationSettings {
+  final AiProvider provider;
+  final AiProviderKeySettings gemini;
+  final AiProviderKeySettings openai;
+  final AiProviderKeySettings claude;
+  final AiProviderKeySettings cerebras;
+
+  const AiIntegrationSettings({
+    required this.provider,
+    required this.gemini,
+    required this.openai,
+    required this.claude,
+    required this.cerebras,
+  });
+
+  factory AiIntegrationSettings.fromJson(Map<String, dynamic> json) =>
+      AiIntegrationSettings(
+        provider: _enum(AiProvider.values, json['provider'], AiProvider.gemini),
+        gemini: _object(json['gemini'], AiProviderKeySettings.fromJson),
+        openai: _object(json['openai'], AiProviderKeySettings.fromJson),
+        claude: _object(json['claude'], AiProviderKeySettings.fromJson),
+        cerebras: _object(json['cerebras'], AiProviderKeySettings.fromJson),
+      );
+}
+
+class AiProviderKeySettings {
   final bool enabled;
   final bool hasApiKey;
 
-  const GeminiIntegrationSettings({
+  const AiProviderKeySettings({
     required this.enabled,
     required this.hasApiKey,
   });
 
-  factory GeminiIntegrationSettings.fromJson(Map<String, dynamic> json) =>
-      GeminiIntegrationSettings(
+  factory AiProviderKeySettings.fromJson(Map<String, dynamic> json) =>
+      AiProviderKeySettings(
         enabled: _bool(json['enabled']),
         hasApiKey: _bool(json['hasApiKey']),
       );
@@ -76,8 +103,15 @@ class SmtpIntegrationSettings {
 }
 
 class AdminIntegrationSettingsInput {
+  final AiProvider aiProvider;
   final String? geminiApiKey;
   final bool clearGeminiApiKey;
+  final String? openaiApiKey;
+  final bool clearOpenaiApiKey;
+  final String? claudeApiKey;
+  final bool clearClaudeApiKey;
+  final String? cerebrasApiKey;
+  final bool clearCerebrasApiKey;
   final String? smtpHost;
   final int? smtpPort;
   final String? smtpUsername;
@@ -88,8 +122,15 @@ class AdminIntegrationSettingsInput {
   final SmtpSecureMode smtpSecureMode;
 
   const AdminIntegrationSettingsInput({
+    this.aiProvider = AiProvider.gemini,
     this.geminiApiKey,
     this.clearGeminiApiKey = false,
+    this.openaiApiKey,
+    this.clearOpenaiApiKey = false,
+    this.claudeApiKey,
+    this.clearClaudeApiKey = false,
+    this.cerebrasApiKey,
+    this.clearCerebrasApiKey = false,
     this.smtpHost,
     this.smtpPort,
     this.smtpUsername,
@@ -101,9 +142,16 @@ class AdminIntegrationSettingsInput {
   });
 
   Map<String, dynamic> toJson() => {
-    'gemini': {
-      'apiKey': geminiApiKey,
-      'clearApiKey': clearGeminiApiKey,
+    'ai': {
+      'provider': _enumName(aiProvider),
+      'geminiApiKey': geminiApiKey,
+      'clearGeminiApiKey': clearGeminiApiKey,
+      'openaiApiKey': openaiApiKey,
+      'clearOpenaiApiKey': clearOpenaiApiKey,
+      'claudeApiKey': claudeApiKey,
+      'clearClaudeApiKey': clearClaudeApiKey,
+      'cerebrasApiKey': cerebrasApiKey,
+      'clearCerebrasApiKey': clearCerebrasApiKey,
     },
     'smtp': {
       'host': smtpHost,

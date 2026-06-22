@@ -38,7 +38,7 @@ class SurveyEditorPage extends RearchConsumer {
     final questionState = isNewSurvey
         ? null
         : questionManager.getState(surveyId!);
-    final geminiEnabled = publicConfig.state.geminiEnabled;
+    final aiGenerationEnabled = publicConfig.state.aiGenerationEnabled;
     final role = client.auth.signedInUser?.role;
     final canWriteSurveys = role == AdminRole.admin || role == AdminRole.editor;
     final canManageUsers = role == AdminRole.admin;
@@ -184,7 +184,7 @@ class SurveyEditorPage extends RearchConsumer {
                 DraftQuestionsSection(
                   formManager: formManager,
                   formState: formState,
-                  geminiEnabled: geminiEnabled,
+                  aiGenerationEnabled: aiGenerationEnabled,
                   primaryLocale: activeDefaultLocale,
                 )
               else
