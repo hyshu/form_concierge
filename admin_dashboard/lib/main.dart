@@ -19,6 +19,9 @@ void main() async {
 }
 
 Future<String> _getApiUrl() async {
+  const configuredApiUrl = String.fromEnvironment('FORM_CONCIERGE_API_URL');
+  if (configuredApiUrl.isNotEmpty) return configuredApiUrl;
+
   try {
     final raw = await rootBundle.loadString('assets/config.json');
     final json = jsonDecode(raw) as Map<String, dynamic>;

@@ -1,0 +1,16 @@
+services:
+  e2e:
+    build:
+      context: ../..
+      dockerfile: .github/docker/e2e.Dockerfile
+    working_dir: /workspace
+    environment:
+      CI: "true"
+      API_URL: http://127.0.0.1:8787
+      ADMIN_URL: http://127.0.0.1:8080
+      WEB_FORM_URL: http://127.0.0.1:8081
+      ADMIN_EMAIL: e2e-admin@example.com
+      ADMIN_PASSWORD: password12345
+    volumes:
+      - ../..:/workspace
+    command: bash tool/ci/e2e.sh

@@ -34,3 +34,8 @@ form_concierge_server/web/app/
 # Docker volumes
 postgres-data/
 redis-data/
+
+# CI / E2E artifacts
+.tmp/
+e2e/.artifacts/
+e2e/test-results/
