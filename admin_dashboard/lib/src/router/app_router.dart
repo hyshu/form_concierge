@@ -52,48 +52,60 @@ GoRouter appRouterCapsule(CapsuleHandle use) {
       routes: [
         GoRoute(
           path: '/login',
-          builder: (context, state) => const LoginPage(),
+          pageBuilder: (context, state) =>
+              const NoTransitionPage<void>(child: LoginPage()),
         ),
         GoRoute(
           path: '/forgot-password',
-          builder: (context, state) => const ForgotPasswordPage(),
+          pageBuilder: (context, state) =>
+              const NoTransitionPage<void>(child: ForgotPasswordPage()),
         ),
         GoRoute(
           path: '/verify-reset-code',
-          builder: (context, state) => const VerifyResetCodePage(),
+          pageBuilder: (context, state) =>
+              const NoTransitionPage<void>(child: VerifyResetCodePage()),
         ),
         GoRoute(
           path: '/reset-password',
-          builder: (context, state) => const ResetPasswordPage(),
+          pageBuilder: (context, state) =>
+              const NoTransitionPage<void>(child: ResetPasswordPage()),
         ),
         GoRoute(
           path: '/admin',
-          builder: (context, state) => const DashboardPage(),
+          pageBuilder: (context, state) =>
+              const NoTransitionPage<void>(child: DashboardPage()),
           routes: [
             GoRoute(
               path: 'surveys/new',
-              builder: (context, state) => const SurveyEditorPage(),
+              pageBuilder: (context, state) =>
+                  const NoTransitionPage<void>(child: SurveyEditorPage()),
             ),
             GoRoute(
               path: 'users',
-              builder: (context, state) => const UsersPage(),
+              pageBuilder: (context, state) =>
+                  const NoTransitionPage<void>(child: UsersPage()),
             ),
             GoRoute(
               path: 'settings',
-              builder: (context, state) => const AdminSettingsPage(),
+              pageBuilder: (context, state) =>
+                  const NoTransitionPage<void>(child: AdminSettingsPage()),
             ),
             GoRoute(
               path: 'surveys/:id',
-              builder: (context, state) {
+              pageBuilder: (context, state) {
                 final id = int.parse(state.pathParameters['id']!);
-                return SurveyEditorPage(surveyId: id);
+                return NoTransitionPage<void>(
+                  child: SurveyEditorPage(surveyId: id),
+                );
               },
               routes: [
                 GoRoute(
                   path: 'responses',
-                  builder: (context, state) {
+                  pageBuilder: (context, state) {
                     final id = int.parse(state.pathParameters['id']!);
-                    return ResponsesPage(surveyId: id);
+                    return NoTransitionPage<void>(
+                      child: ResponsesPage(surveyId: id),
+                    );
                   },
                 ),
               ],
