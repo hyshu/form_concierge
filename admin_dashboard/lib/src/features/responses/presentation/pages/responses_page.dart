@@ -79,6 +79,8 @@ class ResponsesPage extends RearchConsumer {
                     responseManager.loadResponses(surveyId, page: page),
                 onDelete: (response) =>
                     _confirmDelete(context, response, responseManager),
+                onReply: (response) =>
+                    _showReplyDialog(context, response, responseManager),
               ),
               // Notification Settings Tab
               NotificationSettingsView(
@@ -122,6 +124,50 @@ class ResponsesPage extends RearchConsumer {
 
     if (confirmed) {
       await manager.deleteResponse(surveyId, response.id!);
+    }
+  }
+
+  Future<void> _showReplyDialog(
+    BuildContext context,
+    SurveyResponse response,
+    ResponseListManager manager,
+  ) async {
+    final controller = TextEditingController();
+    final body = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Reply to respondent'),
+        content: TextField(
+          controller: controller,
+          minLines: 4,
+          maxLines: 8,
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: 'Message',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(controller.text),
+            child: const Text('Send'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+
+    final trimmed = body?.trim();
+    if (trimmed == null || trimmed.isEmpty || response.id == null) return;
+    final sent = await manager.sendReply(surveyId, response.id!, trimmed);
+    if (sent && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Reply sent')),
+      );
     }
   }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
-import 'package:serverpod_auth_core_flutter/serverpod_auth_core_flutter.dart';
 
 import 'state/survey_state.dart';
 import 'state/auth_state.dart';
@@ -15,16 +15,26 @@ class FormConciergeSurvey extends StatefulWidget {
   final Client client;
   final String surveySlug;
   final VoidCallback? onSubmitted;
+  final ValueChanged<SurveyResponse>? onResponseSubmitted;
+  final ValueChanged<AnonymousSession>? onAnonymousSession;
   final VoidCallback? onAuthRequired;
   final String? anonymousId;
+  final String? anonymousToken;
+  final DeviceInfo? deviceInfo;
+  final Map<String, dynamic>? metadata;
 
   const FormConciergeSurvey({
     super.key,
     required this.client,
     required this.surveySlug,
     this.onSubmitted,
+    this.onResponseSubmitted,
+    this.onAnonymousSession,
     this.onAuthRequired,
     this.anonymousId,
+    this.anonymousToken,
+    this.deviceInfo,
+    this.metadata,
   });
 
   @override
@@ -70,39 +80,7 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
         }
       }
 
-      if (survey.authRequirement == AuthRequirement.authenticated) {
-        await widget.client.auth.restore();
-        final isAuthenticated = widget.client.auth.isAuthenticated;
-
-        setState(() {
-          _authState = _authState.copyWith(isAuthenticated: isAuthenticated);
-        });
-
-        if (!isAuthenticated) {
-          if (widget.onAuthRequired != null) {
-            widget.onAuthRequired!();
-            setState(() {
-              _state = _state.copyWith(
-                viewState: SurveyViewState.authRequired,
-                survey: survey,
-                questions: questions,
-                choicesByQuestion: choicesByQuestion,
-              );
-            });
-            return;
-          }
-
-          setState(() {
-            _state = _state.copyWith(
-              viewState: SurveyViewState.authRequired,
-              survey: survey,
-              questions: questions,
-              choicesByQuestion: choicesByQuestion,
-            );
-          });
-          return;
-        }
-      }
+      await _ensureAnonymousSession();
 
       setState(() {
         _state = _state.copyWith(
@@ -193,12 +171,16 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
     });
 
     try {
+      await _ensureAnonymousSession();
+
       final answers = buildAnswers(_state.answers, _state.questions);
 
-      await widget.client.survey.submitResponse(
+      final response = await widget.client.survey.submitResponse(
         surveyId: _state.survey!.id!,
         answers: answers,
         anonymousId: widget.anonymousId,
+        deviceInfo: _deviceInfoForContext(context),
+        metadata: widget.metadata,
       );
 
       setState(() {
@@ -206,6 +188,7 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
       });
 
       widget.onSubmitted?.call();
+      widget.onResponseSubmitted?.call(response);
     } on Exception catch (e) {
       setState(() {
         _state = _state.copyWith(
@@ -216,11 +199,51 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
     }
   }
 
+  Future<void> _ensureAnonymousSession() async {
+    if (!widget.client.anonymous.isAuthenticated &&
+        widget.anonymousToken != null) {
+      widget.client.anonymous.useToken(widget.anonymousToken!);
+      _authState = _authState.copyWith(
+        isAuthenticated: true,
+        registrationToken: widget.anonymousToken,
+      );
+      return;
+    }
+
+    if (!widget.client.anonymous.isAuthenticated) {
+      final session = await widget.client.anonymous.createAccount(
+        displayName: widget.anonymousId,
+      );
+      _authState = _authState.copyWith(
+        isAuthenticated: true,
+        registrationToken: session.token,
+      );
+      widget.onAnonymousSession?.call(session);
+    }
+  }
+
   void _onAuthSuccess() {
     setState(() {
       _authState = _authState.copyWith(isAuthenticated: true);
       _state = _state.copyWith(viewState: SurveyViewState.ready);
     });
+  }
+
+  DeviceInfo _deviceInfoForContext(BuildContext context) {
+    final media = MediaQuery.maybeOf(context);
+    final platform = Theme.of(context).platform.name;
+    final locale = Localizations.maybeLocaleOf(context)?.toLanguageTag();
+    final automatic = DeviceInfo(
+      label: kIsWeb ? 'Web' : platform,
+      platform: kIsWeb ? 'web' : 'flutter',
+      os: platform,
+      locale: locale,
+      timezone: DateTime.now().timeZoneName,
+      screenWidth: media?.size.width.round(),
+      screenHeight: media?.size.height.round(),
+      devicePixelRatio: media?.devicePixelRatio,
+    );
+    return automatic.merge(widget.deviceInfo);
   }
 
   @override

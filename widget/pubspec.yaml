@@ -1,6 +1,7 @@
 name: form_concierge_survey_widget
 description: Embeddable survey widget for form_concierge
 version: 0.1.0
+publish_to: none
 
 environment:
   sdk: ^3.8.0
@@ -11,7 +12,6 @@ dependencies:
     sdk: flutter
   form_concierge_client:
     path: ../client
-  serverpod_auth_core_flutter: ^3.2.3
 
 dev_dependencies:
   flutter_test:

@@ -15,17 +15,19 @@ class SingleChoiceQuestion extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: choices.map((choice) {
-        return RadioListTile<int>(
-          title: Text(choice.text),
-          value: choice.id!,
-          groupValue: selectedChoiceId,
-          onChanged: onChanged,
-          contentPadding: EdgeInsets.zero,
-          visualDensity: VisualDensity.compact,
-        );
-      }).toList(),
+    return RadioGroup<int>(
+      groupValue: selectedChoiceId,
+      onChanged: onChanged,
+      child: Column(
+        children: choices.map((choice) {
+          return RadioListTile<int>(
+            title: Text(choice.text),
+            value: choice.id!,
+            contentPadding: EdgeInsets.zero,
+            visualDensity: VisualDensity.compact,
+          );
+        }).toList(),
+      ),
     );
   }
 }

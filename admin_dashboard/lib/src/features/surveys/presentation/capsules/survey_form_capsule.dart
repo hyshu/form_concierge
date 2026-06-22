@@ -282,9 +282,6 @@ class SurveyFormManager {
   void reorderDraftQuestions(int oldIndex, int newIndex) {
     final state = getState(null);
     final questions = List<DraftQuestion>.from(state.draftQuestions);
-    if (newIndex > oldIndex) {
-      newIndex -= 1;
-    }
     final item = questions.removeAt(oldIndex);
     questions.insert(newIndex, item);
     _setState(null, state.copyWith(draftQuestions: questions));
