@@ -5,6 +5,8 @@ import 'package:jaspr/dom.dart';
 import '../state/survey_state.dart';
 import '../state/auth_state.dart';
 import '../utils/answer_builder.dart';
+import '../utils/anonymous_storage.dart';
+import '../utils/device_info.dart';
 import '../utils/validation.dart';
 import 'survey_loading.dart';
 import 'survey_error.dart';
@@ -36,6 +38,7 @@ class SurveyClientState extends State<SurveyClient> {
   late List<Question> _questions;
   late Map<int, List<Choice>> _choicesByQuestion;
   late Client _client;
+  late String _anonymousTokenStorageKey;
 
   SurveyViewState _viewState = SurveyViewState.ready;
   SurveyAuthState _authState = const SurveyAuthState();
@@ -58,19 +61,27 @@ class SurveyClientState extends State<SurveyClient> {
 
     // Initialize client
     _client = Client(component.serverUrl);
-
-    // Check auth requirement
-    if (_survey.authRequirement == AuthRequirement.authenticated) {
-      _checkAuthentication();
+    _anonymousTokenStorageKey =
+        'form_concierge.anonymous_token.${component.serverUrl}.${_survey.slug}';
+    final savedToken = readAnonymousToken(_anonymousTokenStorageKey);
+    if (savedToken != null && savedToken.isNotEmpty) {
+      _client.anonymous.useToken(savedToken);
     }
+
+    _ensureAnonymousAccount();
   }
 
-  Future<void> _checkAuthentication() async {
-    // On web, check for stored session in localStorage
-    // For now, just show auth form if authenticated is required
-    setState(() {
-      _viewState = SurveyViewState.authRequired;
-    });
+  Future<void> _ensureAnonymousAccount() async {
+    if (_client.anonymous.isAuthenticated) return;
+    try {
+      final session = await _client.anonymous.createAccount();
+      writeAnonymousToken(_anonymousTokenStorageKey, session.token);
+    } catch (_) {
+      setState(() {
+        _viewState = SurveyViewState.error;
+        _errorMessage = 'Failed to start anonymous session.';
+      });
+    }
   }
 
   void _updateAnswer(int questionId, dynamic value) {
@@ -95,10 +106,12 @@ class SurveyClientState extends State<SurveyClient> {
     });
 
     try {
+      await _ensureAnonymousAccount();
       final answers = buildAnswers(_answers, _questions);
       await _client.survey.submitResponse(
         surveyId: _survey.id!,
         answers: answers,
+        deviceInfo: _deviceInfo(),
       );
 
       setState(() {
@@ -110,6 +123,10 @@ class SurveyClientState extends State<SurveyClient> {
         _errorMessage = 'Failed to submit survey. Please try again.';
       });
     }
+  }
+
+  DeviceInfo _deviceInfo() {
+    return buildDeviceInfo();
   }
 
   void _onAuthSuccess() {

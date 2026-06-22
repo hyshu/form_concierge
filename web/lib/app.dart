@@ -2,7 +2,6 @@ import 'package:jaspr/jaspr.dart';
 import 'package:jaspr_router/jaspr_router.dart';
 
 import 'components/survey_page.dart';
-import 'components/not_found_page.dart';
 
 class App extends StatelessComponent {
   const App({required this.serverUrl, super.key});

@@ -5,18 +5,18 @@ packages:
     dependency: transitive
     description:
       name: _fe_analyzer_shared
-      sha256: "5b7468c326d2f8a4f630056404ca0d291ade42918f4a3c6233618e724f39da8e"
+      sha256: "3b19a47f6ea7c2632760777c78174f47f6aec1e05f0cd611380d4593b8af1dbc"
       url: "https://pub.dev"
     source: hosted
-    version: "92.0.0"
+    version: "96.0.0"
   analyzer:
     dependency: transitive
     description:
       name: analyzer
-      sha256: "70e4b1ef8003c64793a9e268a551a82869a8a96f39deb73dea28084b0e8bf75e"
+      sha256: "0c516bc4ad36a1a75759e54d5047cb9d15cded4459df01aa35a0b5ec7db2c2a0"
       url: "https://pub.dev"
     source: hosted
-    version: "9.0.0"
+    version: "10.2.0"
   archive:
     dependency: transitive
     description:
@@ -49,14 +49,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.5"
-  boolean_selector:
-    dependency: transitive
-    description:
-      name: boolean_selector
-      sha256: "8aab1771e1243a5063b8b0ff68042d67334e3feab9e95b9490f9a6ebf73b42ea"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.1.2"
   build:
     dependency: transitive
     description:
@@ -69,10 +61,10 @@ packages:
     dependency: transitive
     description:
       name: build_config
-      sha256: "4f64382b97504dc2fcdf487d5aae33418e08b4703fc21249e4db6d804a4d0187"
+      sha256: "4070d2a59f8eec34c97c86ceb44403834899075f66e8a9d59706f8e7834f6f71"
       url: "https://pub.dev"
     source: hosted
-    version: "1.2.0"
+    version: "1.3.0"
   build_daemon:
     dependency: transitive
     description:
@@ -81,30 +73,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.1.1"
-  build_modules:
-    dependency: transitive
-    description:
-      name: build_modules
-      sha256: "2e30f22597d45fd49058bb29f47e947d3a045db2a72d3fec27a064cb2164337e"
-      url: "https://pub.dev"
-    source: hosted
-    version: "5.1.7"
   build_runner:
     dependency: "direct dev"
     description:
       name: build_runner
-      sha256: b4d854962a32fd9f8efc0b76f98214790b833af8b2e9b2df6bfc927c0415a072
+      sha256: "1523ce62448ebac2c15a8ba5fbad8acac169788658a7dd2a1c2d9c2a9318b9a6"
       url: "https://pub.dev"
     source: hosted
-    version: "2.10.5"
+    version: "2.15.0"
   build_web_compilers:
     dependency: "direct dev"
     description:
       name: build_web_compilers
-      sha256: a70897a160d2bc5f9cea01d68a4fc5437f7672ecb3ba1c1cf2328d07ce73c9fe
+      sha256: c8be4b48f09289d145c7eaa3240f1e7776c529ea1cecddf483218edd3129de3f
       url: "https://pub.dev"
     source: hosted
-    version: "4.4.9"
+    version: "4.8.0"
   built_collection:
     dependency: transitive
     description:
@@ -129,22 +113,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.4"
-  clock:
-    dependency: transitive
-    description:
-      name: clock
-      sha256: fddb70d9b5277016c77a80201021d40a2247104d9f4aa7bab7157b7e3f05b84b
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.1.2"
-  code_builder:
-    dependency: transitive
-    description:
-      name: code_builder
-      sha256: "6a6cab2ba4680d6423f34a9b972a4c9a94ebe1b62ecec4e1a1f2cba91fd1319d"
-      url: "https://pub.dev"
-    source: hosted
-    version: "4.11.1"
   collection:
     dependency: transitive
     description:
@@ -181,10 +149,10 @@ packages:
     dependency: transitive
     description:
       name: dart_style
-      sha256: a9c30492da18ff84efe2422ba2d319a89942d93e58eb0b73d32abe822ef54b7b
+      sha256: "29f7ecc274a86d32920b1d9cfc7502fa87220da41ec60b55f329559d5732e2b2"
       url: "https://pub.dev"
     source: hosted
-    version: "3.1.3"
+    version: "3.1.7"
   ffi:
     dependency: transitive
     description:
@@ -284,34 +252,26 @@ packages:
     dependency: "direct main"
     description:
       name: jaspr
-      sha256: "2cb7e874cbc4293a90965b3f216c7b2a9dd9bf705466a026afee0013e5060b2d"
+      sha256: "0a27800a0ae8c9f5c606c278d29ce535bfddde00932aa2b56a67c2b0bd86fd80"
       url: "https://pub.dev"
     source: hosted
-    version: "0.22.1"
+    version: "0.23.1"
   jaspr_builder:
     dependency: "direct dev"
     description:
       name: jaspr_builder
-      sha256: "5a152e7bf792d991e6de0e30cee957267ab248ef28c87f4055b293c524ea8492"
+      sha256: "1b591b686dde54fec4f23dbe3cce5493545c4ee303325ab371d2de916e808d3f"
       url: "https://pub.dev"
     source: hosted
-    version: "0.22.1"
+    version: "0.23.1"
   jaspr_router:
     dependency: "direct main"
     description:
       name: jaspr_router
-      sha256: a82899af7e1717ef1643889a00a9f1a738983b58a7db13f1512a0066056d6a1e
+      sha256: "43abdfd63c19cae8faac50334c7f3065635bac3e85fd558b6076517978ade64a"
       url: "https://pub.dev"
     source: hosted
-    version: "0.8.1"
-  jaspr_tailwind:
-    dependency: "direct dev"
-    description:
-      name: jaspr_tailwind
-      sha256: ecc9c1d43d16b11e1f194b25122b7c56df3232cf4c0cf2ada11cad575a7c842f
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.3.6"
+    version: "0.8.2"
   json_annotation:
     dependency: transitive
     description:
@@ -324,10 +284,10 @@ packages:
     dependency: "direct dev"
     description:
       name: lints
-      sha256: c35bb79562d980e9a453fc715854e1ed39e24e7d0297a880ef54e17f9874a9d7
+      sha256: "12f842a479589fea194fe5c5a3095abc7be0c1f2ddfa9a0e76aed1dbd26a87df"
       url: "https://pub.dev"
     source: hosted
-    version: "5.1.1"
+    version: "6.1.0"
   logging:
     dependency: transitive
     description:
@@ -336,14 +296,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.3.0"
-  matcher:
-    dependency: transitive
-    description:
-      name: matcher
-      sha256: "12956d0ad8390bbcc63ca2e1469c0619946ccb52809807067a7020d57e647aa6"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.12.18"
   meta:
     dependency: transitive
     description:
@@ -420,42 +372,10 @@ packages:
     dependency: transitive
     description:
       name: scratch_space
-      sha256: "3417e014d20b12cebc5bfb1c0b1f63806054177158596cc31cc4d9aaca767a60"
+      sha256: "55f141cf286eca871f739518b689af61cb994d671f3fd8efabd63aba7578c309"
       url: "https://pub.dev"
     source: hosted
-    version: "1.2.0"
-  serverpod_auth_core_client:
-    dependency: transitive
-    description:
-      name: serverpod_auth_core_client
-      sha256: "88cbbcdea6f4b2b634a66ee52855817f850903c365e2fee4c3fee74ed0d53eac"
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.2.3"
-  serverpod_auth_idp_client:
-    dependency: transitive
-    description:
-      name: serverpod_auth_idp_client
-      sha256: "50e65f6b8374403c5717cc4a96bdc4246b3c18b448ba68b61d43ccfaeefec0b6"
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.2.3"
-  serverpod_client:
-    dependency: transitive
-    description:
-      name: serverpod_client
-      sha256: "4add5cba3fd6f13d05f12928bff09752efc9096e83d0a8c7d67b4f036634f2b1"
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.2.3"
-  serverpod_serialization:
-    dependency: transitive
-    description:
-      name: serverpod_serialization
-      sha256: "69d0b721c4b7d50b53861681e1c7d385a3def0be9a52e89fd3bd0c704fce0d37"
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.2.3"
+    version: "1.2.2"
   shelf:
     dependency: transitive
     description:
@@ -560,14 +480,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.2.2"
-  test_api:
-    dependency: transitive
-    description:
-      name: test_api
-      sha256: "93167629bfc610f71560ab9312acdda4959de4df6fac7492c89ff0d3886f6636"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.7.9"
   typed_data:
     dependency: transitive
     description:
@@ -609,7 +521,7 @@ packages:
     source: hosted
     version: "1.2.1"
   web:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: web
       sha256: "868d88a33d8a87b18ffc05f9f030ba328ffefba92d6c127917a2ba740f9cfe4a"
@@ -641,4 +553,4 @@ packages:
     source: hosted
     version: "3.1.3"
 sdks:
-  dart: ">=3.9.0 <3.12.0-z"
+  dart: ">=3.10.0 <3.13.0-z"

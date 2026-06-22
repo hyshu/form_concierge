@@ -43,7 +43,7 @@ class _VerifyCodeFormState extends State<VerifyCodeForm> {
       }
 
       final result = await component.client.emailIdp.verifyRegistrationCode(
-        accountRequestId: UuidValue.fromString(requestId),
+        accountRequestId: requestId,
         verificationCode: _code,
       );
 
