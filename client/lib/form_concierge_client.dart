@@ -5,6 +5,8 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import 'src/auth_storage/auth_storage.dart' as auth_storage;
+
 export 'src/utils/date_format.dart';
 
 part 'src/json_helpers.dart';

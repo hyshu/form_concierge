@@ -1,13 +1,6 @@
 import 'package:form_concierge_client/form_concierge_client.dart';
 
-enum SurveyViewState {
-  loading,
-  ready,
-  authRequired,
-  submitting,
-  completed,
-  error,
-}
+enum SurveyViewState { loading, ready, submitting, completed, error }
 
 class SurveyState {
   final SurveyViewState viewState;

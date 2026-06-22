@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:form_concierge_flutter/src/features/surveys/presentation/capsules/survey_form_capsule.dart';
 import 'package:form_concierge_flutter/src/features/surveys/presentation/widgets/survey_form.dart';
 
@@ -41,7 +40,6 @@ void main() {
                     required String title,
                     required String slug,
                     String? description,
-                    required AuthRequirement authRequirement,
                   }) async {
                     saveWasCalled = true;
                     savedTitle = title;
@@ -194,7 +192,6 @@ void main() {
                     required String title,
                     required String slug,
                     String? description,
-                    required AuthRequirement authRequirement,
                   }) async {},
             ),
           ),

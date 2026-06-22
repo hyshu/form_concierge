@@ -247,14 +247,12 @@ class SurveyEditorPage extends RearchConsumer {
             required String title,
             required String slug,
             String? description,
-            required AuthRequirement authRequirement,
           }) async {
             if (isNewSurvey) {
               final created = await formManager.createSurveyWithQuestions(
                 title: title,
                 slug: slug,
                 description: description,
-                authRequirement: authRequirement,
               );
               if (created != null && context.mounted) {
                 await surveyListManager.loadSurveys();
@@ -267,7 +265,6 @@ class SurveyEditorPage extends RearchConsumer {
                 title: title,
                 slug: slug,
                 description: description,
-                authRequirement: authRequirement,
                 updatedAt: DateTime.now(),
               );
               await formManager.updateSurvey(updated);

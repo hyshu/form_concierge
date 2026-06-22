@@ -8,7 +8,6 @@ export function surveyToJson(row: SurveyRow) {
     title: row.title,
     description: row.description,
     status: row.status,
-    authRequirement: row.auth_requirement,
     createdByUserId: row.created_by_admin_id,
     createdAt: row.created_at,
     updatedAt: row.updated_at,

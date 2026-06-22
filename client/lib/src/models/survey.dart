@@ -6,7 +6,6 @@ class Survey {
   final String title;
   final String? description;
   final SurveyStatus status;
-  final AuthRequirement authRequirement;
   final String? createdByUserId;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -19,7 +18,6 @@ class Survey {
     required this.title,
     this.description,
     this.status = SurveyStatus.draft,
-    this.authRequirement = AuthRequirement.anonymous,
     this.createdByUserId,
     required this.createdAt,
     required this.updatedAt,
@@ -33,11 +31,6 @@ class Survey {
     title: json['title'] as String,
     description: json['description'] as String?,
     status: _enum(SurveyStatus.values, json['status'], SurveyStatus.draft),
-    authRequirement: _enum(
-      AuthRequirement.values,
-      json['authRequirement'],
-      AuthRequirement.anonymous,
-    ),
     createdByUserId: json['createdByUserId'] as String?,
     createdAt: _date(json['createdAt']),
     updatedAt: _date(json['updatedAt']),
@@ -51,7 +44,6 @@ class Survey {
     'title': title,
     'description': description,
     'status': _enumName(status),
-    'authRequirement': _enumName(authRequirement),
     'createdByUserId': createdByUserId,
     'createdAt': createdAt.toIso8601String(),
     'updatedAt': updatedAt.toIso8601String(),
@@ -65,7 +57,6 @@ class Survey {
     String? title,
     String? description,
     SurveyStatus? status,
-    AuthRequirement? authRequirement,
     String? createdByUserId,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -78,7 +69,6 @@ class Survey {
       title: title ?? this.title,
       description: description ?? this.description,
       status: status ?? this.status,
-      authRequirement: authRequirement ?? this.authRequirement,
       createdByUserId: createdByUserId ?? this.createdByUserId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

@@ -24,7 +24,6 @@ export type SurveyRow = {
   title: string;
   description: string | null;
   status: string;
-  auth_requirement: string;
   created_by_admin_id: string | null;
   created_at: string;
   updated_at: string;

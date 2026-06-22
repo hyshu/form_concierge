@@ -1,1 +1,0 @@
-ALTER TABLE survey_responses ADD COLUMN metadata TEXT;

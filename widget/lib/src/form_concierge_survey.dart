@@ -3,12 +3,10 @@ import 'package:flutter/foundation.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 
 import 'state/survey_state.dart';
-import 'state/auth_state.dart';
 import 'widgets/survey_loading.dart';
 import 'widgets/survey_error.dart';
 import 'widgets/survey_completed.dart';
 import 'widgets/survey_content.dart';
-import 'widgets/auth/auth_view.dart';
 
 class FormConciergeSurvey extends StatefulWidget {
   final Client client;
@@ -16,7 +14,6 @@ class FormConciergeSurvey extends StatefulWidget {
   final VoidCallback? onSubmitted;
   final ValueChanged<SurveyResponse>? onResponseSubmitted;
   final ValueChanged<AnonymousSession>? onAnonymousSession;
-  final VoidCallback? onAuthRequired;
   final String? anonymousId;
   final String? anonymousToken;
   final DeviceInfo? deviceInfo;
@@ -29,7 +26,6 @@ class FormConciergeSurvey extends StatefulWidget {
     this.onSubmitted,
     this.onResponseSubmitted,
     this.onAnonymousSession,
-    this.onAuthRequired,
     this.anonymousId,
     this.anonymousToken,
     this.deviceInfo,
@@ -42,7 +38,6 @@ class FormConciergeSurvey extends StatefulWidget {
 
 class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
   SurveyState _state = const SurveyState();
-  SurveyAuthState _authState = const SurveyAuthState();
 
   @override
   void initState() {
@@ -195,10 +190,6 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
     if (!widget.client.anonymous.isAuthenticated &&
         widget.anonymousToken != null) {
       widget.client.anonymous.useToken(widget.anonymousToken!);
-      _authState = _authState.copyWith(
-        isAuthenticated: true,
-        registrationToken: widget.anonymousToken,
-      );
       return;
     }
 
@@ -206,19 +197,8 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
       final session = await widget.client.anonymous.createAccount(
         displayName: widget.anonymousId,
       );
-      _authState = _authState.copyWith(
-        isAuthenticated: true,
-        registrationToken: session.token,
-      );
       widget.onAnonymousSession?.call(session);
     }
-  }
-
-  void _onAuthSuccess() {
-    setState(() {
-      _authState = _authState.copyWith(isAuthenticated: true);
-      _state = _state.copyWith(viewState: SurveyViewState.ready);
-    });
   }
 
   DeviceInfo _deviceInfoForContext(BuildContext context) {
@@ -245,16 +225,6 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
       SurveyViewState.error => SurveyError(
         message: _state.errorMessage ?? 'An error occurred',
         onRetry: _loadSurvey,
-      ),
-      SurveyViewState.authRequired => AuthView(
-        client: widget.client,
-        authState: _authState,
-        onAuthStateChanged: (newState) {
-          setState(() {
-            _authState = newState;
-          });
-        },
-        onAuthSuccess: _onAuthSuccess,
       ),
       SurveyViewState.ready || SurveyViewState.submitting => SurveyContent(
         survey: _state.survey!,

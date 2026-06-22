@@ -6,8 +6,6 @@ enum QuestionType { singleChoice, multipleChoice, textSingle, textMultiLine }
 
 enum SurveyStatus { draft, published, closed, archived }
 
-enum AuthRequirement { anonymous, authenticated }
-
 extension QuestionTypeProperties on QuestionType {
   bool get usesChoices =>
       this == QuestionType.singleChoice || this == QuestionType.multipleChoice;

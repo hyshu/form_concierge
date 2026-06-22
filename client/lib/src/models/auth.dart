@@ -24,6 +24,14 @@ class AuthUserInfo {
     blocked: _bool(json['blocked']),
     created: _date(json['created']),
   );
+
+  Map<String, dynamic> toJson() => _withoutNulls({
+    'id': id,
+    'email': email,
+    'scopeNames': scopeNames,
+    'blocked': blocked,
+    'created': created.toIso8601String(),
+  });
 }
 
 class AuthSuccess {
@@ -36,4 +44,9 @@ class AuthSuccess {
     token: json['token'] as String,
     user: _object(json['user'], AuthUserInfo.fromJson),
   );
+
+  Map<String, dynamic> toJson() => {
+    'token': token,
+    'user': user.toJson(),
+  };
 }

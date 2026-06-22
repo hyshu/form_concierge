@@ -27,7 +27,9 @@ class Client {
             : serverUrl,
       ),
       _httpClient = httpClient ?? http.Client() {
-    auth = ClientAuth();
+    auth = ClientAuth(
+      storageKey: 'form_concierge.admin_auth.${baseUri.toString()}',
+    );
     survey = SurveyEndpoint(this);
     surveyAdmin = SurveyAdminEndpoint(this);
     questionAdmin = QuestionAdminEndpoint(this);
@@ -97,22 +99,42 @@ class Client {
 }
 
 class ClientAuth {
+  final String _storageKey;
   String? token;
   AuthUserInfo? signedInUser;
 
-  ClientAuth();
+  ClientAuth({required String storageKey}) : _storageKey = storageKey;
 
   bool get isAuthenticated => token != null;
 
   Future<void> updateSignedInUser(AuthSuccess authSuccess) async {
     token = authSuccess.token;
     signedInUser = authSuccess.user;
+    await auth_storage.writeAuthSession(
+      _storageKey,
+      jsonEncode(authSuccess.toJson()),
+    );
   }
 
-  Future<void> restore() async {}
+  Future<void> restore() async {
+    final raw = await auth_storage.readAuthSession(_storageKey);
+    if (raw == null || raw.isEmpty) return;
+
+    try {
+      final decoded = jsonDecode(raw);
+      final authSuccess = AuthSuccess.fromJson(_requiredMap(decoded));
+      token = authSuccess.token;
+      signedInUser = authSuccess.user;
+    } on Object {
+      token = null;
+      signedInUser = null;
+      await auth_storage.clearAuthSession(_storageKey);
+    }
+  }
 
   Future<void> signOutDevice() async {
     token = null;
     signedInUser = null;
+    await auth_storage.clearAuthSession(_storageKey);
   }
 }
