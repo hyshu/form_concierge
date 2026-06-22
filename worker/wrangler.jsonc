@@ -12,6 +12,7 @@
     }
   ],
   "vars": {
-    "PUBLIC_BASE_URL": "http://localhost:8787"
+    "PUBLIC_BASE_URL": "http://localhost:8787",
+    "PUBLIC_FORM_ASSET_BASE_URL": "http://localhost:8081"
   }
 }
