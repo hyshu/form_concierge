@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:form_concierge_survey_widget/form_concierge_survey_widget.dart';
-import 'package:serverpod_auth_core_flutter/serverpod_auth_core_flutter.dart';
 
 late final Client client;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  client = Client('http://localhost:8080/')
-    ..authSessionManager = FlutterAuthSessionManager();
+  client = Client('http://localhost:8787');
 
   runApp(const MainApp());
 }

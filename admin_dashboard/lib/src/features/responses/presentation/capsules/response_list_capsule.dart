@@ -129,6 +129,27 @@ class ResponseListManager {
     }
   }
 
+  /// Send an admin reply to the anonymous account behind a response.
+  Future<bool> sendReply(
+    int surveyId,
+    int responseId,
+    String body,
+  ) async {
+    try {
+      await _client.responseAnalytics.createReply(responseId, body);
+      await loadResponses(surveyId, page: getState(surveyId).currentPage);
+      return true;
+    } on Exception catch (e) {
+      _setState(
+        surveyId,
+        getState(surveyId).copyWith(
+          error: 'Failed to send reply: $e',
+        ),
+      );
+      return false;
+    }
+  }
+
   /// Clear error for a survey.
   void clearError(int surveyId) {
     _setState(surveyId, getState(surveyId).copyWith(error: null));

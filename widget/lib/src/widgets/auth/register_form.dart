@@ -64,11 +64,11 @@ class _RegisterFormState extends State<RegisterForm> {
 
       if (!config.requireEmailVerification) {
         // Skip verification step - auto-verify with fixed code
-        final registrationToken =
-            await widget.client.emailIdp.verifyRegistrationCode(
-          accountRequestId: requestId,
-          verificationCode: _devVerificationCode,
-        );
+        final registrationToken = await widget.client.emailIdp
+            .verifyRegistrationCode(
+              accountRequestId: requestId,
+              verificationCode: _devVerificationCode,
+            );
 
         widget.onStateChanged(
           SurveyAuthState(

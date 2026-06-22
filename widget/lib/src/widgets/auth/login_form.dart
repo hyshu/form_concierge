@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
-import 'package:serverpod_auth_core_flutter/serverpod_auth_core_flutter.dart';
 
 import '../../state/auth_state.dart';
 

@@ -1,6 +1,5 @@
 import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:rearch/rearch.dart';
-import 'package:serverpod_auth_core_flutter/serverpod_auth_core_flutter.dart';
 
 import '../../features/auth/data/auth_state.dart';
 import 'client_capsule.dart';

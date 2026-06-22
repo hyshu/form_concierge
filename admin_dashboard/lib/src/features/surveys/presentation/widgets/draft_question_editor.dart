@@ -43,7 +43,7 @@ class DraftQuestionEditor extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       itemCount: questions.length,
       buildDefaultDragHandles: false,
-      onReorder: onReorder,
+      onReorderItem: onReorder,
       itemBuilder: (context, index) {
         final question = questions[index];
         return _DraftQuestionTile(

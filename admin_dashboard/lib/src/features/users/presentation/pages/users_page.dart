@@ -3,7 +3,6 @@ import 'package:flutter_rearch/flutter_rearch.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:go_router/go_router.dart';
 import 'package:rearch/rearch.dart';
-import 'package:serverpod_auth_core_flutter/serverpod_auth_core_flutter.dart';
 
 import '../../../../core/capsules/auth_state_capsule.dart';
 import '../../../../core/capsules/client_capsule.dart';
@@ -27,7 +26,7 @@ class UsersPage extends RearchConsumer {
     }
 
     // Get current user ID
-    final currentUserId = client.auth.authInfo?.authUserId;
+    final currentUserId = client.auth.signedInUser?.id;
 
     return Scaffold(
       appBar: AppBar(
