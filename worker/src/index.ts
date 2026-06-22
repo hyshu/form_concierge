@@ -31,6 +31,7 @@ import {
   aggregatedResults,
   createReply,
   deleteResponse,
+  exportResponses,
   getReplies,
   listResponses,
   responseAnswers,
@@ -205,6 +206,10 @@ async function routeAdmin(
       if (method === 'GET' && parts[4] === 'responses' && parts[5] === 'count') {
         requireScope(admin, 'response:read');
         return responseCount(env, surveyId);
+      }
+      if (method === 'GET' && parts[4] === 'responses' && parts[5] === 'export') {
+        requireScope(admin, 'response:read');
+        return exportResponses(env, surveyId, url);
       }
       if (method === 'GET' && parts[4] === 'responses') {
         requireScope(admin, 'response:read');

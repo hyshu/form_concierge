@@ -5,6 +5,7 @@ import 'package:rearch/rearch.dart';
 
 import '../../../../core/widgets/confirm_delete_dialog.dart';
 import '../../../../core/capsules/client_capsule.dart';
+import '../../../../core/utils/download_file.dart';
 import '../capsules/aggregated_results_capsule.dart';
 import '../capsules/notification_settings_capsule.dart';
 import '../capsules/response_list_capsule.dart';
@@ -44,6 +45,39 @@ class ResponsesPage extends RearchConsumer {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Responses'),
+          actions: [
+            PopupMenuButton<ResponseExportFormat>(
+              enabled: !responseState.isExporting,
+              icon: responseState.isExporting
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.download_outlined),
+              tooltip: 'Export responses',
+              onSelected: (format) =>
+                  _exportResponses(context, responseManager, format),
+              itemBuilder: (context) => const [
+                PopupMenuItem(
+                  value: ResponseExportFormat.csv,
+                  child: ListTile(
+                    leading: Icon(Icons.table_chart_outlined),
+                    title: Text('Export CSV'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+                PopupMenuItem(
+                  value: ResponseExportFormat.json,
+                  child: ListTile(
+                    leading: Icon(Icons.data_object_outlined),
+                    title: Text('Export JSON'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+              ],
+            ),
+          ],
           bottom: const TabBar(
             tabs: [
               Tab(
@@ -174,6 +208,33 @@ class ResponsesPage extends RearchConsumer {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Reply sent')),
       );
+    }
+  }
+
+  Future<void> _exportResponses(
+    BuildContext context,
+    ResponseListManager manager,
+    ResponseExportFormat format,
+  ) async {
+    final file = await manager.exportResponses(surveyId, format);
+    if (file == null || !context.mounted) return;
+    try {
+      await downloadFile(
+        bytes: file.bytes,
+        filename: file.filename,
+        contentType: file.contentType,
+      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Exported ${file.filename}')),
+        );
+      }
+    } on UnsupportedError catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.message ?? error.toString())),
+        );
+      }
     }
   }
 }

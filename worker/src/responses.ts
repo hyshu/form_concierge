@@ -1,6 +1,7 @@
 import type { AdminContext, AnswerRow, ChoiceRow, Env, QuestionRow, ReplyRow, ResponseRow } from './types';
+import { mustSurvey } from './admin_records';
 import { HttpError, countRows, isChoiceQuestionType, json, nowIso, readJson, requireString, requiredRow } from './utils';
-import { answerToJson, parseChoiceIds, replyToJson, responseToJson } from './serializers';
+import { answerToJson, choiceToJson, parseChoiceIds, questionToJson, replyToJson, responseToJson, surveyToJson } from './serializers';
 
 export async function listResponses(env: Env, surveyId: number, url: URL): Promise<Response> {
   const limit = Math.min(Number(url.searchParams.get('limit') ?? '50'), 100);
@@ -101,6 +102,27 @@ export async function responseTrends(env: Env, surveyId: number, url: URL): Prom
   return json(result);
 }
 
+export async function exportResponses(env: Env, surveyId: number, url: URL): Promise<Response> {
+  const format = (url.searchParams.get('format') ?? 'csv').toLowerCase();
+  if (format !== 'csv' && format !== 'json') {
+    throw new HttpError(400, 'format must be csv or json');
+  }
+
+  const data = await loadExportData(env, surveyId, url);
+  const timestamp = nowIso().replace(/[:.]/g, '-');
+  const filename = `${safeFilename(data.survey.slug)}-responses-${timestamp}.${format}`;
+
+  if (format === 'json') {
+    return new Response(JSON.stringify(toExportJson(data), null, 2), {
+      headers: exportHeaders('application/json; charset=utf-8', filename),
+    });
+  }
+
+  return new Response(toExportCsv(data), {
+    headers: exportHeaders('text/csv; charset=utf-8', filename),
+  });
+}
+
 export async function deleteResponse(env: Env, responseId: number): Promise<Response> {
   await env.DB.prepare(`DELETE FROM survey_responses WHERE id = ?`).bind(responseId).run();
   return json({ ok: true });
@@ -137,4 +159,221 @@ export async function getReplies(env: Env, responseId: number): Promise<Response
     `SELECT * FROM admin_replies WHERE survey_response_id = ? ORDER BY created_at DESC`,
   ).bind(responseId).all<ReplyRow>();
   return json(rows.results.map(replyToJson));
+}
+
+type ExportData = {
+  survey: Awaited<ReturnType<typeof mustSurvey>>;
+  questions: QuestionRow[];
+  choicesByQuestion: Map<number, ChoiceRow[]>;
+  responses: ResponseRow[];
+  answersByResponse: Map<number, AnswerRow[]>;
+  repliesByResponse: Map<number, ReplyRow[]>;
+};
+
+async function loadExportData(env: Env, surveyId: number, url: URL): Promise<ExportData> {
+  const survey = await mustSurvey(env.DB, surveyId);
+  const questions = await env.DB.prepare(
+    `SELECT * FROM questions WHERE survey_id = ? ORDER BY order_index`,
+  ).bind(surveyId).all<QuestionRow>();
+  const choices = await env.DB.prepare(
+    `SELECT c.* FROM choices c
+     JOIN questions q ON q.id = c.question_id
+     WHERE q.survey_id = ?
+     ORDER BY q.order_index, c.order_index`,
+  ).bind(surveyId).all<ChoiceRow>();
+  const responses = await selectExportResponses(env, surveyId, url);
+  const responseIds = responses.map((response) => response.id);
+  const answers = responseIds.length === 0
+    ? []
+    : (await env.DB.prepare(
+        `SELECT a.* FROM answers a
+         JOIN survey_responses r ON r.id = a.survey_response_id
+         WHERE r.survey_id = ?
+         ORDER BY r.submitted_at DESC, a.id`,
+      ).bind(surveyId).all<AnswerRow>()).results;
+  const replies = responseIds.length === 0
+    ? []
+    : (await env.DB.prepare(
+        `SELECT ar.* FROM admin_replies ar
+         JOIN survey_responses r ON r.id = ar.survey_response_id
+         WHERE r.survey_id = ?
+         ORDER BY ar.created_at`,
+      ).bind(surveyId).all<ReplyRow>()).results;
+
+  return {
+    survey,
+    questions: questions.results,
+    choicesByQuestion: groupBy(choices.results, (choice) => choice.question_id),
+    responses,
+    answersByResponse: groupBy(answers, (answer) => answer.survey_response_id),
+    repliesByResponse: groupBy(replies, (reply) => reply.survey_response_id),
+  };
+}
+
+async function selectExportResponses(env: Env, surveyId: number, url: URL): Promise<ResponseRow[]> {
+  const from = url.searchParams.get('from');
+  const to = url.searchParams.get('to');
+  const conditions = ['survey_id = ?'];
+  const binds: unknown[] = [surveyId];
+  if (from) {
+    conditions.push('submitted_at >= ?');
+    binds.push(parseDateParam(from, 'from'));
+  }
+  if (to) {
+    conditions.push('submitted_at <= ?');
+    binds.push(parseDateParam(to, 'to'));
+  }
+  const rows = await env.DB.prepare(
+    `SELECT id, survey_id, anonymous_account_id, anonymous_id, submitted_at, user_agent,
+       device_id, device_label, device_platform, device_os, device_os_version,
+       device_browser, device_browser_version, device_locale, device_timezone,
+       screen_width, screen_height, device_pixel_ratio, device_info, metadata
+     FROM survey_responses
+     WHERE ${conditions.join(' AND ')}
+     ORDER BY submitted_at DESC`,
+  ).bind(...binds).all<ResponseRow>();
+  return rows.results;
+}
+
+function toExportJson(data: ExportData) {
+  return {
+    exportedAt: nowIso(),
+    survey: surveyToJson(data.survey),
+    responseCount: data.responses.length,
+    questions: data.questions.map((question) => ({
+      ...questionToJson(question),
+      choices: (data.choicesByQuestion.get(question.id) ?? []).map(choiceToJson),
+    })),
+    responses: data.responses.map((response) => ({
+      ...responseToJson(response),
+      answers: (data.answersByResponse.get(response.id) ?? []).map(answerToJson),
+      replies: (data.repliesByResponse.get(response.id) ?? []).map(replyToJson),
+    })),
+  };
+}
+
+function toExportCsv(data: ExportData): string {
+  const questions = data.questions;
+  const headers = [
+    'responseId',
+    'submittedAt',
+    'anonymousId',
+    'anonymousAccountId',
+    'deviceId',
+    'deviceLabel',
+    'devicePlatform',
+    'deviceOs',
+    'deviceOsVersion',
+    'deviceBrowser',
+    'deviceBrowserVersion',
+    'deviceLocale',
+    'deviceTimezone',
+    'screenWidth',
+    'screenHeight',
+    'devicePixelRatio',
+    'userAgent',
+    'metadataJson',
+    'adminReplies',
+    ...questions.map((question) => questionColumnName(question)),
+  ];
+  const choiceTextByQuestion = new Map<number, Map<number, string>>();
+  for (const question of questions) {
+    choiceTextByQuestion.set(
+      question.id,
+      new Map((data.choicesByQuestion.get(question.id) ?? []).map((choice) => [choice.id, choice.text])),
+    );
+  }
+  const lines = [headers.map(csvCell).join(',')];
+  for (const response of data.responses) {
+    const answers = new Map(
+      (data.answersByResponse.get(response.id) ?? []).map((answer) => [answer.question_id, answer]),
+    );
+    const replies = (data.repliesByResponse.get(response.id) ?? [])
+      .map((reply) => `${reply.created_at}: ${reply.body}`)
+      .join('\n');
+    const row = [
+      response.id,
+      response.submitted_at,
+      response.anonymous_id,
+      response.anonymous_account_id,
+      response.device_id,
+      response.device_label,
+      response.device_platform,
+      response.device_os,
+      response.device_os_version,
+      response.device_browser,
+      response.device_browser_version,
+      response.device_locale,
+      response.device_timezone,
+      response.screen_width,
+      response.screen_height,
+      response.device_pixel_ratio,
+      response.user_agent,
+      response.metadata,
+      replies,
+      ...questions.map((question) =>
+        formatAnswerForCsv(
+          question,
+          answers.get(question.id),
+          choiceTextByQuestion.get(question.id) ?? new Map(),
+        ),
+      ),
+    ];
+    lines.push(row.map(csvCell).join(','));
+  }
+  return `${lines.join('\n')}\n`;
+}
+
+function formatAnswerForCsv(
+  question: QuestionRow,
+  answer: AnswerRow | undefined,
+  choiceTextById: Map<number, string>,
+): string {
+  if (!answer) return '';
+  if (!isChoiceQuestionType(question.type)) return answer.text_value ?? '';
+  return parseChoiceIds(answer.selected_choice_ids)
+    .map((choiceId) => choiceTextById.get(choiceId) ?? String(choiceId))
+    .join('; ');
+}
+
+function questionColumnName(question: QuestionRow): string {
+  const prefix = `Q${question.order_index + 1}`;
+  return `${prefix}: ${question.text}`;
+}
+
+function csvCell(value: unknown): string {
+  if (value == null) return '';
+  const text = String(value);
+  if (!/[",\n\r]/.test(text)) return text;
+  return `"${text.replaceAll('"', '""')}"`;
+}
+
+function exportHeaders(contentType: string, filename: string): HeadersInit {
+  return {
+    'content-type': contentType,
+    'content-disposition': `attachment; filename="${filename}"`,
+    'access-control-allow-origin': '*',
+    'access-control-expose-headers': 'content-disposition',
+  };
+}
+
+function safeFilename(value: string): string {
+  return value.replace(/[^a-z0-9-]+/gi, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || 'survey';
+}
+
+function parseDateParam(value: string, field: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) throw new HttpError(400, `${field} must be a valid date`);
+  return date.toISOString();
+}
+
+function groupBy<T>(values: T[], keyOf: (value: T) => number): Map<number, T[]> {
+  const result = new Map<number, T[]>();
+  for (const value of values) {
+    const key = keyOf(value);
+    const group = result.get(key) ?? [];
+    group.push(value);
+    result.set(key, group);
+  }
+  return result;
 }

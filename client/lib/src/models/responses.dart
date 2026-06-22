@@ -1,5 +1,23 @@
 part of form_concierge_client;
 
+enum ResponseExportFormat { csv, json }
+
+class ResponseExportFile {
+  final List<int> bytes;
+  final String filename;
+  final String contentType;
+  final ResponseExportFormat format;
+
+  const ResponseExportFile({
+    required this.bytes,
+    required this.filename,
+    required this.contentType,
+    required this.format,
+  });
+
+  String get text => utf8.decode(bytes);
+}
+
 class SurveyResponse {
   final int? id;
   final int surveyId;
