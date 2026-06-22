@@ -42,7 +42,7 @@ void main() {
     });
 
     testWidgets('text question reports typed value', (tester) async {
-      final answers = <int, dynamic>{};
+      final answers = <int, AnswerValue>{};
 
       await tester.pumpWidget(
         _subject(
@@ -62,7 +62,7 @@ void main() {
     testWidgets('single choice question reports selected choice ID', (
       tester,
     ) async {
-      final answers = <int, dynamic>{};
+      final answers = <int, AnswerValue>{};
 
       await tester.pumpWidget(
         _subject(
@@ -85,7 +85,7 @@ void main() {
     testWidgets(
       'multiple choice enforces max selection and toggles selected IDs',
       (tester) async {
-        final answers = <int, dynamic>{};
+        final answers = <int, AnswerValue>{};
 
         await tester.pumpWidget(
           _subject(
@@ -146,11 +146,11 @@ Widget _subject({
   String locale = 'en',
   List<Question>? questions,
   Map<int, List<Choice>> choicesByQuestion = const {},
-  Map<int, dynamic> answers = const {},
-  Map<int, String> validationErrors = const {},
+  AnswerValues answers = const {},
+  ValidationErrors validationErrors = const {},
   String? errorMessage,
   bool isSubmitting = false,
-  void Function(int questionId, dynamic value)? onAnswerChanged,
+  void Function(int questionId, AnswerValue value)? onAnswerChanged,
   ValueChanged<String>? onLocaleChanged,
   VoidCallback? onSubmit,
 }) {

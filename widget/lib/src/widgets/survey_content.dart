@@ -8,12 +8,12 @@ class SurveyContent extends StatelessWidget {
   final Survey survey;
   final List<Question> questions;
   final Map<int, List<Choice>> choicesByQuestion;
-  final Map<int, dynamic> answers;
-  final Map<int, String> validationErrors;
+  final AnswerValues answers;
+  final ValidationErrors validationErrors;
   final String? errorMessage;
   final String locale;
   final bool isSubmitting;
-  final void Function(int questionId, dynamic value) onAnswerChanged;
+  final void Function(int questionId, AnswerValue value) onAnswerChanged;
   final ValueChanged<String> onLocaleChanged;
   final VoidCallback onSubmit;
 

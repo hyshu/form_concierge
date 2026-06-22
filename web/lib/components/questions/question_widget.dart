@@ -20,10 +20,10 @@ class QuestionWidget extends StatelessComponent {
 
   final Question question;
   final List<Choice> choices;
-  final dynamic value;
+  final AnswerValue value;
   final String? error;
   final String locale;
-  final void Function(dynamic value) onChanged;
+  final void Function(AnswerValue value) onChanged;
 
   @override
   Component build(BuildContext context) {

@@ -53,8 +53,8 @@ class SurveyClientState extends State<SurveyClient> {
   String _locale = defaultFormContentLocale;
 
   SurveyViewState _viewState = SurveyViewState.loading;
-  Map<int, dynamic> _answers = {};
-  Map<int, String> _validationErrors = {};
+  AnswerValues _answers = {};
+  ValidationErrors _validationErrors = {};
   String? _errorMessage;
 
   @override
@@ -262,17 +262,18 @@ class SurveyClientState extends State<SurveyClient> {
     }
   }
 
-  void _updateAnswer(int questionId, dynamic value) {
+  void _updateAnswer(int questionId, AnswerValue value) {
     setState(() {
-      final updatedAnswers = Map<int, dynamic>.from(_answers)
-        ..[questionId] = value;
-      final visible = resolveVisibleQuestions(
-        _questions,
-        _visibilityRules,
-        updatedAnswers,
+      final change = applyAnswerChange(
+        answers: _answers,
+        validationErrors: _validationErrors,
+        questions: _questions,
+        visibilityRules: _visibilityRules,
+        questionId: questionId,
+        value: value,
       );
-      _answers = pruneHiddenAnswers(updatedAnswers, visible);
-      _validationErrors = Map.from(_validationErrors)..remove(questionId);
+      _answers = change.answers;
+      _validationErrors = change.validationErrors;
     });
   }
 

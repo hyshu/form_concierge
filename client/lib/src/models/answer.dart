@@ -1,5 +1,9 @@
 part of form_concierge_client;
 
+typedef AnswerValue = Object?;
+typedef AnswerValues = Map<int, AnswerValue>;
+typedef ValidationErrors = Map<int, String>;
+
 class Answer {
   final int? id;
   final int surveyResponseId;
@@ -48,8 +52,18 @@ class Answer {
   }
 }
 
+class AnswerChange {
+  final AnswerValues answers;
+  final ValidationErrors validationErrors;
+
+  const AnswerChange({
+    required this.answers,
+    required this.validationErrors,
+  });
+}
+
 List<Answer> buildAnswers(
-  Map<int, dynamic> answerValues,
+  AnswerValues answerValues,
   Iterable<Question> questions, {
   int surveyResponseId = 0,
 }) {
@@ -103,7 +117,7 @@ List<Answer> buildAnswers(
 List<Question> resolveVisibleQuestions(
   List<Question> questions,
   List<QuestionVisibilityRule> visibilityRules,
-  Map<int, dynamic> answerValues,
+  AnswerValues answerValues,
 ) {
   final visible = <int>{};
   final rulesByTarget = <int, List<QuestionVisibilityRule>>{};
@@ -139,8 +153,8 @@ List<Question> resolveVisibleQuestions(
   return result;
 }
 
-Map<int, dynamic> pruneHiddenAnswers(
-  Map<int, dynamic> answerValues,
+AnswerValues pruneHiddenAnswers(
+  AnswerValues answerValues,
   List<Question> visibleQuestions,
 ) {
   final visibleIds = visibleQuestions
@@ -152,8 +166,8 @@ Map<int, dynamic> pruneHiddenAnswers(
   );
 }
 
-Map<int, String> validateSurveyAnswers(
-  Map<int, dynamic> answerValues,
+ValidationErrors validateSurveyAnswers(
+  AnswerValues answerValues,
   List<Question> questions,
   String locale,
 ) {
@@ -218,12 +232,35 @@ Map<int, String> validateSurveyAnswers(
   return errors;
 }
 
+AnswerChange applyAnswerChange({
+  required AnswerValues answers,
+  required ValidationErrors validationErrors,
+  required List<Question> questions,
+  required List<QuestionVisibilityRule> visibilityRules,
+  required int questionId,
+  required AnswerValue value,
+}) {
+  final updatedAnswers = Map<int, AnswerValue>.from(answers)
+    ..[questionId] = value;
+  final visibleQuestions = resolveVisibleQuestions(
+    questions,
+    visibilityRules,
+    updatedAnswers,
+  );
+  final updatedErrors = Map<int, String>.from(validationErrors)
+    ..remove(questionId);
+  return AnswerChange(
+    answers: pruneHiddenAnswers(updatedAnswers, visibleQuestions),
+    validationErrors: updatedErrors,
+  );
+}
+
 bool _matchesVisibilityRules(
   Question target,
   List<QuestionVisibilityRule> rules,
   Map<int, Question> questionsById,
   Set<int> visibleQuestionIds,
-  Map<int, dynamic> answerValues,
+  AnswerValues answerValues,
 ) {
   final results = rules.map((rule) {
     final source = questionsById[rule.sourceQuestionId];
@@ -240,7 +277,7 @@ bool _matchesVisibilityRules(
 bool _matchesVisibilityRule(
   Question source,
   QuestionVisibilityRule rule,
-  dynamic answer,
+  AnswerValue answer,
 ) {
   final hasAnswer = _answerHasValue(answer);
   switch (rule.operator) {
@@ -260,7 +297,7 @@ bool _matchesVisibilityRule(
 bool _matchesValueOperator(
   Question source,
   QuestionVisibilityRule rule,
-  dynamic answer,
+  AnswerValue answer,
 ) {
   if (source.type.usesTextAnswer) {
     final actual = answer is String ? answer.trim() : '';
@@ -290,7 +327,7 @@ bool _matchesValueOperator(
   };
 }
 
-bool _answerHasValue(dynamic answer) {
+bool _answerHasValue(AnswerValue answer) {
   return switch (answer) {
     String value => value.trim().isNotEmpty,
     int _ => true,

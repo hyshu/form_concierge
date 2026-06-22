@@ -9,8 +9,8 @@ class SurveyState {
   final List<Question> questions;
   final List<QuestionVisibilityRule> visibilityRules;
   final Map<int, List<Choice>> choicesByQuestion;
-  final Map<int, dynamic> answers;
-  final Map<int, String> validationErrors;
+  final AnswerValues answers;
+  final ValidationErrors validationErrors;
   final String? errorMessage;
 
   const SurveyState({
@@ -32,8 +32,8 @@ class SurveyState {
     List<Question>? questions,
     List<QuestionVisibilityRule>? visibilityRules,
     Map<int, List<Choice>>? choicesByQuestion,
-    Map<int, dynamic>? answers,
-    Map<int, String>? validationErrors,
+    AnswerValues? answers,
+    ValidationErrors? validationErrors,
     String? errorMessage,
   }) {
     return SurveyState(

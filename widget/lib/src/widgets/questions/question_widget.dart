@@ -9,10 +9,10 @@ import 'text_multi_line_question.dart';
 class QuestionWidget extends StatelessWidget {
   final Question question;
   final List<Choice> choices;
-  final dynamic value;
+  final AnswerValue value;
   final String? error;
   final String locale;
-  final ValueChanged<dynamic> onChanged;
+  final ValueChanged<AnswerValue> onChanged;
 
   const QuestionWidget({
     super.key,
