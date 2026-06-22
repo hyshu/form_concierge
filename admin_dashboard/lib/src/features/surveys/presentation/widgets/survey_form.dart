@@ -13,6 +13,7 @@ class SurveyForm extends StatefulWidget {
   final Future<void> Function({
     required String defaultLocale,
     required String slug,
+    required String? customDomain,
     required LocalizedText titleTranslations,
     required LocalizedText descriptionTranslations,
   })
@@ -120,6 +121,31 @@ class _SurveyFormState extends State<SurveyForm> {
             textInputAction: TextInputAction.next,
           ),
           const SizedBox(height: 16),
+          TextFormField(
+            controller: widget.controllers.customDomain,
+            decoration: InputDecoration(
+              labelText: context.tr('Custom domain (optional)'),
+              hintText: 'forms.example.com',
+              helperText: context.tr(
+                'Use a dedicated host to open this survey without a slug.',
+              ),
+            ),
+            enabled: !widget.isSaving,
+            validator: (value) {
+              final domain = value?.trim().toLowerCase() ?? '';
+              if (domain.isEmpty) return null;
+              if (!RegExp(
+                r'^(?=.{1,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$',
+              ).hasMatch(domain)) {
+                return context.tr(
+                  'Custom domain must be a hostname like forms.example.com',
+                );
+              }
+              return null;
+            },
+            textInputAction: TextInputAction.next,
+          ),
+          const SizedBox(height: 16),
           Text(
             context.tr('Localized descriptions'),
             style: Theme.of(context).textTheme.titleSmall,
@@ -175,9 +201,15 @@ class _SurveyFormState extends State<SurveyForm> {
       widget.onSave(
         defaultLocale: _defaultLocale,
         slug: widget.controllers.slug.text.trim(),
+        customDomain: _customDomainValue(),
         titleTranslations: widget.controllers.titleValue(),
         descriptionTranslations: widget.controllers.descriptionValue(),
       );
     }
+  }
+
+  String? _customDomainValue() {
+    final domain = widget.controllers.customDomain.text.trim().toLowerCase();
+    return domain.isEmpty ? null : domain;
   }
 }

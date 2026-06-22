@@ -41,6 +41,13 @@ public actor FormConciergeClient {
     return survey
   }
 
+  public func survey(domain: String) async throws -> Survey {
+    let encodedDomain = domain.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? domain
+    let survey: Survey? = try await request("GET", "/api/surveys/domain?host=\(encodedDomain)")
+    guard let survey else { throw FormConciergeError.notFound }
+    return survey
+  }
+
   public func questions(surveyId: Int) async throws -> [Question] {
     try await request("GET", "/api/surveys/id/\(surveyId)/questions")
   }

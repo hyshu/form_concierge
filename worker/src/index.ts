@@ -25,7 +25,7 @@ import {
   updateQuestion,
 } from './admin_questions';
 import { notificationSettings } from './notification_settings';
-import { getPublicChoices, getPublicQuestions, getPublicSurvey, submitResponse } from './public_surveys';
+import { getPublicChoices, getPublicQuestions, getPublicSurvey, getPublicSurveyByDomain, submitResponse } from './public_surveys';
 import { listAdminVisibilityRules, listPublicVisibilityRules, replaceAdminVisibilityRules } from './visibility_rules';
 import {
   aggregatedResults,
@@ -115,6 +115,9 @@ async function route(request: Request, env: Env): Promise<Response> {
   }
 
   if (parts[0] === 'api' && parts[1] === 'surveys' && parts[2] && method === 'GET') {
+    if (parts[2] === 'domain' && parts.length === 3) {
+      return getPublicSurveyByDomain(env, url.searchParams.get('host'));
+    }
     if (parts[2] === 'id' && parts[3] && parts[4] === 'questions') {
       return getPublicQuestions(env, Number(parts[3]));
     }

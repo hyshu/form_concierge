@@ -7,6 +7,7 @@ export function surveyToJson(row: SurveyRow) {
   return {
     id: row.id,
     slug: row.slug,
+    customDomain: row.custom_domain,
     defaultLocale: row.default_locale,
     supportedLocales: parseJsonArray(row.supported_locales),
     titleTranslations: parseLocalizedText(row.title_translations),

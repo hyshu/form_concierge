@@ -299,6 +299,7 @@ class SurveyEditorPage extends RearchConsumer {
           ({
             required String defaultLocale,
             required String slug,
+            required String? customDomain,
             required LocalizedText titleTranslations,
             required LocalizedText descriptionTranslations,
           }) async {
@@ -306,6 +307,7 @@ class SurveyEditorPage extends RearchConsumer {
               final created = await formManager.createSurveyWithQuestions(
                 defaultLocale: defaultLocale,
                 slug: slug,
+                customDomain: customDomain,
                 titleTranslations: titleTranslations,
                 descriptionTranslations: descriptionTranslations,
               );
@@ -319,6 +321,8 @@ class SurveyEditorPage extends RearchConsumer {
               final updated = survey!.copyWith(
                 defaultLocale: defaultLocale,
                 slug: slug,
+                customDomain: customDomain,
+                clearCustomDomain: customDomain == null,
                 titleTranslations: titleTranslations,
                 descriptionTranslations: descriptionTranslations,
                 updatedAt: DateTime.now(),

@@ -1,5 +1,5 @@
 import type { AnonymousContext, AnswerInput, AnswerRow, ChoiceRow, Env, QuestionRow, ResponseRow, SurveyRow, VisibilityRuleRow } from './types';
-import { HttpError, isChoiceQuestionType, isTextQuestionType, json, nowIso, readJson, requireAnswerInput } from './utils';
+import { HttpError, isChoiceQuestionType, isTextQuestionType, json, nowIso, optionalCustomDomain, readJson, requireAnswerInput } from './utils';
 import { normalizeDeviceInfo, normalizeMetadata } from './metadata';
 import { choiceToJson, parseChoiceIds, questionToJson, responseToJson, surveyToJson } from './serializers';
 import { getVisibilityRules, visibleQuestionIds } from './visibility_rules';
@@ -9,6 +9,22 @@ export async function getPublicSurvey(env: Env, slug: string): Promise<Response>
   const row = await env.DB.prepare(
     `SELECT * FROM surveys WHERE slug = ? AND status = 'published'`,
   ).bind(slug).first<SurveyRow>();
+  if (!row || !isAccepting(row)) return json(null);
+  return json(surveyToJson(row));
+}
+
+export async function getPublicSurveyByDomain(env: Env, domainValue: string | null): Promise<Response> {
+  let customDomain: string | null = null;
+  try {
+    customDomain = optionalCustomDomain(domainValue);
+  } catch (error) {
+    if (error instanceof HttpError) return json(null);
+    throw error;
+  }
+  if (!customDomain) return json(null);
+  const row = await env.DB.prepare(
+    `SELECT * FROM surveys WHERE custom_domain = ? AND status = 'published'`,
+  ).bind(customDomain).first<SurveyRow>();
   if (!row || !isAccepting(row)) return json(null);
   return json(surveyToJson(row));
 }

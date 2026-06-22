@@ -6,6 +6,8 @@
 
 import 'package:jaspr/client.dart';
 
+import 'package:form_concierge_web/components/domain_redirect_client.dart'
+    deferred as _domain_redirect_client;
 import 'package:form_concierge_web/components/survey_client.dart'
     deferred as _survey_client;
 
@@ -27,6 +29,12 @@ import 'package:form_concierge_web/components/survey_client.dart'
 /// ```
 ClientOptions get defaultClientOptions => ClientOptions(
   clients: {
+    'domain_redirect_client': ClientLoader(
+      (p) => _domain_redirect_client.DomainRedirectClient(
+        serverUrl: p['serverUrl'] as String,
+      ),
+      loader: _domain_redirect_client.loadLibrary,
+    ),
     'survey_client': ClientLoader(
       (p) => _survey_client.SurveyClient(
         surveyJson: (p['surveyJson'] as Map<String, Object?>),

@@ -9,6 +9,7 @@ import {
   normalizeQuestionType,
   nowIso,
   objectBody,
+  optionalCustomDomain,
   optionalString,
   readJson,
   requireSlug,
@@ -55,18 +56,21 @@ async function insertSurvey(
 ): Promise<SurveyRow> {
   const slug = requireSlug(body.slug);
   await ensureUniqueSlug(db, slug);
+  const customDomain = optionalCustomDomain(body.customDomain);
+  await ensureUniqueCustomDomain(db, customDomain);
   const content = parseSurveyContent(body);
   const now = nowIso();
   const row = await db.prepare(
     `INSERT INTO surveys
-       (slug, default_locale, supported_locales, title_translations,
+       (slug, custom_domain, default_locale, supported_locales, title_translations,
         description_translations, status, created_by_admin_id,
         created_at, updated_at, starts_at, ends_at)
-     VALUES (?, ?, ?, ?, ?, 'draft', ?, ?, ?, ?, ?)
+     VALUES (?, ?, ?, ?, ?, ?, 'draft', ?, ?, ?, ?, ?)
      RETURNING *`,
   )
     .bind(
       slug,
+      customDomain,
       content.defaultLocale,
       JSON.stringify(content.supportedLocales),
       JSON.stringify(content.titleTranslations),
@@ -125,16 +129,21 @@ export async function updateSurvey(request: Request, env: Env, surveyId: number)
   const body = await readJson(request);
   const slug = requireSlug(body.slug ?? existing.slug);
   await ensureUniqueSlug(env.DB, slug, surveyId);
+  const customDomain = optionalCustomDomain(
+    Object.hasOwn(body, 'customDomain') ? body.customDomain : existing.custom_domain,
+  );
+  await ensureUniqueCustomDomain(env.DB, customDomain, surveyId);
   const content = parseSurveyContent(body);
   const row = await env.DB.prepare(
     `UPDATE surveys
-     SET slug = ?, default_locale = ?, supported_locales = ?,
+     SET slug = ?, custom_domain = ?, default_locale = ?, supported_locales = ?,
          title_translations = ?, description_translations = ?,
          starts_at = ?, ends_at = ?, updated_at = ?
      WHERE id = ?
      RETURNING *`,
   ).bind(
     slug,
+    customDomain,
     content.defaultLocale,
     JSON.stringify(content.supportedLocales),
     JSON.stringify(content.titleTranslations),
@@ -237,6 +246,20 @@ async function ensureUniqueSlug(
       .bind(slug, exceptSurveyId)
       .first<{ id: number }>();
   if (row) throw new HttpError(400, 'A survey with this slug already exists');
+}
+
+async function ensureUniqueCustomDomain(
+  db: D1Database,
+  customDomain: string | null,
+  exceptSurveyId?: number,
+): Promise<void> {
+  if (customDomain == null) return;
+  const row = exceptSurveyId == null
+    ? await db.prepare(`SELECT id FROM surveys WHERE custom_domain = ?`).bind(customDomain).first<{ id: number }>()
+    : await db.prepare(`SELECT id FROM surveys WHERE custom_domain = ? AND id != ?`)
+      .bind(customDomain, exceptSurveyId)
+      .first<{ id: number }>();
+  if (row) throw new HttpError(400, 'A survey with this custom domain already exists');
 }
 
 async function assertSurveyCanPublish(db: D1Database, surveyId: number): Promise<void> {

@@ -73,6 +73,24 @@ export function optionalString(value: unknown): string | null {
   return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
 }
 
+export function optionalCustomDomain(value: unknown): string | null {
+  if (value == null) return null;
+  if (typeof value !== 'string') throw new HttpError(400, 'customDomain must be a hostname');
+  const domain = value.trim().toLowerCase().replace(/\.$/, '');
+  if (domain.length === 0) return null;
+  if (domain.length > 253) throw new HttpError(400, 'customDomain must be 253 characters or fewer');
+  if (domain.includes('://') || domain.includes('/') || domain.includes('?') || domain.includes('#') || domain.includes('@') || domain.includes(':')) {
+    throw new HttpError(400, 'customDomain must be a hostname');
+  }
+  const labels = domain.split('.');
+  if (labels.length < 2) throw new HttpError(400, 'customDomain must include a registrable domain');
+  const validLabels = labels.every((label) =>
+    /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(label),
+  );
+  if (!validLabels) throw new HttpError(400, 'customDomain must be a valid hostname');
+  return domain;
+}
+
 export function optionalNumber(value: unknown): number | null {
   if (value == null || value === '') return null;
   const number = Number(value);

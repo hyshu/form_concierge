@@ -276,6 +276,11 @@ const _localizedValues = <String, Map<String, String>>{
     'Slug is required': 'Slug is required',
     'Only lowercase letters, numbers, and hyphens allowed':
         'Only lowercase letters, numbers, and hyphens allowed',
+    'Custom domain (optional)': 'Custom domain (optional)',
+    'Use a dedicated host to open this survey without a slug.':
+        'Use a dedicated host to open this survey without a slug.',
+    'Custom domain must be a hostname like forms.example.com':
+        'Custom domain must be a hostname like forms.example.com',
     'Description (optional)': 'Description (optional)',
     'Brief description of the survey': 'Brief description of the survey',
     'Questions': 'Questions',
@@ -572,6 +577,11 @@ const _localizedValues = <String, Map<String, String>>{
     'Slug is required': 'スラッグは必須です',
     'Only lowercase letters, numbers, and hyphens allowed':
         '小文字、数字、ハイフンのみ使用できます',
+    'Custom domain (optional)': 'カスタムドメイン (任意)',
+    'Use a dedicated host to open this survey without a slug.':
+        '専用ホストでスラッグなしにこのアンケートを開けます。',
+    'Custom domain must be a hostname like forms.example.com':
+        'カスタムドメインは forms.example.com のようなホスト名にしてください',
     'Description (optional)': '説明 (任意)',
     'Brief description of the survey': 'アンケートの簡単な説明',
     'Questions': '質問',
