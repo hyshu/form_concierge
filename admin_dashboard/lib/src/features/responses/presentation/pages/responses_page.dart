@@ -3,9 +3,10 @@ import 'package:flutter_rearch/flutter_rearch.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:rearch/rearch.dart';
 
-import '../../../../core/widgets/confirm_delete_dialog.dart';
 import '../../../../core/capsules/client_capsule.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/utils/download_file.dart';
+import '../../../../core/widgets/confirm_delete_dialog.dart';
 import '../capsules/aggregated_results_capsule.dart';
 import '../capsules/notification_settings_capsule.dart';
 import '../capsules/response_list_capsule.dart';
@@ -44,7 +45,7 @@ class ResponsesPage extends RearchConsumer {
       length: 3,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Responses'),
+          title: Text(context.tr('Responses')),
           actions: [
             PopupMenuButton<ResponseExportFormat>(
               enabled: !responseState.isExporting,
@@ -55,42 +56,42 @@ class ResponsesPage extends RearchConsumer {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.download_outlined),
-              tooltip: 'Export responses',
+              tooltip: context.tr('Export responses'),
               onSelected: (format) =>
                   _exportResponses(context, responseManager, format),
-              itemBuilder: (context) => const [
+              itemBuilder: (context) => [
                 PopupMenuItem(
                   value: ResponseExportFormat.csv,
                   child: ListTile(
-                    leading: Icon(Icons.table_chart_outlined),
-                    title: Text('Export CSV'),
+                    leading: const Icon(Icons.table_chart_outlined),
+                    title: Text(context.tr('Export CSV')),
                     contentPadding: EdgeInsets.zero,
                   ),
                 ),
                 PopupMenuItem(
                   value: ResponseExportFormat.json,
                   child: ListTile(
-                    leading: Icon(Icons.data_object_outlined),
-                    title: Text('Export JSON'),
+                    leading: const Icon(Icons.data_object_outlined),
+                    title: Text(context.tr('Export JSON')),
                     contentPadding: EdgeInsets.zero,
                   ),
                 ),
               ],
             ),
           ],
-          bottom: const TabBar(
+          bottom: TabBar(
             tabs: [
               Tab(
-                icon: Icon(Icons.analytics_outlined),
-                text: 'Results',
+                icon: const Icon(Icons.analytics_outlined),
+                text: context.tr('Results'),
               ),
               Tab(
-                icon: Icon(Icons.list_alt),
-                text: 'Individual',
+                icon: const Icon(Icons.list_alt),
+                text: context.tr('Individual'),
               ),
               Tab(
-                icon: Icon(Icons.notifications_outlined),
-                text: 'Notifications',
+                icon: const Icon(Icons.notifications_outlined),
+                text: context.tr('Notifications'),
               ),
             ],
           ),
@@ -156,10 +157,8 @@ class ResponsesPage extends RearchConsumer {
   ) async {
     final confirmed = await ConfirmDeleteDialog.show(
       context,
-      title: 'Delete Response',
-      content:
-          'Are you sure you want to delete this response?\n\n'
-          'This action cannot be undone.',
+      title: context.tr('Delete Response'),
+      content: context.tr('Delete response confirmation'),
     );
 
     if (confirmed) {
@@ -176,25 +175,25 @@ class ResponsesPage extends RearchConsumer {
     final body = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Reply to respondent'),
+        title: Text(context.tr('Reply to respondent')),
         content: TextField(
           controller: controller,
           minLines: 4,
           maxLines: 8,
           autofocus: true,
-          decoration: const InputDecoration(
-            labelText: 'Message',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: context.tr('Message'),
+            border: const OutlineInputBorder(),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: Text(context.tr('Cancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(controller.text),
-            child: const Text('Send'),
+            child: Text(context.tr('Send')),
           ),
         ],
       ),
@@ -206,7 +205,7 @@ class ResponsesPage extends RearchConsumer {
     final sent = await manager.sendReply(surveyId, response.id!, trimmed);
     if (sent && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Reply sent')),
+        SnackBar(content: Text(context.tr('Reply sent'))),
       );
     }
   }
@@ -226,13 +225,19 @@ class ResponsesPage extends RearchConsumer {
       );
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Exported ${file.filename}')),
+          SnackBar(
+            content: Text(
+              context.tr('Exported {filename}', {'filename': file.filename}),
+            ),
+          ),
         );
       }
     } on UnsupportedError catch (error) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.message ?? error.toString())),
+          SnackBar(
+            content: Text(context.trMessage(error.message ?? error.toString())),
+          ),
         );
       }
     }

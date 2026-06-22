@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 
 import '../../../../core/extensions/question_type_presentation.dart';
+import '../../../../core/localization/app_localizations.dart';
 
 /// Dialog for creating/editing a question.
 class QuestionFormDialog extends StatefulWidget {
@@ -109,7 +110,9 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(
-        widget.existingQuestion != null ? 'Edit Question' : 'Add Question',
+        context.tr(
+          widget.existingQuestion != null ? 'Edit Question' : 'Add Question',
+        ),
       ),
       content: SizedBox(
         width: 400,
@@ -122,21 +125,21 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
               children: [
                 TextFormField(
                   controller: _textController,
-                  decoration: const InputDecoration(
-                    labelText: 'Question text',
-                    hintText: 'Enter your question',
+                  decoration: InputDecoration(
+                    labelText: context.tr('Question text'),
+                    hintText: context.tr('Enter your question'),
                   ),
                   maxLines: 2,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Question text is required';
+                      return context.tr('Question text is required');
                     }
                     return null;
                   },
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Question Type',
+                  context.tr('Question Type'),
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
                 const SizedBox(height: 8),
@@ -146,7 +149,7 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
                   dropdownMenuEntries: QuestionType.values.map((type) {
                     return DropdownMenuEntry(
                       value: type,
-                      label: type.label,
+                      label: context.tr(type.label),
                       leadingIcon: Icon(type.icon, size: 20),
                     );
                   }).toList(),
@@ -164,9 +167,11 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
                     children: [
                       TextFormField(
                         controller: _placeholderController,
-                        decoration: const InputDecoration(
-                          labelText: 'Placeholder (optional)',
-                          hintText: 'Placeholder text for the input',
+                        decoration: InputDecoration(
+                          labelText: context.tr('Placeholder (optional)'),
+                          hintText: context.tr(
+                            'Placeholder text for the input',
+                          ),
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -175,14 +180,14 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
                           Expanded(
                             child: _NumberField(
                               controller: _minLengthController,
-                              label: 'Min length',
+                              label: context.tr('Min length'),
                             ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: _NumberField(
                               controller: _maxLengthController,
-                              label: 'Max length',
+                              label: context.tr('Max length'),
                             ),
                           ),
                         ],
@@ -195,14 +200,14 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
                       Expanded(
                         child: _NumberField(
                           controller: _minSelectedController,
-                          label: 'Min selections',
+                          label: context.tr('Min selections'),
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: _NumberField(
                           controller: _maxSelectedController,
-                          label: 'Max selections',
+                          label: context.tr('Max selections'),
                         ),
                       ),
                     ],
@@ -211,15 +216,15 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
                 DropdownMenu<VisibilityConditionMode>(
                   initialSelection: _visibilityConditionMode,
                   expandedInsets: EdgeInsets.zero,
-                  label: const Text('Visibility rule match'),
-                  dropdownMenuEntries: const [
+                  label: Text(context.tr('Visibility rule match')),
+                  dropdownMenuEntries: [
                     DropdownMenuEntry(
                       value: VisibilityConditionMode.all,
-                      label: 'All rules',
+                      label: context.tr('All rules'),
                     ),
                     DropdownMenuEntry(
                       value: VisibilityConditionMode.any,
-                      label: 'Any rule',
+                      label: context.tr('Any rule'),
                     ),
                   ],
                   onSelected: (value) {
@@ -231,8 +236,10 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
                 ),
                 const SizedBox(height: 16),
                 SwitchListTile(
-                  title: const Text('Required'),
-                  subtitle: const Text('Respondents must answer this question'),
+                  title: Text(context.tr('Required')),
+                  subtitle: Text(
+                    context.tr('Respondents must answer this question'),
+                  ),
                   value: _isRequired,
                   onChanged: (value) {
                     setState(() {
@@ -249,11 +256,13 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(context.tr('Cancel')),
         ),
         FilledButton(
           onPressed: _submit,
-          child: Text(widget.existingQuestion != null ? 'Save' : 'Add'),
+          child: Text(
+            context.tr(widget.existingQuestion != null ? 'Save' : 'Add'),
+          ),
         ),
       ],
     );
@@ -302,7 +311,7 @@ class _NumberField extends StatelessWidget {
         if (trimmed.isEmpty) return null;
         final parsed = int.tryParse(trimmed);
         if (parsed == null || parsed < 0) {
-          return 'Use 0 or more';
+          return context.tr('Use 0 or more');
         }
         return null;
       },

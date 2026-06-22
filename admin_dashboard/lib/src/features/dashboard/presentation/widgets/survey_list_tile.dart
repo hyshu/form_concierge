@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 
+import '../../../../core/localization/app_localizations.dart';
 import 'survey_status_chip.dart';
 
 /// List tile for displaying a survey with actions.
@@ -108,34 +109,34 @@ class SurveyListTile extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.publish),
             onPressed: onPublish,
-            tooltip: 'Publish',
+            tooltip: context.tr('Publish'),
             visualDensity: VisualDensity.compact,
           ),
         if (onClose != null)
           IconButton(
             icon: const Icon(Icons.stop_circle_outlined),
             onPressed: onClose,
-            tooltip: 'Close',
+            tooltip: context.tr('Close'),
             visualDensity: VisualDensity.compact,
           ),
         if (onReopen != null)
           IconButton(
             icon: const Icon(Icons.play_circle_outlined),
             onPressed: onReopen,
-            tooltip: 'Reopen',
+            tooltip: context.tr('Reopen'),
             visualDensity: VisualDensity.compact,
           ),
         IconButton(
           icon: const Icon(Icons.analytics_outlined),
           onPressed: onViewResponses,
-          tooltip: 'View Responses',
+          tooltip: context.tr('View Responses'),
           visualDensity: VisualDensity.compact,
         ),
         if (onDelete != null)
           IconButton(
             icon: const Icon(Icons.delete_outline),
             onPressed: onDelete,
-            tooltip: 'Delete',
+            tooltip: context.tr('Delete'),
             visualDensity: VisualDensity.compact,
           ),
       ],

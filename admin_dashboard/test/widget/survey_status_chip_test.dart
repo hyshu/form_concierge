@@ -3,10 +3,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:form_concierge_flutter/src/features/dashboard/presentation/widgets/survey_status_chip.dart';
 
+import '../support/localized_test_app.dart';
+
 void main() {
   group('SurveyStatusChip', () {
     Widget buildSubject(SurveyStatus status) {
-      return MaterialApp(
+      return localizedTestApp(
         home: Scaffold(
           body: SurveyStatusChip(status: status),
         ),

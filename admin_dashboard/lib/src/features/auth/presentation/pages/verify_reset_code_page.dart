@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_rearch/flutter_rearch.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/localization/app_localizations.dart';
 import '../capsules/password_reset_capsule.dart';
 
 /// Page for entering verification code for password reset.
@@ -31,7 +32,7 @@ class VerifyResetCodePage extends RearchConsumer {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Verify Code'),
+        title: Text(context.tr('Verify Code')),
       ),
       body: SafeArea(
         child: Center(
@@ -51,13 +52,13 @@ class VerifyResetCodePage extends RearchConsumer {
                     ),
                     const SizedBox(height: 24),
                     Text(
-                      'Check Your Email',
+                      context.tr('Check Your Email'),
                       style: Theme.of(context).textTheme.headlineSmall,
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'We sent a verification code to:',
+                      context.tr('We sent a verification code to:'),
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: colorScheme.onSurfaceVariant,
                       ),
@@ -74,10 +75,10 @@ class VerifyResetCodePage extends RearchConsumer {
                     const SizedBox(height: 32),
                     TextField(
                       controller: controllers.code,
-                      decoration: const InputDecoration(
-                        labelText: 'Verification Code',
-                        prefixIcon: Icon(Icons.pin_outlined),
-                        hintText: 'Enter 6-digit code',
+                      decoration: InputDecoration(
+                        labelText: context.tr('Verification Code'),
+                        prefixIcon: const Icon(Icons.pin_outlined),
+                        hintText: context.tr('Enter 6-digit code'),
                       ),
                       keyboardType: TextInputType.number,
                       enabled: !resetManager.state.isLoading,
@@ -87,7 +88,7 @@ class VerifyResetCodePage extends RearchConsumer {
                     if (resetManager.state.error != null) ...[
                       const SizedBox(height: 16),
                       Text(
-                        resetManager.state.error!,
+                        context.trMessage(resetManager.state.error!),
                         style: TextStyle(color: colorScheme.error),
                       ),
                     ],
@@ -105,7 +106,7 @@ class VerifyResetCodePage extends RearchConsumer {
                                 color: colorScheme.onPrimary,
                               ),
                             )
-                          : const Text('Verify'),
+                          : Text(context.tr('Verify')),
                     ),
                     const SizedBox(height: 16),
                     TextButton(
@@ -114,7 +115,7 @@ class VerifyResetCodePage extends RearchConsumer {
                         controllers.clear();
                         context.go('/login');
                       },
-                      child: const Text('Cancel'),
+                      child: Text(context.tr('Cancel')),
                     ),
                   ],
                 ),

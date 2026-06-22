@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:rearch/rearch.dart';
 
 import '../../../../core/capsules/auth_state_capsule.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/capsules/public_config_capsule.dart';
 import '../capsules/login_form_capsule.dart';
 import '../widgets/login_form.dart';
@@ -50,7 +51,7 @@ class LoginPage extends RearchConsumer {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Form Concierge',
+                      context.tr('Form Concierge'),
                       style: Theme.of(context).textTheme.headlineMedium
                           ?.copyWith(
                             color: colorScheme.primary,
@@ -58,7 +59,7 @@ class LoginPage extends RearchConsumer {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Admin Dashboard',
+                      context.tr('Admin Dashboard'),
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: colorScheme.onSurfaceVariant,
                       ),
@@ -82,7 +83,9 @@ class LoginPage extends RearchConsumer {
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
-                                'Welcome! Create your admin account to get started.',
+                                context.tr(
+                                  'Welcome! Create your admin account to get started.',
+                                ),
                                 style: TextStyle(
                                   color: colorScheme.onPrimaryContainer,
                                 ),

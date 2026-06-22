@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 
+import '../../../../core/localization/app_localizations.dart';
+
 /// Chip displaying survey status with appropriate colors.
 class SurveyStatusChip extends StatelessWidget {
   final SurveyStatus status;
@@ -41,7 +43,7 @@ class SurveyStatusChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
       ),
       child: Text(
-        label,
+        context.tr(label),
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
           color: foregroundColor,
           fontWeight: FontWeight.w500,

@@ -4,8 +4,9 @@ import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:go_router/go_router.dart';
 import 'package:rearch/rearch.dart';
 
-import '../../../../core/capsules/public_config_capsule.dart';
 import '../../../../core/capsules/client_capsule.dart';
+import '../../../../core/capsules/public_config_capsule.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../../dashboard/presentation/capsules/survey_list_capsule.dart';
 import '../capsules/question_list_capsule.dart';
 import '../capsules/survey_form_capsule.dart';
@@ -54,7 +55,7 @@ class SurveyEditorPage extends RearchConsumer {
 
     if (!isNewSurvey && formState.isLoading) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Loading...')),
+        appBar: AppBar(title: Text(context.tr('Loading...'))),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -62,7 +63,7 @@ class SurveyEditorPage extends RearchConsumer {
     final survey = formState.survey;
     if (!isNewSurvey && survey == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Survey Not Found')),
+        appBar: AppBar(title: Text(context.tr('Survey Not Found'))),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -73,11 +74,11 @@ class SurveyEditorPage extends RearchConsumer {
                 color: Theme.of(context).colorScheme.error,
               ),
               const SizedBox(height: 16),
-              const Text('Survey not found'),
+              Text(context.tr('Survey not found')),
               const SizedBox(height: 24),
               FilledButton(
                 onPressed: () => context.go('/admin'),
-                child: const Text('Back to Dashboard'),
+                child: Text(context.tr('Back to Dashboard')),
               ),
             ],
           ),
@@ -91,7 +92,7 @@ class SurveyEditorPage extends RearchConsumer {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isNewSurvey ? 'New Survey' : survey!.title),
+        title: Text(isNewSurvey ? context.tr('New Survey') : survey!.title),
         actions: [
           if (!isNewSurvey &&
               canWriteSurveys &&
@@ -101,7 +102,7 @@ class SurveyEditorPage extends RearchConsumer {
                   ? () => _publishSurvey(context, surveyListManager)
                   : null,
               icon: const Icon(Icons.publish),
-              label: const Text('Publish'),
+              label: Text(context.tr('Publish')),
             ),
         ],
       ),
@@ -133,7 +134,9 @@ class SurveyEditorPage extends RearchConsumer {
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'This survey is archived. You cannot edit the questions.',
+                              context.tr(
+                                'This survey is archived. You cannot edit the questions.',
+                              ),
                               style: TextStyle(
                                 color: Theme.of(
                                   context,
@@ -261,7 +264,7 @@ class SurveyEditorPage extends RearchConsumer {
                   if (questionState?.error != null) ...[
                     const SizedBox(height: 16),
                     Text(
-                      questionState!.error!,
+                      context.trMessage(questionState!.error!),
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.error,
                       ),
@@ -342,19 +345,18 @@ class SurveyEditorPage extends RearchConsumer {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Publish Survey'),
-        content: const Text(
-          'Are you sure you want to publish this survey?\n\n'
-          'Once published, you will not be able to edit the questions.',
+        title: Text(context.tr('Publish Survey')),
+        content: Text(
+          context.tr('Publish survey confirmation'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(context.tr('Cancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Publish'),
+            child: Text(context.tr('Publish')),
           ),
         ],
       ),

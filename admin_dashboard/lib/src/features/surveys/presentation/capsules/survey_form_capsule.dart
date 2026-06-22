@@ -138,6 +138,8 @@ class SurveyFormManager {
     int? maxLength,
     int? minSelected,
     int? maxSelected,
+    String firstChoiceText = 'Choice 1',
+    String secondChoiceText = 'Choice 2',
   }) {
     final newQuestion = DraftQuestion.create(
       text: text,
@@ -148,6 +150,8 @@ class SurveyFormManager {
       maxLength: maxLength,
       minSelected: minSelected,
       maxSelected: maxSelected,
+      firstChoiceText: firstChoiceText,
+      secondChoiceText: secondChoiceText,
     );
     _setDraftQuestions((questions) => [...questions, newQuestion]);
   }

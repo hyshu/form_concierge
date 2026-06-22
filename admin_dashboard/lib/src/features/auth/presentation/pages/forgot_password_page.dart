@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_rearch/flutter_rearch.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/localization/app_localizations.dart';
 import '../capsules/password_reset_capsule.dart';
 
 /// Page for entering email to start password reset.
@@ -23,7 +24,7 @@ class ForgotPasswordPage extends RearchConsumer {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Forgot Password'),
+        title: Text(context.tr('Forgot Password')),
       ),
       body: SafeArea(
         child: Center(
@@ -43,13 +44,15 @@ class ForgotPasswordPage extends RearchConsumer {
                     ),
                     const SizedBox(height: 24),
                     Text(
-                      'Reset Your Password',
+                      context.tr('Reset Your Password'),
                       style: Theme.of(context).textTheme.headlineSmall,
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Enter your email address and we\'ll send you a verification code.',
+                      context.tr(
+                        'Enter your email address and we\'ll send you a verification code.',
+                      ),
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: colorScheme.onSurfaceVariant,
                       ),
@@ -58,9 +61,9 @@ class ForgotPasswordPage extends RearchConsumer {
                     const SizedBox(height: 32),
                     TextField(
                       controller: controllers.email,
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                        prefixIcon: Icon(Icons.email_outlined),
+                      decoration: InputDecoration(
+                        labelText: context.tr('Email'),
+                        prefixIcon: const Icon(Icons.email_outlined),
                       ),
                       keyboardType: TextInputType.emailAddress,
                       autofillHints: const [AutofillHints.email],
@@ -71,7 +74,7 @@ class ForgotPasswordPage extends RearchConsumer {
                     if (resetManager.state.error != null) ...[
                       const SizedBox(height: 16),
                       Text(
-                        resetManager.state.error!,
+                        context.trMessage(resetManager.state.error!),
                         style: TextStyle(color: colorScheme.error),
                       ),
                     ],
@@ -89,7 +92,7 @@ class ForgotPasswordPage extends RearchConsumer {
                                 color: colorScheme.onPrimary,
                               ),
                             )
-                          : const Text('Send Code'),
+                          : Text(context.tr('Send Code')),
                     ),
                     const SizedBox(height: 16),
                     TextButton(
@@ -98,7 +101,7 @@ class ForgotPasswordPage extends RearchConsumer {
                         controllers.clear();
                         context.pop();
                       },
-                      child: const Text('Back to Login'),
+                      child: Text(context.tr('Back to Login')),
                     ),
                   ],
                 ),

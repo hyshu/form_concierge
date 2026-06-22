@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_rearch/flutter_rearch.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/localization/app_localizations.dart';
 import '../capsules/password_reset_capsule.dart';
 
 /// Page for entering new password to complete reset.
@@ -42,13 +43,15 @@ class ResetPasswordPage extends RearchConsumer {
                     ),
                     const SizedBox(height: 24),
                     Text(
-                      'Password Reset Complete',
+                      context.tr('Password Reset Complete'),
                       style: Theme.of(context).textTheme.headlineSmall,
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Your password has been successfully reset. You can now login with your new password.',
+                      context.tr(
+                        'Your password has been successfully reset. You can now login with your new password.',
+                      ),
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: colorScheme.onSurfaceVariant,
                       ),
@@ -61,7 +64,7 @@ class ResetPasswordPage extends RearchConsumer {
                         controllers.clear();
                         context.go('/login');
                       },
-                      child: const Text('Go to Login'),
+                      child: Text(context.tr('Go to Login')),
                     ),
                   ],
                 ),
@@ -74,7 +77,7 @@ class ResetPasswordPage extends RearchConsumer {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('New Password'),
+        title: Text(context.tr('New Password')),
       ),
       body: SafeArea(
         child: Center(
@@ -94,13 +97,13 @@ class ResetPasswordPage extends RearchConsumer {
                     ),
                     const SizedBox(height: 24),
                     Text(
-                      'Create New Password',
+                      context.tr('Create New Password'),
                       style: Theme.of(context).textTheme.headlineSmall,
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Enter a new password for your account.',
+                      context.tr('Enter a new password for your account.'),
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: colorScheme.onSurfaceVariant,
                       ),
@@ -109,9 +112,9 @@ class ResetPasswordPage extends RearchConsumer {
                     const SizedBox(height: 32),
                     TextField(
                       controller: controllers.password,
-                      decoration: const InputDecoration(
-                        labelText: 'New Password',
-                        prefixIcon: Icon(Icons.lock_outlined),
+                      decoration: InputDecoration(
+                        labelText: context.tr('New Password'),
+                        prefixIcon: const Icon(Icons.lock_outlined),
                       ),
                       obscureText: true,
                       enabled: !resetManager.state.isLoading,
@@ -120,9 +123,9 @@ class ResetPasswordPage extends RearchConsumer {
                     const SizedBox(height: 16),
                     TextField(
                       controller: controllers.confirmPassword,
-                      decoration: const InputDecoration(
-                        labelText: 'Confirm Password',
-                        prefixIcon: Icon(Icons.lock_outlined),
+                      decoration: InputDecoration(
+                        labelText: context.tr('Confirm Password'),
+                        prefixIcon: const Icon(Icons.lock_outlined),
                       ),
                       obscureText: true,
                       enabled: !resetManager.state.isLoading,
@@ -133,7 +136,7 @@ class ResetPasswordPage extends RearchConsumer {
                     if (resetManager.state.error != null) ...[
                       const SizedBox(height: 16),
                       Text(
-                        resetManager.state.error!,
+                        context.trMessage(resetManager.state.error!),
                         style: TextStyle(color: colorScheme.error),
                       ),
                     ],
@@ -151,7 +154,7 @@ class ResetPasswordPage extends RearchConsumer {
                                 color: colorScheme.onPrimary,
                               ),
                             )
-                          : const Text('Reset Password'),
+                          : Text(context.tr('Reset Password')),
                     ),
                     const SizedBox(height: 16),
                     TextButton(
@@ -160,7 +163,7 @@ class ResetPasswordPage extends RearchConsumer {
                         controllers.clear();
                         context.go('/login');
                       },
-                      child: const Text('Cancel'),
+                      child: Text(context.tr('Cancel')),
                     ),
                   ],
                 ),
@@ -182,21 +185,25 @@ class ResetPasswordPage extends RearchConsumer {
 
     if (password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a password')),
+        SnackBar(content: Text(context.tr('Please enter a password'))),
       );
       return;
     }
 
     if (password.length < 8) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password must be at least 8 characters')),
+        SnackBar(
+          content: Text(
+            context.tr('Password must be at least 8 characters'),
+          ),
+        ),
       );
       return;
     }
 
     if (password != confirmPassword) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Passwords do not match')),
+        SnackBar(content: Text(context.tr('Passwords do not match'))),
       );
       return;
     }

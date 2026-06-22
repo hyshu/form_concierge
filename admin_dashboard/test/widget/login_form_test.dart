@@ -4,6 +4,7 @@ import 'package:form_concierge_flutter/src/features/auth/presentation/capsules/l
 import 'package:form_concierge_flutter/src/features/auth/presentation/widgets/login_form.dart';
 
 import '../support/given_when_then.dart';
+import '../support/localized_test_app.dart';
 
 void main() {
   group('LoginForm', () {
@@ -33,7 +34,7 @@ void main() {
       bool isRegistration = false,
       VoidCallback? onForgotPassword,
     }) {
-      return MaterialApp(
+      return localizedTestApp(
         home: Scaffold(
           body: LoginForm(
             controllers: controllers,

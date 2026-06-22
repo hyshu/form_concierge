@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/localization/app_localizations.dart';
+
 /// Prompt input for generating draft survey questions with AI.
 class AiPromptInput extends StatefulWidget {
   final bool isGenerating;
@@ -53,7 +55,7 @@ class _AiPromptInputState extends State<AiPromptInput> {
               ),
               const SizedBox(width: 8),
               Text(
-                'Generate with AI',
+                context.tr('Generate with AI'),
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   color: colorScheme.primary,
                 ),
@@ -62,7 +64,9 @@ class _AiPromptInputState extends State<AiPromptInput> {
           ),
           const SizedBox(height: 12),
           Text(
-            'Describe your survey and AI will generate questions for you.',
+            context.tr(
+              'Describe your survey and AI will generate questions for you.',
+            ),
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: colorScheme.onSurfaceVariant,
             ),
@@ -71,8 +75,9 @@ class _AiPromptInputState extends State<AiPromptInput> {
           TextField(
             controller: _controller,
             decoration: InputDecoration(
-              hintText:
-                  'Example: Onboarding survey for a fitness app asking about exercise experience, target weight, and weekly workout frequency',
+              hintText: context.tr(
+                'Example: Onboarding survey for a fitness app asking about exercise experience, target weight, and weekly workout frequency',
+              ),
               border: const OutlineInputBorder(),
               filled: true,
               fillColor: colorScheme.surface,
@@ -83,7 +88,7 @@ class _AiPromptInputState extends State<AiPromptInput> {
           if (widget.error != null) ...[
             const SizedBox(height: 8),
             Text(
-              widget.error!,
+              context.trMessage(widget.error!),
               style: TextStyle(color: colorScheme.error),
             ),
           ],
@@ -108,14 +113,18 @@ class _AiPromptInputState extends State<AiPromptInput> {
                         ),
                       )
                     : const Icon(Icons.auto_awesome),
-                label: Text(widget.isGenerating ? 'Generating...' : 'Generate'),
+                label: Text(
+                  context.tr(
+                    widget.isGenerating ? 'Generating...' : 'Generate',
+                  ),
+                ),
               ),
               const SizedBox(width: 12),
               TextButton(
                 onPressed: widget.isGenerating || widget.isSaving
                     ? null
                     : widget.onAddManually,
-                child: const Text('Add manually'),
+                child: Text(context.tr('Add manually')),
               ),
             ],
           ),

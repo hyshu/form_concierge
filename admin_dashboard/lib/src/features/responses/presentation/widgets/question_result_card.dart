@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 
 import '../../../../core/extensions/question_type_presentation.dart';
+import '../../../../core/localization/app_localizations.dart';
 
 const int _kMaxTextResponsesPreview = 10;
 
@@ -81,7 +82,7 @@ class QuestionResultCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
               child: Text(
-                'Choice',
+                context.tr('Choice'),
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -90,7 +91,7 @@ class QuestionResultCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
               child: Text(
-                'Count',
+                context.tr('Count'),
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -158,7 +159,7 @@ class QuestionResultCard extends StatelessWidget {
 
     if (responses.isEmpty) {
       return Text(
-        'No text responses',
+        context.tr('No text responses'),
         style: TextStyle(
           color: colorScheme.onSurfaceVariant,
           fontStyle: FontStyle.italic,
@@ -170,7 +171,10 @@ class QuestionResultCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '${responses.length} response${responses.length == 1 ? '' : 's'}',
+          context.tr(
+            responses.length == 1 ? '{count} response' : '{count} responses',
+            {'count': responses.length},
+          ),
           style: Theme.of(context).textTheme.labelMedium?.copyWith(
             color: colorScheme.onSurfaceVariant,
           ),
@@ -194,7 +198,9 @@ class QuestionResultCard extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: Text(
-              '... and ${responses.length - _kMaxTextResponsesPreview} more responses',
+              context.tr('... and {count} more responses', {
+                'count': responses.length - _kMaxTextResponsesPreview,
+              }),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),

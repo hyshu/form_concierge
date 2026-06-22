@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/extensions/question_type_presentation.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../models/draft_question.dart';
 
 /// Widget for editing draft questions and their choices.
@@ -124,7 +125,7 @@ class _DraftQuestionTileState extends State<_DraftQuestionTile> {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  widget.question.type.label,
+                  context.tr(widget.question.type.label),
                   style: textTheme.bodySmall?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
@@ -132,7 +133,7 @@ class _DraftQuestionTileState extends State<_DraftQuestionTile> {
                 if (widget.question.isRequired) ...[
                   const SizedBox(width: 8),
                   Text(
-                    'Required',
+                    context.tr('Required'),
                     style: textTheme.bodySmall?.copyWith(
                       color: colorScheme.primary,
                     ),
@@ -210,7 +211,7 @@ class _ChoicesSection extends StatelessWidget {
         children: [
           const Divider(),
           Text(
-            'Choices',
+            context.tr('Choices'),
             style: Theme.of(context).textTheme.titleSmall,
           ),
           const SizedBox(height: 8),
@@ -224,7 +225,7 @@ class _ChoicesSection extends StatelessWidget {
           ),
           if (choices.isEmpty)
             Text(
-              'No choices yet. Add at least one choice.',
+              context.tr('No choices yet. Add at least one choice.'),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),
@@ -234,7 +235,7 @@ class _ChoicesSection extends StatelessWidget {
             OutlinedButton.icon(
               onPressed: () => _showAddDialog(context),
               icon: const Icon(Icons.add),
-              label: const Text('Add Choice'),
+              label: Text(context.tr('Add Choice')),
             ),
         ],
       ),
@@ -246,11 +247,11 @@ class _ChoicesSection extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Add Choice'),
+        title: Text(context.tr('Add Choice')),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'Choice text',
+          decoration: InputDecoration(
+            labelText: context.tr('Choice text'),
           ),
           autofocus: true,
           onSubmitted: (value) {
@@ -263,7 +264,7 @@ class _ChoicesSection extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(context.tr('Cancel')),
           ),
           FilledButton(
             onPressed: () {
@@ -272,7 +273,7 @@ class _ChoicesSection extends StatelessWidget {
                 Navigator.pop(context);
               }
             },
-            child: const Text('Add'),
+            child: Text(context.tr('Add')),
           ),
         ],
       ),

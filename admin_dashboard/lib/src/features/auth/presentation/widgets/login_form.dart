@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/localization/app_localizations.dart';
 import '../capsules/login_form_capsule.dart';
 
 /// Login form widget with email and password fields.
@@ -32,9 +33,9 @@ class LoginForm extends StatelessWidget {
         children: [
           TextField(
             controller: controllers.email,
-            decoration: const InputDecoration(
-              labelText: 'Email',
-              prefixIcon: Icon(Icons.email_outlined),
+            decoration: InputDecoration(
+              labelText: context.tr('Email'),
+              prefixIcon: const Icon(Icons.email_outlined),
             ),
             keyboardType: TextInputType.emailAddress,
             autofillHints: const [AutofillHints.email],
@@ -44,9 +45,9 @@ class LoginForm extends StatelessWidget {
           const SizedBox(height: 16),
           TextField(
             controller: controllers.password,
-            decoration: const InputDecoration(
-              labelText: 'Password',
-              prefixIcon: Icon(Icons.lock_outlined),
+            decoration: InputDecoration(
+              labelText: context.tr('Password'),
+              prefixIcon: const Icon(Icons.lock_outlined),
             ),
             obscureText: true,
             autofillHints: const [AutofillHints.password],
@@ -60,14 +61,14 @@ class LoginForm extends StatelessWidget {
               alignment: Alignment.centerRight,
               child: TextButton(
                 onPressed: isLoading ? null : onForgotPassword,
-                child: const Text('Forgot Password?'),
+                child: Text(context.tr('Forgot Password?')),
               ),
             ),
           ],
           if (error != null) ...[
             const SizedBox(height: 16),
             Text(
-              error!,
+              context.trMessage(error!),
               style: TextStyle(color: colorScheme.error),
             ),
           ],
@@ -83,7 +84,9 @@ class LoginForm extends StatelessWidget {
                       color: colorScheme.onPrimary,
                     ),
                   )
-                : Text(isRegistration ? 'Create Account' : 'Login'),
+                : Text(
+                    context.tr(isRegistration ? 'Create Account' : 'Login'),
+                  ),
           ),
         ],
       ),

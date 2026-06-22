@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 
+import '../../../../core/localization/app_localizations.dart';
+
 class VisibilityRuleEditor extends StatefulWidget {
   const VisibilityRuleEditor({
     super.key,
@@ -61,20 +63,23 @@ class _VisibilityRuleEditorState extends State<VisibilityRuleEditor> {
       childrenPadding: const EdgeInsets.only(top: 8),
       leading: Icon(Icons.account_tree_outlined, color: colorScheme.primary),
       title: Text(
-        'Visibility rules',
+        context.tr('Visibility rules'),
         style: Theme.of(context).textTheme.titleSmall,
       ),
       subtitle: Text(
         _rules.isEmpty
-            ? 'Always visible'
-            : '${_rules.length} ${_rules.length == 1 ? 'rule' : 'rules'}',
+            ? context.tr('Always visible')
+            : context.tr(
+                _rules.length == 1 ? '{count} rule' : '{count} rules',
+                {'count': _rules.length},
+              ),
       ),
       children: [
         if (widget.sourceQuestions.isEmpty)
           Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              'Add an earlier question before creating rules.',
+              context.tr('Add an earlier question before creating rules.'),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),
@@ -82,14 +87,14 @@ class _VisibilityRuleEditorState extends State<VisibilityRuleEditor> {
           )
         else ...[
           SegmentedButton<VisibilityConditionMode>(
-            segments: const [
+            segments: [
               ButtonSegment(
                 value: VisibilityConditionMode.all,
-                label: Text('All'),
+                label: Text(context.tr('All')),
               ),
               ButtonSegment(
                 value: VisibilityConditionMode.any,
-                label: Text('Any'),
+                label: Text(context.tr('Any')),
               ),
             ],
             selected: {_mode},
@@ -116,7 +121,7 @@ class _VisibilityRuleEditorState extends State<VisibilityRuleEditor> {
               OutlinedButton.icon(
                 onPressed: widget.enabled && !_isSaving ? _addRule : null,
                 icon: const Icon(Icons.add),
-                label: const Text('Add rule'),
+                label: Text(context.tr('Add rule')),
               ),
               const Spacer(),
               FilledButton.icon(
@@ -128,7 +133,7 @@ class _VisibilityRuleEditorState extends State<VisibilityRuleEditor> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.save_outlined),
-                label: const Text('Save rules'),
+                label: Text(context.tr('Save rules')),
               ),
             ],
           ),
@@ -224,7 +229,9 @@ class _RuleRow extends StatelessWidget {
                 flex: 2,
                 child: DropdownButtonFormField<int>(
                   initialValue: source.id,
-                  decoration: const InputDecoration(labelText: 'Question'),
+                  decoration: InputDecoration(
+                    labelText: context.tr('Question'),
+                  ),
                   items: [
                     for (final question in sourceQuestions)
                       DropdownMenuItem(
@@ -251,12 +258,14 @@ class _RuleRow extends StatelessWidget {
                   initialValue: operators.contains(rule.operator)
                       ? rule.operator
                       : operators.first,
-                  decoration: const InputDecoration(labelText: 'Condition'),
+                  decoration: InputDecoration(
+                    labelText: context.tr('Condition'),
+                  ),
                   items: [
                     for (final operator in operators)
                       DropdownMenuItem(
                         value: operator,
-                        child: Text(_operatorLabel(operator)),
+                        child: Text(context.tr(_operatorLabel(operator))),
                       ),
                   ],
                   onChanged: enabled
@@ -278,7 +287,7 @@ class _RuleRow extends StatelessWidget {
               IconButton(
                 onPressed: enabled ? onDelete : null,
                 icon: const Icon(Icons.delete_outline),
-                tooltip: 'Delete rule',
+                tooltip: context.tr('Delete rule'),
               ),
             ],
           ),
@@ -336,7 +345,7 @@ class _ValueField extends StatelessWidget {
         initialValue: choiceIds.contains(current)
             ? current
             : _firstOrNull(choices)?.id,
-        decoration: const InputDecoration(labelText: 'Choice'),
+        decoration: InputDecoration(labelText: context.tr('Choice')),
         items: [
           for (final choice in choices)
             DropdownMenuItem(value: choice.id, child: Text(choice.text)),
@@ -347,7 +356,7 @@ class _ValueField extends StatelessWidget {
     return TextFormField(
       initialValue: value?.toString() ?? '',
       enabled: enabled,
-      decoration: const InputDecoration(labelText: 'Value'),
+      decoration: InputDecoration(labelText: context.tr('Value')),
       onChanged: onChanged,
     );
   }

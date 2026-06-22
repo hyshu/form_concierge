@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 
+import '../../../../core/localization/app_localizations.dart';
 import 'question_result_card.dart';
 
 /// View showing aggregated survey results.
@@ -39,11 +40,11 @@ class AggregatedResultsView extends StatelessWidget {
               color: colorScheme.error,
             ),
             const SizedBox(height: 16),
-            Text(error!),
+            Text(context.trMessage(error!)),
             const SizedBox(height: 16),
             FilledButton(
               onPressed: onRefresh,
-              child: const Text('Retry'),
+              child: Text(context.tr('Retry')),
             ),
           ],
         ),
@@ -62,12 +63,12 @@ class AggregatedResultsView extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'No responses yet',
+              context.tr('No responses yet'),
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 8),
             Text(
-              'Share your survey to start collecting responses',
+              context.tr('Share your survey to start collecting responses'),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),
@@ -114,7 +115,7 @@ class AggregatedResultsView extends StatelessWidget {
                             ),
                       ),
                       Text(
-                        'Total Responses',
+                        context.tr('Total Responses'),
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(
                               color: colorScheme.onSurfaceVariant,
@@ -128,7 +129,7 @@ class AggregatedResultsView extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           Text(
-            'Results by Question',
+            context.tr('Results by Question'),
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 16),

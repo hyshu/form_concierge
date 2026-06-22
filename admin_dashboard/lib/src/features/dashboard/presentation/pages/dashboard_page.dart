@@ -6,6 +6,7 @@ import 'package:rearch/rearch.dart';
 
 import '../../../../core/capsules/auth_state_capsule.dart';
 import '../../../../core/capsules/client_capsule.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/confirm_delete_dialog.dart';
 import '../capsules/survey_list_capsule.dart';
 import '../widgets/survey_list_tile.dart';
@@ -30,23 +31,23 @@ class DashboardPage extends RearchConsumer {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Surveys'),
+        title: Text(context.tr('Surveys')),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: surveyManager.loadSurveys,
-            tooltip: 'Refresh',
+            tooltip: context.tr('Refresh'),
           ),
           if (canManageUsers)
             IconButton(
               icon: const Icon(Icons.people),
               onPressed: () => context.go('/admin/users'),
-              tooltip: 'User Management',
+              tooltip: context.tr('User Management'),
             ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () => authManager.logout(),
-            tooltip: 'Logout',
+            tooltip: context.tr('Logout'),
           ),
         ],
       ),
@@ -57,7 +58,7 @@ class DashboardPage extends RearchConsumer {
           ? FloatingActionButton.extended(
               onPressed: () => context.go('/admin/surveys/new'),
               icon: const Icon(Icons.add),
-              label: const Text('New Survey'),
+              label: Text(context.tr('New Survey')),
             )
           : null,
     );
@@ -83,11 +84,11 @@ class DashboardPage extends RearchConsumer {
               color: Theme.of(context).colorScheme.error,
             ),
             const SizedBox(height: 16),
-            Text(manager.state.error!),
+            Text(context.trMessage(manager.state.error!)),
             const SizedBox(height: 16),
             FilledButton(
               onPressed: manager.loadSurveys,
-              child: const Text('Retry'),
+              child: Text(context.tr('Retry')),
             ),
           ],
         ),
@@ -106,12 +107,12 @@ class DashboardPage extends RearchConsumer {
             ),
             const SizedBox(height: 16),
             Text(
-              'No surveys yet',
+              context.tr('No surveys yet'),
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 8),
             Text(
-              'Create your first survey to get started',
+              context.tr('Create your first survey to get started'),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
@@ -120,7 +121,7 @@ class DashboardPage extends RearchConsumer {
             FilledButton.icon(
               onPressed: () => context.go('/admin/surveys/new'),
               icon: const Icon(Icons.add),
-              label: const Text('Create Survey'),
+              label: Text(context.tr('Create Survey')),
             ),
           ],
         ),
@@ -164,10 +165,10 @@ class DashboardPage extends RearchConsumer {
   ) async {
     final confirmed = await ConfirmDeleteDialog.show(
       context,
-      title: 'Delete Survey',
-      content:
-          'Are you sure you want to delete "${survey.title}"?\n\n'
-          'This will also delete all questions and responses. This action cannot be undone.',
+      title: context.tr('Delete Survey'),
+      content: context.tr('Delete survey confirmation', {
+        'title': survey.title,
+      }),
     );
 
     if (confirmed) {

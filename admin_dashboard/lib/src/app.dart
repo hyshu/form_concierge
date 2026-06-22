@@ -3,6 +3,7 @@ import 'package:flutter_rearch/flutter_rearch.dart';
 import 'package:rearch/rearch.dart';
 
 import 'core/capsules/auth_state_capsule.dart';
+import 'core/localization/app_localizations.dart';
 import 'core/theme/app_theme.dart';
 import 'router/app_router.dart';
 
@@ -25,9 +26,12 @@ class App extends RearchConsumer {
     );
 
     return MaterialApp.router(
-      title: 'Form Concierge Admin',
+      onGenerateTitle: (context) => context.tr('Form Concierge Admin'),
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      localeResolutionCallback: AppLocalizations.localeResolutionCallback,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
     );

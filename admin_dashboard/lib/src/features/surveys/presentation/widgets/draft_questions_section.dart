@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 
+import '../../../../core/localization/app_localizations.dart';
 import '../capsules/survey_form_capsule.dart';
 import '../models/draft_question.dart';
 import 'ai_prompt_input.dart';
@@ -41,7 +42,10 @@ class DraftQuestionsSection extends StatelessWidget {
       children: [
         Row(
           children: [
-            Text('Questions', style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              context.tr('Questions'),
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const Spacer(),
           ],
         ),
@@ -82,7 +86,7 @@ class DraftQuestionsSection extends StatelessWidget {
                     ? null
                     : () => _showAddDialog(context),
                 icon: const Icon(Icons.add),
-                label: const Text('Add Question'),
+                label: Text(context.tr('Add Question')),
               ),
             ],
           ),
@@ -114,6 +118,8 @@ class DraftQuestionsSection extends StatelessWidget {
               maxLength: maxLength,
               minSelected: minSelected,
               maxSelected: maxSelected,
+              firstChoiceText: context.tr('Choice 1'),
+              secondChoiceText: context.tr('Choice 2'),
             );
           },
     );
@@ -190,12 +196,12 @@ class _EmptyDraftQuestions extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'No questions yet',
+            context.tr('No questions yet'),
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
           Text(
-            'Add questions to your survey',
+            context.tr('Add questions to your survey'),
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: colorScheme.onSurfaceVariant,
             ),
@@ -204,7 +210,7 @@ class _EmptyDraftQuestions extends StatelessWidget {
           FilledButton.icon(
             onPressed: isSaving ? null : onAdd,
             icon: const Icon(Icons.add),
-            label: const Text('Add Question'),
+            label: Text(context.tr('Add Question')),
           ),
         ],
       ),

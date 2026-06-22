@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 
+import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/confirm_delete_dialog.dart';
 import 'question_form_dialog.dart';
 import 'question_list_tile.dart';
@@ -77,7 +78,7 @@ class QuestionList extends StatelessWidget {
         Row(
           children: [
             Text(
-              'Questions',
+              context.tr('Questions'),
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const Spacer(),
@@ -107,12 +108,12 @@ class QuestionList extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'No questions yet',
+                  context.tr('No questions yet'),
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Add questions to your survey',
+                  context.tr('Add questions to your survey'),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
@@ -121,7 +122,7 @@ class QuestionList extends StatelessWidget {
                 FilledButton.icon(
                   onPressed: enabled ? () => _showAddDialog(context) : null,
                   icon: const Icon(Icons.add),
-                  label: const Text('Add Question'),
+                  label: Text(context.tr('Add Question')),
                 ),
               ],
             ),
@@ -200,7 +201,7 @@ class QuestionList extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: enabled ? () => _showAddDialog(context) : null,
                 icon: const Icon(Icons.add),
-                label: const Text('Add Question'),
+                label: Text(context.tr('Add Question')),
               ),
             ],
           ),
@@ -273,11 +274,10 @@ class QuestionList extends StatelessWidget {
   Future<void> _confirmDelete(BuildContext context, Question question) async {
     final confirmed = await ConfirmDeleteDialog.show(
       context,
-      title: 'Delete Question',
-      content:
-          'Are you sure you want to delete this question?\n\n'
-          '"${question.text}"\n\n'
-          'This will also delete any responses to this question.',
+      title: context.tr('Delete Question'),
+      content: context.tr('Delete question confirmation', {
+        'question': question.text,
+      }),
     );
 
     if (confirmed) {
