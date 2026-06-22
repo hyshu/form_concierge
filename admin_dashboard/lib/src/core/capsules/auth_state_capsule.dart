@@ -61,6 +61,8 @@ class AuthStateManager {
 
   /// Check if we have a valid stored session.
   Future<void> checkAuth() async {
+    if (state.hasCheckedAuth || state.isLoading) return;
+
     _setState(state.copyWith(isLoading: true));
     try {
       // Load stored auth info
@@ -87,12 +89,16 @@ class AuthStateManager {
 
   /// Check if this is the first user (no users exist yet).
   Future<void> checkFirstUser() async {
+    if (state.hasCheckedFirstUser || state.isCheckingFirstUser) return;
+
+    _setState(state.copyWith(isCheckingFirstUser: true));
     try {
       final isFirst = await _client.userAdmin.isFirstUser();
       _setState(
         state.copyWith(
           isFirstUser: isFirst,
           hasCheckedFirstUser: true,
+          isCheckingFirstUser: false,
         ),
       );
     } on Exception {
@@ -100,6 +106,7 @@ class AuthStateManager {
         state.copyWith(
           isFirstUser: false,
           hasCheckedFirstUser: true,
+          isCheckingFirstUser: false,
         ),
       );
     }
@@ -123,6 +130,8 @@ class AuthStateManager {
           isLoading: false,
           hasCheckedAuth: true,
           isFirstUser: false,
+          hasCheckedFirstUser: true,
+          isCheckingFirstUser: false,
         ),
       );
     } on Exception catch (e) {

@@ -10,38 +10,42 @@ import 'survey_loading.dart';
 import 'survey_error.dart';
 import 'survey_completed.dart';
 import 'survey_content.dart';
+import 'not_found_page.dart';
 
-@client
 class SurveyClient extends StatefulComponent {
   const SurveyClient({
-    required this.surveyJson,
-    required this.questionsJson,
-    required this.visibilityRulesJson,
-    required this.choicesByQuestionJson,
     required this.serverUrl,
+    this.surveyJson,
+    this.questionsJson = const [],
+    this.visibilityRulesJson = const [],
+    this.choicesByQuestionJson = const {},
+    this.slug,
+    this.domain,
     super.key,
   });
 
-  final Map<String, dynamic> surveyJson;
+  final Map<String, dynamic>? surveyJson;
   final List<Map<String, dynamic>> questionsJson;
   final List<Map<String, dynamic>> visibilityRulesJson;
   final Map<String, List<Map<String, dynamic>>> choicesByQuestionJson;
   final String serverUrl;
+  final String? slug;
+  final String? domain;
 
   @override
   State<SurveyClient> createState() => SurveyClientState();
 }
 
 class SurveyClientState extends State<SurveyClient> {
-  late Survey _survey;
-  late List<Question> _questions;
-  late List<QuestionVisibilityRule> _visibilityRules;
-  late Map<int, List<Choice>> _choicesByQuestion;
   late Client _client;
-  late String _anonymousTokenStorageKey;
-  late String _locale;
+  Survey? _survey;
+  List<Question> _questions = [];
+  List<QuestionVisibilityRule> _visibilityRules = [];
+  Map<int, List<Choice>> _choicesByQuestion = {};
+  String? _anonymousTokenStorageKey;
+  String _locale = defaultFormContentLocale;
 
-  SurveyViewState _viewState = SurveyViewState.ready;
+  SurveyViewState _viewState = SurveyViewState.loading;
   Map<int, dynamic> _answers = {};
   Map<int, String> _validationErrors = {};
   String? _errorMessage;
@@ -49,37 +53,110 @@ class SurveyClientState extends State<SurveyClient> {
   @override
   void initState() {
     super.initState();
-
-    // Decode data passed from server
-    _survey = Survey.fromJson(component.surveyJson);
-    _locale = _survey.defaultLocale;
-    _questions =
-        component.questionsJson.map((j) => Question.fromJson(j)).toList();
-    _visibilityRules = component.visibilityRulesJson
-        .map((j) => QuestionVisibilityRule.fromJson(j))
-        .toList();
-    _choicesByQuestion = component.choicesByQuestionJson.map(
-      (k, v) =>
-          MapEntry(int.parse(k), v.map((j) => Choice.fromJson(j)).toList()),
-    );
-
-    // Initialize client
     _client = Client(component.serverUrl);
-    _anonymousTokenStorageKey =
-        'form_concierge.anonymous_token.${component.serverUrl}.${_survey.slug}';
-    final savedToken = readAnonymousToken(_anonymousTokenStorageKey);
-    if (savedToken != null && savedToken.isNotEmpty) {
-      _client.anonymous.useToken(savedToken);
+
+    final surveyJson = component.surveyJson;
+    if (surveyJson == null) {
+      _loadSurvey();
+      return;
     }
 
+    _hydrateSurvey(
+      Survey.fromJson(surveyJson),
+      component.questionsJson.map((j) => Question.fromJson(j)).toList(),
+      component.visibilityRulesJson
+          .map((j) => QuestionVisibilityRule.fromJson(j))
+          .toList(),
+      component.choicesByQuestionJson.map(
+        (k, v) =>
+            MapEntry(int.parse(k), v.map((j) => Choice.fromJson(j)).toList()),
+      ),
+    );
+    _viewState = SurveyViewState.ready;
     _ensureAnonymousAccount();
   }
 
+  Future<void> _loadSurvey() async {
+    setState(() {
+      _viewState = SurveyViewState.loading;
+      _errorMessage = null;
+    });
+
+    try {
+      final survey = await _resolveSurvey();
+      if (survey == null) {
+        setState(() => _viewState = SurveyViewState.notFound);
+        return;
+      }
+
+      final questions = await _client.survey.getQuestionsForSurvey(survey.id!);
+      final visibilityRules =
+          await _client.survey.getVisibilityRulesForSurvey(survey.id!);
+      final choicesByQuestion =
+          await _client.survey.getChoicesByQuestion(questions);
+
+      setState(() {
+        _hydrateSurvey(
+          survey,
+          questions,
+          visibilityRules,
+          choicesByQuestion,
+        );
+        _viewState = SurveyViewState.ready;
+      });
+      await _ensureAnonymousAccount();
+    } on Exception catch (error) {
+      setState(() {
+        _viewState = SurveyViewState.error;
+        _errorMessage = error is ApiException
+            ? error.message
+            : FormContentMessages.text(_locale, 'errorOccurred');
+      });
+    }
+  }
+
+  Future<Survey?> _resolveSurvey() {
+    final slug = component.slug?.trim();
+    if (slug != null && slug.isNotEmpty) {
+      return _client.survey.getBySlug(slug);
+    }
+
+    final domain = component.domain?.trim().toLowerCase();
+    if (domain != null && domain.isNotEmpty) {
+      return _client.survey.getByDomain(domain);
+    }
+
+    return Future.value(null);
+  }
+
+  void _hydrateSurvey(
+    Survey survey,
+    List<Question> questions,
+    List<QuestionVisibilityRule> visibilityRules,
+    Map<int, List<Choice>> choicesByQuestion,
+  ) {
+    _survey = survey;
+    _locale = survey.defaultLocale;
+    _questions = questions;
+    _visibilityRules = visibilityRules;
+    _choicesByQuestion = choicesByQuestion;
+    _anonymousTokenStorageKey =
+        'form_concierge.anonymous_token.${component.serverUrl}.${survey.slug}';
+  }
+
   Future<bool> _ensureAnonymousAccount() async {
+    final storageKey = _anonymousTokenStorageKey;
+    if (storageKey == null) return false;
+    if (!_client.anonymous.isAuthenticated) {
+      final savedToken = readAnonymousToken(storageKey);
+      if (savedToken != null && savedToken.isNotEmpty) {
+        _client.anonymous.useToken(savedToken);
+      }
+    }
     if (_client.anonymous.isAuthenticated) return true;
     try {
       final session = await _client.anonymous.createAccount();
-      writeAnonymousToken(_anonymousTokenStorageKey, session.token);
+      writeAnonymousToken(storageKey, session.token);
       return true;
     } on Exception catch (_) {
       setState(() {
@@ -108,6 +185,9 @@ class SurveyClientState extends State<SurveyClient> {
   }
 
   Future<void> _submit() async {
+    final survey = _survey;
+    if (survey == null) return;
+
     final visible = resolveVisibleQuestions(
       _questions,
       _visibilityRules,
@@ -132,7 +212,7 @@ class SurveyClientState extends State<SurveyClient> {
 
       final answers = buildAnswers(_answers, visible);
       await _client.survey.submitResponse(
-        surveyId: _survey.id!,
+        surveyId: survey.id!,
         answers: answers,
         deviceInfo: _deviceInfo(),
       );
@@ -154,6 +234,7 @@ class SurveyClientState extends State<SurveyClient> {
 
   @override
   Component build(BuildContext context) {
+    final survey = _survey;
     final visibleQuestions = resolveVisibleQuestions(
       _questions,
       _visibilityRules,
@@ -162,35 +243,40 @@ class SurveyClientState extends State<SurveyClient> {
     return div(classes: 'survey-wrapper', [
       switch (_viewState) {
         SurveyViewState.loading => const SurveyLoading(),
+        SurveyViewState.notFound => const NotFoundPage(),
         SurveyViewState.error => SurveyError(
             locale: _locale,
             message: _errorMessage ??
                 FormContentMessages.text(_locale, 'errorOccurred'),
-            onRetry: () => setState(() => _viewState = SurveyViewState.ready),
+            onRetry: _loadSurvey,
           ),
-        SurveyViewState.ready || SurveyViewState.submitting => SurveyContent(
-            survey: _survey,
-            questions: visibleQuestions,
-            choicesByQuestion: _choicesByQuestion,
-            answers: _answers,
-            validationErrors: _validationErrors,
-            errorMessage: _errorMessage,
-            locale: _locale,
-            isSubmitting: _viewState == SurveyViewState.submitting,
-            onAnswerChanged: _updateAnswer,
-            onLocaleChanged: (locale) {
-              setState(() {
-                _locale = locale;
-                _validationErrors = {};
-                _errorMessage = null;
-              });
-            },
-            onSubmit: _submit,
-          ),
-        SurveyViewState.completed => SurveyCompleted(
-            survey: _survey,
-            locale: _locale,
-          ),
+        SurveyViewState.ready || SurveyViewState.submitting => survey == null
+            ? const SurveyLoading()
+            : SurveyContent(
+                survey: survey,
+                questions: visibleQuestions,
+                choicesByQuestion: _choicesByQuestion,
+                answers: _answers,
+                validationErrors: _validationErrors,
+                errorMessage: _errorMessage,
+                locale: _locale,
+                isSubmitting: _viewState == SurveyViewState.submitting,
+                onAnswerChanged: _updateAnswer,
+                onLocaleChanged: (locale) {
+                  setState(() {
+                    _locale = locale;
+                    _validationErrors = {};
+                    _errorMessage = null;
+                  });
+                },
+                onSubmit: _submit,
+              ),
+        SurveyViewState.completed => survey == null
+            ? const SurveyLoading()
+            : SurveyCompleted(
+                survey: survey,
+                locale: _locale,
+              ),
       },
     ]);
   }

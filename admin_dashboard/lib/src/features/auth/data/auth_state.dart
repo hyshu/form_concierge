@@ -6,6 +6,7 @@ class AuthState {
   final bool hasCheckedAuth;
   final bool? isFirstUser;
   final bool hasCheckedFirstUser;
+  final bool isCheckingFirstUser;
 
   const AuthState({
     this.isAuthenticated = false,
@@ -14,6 +15,7 @@ class AuthState {
     this.hasCheckedAuth = false,
     this.isFirstUser,
     this.hasCheckedFirstUser = false,
+    this.isCheckingFirstUser = false,
   });
 
   factory AuthState.initial() => const AuthState();
@@ -25,6 +27,7 @@ class AuthState {
     bool? hasCheckedAuth,
     bool? isFirstUser,
     bool? hasCheckedFirstUser,
+    bool? isCheckingFirstUser,
   }) => AuthState(
     isAuthenticated: isAuthenticated ?? this.isAuthenticated,
     isLoading: isLoading ?? this.isLoading,
@@ -32,5 +35,6 @@ class AuthState {
     hasCheckedAuth: hasCheckedAuth ?? this.hasCheckedAuth,
     isFirstUser: isFirstUser ?? this.isFirstUser,
     hasCheckedFirstUser: hasCheckedFirstUser ?? this.hasCheckedFirstUser,
+    isCheckingFirstUser: isCheckingFirstUser ?? this.isCheckingFirstUser,
   );
 }

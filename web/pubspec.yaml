@@ -7,11 +7,10 @@ environment:
   sdk: ^3.6.0
 
 jaspr:
-  mode: server
+  mode: client
 
 dependencies:
   jaspr: ^0.23.1
-  jaspr_router: ^0.8.2
   form_concierge_client:
     path: ../client
   web: ^1.1.1
