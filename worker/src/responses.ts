@@ -2,6 +2,7 @@ import type { AdminContext, AnswerRow, ChoiceRow, Env, QuestionRow, ReplyRow, Re
 import { mustSurvey } from './admin_records';
 import { HttpError, countRows, isChoiceQuestionType, json, nowIso, readJson, requireString, requiredRow } from './utils';
 import { answerToJson, choiceToJson, parseChoiceIds, questionToJson, replyToJson, responseToJson, surveyToJson } from './serializers';
+import { DEFAULT_FORM_CONTENT_LOCALE, localizedTextFor } from './localization';
 
 export async function listResponses(env: Env, surveyId: number, url: URL): Promise<Response> {
   const limit = Math.min(Number(url.searchParams.get('limit') ?? '50'), 100);
@@ -62,7 +63,7 @@ export async function aggregatedResults(env: Env, surveyId: number): Promise<Res
       }
       questionResults.push({
         questionId: question.id,
-        questionText: question.text,
+        questionText: localizedTextFor(question.text_translations, DEFAULT_FORM_CONTENT_LOCALE),
         questionType: question.type,
         choiceCounts: counts,
         textResponses: null,
@@ -70,7 +71,7 @@ export async function aggregatedResults(env: Env, surveyId: number): Promise<Res
     } else {
       questionResults.push({
         questionId: question.id,
-        questionText: question.text,
+        questionText: localizedTextFor(question.text_translations, DEFAULT_FORM_CONTENT_LOCALE),
         questionType: question.type,
         choiceCounts: null,
         textResponses: answers.results
@@ -280,7 +281,10 @@ function toExportCsv(data: ExportData): string {
   for (const question of questions) {
     choiceTextByQuestion.set(
       question.id,
-      new Map((data.choicesByQuestion.get(question.id) ?? []).map((choice) => [choice.id, choice.text])),
+      new Map((data.choicesByQuestion.get(question.id) ?? []).map((choice) => [
+        choice.id,
+        localizedTextFor(choice.text_translations, DEFAULT_FORM_CONTENT_LOCALE),
+      ])),
     );
   }
   const lines = [headers.map(csvCell).join(',')];
@@ -338,7 +342,7 @@ function formatAnswerForCsv(
 
 function questionColumnName(question: QuestionRow): string {
   const prefix = `Q${question.order_index + 1}`;
-  return `${prefix}: ${question.text}`;
+  return `${prefix}: ${localizedTextFor(question.text_translations, DEFAULT_FORM_CONTENT_LOCALE)}`;
 }
 
 function csvCell(value: unknown): string {

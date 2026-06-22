@@ -13,6 +13,7 @@ class QuestionWidget extends StatelessComponent {
     required this.choices,
     required this.value,
     required this.error,
+    required this.locale,
     required this.onChanged,
     super.key,
   });
@@ -21,6 +22,7 @@ class QuestionWidget extends StatelessComponent {
   final List<Choice> choices;
   final dynamic value;
   final String? error;
+  final String locale;
   final void Function(dynamic value) onChanged;
 
   @override
@@ -33,7 +35,7 @@ class QuestionWidget extends StatelessComponent {
           // Question label
           div(classes: 'mb-4', [
             span(classes: 'text-sm font-medium text-slate-800', [
-              Component.text(question.text),
+              Component.text(question.textFor(locale)),
             ]),
             if (question.isRequired)
               span(classes: 'text-red-500 ml-1 text-sm', [Component.text('*')]),
@@ -57,22 +59,26 @@ class QuestionWidget extends StatelessComponent {
           question: question,
           choices: choices,
           value: value as int?,
+          locale: locale,
           onChanged: onChanged,
         ),
       QuestionType.multipleChoice => MultipleChoiceQuestion(
           question: question,
           choices: choices,
           value: (value as List<dynamic>?)?.cast<int>() ?? [],
+          locale: locale,
           onChanged: onChanged,
         ),
       QuestionType.textSingle => TextSingleQuestion(
           question: question,
           value: value as String?,
+          locale: locale,
           onChanged: onChanged,
         ),
       QuestionType.textMultiLine => TextMultiLineQuestion(
           question: question,
           value: value as String?,
+          locale: locale,
           onChanged: onChanged,
         ),
     };

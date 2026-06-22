@@ -14,8 +14,9 @@ class QuestionListTile extends StatelessWidget {
   final bool enabled;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
-  final void Function(String text) onAddChoice;
-  final void Function(Choice choice, String newText) onUpdateChoice;
+  final void Function(LocalizedText textTranslations) onAddChoice;
+  final void Function(Choice choice, LocalizedText textTranslations)
+  onUpdateChoice;
   final void Function(Choice choice) onDeleteChoice;
 
   const QuestionListTile({

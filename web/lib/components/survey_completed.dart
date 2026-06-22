@@ -5,10 +5,12 @@ import 'package:jaspr/dom.dart';
 class SurveyCompleted extends StatelessComponent {
   const SurveyCompleted({
     required this.survey,
+    required this.locale,
     super.key,
   });
 
   final Survey survey;
+  final String locale;
 
   @override
   Component build(BuildContext context) {
@@ -25,10 +27,10 @@ class SurveyCompleted extends StatelessComponent {
                 ]),
               ]),
           h2(classes: 'mt-5 text-xl font-semibold text-slate-900', [
-            Component.text('Thank you!'),
+            Component.text(FormContentMessages.text(locale, 'thankYou')),
           ]),
           p(classes: 'mt-2 text-slate-600', [
-            Component.text('Your response has been submitted successfully.'),
+            Component.text(FormContentMessages.text(locale, 'submitted')),
           ]),
         ]);
   }

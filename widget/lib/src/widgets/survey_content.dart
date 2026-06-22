@@ -10,8 +10,10 @@ class SurveyContent extends StatelessWidget {
   final Map<int, dynamic> answers;
   final Map<int, String> validationErrors;
   final String? errorMessage;
+  final String locale;
   final bool isSubmitting;
   final void Function(int questionId, dynamic value) onAnswerChanged;
+  final ValueChanged<String> onLocaleChanged;
   final VoidCallback onSubmit;
 
   const SurveyContent({
@@ -22,8 +24,10 @@ class SurveyContent extends StatelessWidget {
     required this.answers,
     required this.validationErrors,
     this.errorMessage,
+    required this.locale,
     required this.isSubmitting,
     required this.onAnswerChanged,
+    required this.onLocaleChanged,
     required this.onSubmit,
   });
 
@@ -36,12 +40,37 @@ class SurveyContent extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(survey.title, style: Theme.of(context).textTheme.headlineSmall),
-          if (survey.description != null && survey.description!.isNotEmpty) ...[
+          Text(
+            survey.titleFor(locale),
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          if (survey.descriptionFor(locale).isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(
-              survey.description!,
+              survey.descriptionFor(locale),
               style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ],
+          if (survey.supportedLocales.length > 1) ...[
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              initialValue: locale,
+              decoration: const InputDecoration(
+                isDense: true,
+                border: OutlineInputBorder(),
+              ),
+              items: [
+                for (final option in survey.supportedLocales)
+                  DropdownMenuItem(
+                    value: option,
+                    child: Text(formContentLocaleLabels[option]!),
+                  ),
+              ],
+              onChanged: isSubmitting
+                  ? null
+                  : (value) {
+                      if (value != null) onLocaleChanged(value);
+                    },
             ),
           ],
           const SizedBox(height: 24),
@@ -70,6 +99,7 @@ class SurveyContent extends StatelessWidget {
                 choices: choices,
                 value: answers[question.id],
                 error: error,
+                locale: locale,
                 onChanged: (value) => onAnswerChanged(question.id!, value),
               ),
             );
@@ -83,7 +113,7 @@ class SurveyContent extends StatelessWidget {
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('Submit'),
+                : Text(FormContentMessages.text(locale, 'submit')),
           ),
         ],
       ),

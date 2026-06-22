@@ -1,13 +1,16 @@
 import type { AdminContext, AdminRow, AnonymousContext, AnswerRow, ChoiceRow, NotificationSettingsRow, QuestionRow, ReplyRow, ResponseRow, SurveyRow, VisibilityRuleRow } from './types';
 import { roleFromScopes } from './permissions';
 import { compactObject } from './utils';
+import { parseLocalizedText } from './localization';
 
 export function surveyToJson(row: SurveyRow) {
   return {
     id: row.id,
     slug: row.slug,
-    title: row.title,
-    description: row.description,
+    defaultLocale: row.default_locale,
+    supportedLocales: parseJsonArray(row.supported_locales),
+    titleTranslations: parseLocalizedText(row.title_translations),
+    descriptionTranslations: parseLocalizedText(row.description_translations),
     status: row.status,
     authRequirement: row.auth_requirement,
     createdByUserId: row.created_by_admin_id,
@@ -22,11 +25,11 @@ export function questionToJson(row: QuestionRow) {
   return {
     id: row.id,
     surveyId: row.survey_id,
-    text: row.text,
+    textTranslations: parseLocalizedText(row.text_translations),
     type: row.type,
     orderIndex: row.order_index,
     isRequired: row.is_required === 1,
-    placeholder: row.placeholder,
+    placeholderTranslations: parseLocalizedText(row.placeholder_translations),
     minLength: row.min_length,
     maxLength: row.max_length,
     minSelected: row.min_selected,
@@ -53,7 +56,7 @@ export function choiceToJson(row: ChoiceRow) {
   return {
     id: row.id,
     questionId: row.question_id,
-    text: row.text,
+    textTranslations: parseLocalizedText(row.text_translations),
     orderIndex: row.order_index,
     value: row.value,
   };

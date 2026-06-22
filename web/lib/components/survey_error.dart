@@ -1,13 +1,16 @@
+import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:jaspr/jaspr.dart';
 import 'package:jaspr/dom.dart';
 
 class SurveyError extends StatelessComponent {
   const SurveyError({
+    required this.locale,
     required this.message,
     this.onRetry,
     super.key,
   });
 
+  final String locale;
   final String message;
   final void Function()? onRetry;
 
@@ -26,7 +29,9 @@ class SurveyError extends StatelessComponent {
                 ]),
               ]),
           h2(classes: 'mt-5 text-xl font-semibold text-slate-900', [
-            Component.text('Something went wrong'),
+            Component.text(
+              FormContentMessages.text(locale, 'somethingWentWrong'),
+            ),
           ]),
           p(classes: 'mt-2 text-slate-600', [
             Component.text(message),
@@ -34,7 +39,7 @@ class SurveyError extends StatelessComponent {
           if (onRetry != null)
             div(classes: 'mt-6', [
               button(
-                [Component.text('Try Again')],
+                [Component.text(FormContentMessages.text(locale, 'tryAgain'))],
                 classes:
                     'px-6 py-2.5 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 shadow-sm',
                 onClick: onRetry,

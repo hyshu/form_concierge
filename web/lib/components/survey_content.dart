@@ -12,8 +12,10 @@ class SurveyContent extends StatelessComponent {
     required this.answers,
     required this.validationErrors,
     required this.errorMessage,
+    required this.locale,
     required this.isSubmitting,
     required this.onAnswerChanged,
+    required this.onLocaleChanged,
     required this.onSubmit,
     super.key,
   });
@@ -24,8 +26,10 @@ class SurveyContent extends StatelessComponent {
   final Map<int, dynamic> answers;
   final Map<int, String> validationErrors;
   final String? errorMessage;
+  final String locale;
   final bool isSubmitting;
   final void Function(int questionId, dynamic value) onAnswerChanged;
+  final void Function(String locale) onLocaleChanged;
   final void Function() onSubmit;
 
   @override
@@ -41,11 +45,21 @@ class SurveyContent extends StatelessComponent {
             // Content
             div(classes: 'p-6', [
               h1(classes: 'text-xl font-semibold text-slate-900', [
-                Component.text(survey.title),
+                Component.text(survey.titleFor(locale)),
               ]),
-              if (survey.description != null && survey.description!.isNotEmpty)
+              if (survey.descriptionFor(locale).isNotEmpty)
                 p(classes: 'mt-2 text-sm text-slate-600 leading-relaxed', [
-                  Component.text(survey.description!),
+                  Component.text(survey.descriptionFor(locale)),
+                ]),
+              if (survey.supportedLocales.length > 1)
+                div(classes: 'mt-4 flex flex-wrap gap-2', [
+                  for (final option in survey.supportedLocales)
+                    button(
+                      [Component.text(formContentLocaleLabels[option]!)],
+                      classes:
+                          'px-3 py-1.5 rounded-lg border text-xs font-medium ${option == locale ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-200 text-slate-600 hover:border-slate-300'}',
+                      onClick: () => onLocaleChanged(option),
+                    ),
                 ]),
             ]),
           ]),
@@ -70,6 +84,7 @@ class SurveyContent extends StatelessComponent {
             choices: choicesByQuestion[question.id] ?? [],
             value: answers[question.id],
             error: validationErrors[question.id],
+            locale: locale,
             onChanged: (value) => onAnswerChanged(question.id!, value),
           ),
       ]),
@@ -82,7 +97,12 @@ class SurveyContent extends StatelessComponent {
               span(classes: 'inline-block animate-spin mr-2', [
                 Component.text('\u21BB'),
               ]),
-            Component.text(isSubmitting ? 'Submitting...' : 'Submit'),
+            Component.text(
+              FormContentMessages.text(
+                locale,
+                isSubmitting ? 'submitting' : 'submit',
+              ),
+            ),
           ],
           classes:
               'w-full py-3 px-6 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm',

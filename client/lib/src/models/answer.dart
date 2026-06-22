@@ -155,6 +155,7 @@ Map<int, dynamic> pruneHiddenAnswers(
 Map<int, String> validateSurveyAnswers(
   Map<int, dynamic> answerValues,
   List<Question> questions,
+  String locale,
 ) {
   final errors = <int, String>{};
 
@@ -167,7 +168,7 @@ Map<int, String> validateSurveyAnswers(
       if (answer == null ||
           (answer is String && answer.trim().isEmpty) ||
           (answer is List && answer.isEmpty)) {
-        errors[questionId] = 'This question is required';
+        errors[questionId] = FormContentMessages.requiredQuestion(locale);
         continue;
       }
     }
@@ -175,12 +176,17 @@ Map<int, String> validateSurveyAnswers(
     if (answer is String && answer.trim().isNotEmpty) {
       final length = answer.trim().length;
       if (question.minLength != null && length < question.minLength!) {
-        errors[questionId] =
-            'Minimum ${question.minLength} characters required';
+        errors[questionId] = FormContentMessages.minCharacters(
+          locale,
+          question.minLength!,
+        );
         continue;
       }
       if (question.maxLength != null && length > question.maxLength!) {
-        errors[questionId] = 'Maximum ${question.maxLength} characters allowed';
+        errors[questionId] = FormContentMessages.maxCharacters(
+          locale,
+          question.maxLength!,
+        );
         continue;
       }
     }
@@ -193,12 +199,18 @@ Map<int, String> validateSurveyAnswers(
     if (selected.isNotEmpty || question.minSelected != null) {
       if (question.minSelected != null &&
           selected.length < question.minSelected!) {
-        errors[questionId] = 'Select at least ${question.minSelected} choices';
+        errors[questionId] = FormContentMessages.minChoices(
+          locale,
+          question.minSelected!,
+        );
         continue;
       }
       if (question.maxSelected != null &&
           selected.length > question.maxSelected!) {
-        errors[questionId] = 'Select at most ${question.maxSelected} choices';
+        errors[questionId] = FormContentMessages.maxChoices(
+          locale,
+          question.maxSelected!,
+        );
       }
     }
   }

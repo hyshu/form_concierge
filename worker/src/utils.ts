@@ -114,11 +114,11 @@ export function isTextQuestionType(type: string): boolean {
 export async function insertChoices(
   db: D1Database,
   questionId: number,
-  choices: readonly string[],
+  choiceTranslations: readonly Record<string, string>[],
 ): Promise<void> {
-  const inserts = choices.map((choice, index) =>
-    db.prepare(`INSERT INTO choices (question_id, text, order_index) VALUES (?, ?, ?)`)
-      .bind(questionId, choice, index),
+  const inserts = choiceTranslations.map((translations, index) =>
+    db.prepare(`INSERT INTO choices (question_id, text_translations, order_index) VALUES (?, ?, ?)`)
+      .bind(questionId, JSON.stringify(translations), index),
   );
   if (inserts.length > 0) await db.batch(inserts);
 }

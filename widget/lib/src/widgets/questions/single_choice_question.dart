@@ -4,12 +4,14 @@ import 'package:form_concierge_client/form_concierge_client.dart';
 class SingleChoiceQuestion extends StatelessWidget {
   final List<Choice> choices;
   final int? selectedChoiceId;
+  final String locale;
   final ValueChanged<int?> onChanged;
 
   const SingleChoiceQuestion({
     super.key,
     required this.choices,
     required this.selectedChoiceId,
+    required this.locale,
     required this.onChanged,
   });
 
@@ -21,7 +23,7 @@ class SingleChoiceQuestion extends StatelessWidget {
       child: Column(
         children: choices.map((choice) {
           return RadioListTile<int>(
-            title: Text(choice.text),
+            title: Text(choice.textFor(locale)),
             value: choice.id!,
             contentPadding: EdgeInsets.zero,
             visualDensity: VisualDensity.compact,

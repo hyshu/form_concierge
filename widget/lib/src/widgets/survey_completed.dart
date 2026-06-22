@@ -3,8 +3,13 @@ import 'package:form_concierge_client/form_concierge_client.dart';
 
 class SurveyCompleted extends StatelessWidget {
   final Survey survey;
+  final String locale;
 
-  const SurveyCompleted({super.key, required this.survey});
+  const SurveyCompleted({
+    super.key,
+    required this.survey,
+    required this.locale,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -24,12 +29,15 @@ class SurveyCompleted extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              'Thank you!',
+              FormContentMessages.text(locale, 'thankYou'),
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 8),
             Text(
-              'Your response to "${survey.title}" has been submitted.',
+              FormContentMessages.text(
+                locale,
+                'submittedWithTitle',
+              ).replaceAll('{title}', survey.titleFor(locale)),
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyLarge,
             ),

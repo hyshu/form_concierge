@@ -21,8 +21,10 @@ export type AnonymousContext = {
 export type SurveyRow = {
   id: number;
   slug: string;
-  title: string;
-  description: string | null;
+  default_locale: string;
+  supported_locales: string;
+  title_translations: string;
+  description_translations: string;
   status: string;
   auth_requirement: string;
   created_by_admin_id: string | null;
@@ -35,11 +37,11 @@ export type SurveyRow = {
 export type QuestionRow = {
   id: number;
   survey_id: number;
-  text: string;
+  text_translations: string;
   type: string;
   order_index: number;
   is_required: number;
-  placeholder: string | null;
+  placeholder_translations: string;
   min_length: number | null;
   max_length: number | null;
   min_selected: number | null;
@@ -51,7 +53,7 @@ export type QuestionRow = {
 export type ChoiceRow = {
   id: number;
   question_id: number;
-  text: string;
+  text_translations: string;
   order_index: number;
   value: string | null;
 };
@@ -129,16 +131,16 @@ export type NotificationSettingsRow = {
 };
 
 export type QuestionInput = {
-  text: string;
+  textTranslations: Record<string, string>;
   type: string;
   isRequired: boolean;
-  placeholder: string | null;
+  placeholderTranslations: Record<string, string>;
   minLength: number | null;
   maxLength: number | null;
   minSelected: number | null;
   maxSelected: number | null;
   visibilityConditionMode: string;
-  choices: string[];
+  choiceTranslations: Record<string, string>[];
 };
 
 export type VisibilityRuleRow = {

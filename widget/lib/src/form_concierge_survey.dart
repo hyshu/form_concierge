@@ -18,6 +18,7 @@ class FormConciergeSurvey extends StatefulWidget {
   final String? anonymousToken;
   final DeviceInfo? deviceInfo;
   final Map<String, dynamic>? metadata;
+  final String? locale;
 
   const FormConciergeSurvey({
     super.key,
@@ -30,6 +31,7 @@ class FormConciergeSurvey extends StatefulWidget {
     this.anonymousToken,
     this.deviceInfo,
     this.metadata,
+    this.locale,
   });
 
   @override
@@ -38,6 +40,7 @@ class FormConciergeSurvey extends StatefulWidget {
 
 class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
   SurveyState _state = const SurveyState();
+  String? _selectedLocale;
 
   @override
   void initState() {
@@ -53,7 +56,10 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
         setState(() {
           _state = _state.copyWith(
             viewState: SurveyViewState.error,
-            errorMessage: 'Survey not found or not available',
+            errorMessage: FormContentMessages.text(
+              defaultFormContentLocale,
+              'surveyNotFound',
+            ),
           );
         });
         return;
@@ -72,6 +78,9 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
       await _ensureAnonymousSession();
 
       setState(() {
+        _selectedLocale = normalizeFormContentLocale(
+          widget.locale ?? survey.defaultLocale,
+        );
         _state = _state.copyWith(
           viewState: SurveyViewState.ready,
           survey: survey,
@@ -116,7 +125,7 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
       _state.visibilityRules,
       _state.answers,
     );
-    return validateSurveyAnswers(_state.answers, visibleQuestions);
+    return validateSurveyAnswers(_state.answers, visibleQuestions, _locale);
   }
 
   Future<void> _submit() async {
@@ -201,6 +210,7 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
 
   @override
   Widget build(BuildContext context) {
+    final locale = _locale;
     final visibleQuestions = resolveVisibleQuestions(
       _state.questions,
       _state.visibilityRules,
@@ -209,7 +219,10 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
     return switch (_state.viewState) {
       SurveyViewState.loading => const SurveyLoading(),
       SurveyViewState.error => SurveyError(
-        message: _state.errorMessage ?? 'An error occurred',
+        locale: locale,
+        message:
+            _state.errorMessage ??
+            FormContentMessages.text(locale, 'errorOccurred'),
         onRetry: _loadSurvey,
       ),
       SurveyViewState.ready || SurveyViewState.submitting => SurveyContent(
@@ -219,11 +232,31 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
         answers: _state.answers,
         validationErrors: _state.validationErrors,
         errorMessage: _state.errorMessage,
+        locale: locale,
         isSubmitting: _state.viewState == SurveyViewState.submitting,
         onAnswerChanged: _updateAnswer,
+        onLocaleChanged: (locale) {
+          setState(() {
+            _selectedLocale = locale;
+            _state = _state.copyWith(
+              validationErrors: const {},
+              errorMessage: null,
+            );
+          });
+        },
         onSubmit: _submit,
       ),
-      SurveyViewState.completed => SurveyCompleted(survey: _state.survey!),
+      SurveyViewState.completed => SurveyCompleted(
+        survey: _state.survey!,
+        locale: locale,
+      ),
     };
   }
+
+  String get _locale => normalizeFormContentLocale(
+    _selectedLocale ??
+        widget.locale ??
+        _state.survey?.defaultLocale ??
+        defaultFormContentLocale,
+  );
 }

@@ -66,17 +66,19 @@ class SurveyFormManager {
 
   /// Create a new survey.
   Future<Survey?> createSurvey({
-    required String title,
+    required String defaultLocale,
     required String slug,
-    String? description,
+    required LocalizedText titleTranslations,
+    required LocalizedText descriptionTranslations,
   }) async {
     _setState(null, getState(null).copyWith(isSaving: true, error: null));
     try {
       final created = await _client.surveyAdmin.create(
         _draftSurvey(
-          title: title,
+          defaultLocale: defaultLocale,
           slug: slug,
-          description: description,
+          titleTranslations: titleTranslations,
+          descriptionTranslations: descriptionTranslations,
         ),
       );
       _setState(null, getState(null).copyWith(isSaving: false));
@@ -130,28 +132,28 @@ class SurveyFormManager {
 
   /// Add a draft question.
   void addDraftQuestion({
-    required String text,
+    required LocalizedText textTranslations,
     required QuestionType type,
     required bool isRequired,
-    String? placeholder,
+    required LocalizedText placeholderTranslations,
     int? minLength,
     int? maxLength,
     int? minSelected,
     int? maxSelected,
-    String firstChoiceText = 'Choice 1',
-    String secondChoiceText = 'Choice 2',
+    required LocalizedText firstChoiceTranslations,
+    required LocalizedText secondChoiceTranslations,
   }) {
     final newQuestion = DraftQuestion.create(
-      text: text,
+      textTranslations: textTranslations,
       type: type,
       isRequired: isRequired,
-      placeholder: placeholder,
+      placeholderTranslations: placeholderTranslations,
       minLength: minLength,
       maxLength: maxLength,
       minSelected: minSelected,
       maxSelected: maxSelected,
-      firstChoiceText: firstChoiceText,
-      secondChoiceText: secondChoiceText,
+      firstChoiceTranslations: firstChoiceTranslations,
+      secondChoiceTranslations: secondChoiceTranslations,
     );
     _setDraftQuestions((questions) => [...questions, newQuestion]);
   }
@@ -159,10 +161,10 @@ class SurveyFormManager {
   /// Update a draft question.
   void updateDraftQuestion({
     required String tempId,
-    required String text,
+    required LocalizedText textTranslations,
     required QuestionType type,
     required bool isRequired,
-    String? placeholder,
+    required LocalizedText placeholderTranslations,
     int? minLength,
     int? maxLength,
     int? minSelected,
@@ -172,10 +174,10 @@ class SurveyFormManager {
       tempId,
       (question) => DraftQuestion(
         tempId: question.tempId,
-        text: text,
+        textTranslations: textTranslations,
         type: type,
         isRequired: isRequired,
-        placeholder: placeholder,
+        placeholderTranslations: placeholderTranslations,
         minLength: minLength,
         maxLength: maxLength,
         minSelected: minSelected,
@@ -202,13 +204,16 @@ class SurveyFormManager {
   }
 
   /// Add a choice to a draft question.
-  void addChoiceToDraftQuestion(String questionTempId, String choiceText) {
+  void addChoiceToDraftQuestion(
+    String questionTempId,
+    LocalizedText choiceTranslations,
+  ) {
     _updateDraftQuestion(
       questionTempId,
       (question) => question.copyWith(
         choices: [
           ...question.choices,
-          DraftChoice.create(text: choiceText),
+          DraftChoice.create(textTranslations: choiceTranslations),
         ],
       ),
     );
@@ -218,14 +223,14 @@ class SurveyFormManager {
   void updateDraftChoice(
     String questionTempId,
     String choiceTempId,
-    String newText,
+    LocalizedText textTranslations,
   ) {
     _updateDraftQuestion(
       questionTempId,
       (question) => question.copyWith(
         choices: question.choices.map((choice) {
           return choice.tempId == choiceTempId
-              ? choice.copyWith(text: newText)
+              ? choice.copyWith(textTranslations: textTranslations)
               : choice;
         }).toList(),
       ),
@@ -246,9 +251,10 @@ class SurveyFormManager {
 
   /// Create a new survey with questions.
   Future<Survey?> createSurveyWithQuestions({
-    required String title,
+    required String defaultLocale,
     required String slug,
-    String? description,
+    required LocalizedText titleTranslations,
+    required LocalizedText descriptionTranslations,
   }) async {
     final state = getState(null);
     _setState(null, state.copyWith(isSaving: true, error: null));
@@ -259,9 +265,10 @@ class SurveyFormManager {
 
       final created = await _client.surveyAdmin.createWithQuestions(
         _draftSurvey(
-          title: title,
+          defaultLocale: defaultLocale,
           slug: slug,
-          description: description,
+          titleTranslations: titleTranslations,
+          descriptionTranslations: descriptionTranslations,
         ),
         questions,
       );
@@ -283,15 +290,18 @@ class SurveyFormManager {
   }
 
   Survey _draftSurvey({
-    required String title,
+    required String defaultLocale,
     required String slug,
-    String? description,
+    required LocalizedText titleTranslations,
+    required LocalizedText descriptionTranslations,
   }) {
     final now = DateTime.now();
     return Survey(
       slug: slug,
-      title: title,
-      description: description,
+      defaultLocale: defaultLocale,
+      supportedLocales: formContentLocaleCodes,
+      titleTranslations: titleTranslations,
+      descriptionTranslations: descriptionTranslations,
       status: SurveyStatus.draft,
       createdAt: now,
       updatedAt: now,

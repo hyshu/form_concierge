@@ -31,8 +31,10 @@ CREATE TABLE anonymous_accounts (
 CREATE TABLE surveys (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   slug TEXT NOT NULL UNIQUE,
-  title TEXT NOT NULL,
-  description TEXT,
+  default_locale TEXT NOT NULL DEFAULT 'en',
+  supported_locales TEXT NOT NULL,
+  title_translations TEXT NOT NULL,
+  description_translations TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'draft',
   auth_requirement TEXT NOT NULL DEFAULT 'anonymous',
   created_by_admin_id TEXT REFERENCES admins(id) ON DELETE SET NULL,
@@ -48,11 +50,11 @@ CREATE INDEX surveys_created_by_admin_id ON surveys(created_by_admin_id);
 CREATE TABLE questions (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   survey_id INTEGER NOT NULL REFERENCES surveys(id) ON DELETE CASCADE,
-  text TEXT NOT NULL,
+  text_translations TEXT NOT NULL,
   type TEXT NOT NULL,
   order_index INTEGER NOT NULL,
   is_required INTEGER NOT NULL DEFAULT 1,
-  placeholder TEXT,
+  placeholder_translations TEXT NOT NULL,
   min_length INTEGER,
   max_length INTEGER,
   min_selected INTEGER,
@@ -66,7 +68,7 @@ CREATE INDEX questions_survey_order ON questions(survey_id, order_index);
 CREATE TABLE choices (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   question_id INTEGER NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
-  text TEXT NOT NULL,
+  text_translations TEXT NOT NULL,
   order_index INTEGER NOT NULL,
   value TEXT
 );

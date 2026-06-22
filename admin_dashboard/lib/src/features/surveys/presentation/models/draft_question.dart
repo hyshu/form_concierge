@@ -6,35 +6,37 @@ const _uuid = Uuid();
 /// A draft choice before being saved to the server.
 class DraftChoice {
   final String tempId;
-  final String text;
+  final LocalizedText textTranslations;
 
   const DraftChoice({
     required this.tempId,
-    required this.text,
+    required this.textTranslations,
   });
 
-  factory DraftChoice.create({required String text}) {
+  factory DraftChoice.create({required LocalizedText textTranslations}) {
     return DraftChoice(
       tempId: _uuid.v4(),
-      text: text,
+      textTranslations: textTranslations,
     );
   }
 
-  DraftChoice copyWith({String? text}) {
+  DraftChoice copyWith({LocalizedText? textTranslations}) {
     return DraftChoice(
       tempId: tempId,
-      text: text ?? this.text,
+      textTranslations: textTranslations ?? this.textTranslations,
     );
   }
+
+  String get text => textTranslations.valueFor(defaultFormContentLocale);
 }
 
 /// A draft question before being saved to the server.
 class DraftQuestion {
   final String tempId;
-  final String text;
+  final LocalizedText textTranslations;
   final QuestionType type;
   final bool isRequired;
-  final String? placeholder;
+  final LocalizedText placeholderTranslations;
   final int? minLength;
   final int? maxLength;
   final int? minSelected;
@@ -43,10 +45,10 @@ class DraftQuestion {
 
   const DraftQuestion({
     required this.tempId,
-    required this.text,
+    required this.textTranslations,
     required this.type,
     required this.isRequired,
-    this.placeholder,
+    required this.placeholderTranslations,
     this.minLength,
     this.maxLength,
     this.minSelected,
@@ -55,32 +57,32 @@ class DraftQuestion {
   });
 
   factory DraftQuestion.create({
-    required String text,
+    required LocalizedText textTranslations,
     required QuestionType type,
     required bool isRequired,
-    String? placeholder,
+    required LocalizedText placeholderTranslations,
     int? minLength,
     int? maxLength,
     int? minSelected,
     int? maxSelected,
-    String firstChoiceText = 'Choice 1',
-    String secondChoiceText = 'Choice 2',
+    required LocalizedText firstChoiceTranslations,
+    required LocalizedText secondChoiceTranslations,
   }) {
     // Add default choices for choice-type questions
     final choices = <DraftChoice>[];
     if (type.usesChoices) {
       choices.addAll([
-        DraftChoice.create(text: firstChoiceText),
-        DraftChoice.create(text: secondChoiceText),
+        DraftChoice.create(textTranslations: firstChoiceTranslations),
+        DraftChoice.create(textTranslations: secondChoiceTranslations),
       ]);
     }
 
     return DraftQuestion(
       tempId: _uuid.v4(),
-      text: text,
+      textTranslations: textTranslations,
       type: type,
       isRequired: isRequired,
-      placeholder: placeholder,
+      placeholderTranslations: placeholderTranslations,
       minLength: minLength,
       maxLength: maxLength,
       minSelected: minSelected,
@@ -93,23 +95,25 @@ class DraftQuestion {
   factory DraftQuestion.fromQuestionWithChoices(QuestionWithChoices q) {
     return DraftQuestion(
       tempId: _uuid.v4(),
-      text: q.text,
+      textTranslations: q.textTranslations,
       type: q.type,
       isRequired: q.isRequired,
-      placeholder: q.placeholder,
+      placeholderTranslations: q.placeholderTranslations,
       minLength: q.minLength,
       maxLength: q.maxLength,
       minSelected: q.minSelected,
       maxSelected: q.maxSelected,
-      choices: q.choices.map((c) => DraftChoice.create(text: c)).toList(),
+      choices: q.choiceTranslations
+          .map((c) => DraftChoice.create(textTranslations: c))
+          .toList(),
     );
   }
 
   DraftQuestion copyWith({
-    String? text,
+    LocalizedText? textTranslations,
     QuestionType? type,
     bool? isRequired,
-    String? placeholder,
+    LocalizedText? placeholderTranslations,
     int? minLength,
     int? maxLength,
     int? minSelected,
@@ -118,10 +122,11 @@ class DraftQuestion {
   }) {
     return DraftQuestion(
       tempId: tempId,
-      text: text ?? this.text,
+      textTranslations: textTranslations ?? this.textTranslations,
       type: type ?? this.type,
       isRequired: isRequired ?? this.isRequired,
-      placeholder: placeholder ?? this.placeholder,
+      placeholderTranslations:
+          placeholderTranslations ?? this.placeholderTranslations,
       minLength: minLength ?? this.minLength,
       maxLength: maxLength ?? this.maxLength,
       minSelected: minSelected ?? this.minSelected,
@@ -133,18 +138,25 @@ class DraftQuestion {
   /// Convert to QuestionWithChoices for server submission.
   QuestionWithChoices toQuestionWithChoices() {
     return QuestionWithChoices(
-      text: text,
+      textTranslations: textTranslations,
       type: type,
       isRequired: isRequired,
-      placeholder: placeholder,
+      placeholderTranslations: placeholderTranslations,
       minLength: minLength,
       maxLength: maxLength,
       minSelected: minSelected,
       maxSelected: maxSelected,
-      choices: choices.map((c) => c.text).toList(),
+      choiceTranslations: choices.map((c) => c.textTranslations).toList(),
     );
   }
 
   /// Whether this question type uses choices.
   bool get hasChoices => type.usesChoices;
+
+  String get text => textTranslations.valueFor(defaultFormContentLocale);
+
+  String? get placeholder {
+    final value = placeholderTranslations.valueFor(defaultFormContentLocale);
+    return value.trim().isEmpty ? null : value;
+  }
 }

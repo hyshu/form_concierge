@@ -73,10 +73,17 @@ class DraftQuestionsSection extends StatelessWidget {
                 onDelete: (question) =>
                     formManager.deleteDraftQuestion(question.tempId),
                 onReorder: formManager.reorderDraftQuestions,
-                onAddChoice: (question, text) =>
-                    formManager.addChoiceToDraftQuestion(question.tempId, text),
-                onUpdateChoice: (question, choice, newText) => formManager
-                    .updateDraftChoice(question.tempId, choice.tempId, newText),
+                onAddChoice: (question, textTranslations) =>
+                    formManager.addChoiceToDraftQuestion(
+                      question.tempId,
+                      textTranslations,
+                    ),
+                onUpdateChoice: (question, choice, textTranslations) =>
+                    formManager.updateDraftChoice(
+                      question.tempId,
+                      choice.tempId,
+                      textTranslations,
+                    ),
                 onDeleteChoice: (question, choice) => formManager
                     .deleteDraftChoice(question.tempId, choice.tempId),
               ),
@@ -99,10 +106,10 @@ class DraftQuestionsSection extends StatelessWidget {
       context,
       onSave:
           ({
-            required String text,
+            required LocalizedText textTranslations,
             required QuestionType type,
             required bool isRequired,
-            String? placeholder,
+            required LocalizedText placeholderTranslations,
             int? minLength,
             int? maxLength,
             int? minSelected,
@@ -110,16 +117,16 @@ class DraftQuestionsSection extends StatelessWidget {
             required VisibilityConditionMode visibilityConditionMode,
           }) {
             formManager.addDraftQuestion(
-              text: text,
+              textTranslations: textTranslations,
               type: type,
               isRequired: isRequired,
-              placeholder: placeholder,
+              placeholderTranslations: placeholderTranslations,
               minLength: minLength,
               maxLength: maxLength,
               minSelected: minSelected,
               maxSelected: maxSelected,
-              firstChoiceText: context.tr('Choice 1'),
-              secondChoiceText: context.tr('Choice 2'),
+              firstChoiceTranslations: _defaultChoiceTranslations(1),
+              secondChoiceTranslations: _defaultChoiceTranslations(2),
             );
           },
     );
@@ -128,11 +135,11 @@ class DraftQuestionsSection extends StatelessWidget {
   void _showEditDialog(BuildContext context, DraftQuestion question) {
     final tempQuestion = Question(
       surveyId: 0,
-      text: question.text,
+      textTranslations: question.textTranslations,
       type: question.type,
       orderIndex: 0,
       isRequired: question.isRequired,
-      placeholder: question.placeholder,
+      placeholderTranslations: question.placeholderTranslations,
       minLength: question.minLength,
       maxLength: question.maxLength,
       minSelected: question.minSelected,
@@ -144,10 +151,10 @@ class DraftQuestionsSection extends StatelessWidget {
       existingQuestion: tempQuestion,
       onSave:
           ({
-            required String text,
+            required LocalizedText textTranslations,
             required QuestionType type,
             required bool isRequired,
-            String? placeholder,
+            required LocalizedText placeholderTranslations,
             int? minLength,
             int? maxLength,
             int? minSelected,
@@ -156,10 +163,10 @@ class DraftQuestionsSection extends StatelessWidget {
           }) {
             formManager.updateDraftQuestion(
               tempId: question.tempId,
-              text: text,
+              textTranslations: textTranslations,
               type: type,
               isRequired: isRequired,
-              placeholder: placeholder,
+              placeholderTranslations: placeholderTranslations,
               minLength: minLength,
               maxLength: maxLength,
               minSelected: minSelected,
@@ -169,6 +176,15 @@ class DraftQuestionsSection extends StatelessWidget {
     );
   }
 }
+
+LocalizedText _defaultChoiceTranslations(int number) => LocalizedText({
+  'en': 'Choice $number',
+  'ja': '選択肢 $number',
+  'zh-Hans': '选项 $number',
+  'zh-Hant': '選項 $number',
+  'ko': '선택지 $number',
+  'de': 'Auswahl $number',
+});
 
 class _EmptyDraftQuestions extends StatelessWidget {
   const _EmptyDraftQuestions({required this.isSaving, required this.onAdd});

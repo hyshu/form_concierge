@@ -107,10 +107,10 @@ class QuestionListManager {
   /// Create a new question.
   Future<Question?> createQuestion({
     required int surveyId,
-    required String text,
+    required LocalizedText textTranslations,
     required QuestionType type,
     bool isRequired = true,
-    String? placeholder,
+    required LocalizedText placeholderTranslations,
     int? minLength,
     int? maxLength,
     int? minSelected,
@@ -123,11 +123,11 @@ class QuestionListManager {
       () {
         final question = Question(
           surveyId: surveyId,
-          text: text,
+          textTranslations: textTranslations,
           type: type,
           orderIndex: getState(surveyId).questions.length,
           isRequired: isRequired,
-          placeholder: placeholder,
+          placeholderTranslations: placeholderTranslations,
           minLength: minLength,
           maxLength: maxLength,
           minSelected: minSelected,
@@ -171,14 +171,14 @@ class QuestionListManager {
   Future<Choice?> createChoice({
     required int questionId,
     required int surveyId,
-    required String text,
+    required LocalizedText textTranslations,
   }) async {
     return _runAndReload(
       surveyId,
       () {
         final choice = Choice(
           questionId: questionId,
-          text: text,
+          textTranslations: textTranslations,
           orderIndex:
               getState(surveyId).choicesByQuestion[questionId]?.length ?? 0,
         );

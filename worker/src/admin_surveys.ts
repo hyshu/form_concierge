@@ -12,12 +12,20 @@ import {
   optionalString,
   readJson,
   requireSlug,
-  requireString,
   requiredRow,
 } from './utils';
 import { surveyToJson } from './serializers';
 import { mustSurvey } from './admin_records';
 import { normalizeQuestionValidation, normalizeVisibilityConditionMode } from './admin_questions';
+import {
+  DEFAULT_FORM_CONTENT_LOCALE,
+  FORM_CONTENT_LOCALES,
+  LocalizedText,
+  localizedTextFor,
+  requireDefaultLocale,
+  requireLocalizedText,
+  requireSupportedLocales,
+} from './localization';
 
 export async function listSurveys(env: Env, admin: AdminContext): Promise<Response> {
   const rows = await env.DB.prepare(
@@ -47,18 +55,22 @@ async function insertSurvey(
 ): Promise<SurveyRow> {
   const slug = requireSlug(body.slug);
   await ensureUniqueSlug(db, slug);
+  const content = parseSurveyContent(body);
   const now = nowIso();
   const row = await db.prepare(
     `INSERT INTO surveys
-       (slug, title, description, status, created_by_admin_id,
+       (slug, default_locale, supported_locales, title_translations,
+        description_translations, status, created_by_admin_id,
         created_at, updated_at, starts_at, ends_at)
-     VALUES (?, ?, ?, 'draft', ?, ?, ?, ?, ?)
+     VALUES (?, ?, ?, ?, ?, 'draft', ?, ?, ?, ?, ?)
      RETURNING *`,
   )
     .bind(
       slug,
-      requireString(body.title, 'title'),
-      optionalString(body.description),
+      content.defaultLocale,
+      JSON.stringify(content.supportedLocales),
+      JSON.stringify(content.titleTranslations),
+      JSON.stringify(content.descriptionTranslations),
       admin.id,
       now,
       now,
@@ -83,17 +95,17 @@ export async function createSurveyWithQuestions(
     const q = questions[i];
     const question = await env.DB.prepare(
       `INSERT INTO questions
-         (survey_id, text, type, order_index, is_required, placeholder,
+         (survey_id, text_translations, type, order_index, is_required, placeholder_translations,
           min_length, max_length, min_selected, max_selected, visibility_condition_mode)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        RETURNING *`,
     ).bind(
       created.id,
-      q.text,
+      JSON.stringify(q.textTranslations),
       q.type,
       i,
       boolToInt(q.isRequired),
-      q.placeholder,
+      JSON.stringify(q.placeholderTranslations),
       q.minLength,
       q.maxLength,
       q.minSelected,
@@ -102,7 +114,7 @@ export async function createSurveyWithQuestions(
     ).first<QuestionRow>();
     if (!question) throw new HttpError(500, 'Failed to create question');
     if (isChoiceQuestionType(question.type)) {
-      await insertChoices(env.DB, question.id, q.choices.map(String));
+      await insertChoices(env.DB, question.id, q.choiceTranslations);
     }
   }
   return json(surveyToJson(created), 201);
@@ -113,16 +125,20 @@ export async function updateSurvey(request: Request, env: Env, surveyId: number)
   const body = await readJson(request);
   const slug = requireSlug(body.slug ?? existing.slug);
   await ensureUniqueSlug(env.DB, slug, surveyId);
+  const content = parseSurveyContent(body);
   const row = await env.DB.prepare(
     `UPDATE surveys
-     SET slug = ?, title = ?, description = ?,
+     SET slug = ?, default_locale = ?, supported_locales = ?,
+         title_translations = ?, description_translations = ?,
          starts_at = ?, ends_at = ?, updated_at = ?
      WHERE id = ?
      RETURNING *`,
   ).bind(
     slug,
-    requireString(body.title ?? existing.title, 'title'),
-    optionalString(body.description ?? existing.description),
+    content.defaultLocale,
+    JSON.stringify(content.supportedLocales),
+    JSON.stringify(content.titleTranslations),
+    JSON.stringify(content.descriptionTranslations),
     optionalString(body.startsAt ?? existing.starts_at),
     optionalString(body.endsAt ?? existing.ends_at),
     nowIso(),
@@ -161,19 +177,53 @@ function parseQuestionInputs(value: unknown): QuestionInput[] {
   return value.map((raw, index) => {
     const question = typeof raw === 'object' && raw !== null ? raw as Record<string, unknown> : {};
     const type = normalizeQuestionType(question.type);
-    const choices = Array.isArray(question.choices)
-      ? question.choices.map((choice) => requireString(choice, `questions[${index}].choices`))
+    const choiceTranslations = Array.isArray(question.choiceTranslations)
+      ? question.choiceTranslations.map((choice, choiceIndex) => requireLocalizedText(
+          choice,
+          `questions[${index}].choiceTranslations[${choiceIndex}]`,
+          FORM_CONTENT_LOCALES,
+        ))
       : [];
     return {
-      text: requireString(question.text, `questions[${index}].text`),
+      textTranslations: requireLocalizedText(
+        question.textTranslations,
+        `questions[${index}].textTranslations`,
+        FORM_CONTENT_LOCALES,
+      ),
       type,
       isRequired: question.isRequired !== false,
-      placeholder: optionalString(question.placeholder),
+      placeholderTranslations: requireLocalizedText(
+        question.placeholderTranslations,
+        `questions[${index}].placeholderTranslations`,
+        FORM_CONTENT_LOCALES,
+        { allowEmpty: true },
+      ),
       ...normalizeQuestionValidation(question, type),
       visibilityConditionMode: normalizeVisibilityConditionMode(question.visibilityConditionMode),
-      choices,
+      choiceTranslations,
     };
   });
+}
+
+function parseSurveyContent(body: Record<string, unknown>): {
+  supportedLocales: string[];
+  defaultLocale: string;
+  titleTranslations: LocalizedText;
+  descriptionTranslations: LocalizedText;
+} {
+  const supportedLocales = requireSupportedLocales(body.supportedLocales);
+  const defaultLocale = requireDefaultLocale(body.defaultLocale, supportedLocales);
+  return {
+    supportedLocales,
+    defaultLocale,
+    titleTranslations: requireLocalizedText(body.titleTranslations, 'titleTranslations', supportedLocales),
+    descriptionTranslations: requireLocalizedText(
+      body.descriptionTranslations,
+      'descriptionTranslations',
+      supportedLocales,
+      { allowEmpty: true },
+    ),
+  };
 }
 
 async function ensureUniqueSlug(
@@ -204,7 +254,10 @@ async function assertSurveyCanPublish(db: D1Database, surveyId: number): Promise
       question.id,
     );
     if (choiceCount === 0) {
-      throw new HttpError(400, `Question "${question.text}" must have at least one choice`);
+      throw new HttpError(
+        400,
+        `Question "${localizedTextFor(question.text_translations, DEFAULT_FORM_CONTENT_LOCALE)}" must have at least one choice`,
+      );
     }
   }
 }

@@ -175,10 +175,10 @@ class SurveyEditorPage extends RearchConsumer {
                       enabled: canEdit,
                       onAddQuestion:
                           ({
-                            required String text,
+                            required LocalizedText textTranslations,
                             required QuestionType type,
                             required bool isRequired,
-                            String? placeholder,
+                            required LocalizedText placeholderTranslations,
                             int? minLength,
                             int? maxLength,
                             int? minSelected,
@@ -188,10 +188,10 @@ class SurveyEditorPage extends RearchConsumer {
                           }) {
                             questionManager.createQuestion(
                               surveyId: surveyId!,
-                              text: text,
+                              textTranslations: textTranslations,
                               type: type,
                               isRequired: isRequired,
-                              placeholder: placeholder,
+                              placeholderTranslations: placeholderTranslations,
                               minLength: minLength,
                               maxLength: maxLength,
                               minSelected: minSelected,
@@ -202,10 +202,10 @@ class SurveyEditorPage extends RearchConsumer {
                       onEditQuestion:
                           (
                             question, {
-                            required String text,
+                            required LocalizedText textTranslations,
                             required QuestionType type,
                             required bool isRequired,
-                            String? placeholder,
+                            required LocalizedText placeholderTranslations,
                             int? minLength,
                             int? maxLength,
                             int? minSelected,
@@ -216,11 +216,11 @@ class SurveyEditorPage extends RearchConsumer {
                             final updated = Question(
                               id: question.id,
                               surveyId: question.surveyId,
-                              text: text,
+                              textTranslations: textTranslations,
                               type: type,
                               orderIndex: question.orderIndex,
                               isRequired: isRequired,
-                              placeholder: placeholder,
+                              placeholderTranslations: placeholderTranslations,
                               minLength: minLength,
                               maxLength: maxLength,
                               minSelected: minSelected,
@@ -233,15 +233,17 @@ class SurveyEditorPage extends RearchConsumer {
                       onDeleteQuestion: (question) {
                         questionManager.deleteQuestion(surveyId!, question.id!);
                       },
-                      onAddChoice: (questionId, text) {
+                      onAddChoice: (questionId, textTranslations) {
                         questionManager.createChoice(
                           questionId: questionId,
                           surveyId: surveyId!,
-                          text: text,
+                          textTranslations: textTranslations,
                         );
                       },
-                      onUpdateChoice: (choice, newText) {
-                        final updated = choice.copyWith(text: newText);
+                      onUpdateChoice: (choice, textTranslations) {
+                        final updated = choice.copyWith(
+                          textTranslations: textTranslations,
+                        );
                         questionManager.updateChoice(updated, surveyId!);
                       },
                       onDeleteChoice: (choice) {
@@ -295,15 +297,17 @@ class SurveyEditorPage extends RearchConsumer {
       error: formState.error,
       onSave:
           ({
-            required String title,
+            required String defaultLocale,
             required String slug,
-            String? description,
+            required LocalizedText titleTranslations,
+            required LocalizedText descriptionTranslations,
           }) async {
             if (isNewSurvey) {
               final created = await formManager.createSurveyWithQuestions(
-                title: title,
+                defaultLocale: defaultLocale,
                 slug: slug,
-                description: description,
+                titleTranslations: titleTranslations,
+                descriptionTranslations: descriptionTranslations,
               );
               if (created != null && context.mounted) {
                 await surveyListManager.loadSurveys();
@@ -313,9 +317,10 @@ class SurveyEditorPage extends RearchConsumer {
               }
             } else {
               final updated = survey!.copyWith(
-                title: title,
+                defaultLocale: defaultLocale,
                 slug: slug,
-                description: description,
+                titleTranslations: titleTranslations,
+                descriptionTranslations: descriptionTranslations,
                 updatedAt: DateTime.now(),
               );
               await formManager.updateSurvey(updated);

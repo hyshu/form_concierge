@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:form_concierge_flutter/src/features/surveys/presentation/capsules/survey_form_capsule.dart';
 import 'package:form_concierge_flutter/src/features/surveys/presentation/widgets/survey_form.dart';
 
@@ -10,17 +11,13 @@ void main() {
   group('SurveyForm validation', () {
     late SurveyFormControllers controllers;
     late bool saveWasCalled;
-    late String? savedTitle;
+    late LocalizedText? savedTitleTranslations;
     late String? savedSlug;
 
     setUp(() {
-      controllers = SurveyFormControllers(
-        title: TextEditingController(),
-        slug: TextEditingController(),
-        description: TextEditingController(),
-      );
+      controllers = _controllers();
       saveWasCalled = false;
-      savedTitle = null;
+      savedTitleTranslations = null;
       savedSlug = null;
     });
 
@@ -38,12 +35,13 @@ void main() {
               error: error,
               onSave:
                   ({
-                    required String title,
+                    required String defaultLocale,
                     required String slug,
-                    String? description,
+                    required LocalizedText titleTranslations,
+                    required LocalizedText descriptionTranslations,
                   }) async {
                     saveWasCalled = true;
-                    savedTitle = title;
+                    savedTitleTranslations = titleTranslations;
                     savedSlug = slug;
                   },
             ),
@@ -59,11 +57,10 @@ void main() {
         controllers.slug.text = 'valid-slug';
       },
       when: (tester) async {
-        await tester.tap(find.text('Create Survey'));
-        await tester.pumpAndSettle();
+        await _tapCreateSurvey(tester);
       },
       then: (tester) async {
-        expect(find.text('Title is required'), findsOneWidget);
+        expect(find.text('Title is required'), findsWidgets);
         expect(saveWasCalled, isFalse);
       },
     );
@@ -72,11 +69,10 @@ void main() {
       'empty slug shows validation error',
       given: (tester) async {
         await tester.pumpWidget(buildSubject());
-        controllers.title.text = 'My Survey';
+        _fillTitles(controllers, 'My Survey');
       },
       when: (tester) async {
-        await tester.tap(find.text('Create Survey'));
-        await tester.pumpAndSettle();
+        await _tapCreateSurvey(tester);
       },
       then: (tester) async {
         expect(find.text('Slug is required'), findsOneWidget);
@@ -88,12 +84,11 @@ void main() {
       'slug with uppercase letters shows validation error',
       given: (tester) async {
         await tester.pumpWidget(buildSubject());
-        controllers.title.text = 'My Survey';
+        _fillTitles(controllers, 'My Survey');
         controllers.slug.text = 'Invalid-Slug';
       },
       when: (tester) async {
-        await tester.tap(find.text('Create Survey'));
-        await tester.pumpAndSettle();
+        await _tapCreateSurvey(tester);
       },
       then: (tester) async {
         expect(
@@ -108,12 +103,11 @@ void main() {
       'slug with special characters shows validation error',
       given: (tester) async {
         await tester.pumpWidget(buildSubject());
-        controllers.title.text = 'My Survey';
+        _fillTitles(controllers, 'My Survey');
         controllers.slug.text = 'invalid_slug!';
       },
       when: (tester) async {
-        await tester.tap(find.text('Create Survey'));
-        await tester.pumpAndSettle();
+        await _tapCreateSurvey(tester);
       },
       then: (tester) async {
         expect(
@@ -128,17 +122,16 @@ void main() {
       'valid form calls onSave with correct values',
       given: (tester) async {
         await tester.pumpWidget(buildSubject());
-        await tester.enterText(find.byType(TextFormField).at(0), 'My Survey');
-        await tester.enterText(find.byType(TextFormField).at(1), 'my-survey');
+        _fillTitles(controllers, 'My Survey');
+        controllers.slug.text = 'my-survey';
         await tester.pump();
       },
       when: (tester) async {
-        await tester.tap(find.text('Create Survey'));
-        await tester.pumpAndSettle();
+        await _tapCreateSurvey(tester);
       },
       then: (tester) async {
         expect(saveWasCalled, isTrue);
-        expect(savedTitle, 'My Survey');
+        expect(savedTitleTranslations!.valueFor('en'), 'My Survey');
         expect(savedSlug, 'my-survey');
       },
     );
@@ -147,16 +140,12 @@ void main() {
       'slug with numbers and hyphens is valid',
       given: (tester) async {
         await tester.pumpWidget(buildSubject());
-        await tester.enterText(find.byType(TextFormField).at(0), 'Survey 2024');
-        await tester.enterText(
-          find.byType(TextFormField).at(1),
-          'survey-2024-v1',
-        );
+        _fillTitles(controllers, 'Survey 2024');
+        controllers.slug.text = 'survey-2024-v1';
         await tester.pump();
       },
       when: (tester) async {
-        await tester.tap(find.text('Create Survey'));
-        await tester.pumpAndSettle();
+        await _tapCreateSurvey(tester);
       },
       then: (tester) async {
         expect(saveWasCalled, isTrue);
@@ -169,11 +158,7 @@ void main() {
     late SurveyFormControllers controllers;
 
     setUp(() {
-      controllers = SurveyFormControllers(
-        title: TextEditingController(),
-        slug: TextEditingController(),
-        description: TextEditingController(),
-      );
+      controllers = _controllers();
     });
 
     tearDown(() {
@@ -190,9 +175,10 @@ void main() {
               error: error,
               onSave:
                   ({
-                    required String title,
+                    required String defaultLocale,
                     required String slug,
-                    String? description,
+                    required LocalizedText titleTranslations,
+                    required LocalizedText descriptionTranslations,
                   }) async {},
             ),
           ),
@@ -237,4 +223,29 @@ void main() {
       expect(find.text('Create Survey'), findsOneWidget);
     });
   });
+}
+
+SurveyFormControllers _controllers() => SurveyFormControllers(
+  slug: TextEditingController(),
+  titleTranslations: {
+    for (final locale in formContentLocaleCodes)
+      locale: TextEditingController(),
+  },
+  descriptionTranslations: {
+    for (final locale in formContentLocaleCodes)
+      locale: TextEditingController(),
+  },
+);
+
+void _fillTitles(SurveyFormControllers controllers, String value) {
+  for (final controller in controllers.titleTranslations.values) {
+    controller.text = value;
+  }
+}
+
+Future<void> _tapCreateSurvey(WidgetTester tester) async {
+  final button = find.text('Create Survey');
+  await tester.ensureVisible(button);
+  await tester.tap(button);
+  await tester.pumpAndSettle();
 }
