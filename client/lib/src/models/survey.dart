@@ -244,12 +244,130 @@ const _messages = <String, Map<String, String>>{
   },
 };
 
-class Survey {
+class Project {
   final int? id;
   final String slug;
   final String? customDomain;
   final String defaultLocale;
   final List<String> supportedLocales;
+  final LocalizedText nameTranslations;
+  final LocalizedText descriptionTranslations;
+  final String? createdByUserId;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
+  const Project({
+    this.id,
+    required this.slug,
+    this.customDomain,
+    this.defaultLocale = defaultFormContentLocale,
+    this.supportedLocales = formContentLocaleCodes,
+    required this.nameTranslations,
+    required this.descriptionTranslations,
+    this.createdByUserId,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+
+  factory Project.fromJson(Map<String, dynamic> json) => Project(
+    id: json['id'] == null ? null : _int(json['id']),
+    slug: json['slug'] as String,
+    customDomain: json['customDomain'] as String?,
+    defaultLocale: json['defaultLocale'] as String,
+    supportedLocales: (json['supportedLocales'] as List)
+        .map((value) => value as String)
+        .toList(),
+    nameTranslations: LocalizedText.fromJson(json['nameTranslations']),
+    descriptionTranslations: LocalizedText.fromJson(
+      json['descriptionTranslations'],
+    ),
+    createdByUserId: json['createdByUserId'] as String?,
+    createdAt: _date(json['createdAt']),
+    updatedAt: _date(json['updatedAt']),
+  );
+
+  Map<String, dynamic> toJson() => _withoutNulls({
+    'id': id,
+    'slug': slug,
+    'customDomain': customDomain ?? '',
+    'defaultLocale': defaultLocale,
+    'supportedLocales': supportedLocales,
+    'nameTranslations': nameTranslations.toJson(),
+    'descriptionTranslations': descriptionTranslations.toJson(),
+    'createdByUserId': createdByUserId,
+    'createdAt': createdAt.toIso8601String(),
+    'updatedAt': updatedAt.toIso8601String(),
+  });
+
+  Project copyWith({
+    int? id,
+    String? slug,
+    String? customDomain,
+    bool clearCustomDomain = false,
+    String? defaultLocale,
+    List<String>? supportedLocales,
+    LocalizedText? nameTranslations,
+    LocalizedText? descriptionTranslations,
+    String? createdByUserId,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) {
+    return Project(
+      id: id ?? this.id,
+      slug: slug ?? this.slug,
+      customDomain: clearCustomDomain
+          ? null
+          : customDomain ?? this.customDomain,
+      defaultLocale: defaultLocale ?? this.defaultLocale,
+      supportedLocales: supportedLocales ?? this.supportedLocales,
+      nameTranslations: nameTranslations ?? this.nameTranslations,
+      descriptionTranslations:
+          descriptionTranslations ?? this.descriptionTranslations,
+      createdByUserId: createdByUserId ?? this.createdByUserId,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  String nameFor(String locale) => nameTranslations.valueFor(locale);
+  String descriptionFor(String locale) =>
+      descriptionTranslations.valueFor(locale);
+
+  String get name => nameFor(defaultLocale);
+  String? get description {
+    final value = descriptionFor(defaultLocale);
+    return value.trim().isEmpty ? null : value;
+  }
+}
+
+class ProjectWithSurveys {
+  final Project project;
+  final List<Survey> surveys;
+
+  const ProjectWithSurveys({required this.project, required this.surveys});
+
+  factory ProjectWithSurveys.fromJson(Map<String, dynamic> json) =>
+      ProjectWithSurveys(
+        project: Project.fromJson(json['project'] as Map<String, dynamic>),
+        surveys: _objectList(json['surveys'], Survey.fromJson),
+      );
+}
+
+class PublicProject {
+  final Project project;
+  final List<Survey> surveys;
+
+  const PublicProject({required this.project, required this.surveys});
+
+  factory PublicProject.fromJson(Map<String, dynamic> json) => PublicProject(
+    project: Project.fromJson(json['project'] as Map<String, dynamic>),
+    surveys: _objectList(json['surveys'], Survey.fromJson),
+  );
+}
+
+class Survey {
+  final int? id;
+  final int projectId;
   final LocalizedText titleTranslations;
   final LocalizedText descriptionTranslations;
   final SurveyStatus status;
@@ -261,10 +379,7 @@ class Survey {
 
   const Survey({
     this.id,
-    required this.slug,
-    this.customDomain,
-    this.defaultLocale = defaultFormContentLocale,
-    this.supportedLocales = formContentLocaleCodes,
+    required this.projectId,
     required this.titleTranslations,
     required this.descriptionTranslations,
     this.status = SurveyStatus.draft,
@@ -277,12 +392,7 @@ class Survey {
 
   factory Survey.fromJson(Map<String, dynamic> json) => Survey(
     id: json['id'] == null ? null : _int(json['id']),
-    slug: json['slug'] as String,
-    customDomain: json['customDomain'] as String?,
-    defaultLocale: json['defaultLocale'] as String,
-    supportedLocales: (json['supportedLocales'] as List)
-        .map((value) => value as String)
-        .toList(),
+    projectId: _int(json['projectId']),
     titleTranslations: LocalizedText.fromJson(json['titleTranslations']),
     descriptionTranslations: LocalizedText.fromJson(
       json['descriptionTranslations'],
@@ -297,10 +407,7 @@ class Survey {
 
   Map<String, dynamic> toJson() => _withoutNulls({
     'id': id,
-    'slug': slug,
-    'customDomain': customDomain ?? '',
-    'defaultLocale': defaultLocale,
-    'supportedLocales': supportedLocales,
+    'projectId': projectId,
     'titleTranslations': titleTranslations.toJson(),
     'descriptionTranslations': descriptionTranslations.toJson(),
     'status': _enumName(status),
@@ -313,11 +420,7 @@ class Survey {
 
   Survey copyWith({
     int? id,
-    String? slug,
-    String? customDomain,
-    bool clearCustomDomain = false,
-    String? defaultLocale,
-    List<String>? supportedLocales,
+    int? projectId,
     LocalizedText? titleTranslations,
     LocalizedText? descriptionTranslations,
     SurveyStatus? status,
@@ -329,12 +432,7 @@ class Survey {
   }) {
     return Survey(
       id: id ?? this.id,
-      slug: slug ?? this.slug,
-      customDomain: clearCustomDomain
-          ? null
-          : customDomain ?? this.customDomain,
-      defaultLocale: defaultLocale ?? this.defaultLocale,
-      supportedLocales: supportedLocales ?? this.supportedLocales,
+      projectId: projectId ?? this.projectId,
       titleTranslations: titleTranslations ?? this.titleTranslations,
       descriptionTranslations:
           descriptionTranslations ?? this.descriptionTranslations,
@@ -351,9 +449,9 @@ class Survey {
   String descriptionFor(String locale) =>
       descriptionTranslations.valueFor(locale);
 
-  String get title => titleFor(defaultLocale);
+  String get title => titleFor(defaultFormContentLocale);
   String? get description {
-    final value = descriptionFor(defaultLocale);
+    final value = descriptionFor(defaultFormContentLocale);
     return value.trim().isEmpty ? null : value;
   }
 }

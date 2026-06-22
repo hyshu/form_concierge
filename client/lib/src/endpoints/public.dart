@@ -4,18 +4,18 @@ class SurveyEndpoint {
   final Client _client;
   SurveyEndpoint(this._client);
 
-  Future<Survey?> getBySlug(String slug) async {
-    final json = await _client.request('GET', '/api/surveys/$slug');
-    return json == null ? null : Survey.fromJson(json);
+  Future<PublicProject?> getProjectBySlug(String slug) async {
+    final json = await _client.request('GET', '/api/projects/$slug');
+    return json == null ? null : PublicProject.fromJson(json);
   }
 
-  Future<Survey?> getByDomain(String domain) async {
+  Future<PublicProject?> getProjectByDomain(String domain) async {
     final json = await _client.request(
       'GET',
-      '/api/surveys/domain',
+      '/api/projects/domain',
       query: {'host': domain},
     );
-    return json == null ? null : Survey.fromJson(json);
+    return json == null ? null : PublicProject.fromJson(json);
   }
 
   Future<List<Question>> getQuestionsForSurvey(int surveyId) async {

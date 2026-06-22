@@ -1,15 +1,27 @@
-import type { AdminContext, AdminRow, AnonymousContext, AnswerRow, ChoiceRow, NotificationSettingsRow, QuestionRow, ReplyRow, ResponseRow, SurveyRow, VisibilityRuleRow } from './types';
+import type { AdminContext, AdminRow, AnonymousContext, AnswerRow, ChoiceRow, NotificationSettingsRow, ProjectRow, QuestionRow, ReplyRow, ResponseRow, SurveyRow, VisibilityRuleRow } from './types';
 import { roleFromScopes } from './permissions';
 import { compactObject } from './utils';
 import { parseLocalizedText } from './localization';
 
-export function surveyToJson(row: SurveyRow) {
+export function projectToJson(row: ProjectRow) {
   return {
     id: row.id,
     slug: row.slug,
     customDomain: row.custom_domain,
     defaultLocale: row.default_locale,
     supportedLocales: parseJsonArray(row.supported_locales),
+    nameTranslations: parseLocalizedText(row.name_translations),
+    descriptionTranslations: parseLocalizedText(row.description_translations),
+    createdByUserId: row.created_by_admin_id,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export function surveyToJson(row: SurveyRow) {
+  return {
+    id: row.id,
+    projectId: row.project_id,
     titleTranslations: parseLocalizedText(row.title_translations),
     descriptionTranslations: parseLocalizedText(row.description_translations),
     status: row.status,

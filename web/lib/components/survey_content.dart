@@ -6,6 +6,7 @@ import 'questions/question_widget.dart';
 
 class SurveyContent extends StatelessComponent {
   const SurveyContent({
+    required this.project,
     required this.survey,
     required this.questions,
     required this.choicesByQuestion,
@@ -20,6 +21,7 @@ class SurveyContent extends StatelessComponent {
     super.key,
   });
 
+  final Project project;
   final Survey survey;
   final List<Question> questions;
   final Map<int, List<Choice>> choicesByQuestion;
@@ -51,9 +53,9 @@ class SurveyContent extends StatelessComponent {
                 p(classes: 'mt-2 text-sm text-slate-600 leading-relaxed', [
                   Component.text(survey.descriptionFor(locale)),
                 ]),
-              if (survey.supportedLocales.length > 1)
+              if (project.supportedLocales.length > 1)
                 div(classes: 'mt-4 flex flex-wrap gap-2', [
-                  for (final option in survey.supportedLocales)
+                  for (final option in project.supportedLocales)
                     button(
                       [Component.text(formContentLocaleLabels[option]!)],
                       classes:

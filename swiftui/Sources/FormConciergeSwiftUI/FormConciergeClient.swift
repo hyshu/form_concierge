@@ -35,17 +35,19 @@ public actor FormConciergeClient {
     return created
   }
 
-  public func survey(slug: String) async throws -> Survey {
-    let survey: Survey? = try await request("GET", "/api/surveys/\(slug)")
-    guard let survey else { throw FormConciergeError.notFound }
-    return survey
+  public func project(slug: String) async throws -> PublicProject {
+    let project: PublicProject? = try await request("GET", "/api/projects/\(slug)")
+    guard let project else { throw FormConciergeError.notFound }
+    return project
   }
 
-  public func survey(domain: String) async throws -> Survey {
-    let encodedDomain = domain.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? domain
-    let survey: Survey? = try await request("GET", "/api/surveys/domain?host=\(encodedDomain)")
-    guard let survey else { throw FormConciergeError.notFound }
-    return survey
+  public func project(domain: String) async throws -> PublicProject {
+    let encodedDomain =
+      domain.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? domain
+    let project: PublicProject? = try await request(
+      "GET", "/api/projects/domain?host=\(encodedDomain)")
+    guard let project else { throw FormConciergeError.notFound }
+    return project
   }
 
   public func questions(surveyId: Int) async throws -> [Question] {

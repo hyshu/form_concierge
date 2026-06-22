@@ -5,6 +5,7 @@ import '../models/draft_question.dart';
 /// State for the survey form.
 class SurveyFormState {
   final Survey? survey;
+  final Project? project;
   final bool isLoading;
   final bool isSaving;
   final String? error;
@@ -16,6 +17,7 @@ class SurveyFormState {
 
   const SurveyFormState({
     this.survey,
+    this.project,
     this.isLoading = false,
     this.isSaving = false,
     this.error,
@@ -29,6 +31,7 @@ class SurveyFormState {
 
   SurveyFormState copyWith({
     Survey? survey,
+    Project? project,
     bool? isLoading,
     bool? isSaving,
     String? error,
@@ -40,6 +43,7 @@ class SurveyFormState {
     bool clearGenerationError = false,
   }) => SurveyFormState(
     survey: survey ?? this.survey,
+    project: project ?? this.project,
     isLoading: isLoading ?? this.isLoading,
     isSaving: isSaving ?? this.isSaving,
     error: error,

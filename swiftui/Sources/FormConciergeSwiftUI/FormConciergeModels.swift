@@ -37,7 +37,7 @@ public let formContentLocaleLabels = [
   "zh-Hans": "简体中文",
   "zh-Hant": "繁體中文",
   "ko": "한국어",
-  "de": "Deutsch"
+  "de": "Deutsch",
 ]
 
 public func normalizeFormContentLocale(_ locale: String) -> String {
@@ -79,12 +79,34 @@ public struct LocalizedText: Codable, Equatable, Sendable {
   }
 }
 
-public struct Survey: Codable, Identifiable, Sendable {
+public struct Project: Codable, Identifiable, Sendable {
   public let id: Int
   public let slug: String
   public let customDomain: String?
   public let defaultLocale: String
   public let supportedLocales: [String]
+  public let nameTranslations: LocalizedText
+  public let descriptionTranslations: LocalizedText
+  public let createdAt: Date
+  public let updatedAt: Date
+
+  public func name(for locale: String) -> String {
+    nameTranslations.value(for: locale)
+  }
+
+  public func description(for locale: String) -> String {
+    descriptionTranslations.value(for: locale)
+  }
+}
+
+public struct PublicProject: Codable, Sendable {
+  public let project: Project
+  public let surveys: [Survey]
+}
+
+public struct Survey: Codable, Identifiable, Sendable {
+  public let id: Int
+  public let projectId: Int
   public let titleTranslations: LocalizedText
   public let descriptionTranslations: LocalizedText
   public let status: SurveyStatus

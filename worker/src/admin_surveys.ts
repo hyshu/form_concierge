@@ -1,4 +1,4 @@
-import type { AdminContext, Env, QuestionInput, QuestionRow, SurveyRow } from './types';
+import type { AdminContext, Env, ProjectRow, QuestionInput, QuestionRow, SurveyRow } from './types';
 import {
   HttpError,
   boolToInt,
@@ -9,30 +9,26 @@ import {
   normalizeQuestionType,
   nowIso,
   objectBody,
-  optionalCustomDomain,
   optionalString,
   readJson,
-  requireSlug,
   requiredRow,
 } from './utils';
 import { surveyToJson } from './serializers';
-import { mustSurvey } from './admin_records';
+import { mustProject, mustSurvey } from './admin_records';
 import { normalizeQuestionValidation, normalizeVisibilityConditionMode } from './admin_questions';
 import {
   DEFAULT_FORM_CONTENT_LOCALE,
   FORM_CONTENT_LOCALES,
   LocalizedText,
   localizedTextFor,
-  requireDefaultLocale,
   requireLocalizedText,
-  requireSupportedLocales,
 } from './localization';
 
-export async function listSurveys(env: Env, admin: AdminContext): Promise<Response> {
-  const rows = await env.DB.prepare(
-    `SELECT * FROM surveys
-     ORDER BY updated_at DESC`,
-  ).all<SurveyRow>();
+export async function listSurveys(env: Env, projectId?: number): Promise<Response> {
+  const statement = projectId == null
+    ? env.DB.prepare(`SELECT * FROM surveys ORDER BY updated_at DESC`)
+    : env.DB.prepare(`SELECT * FROM surveys WHERE project_id = ? ORDER BY updated_at DESC`).bind(projectId);
+  const rows = await statement.all<SurveyRow>();
   return json(rows.results.map(surveyToJson));
 }
 
@@ -54,25 +50,19 @@ async function insertSurvey(
   body: Record<string, unknown>,
   admin: AdminContext,
 ): Promise<SurveyRow> {
-  const slug = requireSlug(body.slug);
-  await ensureUniqueSlug(db, slug);
-  const customDomain = optionalCustomDomain(body.customDomain);
-  await ensureUniqueCustomDomain(db, customDomain);
-  const content = parseSurveyContent(body);
+  const projectId = requireProjectId(body.projectId);
+  const project = await mustProject(db, projectId);
+  const content = parseSurveyContent(body, project);
   const now = nowIso();
   const row = await db.prepare(
     `INSERT INTO surveys
-       (slug, custom_domain, default_locale, supported_locales, title_translations,
-        description_translations, status, created_by_admin_id,
+       (project_id, title_translations, description_translations, status, created_by_admin_id,
         created_at, updated_at, starts_at, ends_at)
-     VALUES (?, ?, ?, ?, ?, ?, 'draft', ?, ?, ?, ?, ?)
+     VALUES (?, ?, ?, 'draft', ?, ?, ?, ?, ?)
      RETURNING *`,
   )
     .bind(
-      slug,
-      customDomain,
-      content.defaultLocale,
-      JSON.stringify(content.supportedLocales),
+      projectId,
       JSON.stringify(content.titleTranslations),
       JSON.stringify(content.descriptionTranslations),
       admin.id,
@@ -127,25 +117,15 @@ export async function createSurveyWithQuestions(
 export async function updateSurvey(request: Request, env: Env, surveyId: number): Promise<Response> {
   const existing = await mustSurvey(env.DB, surveyId);
   const body = await readJson(request);
-  const slug = requireSlug(body.slug ?? existing.slug);
-  await ensureUniqueSlug(env.DB, slug, surveyId);
-  const customDomain = optionalCustomDomain(
-    Object.hasOwn(body, 'customDomain') ? body.customDomain : existing.custom_domain,
-  );
-  await ensureUniqueCustomDomain(env.DB, customDomain, surveyId);
-  const content = parseSurveyContent(body);
+  const project = await mustProject(env.DB, existing.project_id);
+  const content = parseSurveyContent(body, project);
   const row = await env.DB.prepare(
     `UPDATE surveys
-     SET slug = ?, custom_domain = ?, default_locale = ?, supported_locales = ?,
-         title_translations = ?, description_translations = ?,
+     SET title_translations = ?, description_translations = ?,
          starts_at = ?, ends_at = ?, updated_at = ?
      WHERE id = ?
      RETURNING *`,
   ).bind(
-    slug,
-    customDomain,
-    content.defaultLocale,
-    JSON.stringify(content.supportedLocales),
     JSON.stringify(content.titleTranslations),
     JSON.stringify(content.descriptionTranslations),
     optionalString(body.startsAt ?? existing.starts_at),
@@ -214,17 +194,12 @@ function parseQuestionInputs(value: unknown): QuestionInput[] {
   });
 }
 
-function parseSurveyContent(body: Record<string, unknown>): {
-  supportedLocales: string[];
-  defaultLocale: string;
+function parseSurveyContent(body: Record<string, unknown>, project: ProjectRow): {
   titleTranslations: LocalizedText;
   descriptionTranslations: LocalizedText;
 } {
-  const supportedLocales = requireSupportedLocales(body.supportedLocales);
-  const defaultLocale = requireDefaultLocale(body.defaultLocale, supportedLocales);
+  const supportedLocales = parseProjectLocales(project);
   return {
-    supportedLocales,
-    defaultLocale,
     titleTranslations: requireLocalizedText(body.titleTranslations, 'titleTranslations', supportedLocales),
     descriptionTranslations: requireLocalizedText(
       body.descriptionTranslations,
@@ -235,31 +210,19 @@ function parseSurveyContent(body: Record<string, unknown>): {
   };
 }
 
-async function ensureUniqueSlug(
-  db: D1Database,
-  slug: string,
-  exceptSurveyId?: number,
-): Promise<void> {
-  const row = exceptSurveyId == null
-    ? await db.prepare(`SELECT id FROM surveys WHERE slug = ?`).bind(slug).first<{ id: number }>()
-    : await db.prepare(`SELECT id FROM surveys WHERE slug = ? AND id != ?`)
-      .bind(slug, exceptSurveyId)
-      .first<{ id: number }>();
-  if (row) throw new HttpError(400, 'A survey with this slug already exists');
+function parseProjectLocales(project: ProjectRow): string[] {
+  try {
+    const decoded = JSON.parse(project.supported_locales);
+    return Array.isArray(decoded) ? decoded.map(String) : [...FORM_CONTENT_LOCALES];
+  } catch {
+    return [...FORM_CONTENT_LOCALES];
+  }
 }
 
-async function ensureUniqueCustomDomain(
-  db: D1Database,
-  customDomain: string | null,
-  exceptSurveyId?: number,
-): Promise<void> {
-  if (customDomain == null) return;
-  const row = exceptSurveyId == null
-    ? await db.prepare(`SELECT id FROM surveys WHERE custom_domain = ?`).bind(customDomain).first<{ id: number }>()
-    : await db.prepare(`SELECT id FROM surveys WHERE custom_domain = ? AND id != ?`)
-      .bind(customDomain, exceptSurveyId)
-      .first<{ id: number }>();
-  if (row) throw new HttpError(400, 'A survey with this custom domain already exists');
+function requireProjectId(value: unknown): number {
+  const id = Number(value);
+  if (!Number.isInteger(id) || id <= 0) throw new HttpError(400, 'projectId is required');
+  return id;
 }
 
 async function assertSurveyCanPublish(db: D1Database, surveyId: number): Promise<void> {

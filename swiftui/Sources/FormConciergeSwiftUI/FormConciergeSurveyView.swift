@@ -2,7 +2,8 @@ import SwiftUI
 
 public struct FormConciergeSurveyView: View {
   private let client: FormConciergeClient
-  private let surveySlug: String
+  private let projectSlug: String
+  private let surveyId: Int?
   private let anonymousToken: String?
   private let locale: String?
   private let deviceInfo: DeviceInfo?
@@ -11,6 +12,7 @@ public struct FormConciergeSurveyView: View {
   private let onResponseSubmitted: ((SurveyResponse) -> Void)?
   private let onSubmitted: (() -> Void)?
 
+  @State private var project: Project?
   @State private var survey: Survey?
   @State private var questions: [Question] = []
   @State private var visibilityRules: [QuestionVisibilityRule] = []
@@ -23,7 +25,8 @@ public struct FormConciergeSurveyView: View {
 
   public init(
     client: FormConciergeClient,
-    surveySlug: String,
+    projectSlug: String,
+    surveyId: Int? = nil,
     anonymousToken: String? = nil,
     locale: String? = nil,
     deviceInfo: DeviceInfo? = nil,
@@ -33,7 +36,8 @@ public struct FormConciergeSurveyView: View {
     onSubmitted: (() -> Void)? = nil
   ) {
     self.client = client
-    self.surveySlug = surveySlug
+    self.projectSlug = projectSlug
+    self.surveyId = surveyId
     self.anonymousToken = anonymousToken
     self.locale = locale
     self.deviceInfo = deviceInfo
@@ -54,9 +58,12 @@ public struct FormConciergeSurveyView: View {
             .foregroundStyle(.green)
           Text(FormContentMessages.text(activeLocale, "thankYou"))
             .font(.headline)
-          Text(FormContentMessages.submittedWithTitle(activeLocale, title: survey.title(for: activeLocale)))
-            .multilineTextAlignment(.center)
-            .foregroundStyle(.secondary)
+          Text(
+            FormContentMessages.submittedWithTitle(
+              activeLocale, title: survey.title(for: activeLocale))
+          )
+          .multilineTextAlignment(.center)
+          .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
       } else if let survey {
@@ -130,7 +137,10 @@ public struct FormConciergeSurveyView: View {
         let session = try await client.createAnonymousAccount()
         onAnonymousSession?(session)
       }
-      let loadedSurvey = try await client.survey(slug: surveySlug)
+      let loadedProject = try await client.project(slug: projectSlug)
+      guard let loadedSurvey = selectedSurvey(from: loadedProject) else {
+        throw FormConciergeError.notFound
+      }
       let loadedQuestions = try await client.questions(surveyId: loadedSurvey.id)
       let loadedVisibilityRules = try await client.visibilityRules(surveyId: loadedSurvey.id)
       var loadedChoices: [Int: [Choice]] = [:]
@@ -138,6 +148,7 @@ public struct FormConciergeSurveyView: View {
       where question.type == .singleChoice || question.type == .multipleChoice {
         loadedChoices[question.id] = try await client.choices(questionId: question.id)
       }
+      project = loadedProject.project
       survey = loadedSurvey
       questions = loadedQuestions
       visibilityRules = loadedVisibilityRules
@@ -145,6 +156,13 @@ public struct FormConciergeSurveyView: View {
     } catch {
       errorMessage = error.localizedDescription
     }
+  }
+
+  private func selectedSurvey(from project: PublicProject) -> Survey? {
+    if let surveyId {
+      return project.surveys.first { $0.id == surveyId }
+    }
+    return project.surveys.first
   }
 
   private func submit() async {
@@ -196,10 +214,12 @@ public struct FormConciergeSurveyView: View {
       if case .text(let text) = value {
         let count = text.trimmingCharacters(in: .whitespacesAndNewlines).count
         if let minLength = question.minLength, count > 0, count < minLength {
-          return FormContentMessages.minCharacters(activeLocale, question: questionText, count: minLength)
+          return FormContentMessages.minCharacters(
+            activeLocale, question: questionText, count: minLength)
         }
         if let maxLength = question.maxLength, count > maxLength {
-          return FormContentMessages.maxCharacters(activeLocale, question: questionText, count: maxLength)
+          return FormContentMessages.maxCharacters(
+            activeLocale, question: questionText, count: maxLength)
         }
       }
       let selectedCount: Int
@@ -212,10 +232,12 @@ public struct FormConciergeSurveyView: View {
         selectedCount = 0
       }
       if let minSelected = question.minSelected, selectedCount < minSelected {
-        return FormContentMessages.minChoices(activeLocale, question: questionText, count: minSelected)
+        return FormContentMessages.minChoices(
+          activeLocale, question: questionText, count: minSelected)
       }
       if let maxSelected = question.maxSelected, selectedCount > maxSelected {
-        return FormContentMessages.maxChoices(activeLocale, question: questionText, count: maxSelected)
+        return FormContentMessages.maxChoices(
+          activeLocale, question: questionText, count: maxSelected)
       }
     }
     return nil
@@ -244,7 +266,7 @@ public struct FormConciergeSurveyView: View {
 
   private var activeLocale: String {
     normalizeFormContentLocale(
-      locale ?? survey?.defaultLocale ?? defaultFormContentLocale
+      locale ?? project?.defaultLocale ?? defaultFormContentLocale
     )
   }
 }
@@ -289,7 +311,8 @@ private func resolveVisibleQuestions(
         else { return false }
         return matchesRule(source: source, rule: rule, answer: answers[source.id])
       }
-      isVisible = question.visibilityConditionMode == .any
+      isVisible =
+        question.visibilityConditionMode == .any
         ? outcomes.contains(true)
         : outcomes.allSatisfy { $0 }
     }

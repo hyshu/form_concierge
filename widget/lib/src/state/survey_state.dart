@@ -4,6 +4,7 @@ enum SurveyViewState { loading, ready, submitting, completed, error }
 
 class SurveyState {
   final SurveyViewState viewState;
+  final Project? project;
   final Survey? survey;
   final List<Question> questions;
   final List<QuestionVisibilityRule> visibilityRules;
@@ -14,6 +15,7 @@ class SurveyState {
 
   const SurveyState({
     this.viewState = SurveyViewState.loading,
+    this.project,
     this.survey,
     this.questions = const [],
     this.visibilityRules = const [],
@@ -25,6 +27,7 @@ class SurveyState {
 
   SurveyState copyWith({
     SurveyViewState? viewState,
+    Project? project,
     Survey? survey,
     List<Question>? questions,
     List<QuestionVisibilityRule>? visibilityRules,
@@ -35,6 +38,7 @@ class SurveyState {
   }) {
     return SurveyState(
       viewState: viewState ?? this.viewState,
+      project: project ?? this.project,
       survey: survey ?? this.survey,
       questions: questions ?? this.questions,
       visibilityRules: visibilityRules ?? this.visibilityRules,

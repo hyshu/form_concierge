@@ -19,12 +19,22 @@ export type AnonymousContext = {
   lastSeenAt: string;
 };
 
-export type SurveyRow = {
+export type ProjectRow = {
   id: number;
   slug: string;
   custom_domain: string | null;
   default_locale: string;
   supported_locales: string;
+  name_translations: string;
+  description_translations: string;
+  created_by_admin_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type SurveyRow = {
+  id: number;
+  project_id: number;
   title_translations: string;
   description_translations: string;
   status: string;

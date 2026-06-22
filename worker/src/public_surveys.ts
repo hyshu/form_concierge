@@ -1,20 +1,20 @@
-import type { AnonymousContext, AnswerInput, AnswerRow, ChoiceRow, Env, QuestionRow, ResponseRow, SurveyRow, VisibilityRuleRow } from './types';
+import type { AnonymousContext, AnswerInput, AnswerRow, ChoiceRow, Env, ProjectRow, QuestionRow, ResponseRow, SurveyRow, VisibilityRuleRow } from './types';
 import { HttpError, isChoiceQuestionType, isTextQuestionType, json, nowIso, optionalCustomDomain, readJson, requireAnswerInput } from './utils';
 import { normalizeDeviceInfo, normalizeMetadata } from './metadata';
-import { choiceToJson, parseChoiceIds, questionToJson, responseToJson, surveyToJson } from './serializers';
+import { choiceToJson, parseChoiceIds, projectToJson, questionToJson, responseToJson, surveyToJson } from './serializers';
 import { getVisibilityRules, visibleQuestionIds } from './visibility_rules';
 import { DEFAULT_FORM_CONTENT_LOCALE, localizedTextFor } from './localization';
 import { sendResponseNotification } from './notification_settings';
 
-export async function getPublicSurvey(env: Env, slug: string): Promise<Response> {
-  const row = await env.DB.prepare(
-    `SELECT * FROM surveys WHERE slug = ? AND status = 'published'`,
-  ).bind(slug).first<SurveyRow>();
-  if (!row || !isAccepting(row)) return json(null);
-  return json(surveyToJson(row));
+export async function getPublicProject(env: Env, slug: string): Promise<Response> {
+  const project = await env.DB.prepare(
+    `SELECT * FROM projects WHERE slug = ?`,
+  ).bind(slug).first<ProjectRow>();
+  if (!project) return json(null);
+  return json(await publicProjectPayload(env, project));
 }
 
-export async function getPublicSurveyByDomain(env: Env, domainValue: string | null): Promise<Response> {
+export async function getPublicProjectByDomain(env: Env, domainValue: string | null): Promise<Response> {
   let customDomain: string | null = null;
   try {
     customDomain = optionalCustomDomain(domainValue);
@@ -23,11 +23,23 @@ export async function getPublicSurveyByDomain(env: Env, domainValue: string | nu
     throw error;
   }
   if (!customDomain) return json(null);
-  const row = await env.DB.prepare(
-    `SELECT * FROM surveys WHERE custom_domain = ? AND status = 'published'`,
-  ).bind(customDomain).first<SurveyRow>();
-  if (!row || !isAccepting(row)) return json(null);
-  return json(surveyToJson(row));
+  const project = await env.DB.prepare(
+    `SELECT * FROM projects WHERE custom_domain = ?`,
+  ).bind(customDomain).first<ProjectRow>();
+  if (!project) return json(null);
+  return json(await publicProjectPayload(env, project));
+}
+
+async function publicProjectPayload(env: Env, project: ProjectRow) {
+  const rows = await env.DB.prepare(
+    `SELECT * FROM surveys
+     WHERE project_id = ? AND status = 'published'
+     ORDER BY updated_at DESC`,
+  ).bind(project.id).all<SurveyRow>();
+  return {
+    project: projectToJson(project),
+    surveys: rows.results.filter(isAccepting).map(surveyToJson),
+  };
 }
 
 export async function getPublicQuestions(env: Env, surveyId: number): Promise<Response> {

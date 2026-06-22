@@ -5,6 +5,7 @@ class Client {
   final http.Client _httpClient;
 
   late final SurveyEndpoint survey;
+  late final ProjectAdminEndpoint projectAdmin;
   late final SurveyAdminEndpoint surveyAdmin;
   late final QuestionAdminEndpoint questionAdmin;
   late final ChoiceAdminEndpoint choiceAdmin;
@@ -32,6 +33,7 @@ class Client {
       storageKey: 'form_concierge.admin_auth.${baseUri.toString()}',
     );
     survey = SurveyEndpoint(this);
+    projectAdmin = ProjectAdminEndpoint(this);
     surveyAdmin = SurveyAdminEndpoint(this);
     questionAdmin = QuestionAdminEndpoint(this);
     choiceAdmin = ChoiceAdminEndpoint(this);

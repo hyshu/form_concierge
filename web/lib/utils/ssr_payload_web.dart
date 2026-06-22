@@ -13,15 +13,15 @@ Map<String, dynamic>? readSsrSurveyPayload({
   try {
     final decoded = jsonDecode(text);
     if (decoded is! Map<String, dynamic>) return null;
-    final survey = decoded['survey'];
-    if (survey is! Map<String, dynamic>) return null;
-    final surveySlug = survey['slug']?.toString();
-    final surveyDomain = survey['customDomain']?.toString();
-    if (slug != null && slug.isNotEmpty && surveySlug != slug) return null;
+    final project = decoded['project'];
+    if (project is! Map<String, dynamic>) return null;
+    final projectSlug = project['slug']?.toString();
+    final projectDomain = project['customDomain']?.toString();
+    if (slug != null && slug.isNotEmpty && projectSlug != slug) return null;
     if (domain != null &&
         domain.isNotEmpty &&
-        surveyDomain != null &&
-        surveyDomain.toLowerCase() != domain.toLowerCase()) {
+        projectDomain != null &&
+        projectDomain.toLowerCase() != domain.toLowerCase()) {
       return null;
     }
     return decoded;

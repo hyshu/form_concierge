@@ -20,8 +20,9 @@ import '../widgets/survey_form.dart';
 /// Page for creating or editing a survey and its questions.
 class SurveyEditorPage extends RearchConsumer {
   final int? surveyId;
+  final int? projectId;
 
-  const SurveyEditorPage({super.key, this.surveyId});
+  const SurveyEditorPage({super.key, this.surveyId, this.projectId});
 
   @override
   Widget build(BuildContext context, WidgetHandle use) {
@@ -31,8 +32,6 @@ class SurveyEditorPage extends RearchConsumer {
     final controllers = use(surveyFormControllersCapsule);
     final publicConfig = use(publicConfigCapsule);
     final client = use(clientCapsule);
-    final (defaultLocaleOverride, setDefaultLocaleOverride) = use
-        .state<String?>(null);
 
     final isNewSurvey = surveyId == null;
     final formState = formManager.getState(surveyId);
@@ -45,9 +44,13 @@ class SurveyEditorPage extends RearchConsumer {
     final canManageUsers = role == AdminRole.admin;
 
     // Load survey and questions on first build (only for existing surveys)
-    if (use.isFirstBuild() && !isNewSurvey) {
-      formManager.loadSurvey(surveyId!);
-      questionManager.loadQuestions(surveyId!);
+    if (use.isFirstBuild()) {
+      if (isNewSurvey && projectId != null) {
+        formManager.loadProject(projectId!);
+      } else if (!isNewSurvey) {
+        formManager.loadSurvey(surveyId!);
+        questionManager.loadQuestions(surveyId!);
+      }
     }
 
     // Populate form when survey is loaded (track previous to detect change)
@@ -59,9 +62,12 @@ class SurveyEditorPage extends RearchConsumer {
       });
     }
 
-    if (!isNewSurvey &&
+    if ((!isNewSurvey || projectId != null) &&
         (formState.isLoading ||
-            (formState.survey == null && formState.error == null))) {
+            (formState.project == null && formState.error == null) ||
+            (!isNewSurvey &&
+                formState.survey == null &&
+                formState.error == null))) {
       return HuxAdminShell(
         title: context.tr('Loading...'),
         selectedItemId: 'surveys',
@@ -76,10 +82,24 @@ class SurveyEditorPage extends RearchConsumer {
     }
 
     final survey = formState.survey;
+    final project = formState.project;
     final activeDefaultLocale =
-        defaultLocaleOverride ??
-        survey?.defaultLocale ??
-        defaultFormContentLocale;
+        project?.defaultLocale ?? defaultFormContentLocale;
+    if (isNewSurvey && (projectId == null || project == null)) {
+      return HuxAdminShell(
+        title: context.tr('Project not found'),
+        selectedItemId: 'surveys',
+        showUsers: canManageUsers,
+        showSettings: canManageUsers,
+        onBack: () => context.go('/admin'),
+        child: HuxPageBody(
+          child: HuxErrorState(
+            message: context.tr('Project not found'),
+            onRetry: () => context.go('/admin'),
+          ),
+        ),
+      );
+    }
     if (!isNewSurvey && survey == null) {
       return HuxAdminShell(
         title: context.tr('Survey Not Found'),
@@ -101,7 +121,9 @@ class SurveyEditorPage extends RearchConsumer {
         (isNewSurvey || survey!.status != SurveyStatus.archived);
 
     return HuxAdminShell(
-      title: isNewSurvey ? context.tr('New Survey') : survey!.title,
+      title: isNewSurvey
+          ? context.tr('New Survey')
+          : survey!.titleFor(activeDefaultLocale),
       selectedItemId: 'surveys',
       showUsers: canManageUsers,
       showSettings: canManageUsers,
@@ -156,7 +178,6 @@ class SurveyEditorPage extends RearchConsumer {
                 formState,
                 survey,
                 isNewSurvey,
-                onDefaultLocaleChanged: setDefaultLocaleOverride,
               ),
               const SizedBox(height: 48),
               if (isNewSurvey)
@@ -288,28 +309,23 @@ class SurveyEditorPage extends RearchConsumer {
     SurveyFormControllers controllers,
     SurveyFormState formState,
     Survey? survey,
-    bool isNewSurvey, {
-    required void Function(String? locale) onDefaultLocaleChanged,
-  }) {
+    bool isNewSurvey,
+  ) {
+    final project = formState.project;
     return SurveyForm(
       controllers: controllers,
       existingSurvey: survey,
       isSaving: formState.isSaving,
       error: formState.error,
-      onDefaultLocaleChanged: onDefaultLocaleChanged,
+      primaryLocale: project?.defaultLocale ?? defaultFormContentLocale,
       onSave:
           ({
-            required String defaultLocale,
-            required String slug,
-            required String? customDomain,
             required LocalizedText titleTranslations,
             required LocalizedText descriptionTranslations,
           }) async {
             if (isNewSurvey) {
               final created = await formManager.createSurveyWithQuestions(
-                defaultLocale: defaultLocale,
-                slug: slug,
-                customDomain: customDomain,
+                projectId: projectId!,
                 titleTranslations: titleTranslations,
                 descriptionTranslations: descriptionTranslations,
               );
@@ -321,10 +337,6 @@ class SurveyEditorPage extends RearchConsumer {
               }
             } else {
               final updated = survey!.copyWith(
-                defaultLocale: defaultLocale,
-                slug: slug,
-                customDomain: customDomain,
-                clearCustomDomain: customDomain == null,
                 titleTranslations: titleTranslations,
                 descriptionTranslations: descriptionTranslations,
                 updatedAt: DateTime.now(),

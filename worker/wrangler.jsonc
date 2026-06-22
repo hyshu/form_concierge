@@ -7,7 +7,7 @@
     {
       "binding": "DB",
       "database_name": "form_concierge",
-      "database_id": "replace-with-cloudflare-d1-database-id",
+      "database_id": "6fed1b83-f043-4489-b99f-f48d481f5b07",
       "migrations_dir": "migrations"
     }
   ],

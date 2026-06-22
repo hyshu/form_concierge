@@ -8,6 +8,7 @@ import 'survey_status_chip.dart';
 /// List tile for displaying a survey with actions.
 class SurveyListTile extends StatelessWidget {
   final Survey survey;
+  final String locale;
   final VoidCallback onTap;
   final VoidCallback onViewResponses;
   final VoidCallback? onPublish;
@@ -18,6 +19,7 @@ class SurveyListTile extends StatelessWidget {
   const SurveyListTile({
     super.key,
     required this.survey,
+    required this.locale,
     required this.onTap,
     required this.onViewResponses,
     this.onPublish,
@@ -28,6 +30,8 @@ class SurveyListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final title = survey.titleFor(locale);
+    final description = survey.descriptionFor(locale).trim();
     return HuxCard(
       margin: const EdgeInsets.only(bottom: 12),
       onTap: onTap,
@@ -39,7 +43,7 @@ class SurveyListTile extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  survey.title,
+                  title,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -49,10 +53,10 @@ class SurveyListTile extends StatelessWidget {
               SurveyStatusChip(status: survey.status),
             ],
           ),
-          if (survey.description != null && survey.description!.isNotEmpty) ...[
+          if (description.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(
-              survey.description!,
+              description,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: HuxTokens.textSecondary(context),
               ),
@@ -65,15 +69,6 @@ class SurveyListTile extends StatelessWidget {
             spacing: 16,
             runSpacing: 8,
             children: [
-              _MetadataItem(
-                icon: LucideIcons.link,
-                text: '/${survey.slug}',
-              ),
-              if (survey.customDomain != null)
-                _MetadataItem(
-                  icon: LucideIcons.globe,
-                  text: survey.customDomain!,
-                ),
               _MetadataItem(
                 icon: LucideIcons.clock3,
                 text: _formatDate(survey.updatedAt),
