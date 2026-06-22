@@ -65,32 +65,27 @@ class SurveyListTile extends StatelessWidget {
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Icon(
-                    Icons.link,
-                    size: 16,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    '/${survey.slug}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
+                  Expanded(
+                    child: Wrap(
+                      spacing: 16,
+                      runSpacing: 8,
+                      children: [
+                        _MetadataItem(
+                          icon: Icons.link,
+                          text: '/${survey.slug}',
+                        ),
+                        if (survey.customDomain != null)
+                          _MetadataItem(
+                            icon: Icons.public,
+                            text: survey.customDomain!,
+                          ),
+                        _MetadataItem(
+                          icon: Icons.update,
+                          text: _formatDate(survey.updatedAt),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  Icon(
-                    Icons.update,
-                    size: 16,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    _formatDate(survey.updatedAt),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const Spacer(),
                   _buildActions(context),
                 ],
               ),
@@ -144,4 +139,30 @@ class SurveyListTile extends StatelessWidget {
   }
 
   String _formatDate(DateTime date) => date.toIsoDateString();
+}
+
+class _MetadataItem extends StatelessWidget {
+  final IconData icon;
+  final String text;
+
+  const _MetadataItem({
+    required this.icon,
+    required this.text,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Theme.of(context).colorScheme.onSurfaceVariant;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 16, color: color),
+        const SizedBox(width: 4),
+        Text(
+          text,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: color),
+        ),
+      ],
+    );
+  }
 }

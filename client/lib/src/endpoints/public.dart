@@ -9,6 +9,15 @@ class SurveyEndpoint {
     return json == null ? null : Survey.fromJson(json);
   }
 
+  Future<Survey?> getByDomain(String domain) async {
+    final json = await _client.request(
+      'GET',
+      '/api/surveys/domain',
+      query: {'host': domain},
+    );
+    return json == null ? null : Survey.fromJson(json);
+  }
+
   Future<List<Question>> getQuestionsForSurvey(int surveyId) async {
     final json = await _client.request(
       'GET',

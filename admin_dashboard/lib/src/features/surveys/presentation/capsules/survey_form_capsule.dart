@@ -68,6 +68,7 @@ class SurveyFormManager {
   Future<Survey?> createSurvey({
     required String defaultLocale,
     required String slug,
+    required String? customDomain,
     required LocalizedText titleTranslations,
     required LocalizedText descriptionTranslations,
   }) async {
@@ -77,6 +78,7 @@ class SurveyFormManager {
         _draftSurvey(
           defaultLocale: defaultLocale,
           slug: slug,
+          customDomain: customDomain,
           titleTranslations: titleTranslations,
           descriptionTranslations: descriptionTranslations,
         ),
@@ -253,6 +255,7 @@ class SurveyFormManager {
   Future<Survey?> createSurveyWithQuestions({
     required String defaultLocale,
     required String slug,
+    required String? customDomain,
     required LocalizedText titleTranslations,
     required LocalizedText descriptionTranslations,
   }) async {
@@ -267,6 +270,7 @@ class SurveyFormManager {
         _draftSurvey(
           defaultLocale: defaultLocale,
           slug: slug,
+          customDomain: customDomain,
           titleTranslations: titleTranslations,
           descriptionTranslations: descriptionTranslations,
         ),
@@ -292,12 +296,14 @@ class SurveyFormManager {
   Survey _draftSurvey({
     required String defaultLocale,
     required String slug,
+    required String? customDomain,
     required LocalizedText titleTranslations,
     required LocalizedText descriptionTranslations,
   }) {
     final now = DateTime.now();
     return Survey(
       slug: slug,
+      customDomain: customDomain,
       defaultLocale: defaultLocale,
       supportedLocales: formContentLocaleCodes,
       titleTranslations: titleTranslations,

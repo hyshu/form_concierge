@@ -247,6 +247,7 @@ const _messages = <String, Map<String, String>>{
 class Survey {
   final int? id;
   final String slug;
+  final String? customDomain;
   final String defaultLocale;
   final List<String> supportedLocales;
   final LocalizedText titleTranslations;
@@ -261,6 +262,7 @@ class Survey {
   const Survey({
     this.id,
     required this.slug,
+    this.customDomain,
     this.defaultLocale = defaultFormContentLocale,
     this.supportedLocales = formContentLocaleCodes,
     required this.titleTranslations,
@@ -276,6 +278,7 @@ class Survey {
   factory Survey.fromJson(Map<String, dynamic> json) => Survey(
     id: json['id'] == null ? null : _int(json['id']),
     slug: json['slug'] as String,
+    customDomain: json['customDomain'] as String?,
     defaultLocale: json['defaultLocale'] as String,
     supportedLocales: (json['supportedLocales'] as List)
         .map((value) => value as String)
@@ -295,6 +298,7 @@ class Survey {
   Map<String, dynamic> toJson() => _withoutNulls({
     'id': id,
     'slug': slug,
+    'customDomain': customDomain ?? '',
     'defaultLocale': defaultLocale,
     'supportedLocales': supportedLocales,
     'titleTranslations': titleTranslations.toJson(),
@@ -310,6 +314,8 @@ class Survey {
   Survey copyWith({
     int? id,
     String? slug,
+    String? customDomain,
+    bool clearCustomDomain = false,
     String? defaultLocale,
     List<String>? supportedLocales,
     LocalizedText? titleTranslations,
@@ -324,6 +330,9 @@ class Survey {
     return Survey(
       id: id ?? this.id,
       slug: slug ?? this.slug,
+      customDomain: clearCustomDomain
+          ? null
+          : customDomain ?? this.customDomain,
       defaultLocale: defaultLocale ?? this.defaultLocale,
       supportedLocales: supportedLocales ?? this.supportedLocales,
       titleTranslations: titleTranslations ?? this.titleTranslations,

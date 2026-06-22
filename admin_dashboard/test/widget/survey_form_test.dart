@@ -13,12 +13,14 @@ void main() {
     late bool saveWasCalled;
     late LocalizedText? savedTitleTranslations;
     late String? savedSlug;
+    late String? savedCustomDomain;
 
     setUp(() {
       controllers = _controllers();
       saveWasCalled = false;
       savedTitleTranslations = null;
       savedSlug = null;
+      savedCustomDomain = null;
     });
 
     tearDown(() {
@@ -37,12 +39,14 @@ void main() {
                   ({
                     required String defaultLocale,
                     required String slug,
+                    required String? customDomain,
                     required LocalizedText titleTranslations,
                     required LocalizedText descriptionTranslations,
                   }) async {
                     saveWasCalled = true;
                     savedTitleTranslations = titleTranslations;
                     savedSlug = slug;
+                    savedCustomDomain = customDomain;
                   },
             ),
           ),
@@ -124,6 +128,7 @@ void main() {
         await tester.pumpWidget(buildSubject());
         _fillTitles(controllers, 'My Survey');
         controllers.slug.text = 'my-survey';
+        controllers.customDomain.text = 'Forms.Example.COM';
         await tester.pump();
       },
       when: (tester) async {
@@ -133,6 +138,28 @@ void main() {
         expect(saveWasCalled, isTrue);
         expect(savedTitleTranslations!.valueFor('en'), 'My Survey');
         expect(savedSlug, 'my-survey');
+        expect(savedCustomDomain, 'forms.example.com');
+      },
+    );
+
+    scenarioWidget(
+      'invalid custom domain shows validation error',
+      given: (tester) async {
+        await tester.pumpWidget(buildSubject());
+        _fillTitles(controllers, 'My Survey');
+        controllers.slug.text = 'my-survey';
+        controllers.customDomain.text = 'https://forms.example.com/path';
+        await tester.pump();
+      },
+      when: (tester) async {
+        await _tapCreateSurvey(tester);
+      },
+      then: (tester) async {
+        expect(
+          find.text('Custom domain must be a hostname like forms.example.com'),
+          findsOneWidget,
+        );
+        expect(saveWasCalled, isFalse);
       },
     );
 
@@ -177,6 +204,7 @@ void main() {
                   ({
                     required String defaultLocale,
                     required String slug,
+                    required String? customDomain,
                     required LocalizedText titleTranslations,
                     required LocalizedText descriptionTranslations,
                   }) async {},
@@ -227,6 +255,7 @@ void main() {
 
 SurveyFormControllers _controllers() => SurveyFormControllers(
   slug: TextEditingController(),
+  customDomain: TextEditingController(),
   titleTranslations: {
     for (final locale in formContentLocaleCodes)
       locale: TextEditingController(),

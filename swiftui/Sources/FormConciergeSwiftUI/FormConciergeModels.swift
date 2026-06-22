@@ -82,6 +82,7 @@ public struct LocalizedText: Codable, Equatable, Sendable {
 public struct Survey: Codable, Identifiable, Sendable {
   public let id: Int
   public let slug: String
+  public let customDomain: String?
   public let defaultLocale: String
   public let supportedLocales: [String]
   public let titleTranslations: LocalizedText

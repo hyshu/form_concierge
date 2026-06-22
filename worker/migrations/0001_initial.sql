@@ -31,6 +31,7 @@ CREATE TABLE anonymous_accounts (
 CREATE TABLE surveys (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   slug TEXT NOT NULL UNIQUE,
+  custom_domain TEXT,
   default_locale TEXT NOT NULL DEFAULT 'en',
   supported_locales TEXT NOT NULL,
   title_translations TEXT NOT NULL,
@@ -46,6 +47,7 @@ CREATE TABLE surveys (
 
 CREATE INDEX surveys_status ON surveys(status);
 CREATE INDEX surveys_created_by_admin_id ON surveys(created_by_admin_id);
+CREATE UNIQUE INDEX surveys_custom_domain_unique ON surveys(custom_domain);
 
 CREATE TABLE questions (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

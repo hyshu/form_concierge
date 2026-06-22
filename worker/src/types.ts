@@ -21,6 +21,7 @@ export type AnonymousContext = {
 export type SurveyRow = {
   id: number;
   slug: string;
+  custom_domain: string | null;
   default_locale: string;
   supported_locales: string;
   title_translations: string;

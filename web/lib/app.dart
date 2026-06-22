@@ -1,6 +1,7 @@
 import 'package:jaspr/jaspr.dart';
 import 'package:jaspr_router/jaspr_router.dart';
 
+import 'components/domain_redirect_client.dart';
 import 'components/survey_page.dart';
 
 class App extends StatelessComponent {
@@ -12,6 +13,12 @@ class App extends StatelessComponent {
   Component build(BuildContext context) {
     return Router(
       routes: [
+        Route(
+          path: '/',
+          builder: (context, state) => DomainRedirectClient(
+            serverUrl: serverUrl,
+          ),
+        ),
         Route(
           path: '/:slug',
           builder: (context, state) => SurveyPage(
