@@ -110,7 +110,7 @@ class _NotificationSettingsViewState extends State<NotificationSettingsView> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!widget.isEmailConfigured) ...[
-            _MessageCard(
+            HuxMessageCard(
               icon: LucideIcons.triangleAlert,
               message: context.tr(
                 'Email service is not configured. Contact your administrator to enable SMTP settings.',
@@ -120,7 +120,7 @@ class _NotificationSettingsViewState extends State<NotificationSettingsView> {
             const SizedBox(height: 16),
           ],
           if (widget.error != null) ...[
-            _MessageCard(
+            HuxMessageCard(
               icon: LucideIcons.circleAlert,
               message: context.trMessage(widget.error!),
               destructive: true,
@@ -129,7 +129,7 @@ class _NotificationSettingsViewState extends State<NotificationSettingsView> {
             const SizedBox(height: 16),
           ],
           if (widget.successMessage != null) ...[
-            _MessageCard(
+            HuxMessageCard(
               icon: LucideIcons.circleCheck,
               message: context.trMessage(widget.successMessage!),
               onClose: widget.onClearMessages,
@@ -273,50 +273,6 @@ class _NotificationSettingsViewState extends State<NotificationSettingsView> {
               ),
             ),
           ],
-        ],
-      ),
-    );
-  }
-}
-
-class _MessageCard extends StatelessWidget {
-  const _MessageCard({
-    required this.icon,
-    required this.message,
-    this.destructive = false,
-    this.onClose,
-  });
-
-  final IconData icon;
-  final String message;
-  final bool destructive;
-  final VoidCallback? onClose;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = destructive
-        ? HuxTokens.textDestructive(context)
-        : HuxTokens.textSuccess(context);
-    return HuxCard(
-      backgroundColor: destructive
-          ? HuxTokens.surfaceDestructive(context)
-          : HuxTokens.surfaceSuccess(context),
-      child: Row(
-        children: [
-          Icon(icon, color: color),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(message, style: TextStyle(color: color)),
-          ),
-          if (onClose != null)
-            HuxButton(
-              onPressed: onClose,
-              variant: HuxButtonVariant.ghost,
-              size: HuxButtonSize.small,
-              icon: LucideIcons.x,
-              textColor: color,
-              child: const SizedBox(width: 0),
-            ),
         ],
       ),
     );

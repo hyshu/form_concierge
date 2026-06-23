@@ -3,6 +3,7 @@ import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:hux/hux.dart';
 
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/widgets/hux_states.dart';
 
 class AdminSettingsForm extends StatefulWidget {
   const AdminSettingsForm({
@@ -204,7 +205,7 @@ class _AdminSettingsFormState extends State<AdminSettingsForm> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   if (widget.error != null) ...[
-                    _MessageCard(
+                    HuxMessageCard(
                       icon: LucideIcons.circleAlert,
                       message: context.trMessage(widget.error!),
                       destructive: true,
@@ -213,7 +214,7 @@ class _AdminSettingsFormState extends State<AdminSettingsForm> {
                     const SizedBox(height: 16),
                   ],
                   if (widget.successMessage != null) ...[
-                    _MessageCard(
+                    HuxMessageCard(
                       icon: LucideIcons.circleCheck,
                       message: context.trMessage(widget.successMessage!),
                       onClose: widget.onClearMessages,
@@ -753,50 +754,6 @@ class _LabeledControl extends StatelessWidget {
         const SizedBox(height: 6),
         SizedBox(width: double.infinity, child: child),
       ],
-    );
-  }
-}
-
-class _MessageCard extends StatelessWidget {
-  const _MessageCard({
-    required this.icon,
-    required this.message,
-    this.destructive = false,
-    this.onClose,
-  });
-
-  final IconData icon;
-  final String message;
-  final bool destructive;
-  final VoidCallback? onClose;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = destructive
-        ? HuxTokens.textDestructive(context)
-        : HuxTokens.textSuccess(context);
-    return HuxCard(
-      backgroundColor: destructive
-          ? HuxTokens.surfaceDestructive(context)
-          : HuxTokens.surfaceSuccess(context),
-      child: Row(
-        children: [
-          Icon(icon, color: color),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(message, style: TextStyle(color: color)),
-          ),
-          if (onClose != null)
-            HuxButton(
-              onPressed: onClose,
-              variant: HuxButtonVariant.ghost,
-              size: HuxButtonSize.small,
-              icon: LucideIcons.x,
-              textColor: color,
-              child: const SizedBox(width: 0),
-            ),
-        ],
-      ),
     );
   }
 }
