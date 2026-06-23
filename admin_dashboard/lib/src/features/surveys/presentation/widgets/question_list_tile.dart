@@ -4,6 +4,7 @@ import 'package:hux/hux.dart';
 
 import '../../../../core/extensions/question_type_presentation.dart';
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/widgets/hux_icon_tooltip_button.dart';
 import 'choice_editor.dart';
 
 /// List tile for displaying a question with its choices.
@@ -113,26 +114,16 @@ class QuestionListTile extends StatelessWidget {
                   ),
                 ),
                 if (enabled) ...[
-                  Tooltip(
-                    message: context.tr('Edit question'),
-                    child: HuxButton(
-                      onPressed: onEdit,
-                      variant: HuxButtonVariant.ghost,
-                      size: HuxButtonSize.small,
-                      icon: LucideIcons.pencil,
-                      child: const SizedBox(width: 0),
-                    ),
+                  HuxIconTooltipButton(
+                    tooltip: context.tr('Edit question'),
+                    onPressed: onEdit,
+                    icon: LucideIcons.pencil,
                   ),
-                  Tooltip(
-                    message: context.tr('Delete question'),
-                    child: HuxButton(
-                      onPressed: onDelete,
-                      variant: HuxButtonVariant.ghost,
-                      size: HuxButtonSize.small,
-                      icon: LucideIcons.trash2,
-                      textColor: HuxTokens.textDestructive(context),
-                      child: const SizedBox(width: 0),
-                    ),
+                  HuxIconTooltipButton(
+                    tooltip: context.tr('Delete question'),
+                    onPressed: onDelete,
+                    icon: LucideIcons.trash2,
+                    textColor: HuxTokens.textDestructive(context),
                   ),
                 ],
               ],

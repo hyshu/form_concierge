@@ -3,6 +3,7 @@ import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:hux/hux.dart';
 
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/widgets/hux_icon_tooltip_button.dart';
 import '../../../../core/widgets/hux_states.dart';
 
 class VisibilityRuleRow extends StatelessWidget {
@@ -103,16 +104,11 @@ class VisibilityRuleRow extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              Tooltip(
-                message: context.tr('Delete rule'),
-                child: HuxButton(
-                  onPressed: enabled ? onDelete : null,
-                  variant: HuxButtonVariant.ghost,
-                  size: HuxButtonSize.small,
-                  icon: LucideIcons.trash2,
-                  textColor: HuxTokens.textDestructive(context),
-                  child: const SizedBox(width: 0),
-                ),
+              HuxIconTooltipButton(
+                tooltip: context.tr('Delete rule'),
+                onPressed: enabled ? onDelete : null,
+                icon: LucideIcons.trash2,
+                textColor: HuxTokens.textDestructive(context),
               ),
             ],
           ),
