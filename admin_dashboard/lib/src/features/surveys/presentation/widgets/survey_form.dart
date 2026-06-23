@@ -105,19 +105,7 @@ class SurveyFormWidgetState extends State<SurveyForm> {
               hint: 'customer-feedback',
               enabled: !widget.isSaving,
               textInputAction: TextInputAction.next,
-              validator: (value) {
-                final slug = value?.trim() ?? '';
-                if (slug.isEmpty) return context.tr('Slug is required');
-                if (!RegExp(r'^[a-z0-9-]+$').hasMatch(slug)) {
-                  return context.tr(
-                    'Only lowercase letters, numbers, and hyphens allowed',
-                  );
-                }
-                if (!RegExp(r'[a-z]').hasMatch(slug)) {
-                  return context.tr('Slug must include a lowercase letter');
-                }
-                return null;
-              },
+              validator: (value) => validateSlug(context, value),
             ),
             const SizedBox(height: 16),
             Text(

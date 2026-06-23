@@ -109,17 +109,11 @@ class _ProjectFormState extends State<ProjectForm> {
                 style: TextStyle(color: HuxTokens.textSecondary(context)),
               ),
               enabled: !widget.isSaving,
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return context.tr('Slug is required');
-                }
-                if (!RegExp(r'^[a-z0-9-]+$').hasMatch(value.trim())) {
-                  return context.tr(
-                    'Only lowercase letters, numbers, and hyphens allowed',
-                  );
-                }
-                return null;
-              },
+              validator: (value) => validateSlug(
+                context,
+                value,
+                requireLowercaseLetter: false,
+              ),
               textInputAction: TextInputAction.next,
             ),
             const SizedBox(height: 16),

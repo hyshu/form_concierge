@@ -1,5 +1,14 @@
 import 'package:flutter/widgets.dart';
 
+import '../localization/app_localizations.dart';
+
+final _asciiTextPattern = RegExp(r'^[\x00-\x7F]+$');
+final _nonSlugCharacterPattern = RegExp(r'[^a-z0-9]+');
+final _edgeHyphenPattern = RegExp(r'^-+|-+$');
+final _duplicateHyphenPattern = RegExp(r'-{2,}');
+final _slugPattern = RegExp(r'^[a-z0-9-]+$');
+final _lowercaseLetterPattern = RegExp(r'[a-z]');
+
 class SlugAutoFill {
   String? _lastAutoSlug;
 
@@ -37,16 +46,37 @@ String? slugFromText(
 }) {
   final trimmed = value.trim();
   if (trimmed.isEmpty) return null;
-  if (requireAsciiSource && !RegExp(r'^[\x00-\x7F]+$').hasMatch(trimmed)) {
+  if (requireAsciiSource && !_asciiTextPattern.hasMatch(trimmed)) {
     return null;
   }
 
   final slug = trimmed
       .toLowerCase()
-      .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
-      .replaceAll(RegExp(r'^-+|-+$'), '')
-      .replaceAll(RegExp(r'-{2,}'), '-');
+      .replaceAll(_nonSlugCharacterPattern, '-')
+      .replaceAll(_edgeHyphenPattern, '')
+      .replaceAll(_duplicateHyphenPattern, '-');
   if (slug.isEmpty) return null;
-  if (requireLowercaseLetter && !RegExp(r'[a-z]').hasMatch(slug)) return null;
+  if (requireLowercaseLetter && !hasLowercaseSlugLetter(slug)) return null;
   return slug;
 }
+
+String? validateSlug(
+  BuildContext context,
+  String? value, {
+  bool requireLowercaseLetter = true,
+}) {
+  final slug = value?.trim() ?? '';
+  if (slug.isEmpty) return context.tr('Slug is required');
+  if (!isSlugText(slug)) {
+    return context.tr('Only lowercase letters, numbers, and hyphens allowed');
+  }
+  if (requireLowercaseLetter && !hasLowercaseSlugLetter(slug)) {
+    return context.tr('Slug must include a lowercase letter');
+  }
+  return null;
+}
+
+bool isSlugText(String value) => _slugPattern.hasMatch(value);
+
+bool hasLowercaseSlugLetter(String value) =>
+    _lowercaseLetterPattern.hasMatch(value);
