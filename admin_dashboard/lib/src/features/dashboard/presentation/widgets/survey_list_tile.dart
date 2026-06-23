@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:hux/hux.dart';
 
-import '../../../../core/localization/app_localizations.dart';
-import '../../../../core/widgets/hux_icon_action_button.dart';
 import '../../../../core/widgets/hux_states.dart';
+import 'survey_action_buttons.dart';
 import 'survey_status_chip.dart';
 
 /// List tile for displaying a survey with actions.
@@ -80,48 +79,16 @@ class SurveyListTile extends StatelessWidget {
           const SizedBox(height: 12),
           Align(
             alignment: Alignment.centerRight,
-            child: _buildActions(context),
+            child: SurveyActionButtons(
+              onPublish: onPublish,
+              onClose: onClose,
+              onReopen: onReopen,
+              onViewResponses: onViewResponses,
+              onDelete: onDelete,
+            ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildActions(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (onPublish != null)
-          HuxIconActionButton(
-            icon: LucideIcons.upload,
-            onPressed: onPublish,
-            tooltip: context.tr('Publish'),
-          ),
-        if (onClose != null)
-          HuxIconActionButton(
-            icon: LucideIcons.circleStop,
-            onPressed: onClose,
-            tooltip: context.tr('Close'),
-          ),
-        if (onReopen != null)
-          HuxIconActionButton(
-            icon: LucideIcons.circlePlay,
-            onPressed: onReopen,
-            tooltip: context.tr('Reopen'),
-          ),
-        HuxIconActionButton(
-          icon: LucideIcons.chartNoAxesColumn,
-          onPressed: onViewResponses,
-          tooltip: context.tr('View Responses'),
-        ),
-        if (onDelete != null)
-          HuxIconActionButton(
-            icon: LucideIcons.trash2,
-            onPressed: onDelete,
-            tooltip: context.tr('Delete'),
-            destructive: true,
-          ),
-      ],
     );
   }
 
