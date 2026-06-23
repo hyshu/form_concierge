@@ -5,6 +5,7 @@ import 'package:hux/hux.dart';
 
 import '../../../../core/localization/app_localizations.dart';
 import '../capsules/password_reset_capsule.dart';
+import '../widgets/auth_card_scaffold.dart';
 
 /// Page for entering email to start password reset.
 class ForgotPasswordPage extends RearchConsumer {
@@ -22,89 +23,57 @@ class ForgotPasswordPage extends RearchConsumer {
       });
     }
 
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 400),
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: HuxCard(
-                  size: HuxCardSize.large,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Icon(
-                        LucideIcons.rotateCcwKey,
-                        size: 64,
-                        color: HuxTokens.primary(context),
-                      ),
-                      const SizedBox(height: 24),
-                      Text(
-                        context.tr('Reset Your Password'),
-                        style: Theme.of(context).textTheme.headlineSmall,
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        context.tr(
-                          'Enter your email address and we\'ll send you a verification code.',
-                        ),
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: HuxTokens.textSecondary(context),
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 32),
-                      HuxInput(
-                        controller: controllers.email,
-                        label: context.tr('Email'),
-                        prefixIcon: const Icon(LucideIcons.mail),
-                        keyboardType: TextInputType.emailAddress,
-                        enabled: !resetManager.state.isLoading,
-                        textInputAction: TextInputAction.done,
-                        onSubmitted: (_) => _submit(resetManager, controllers),
-                      ),
-                      if (resetManager.state.error != null) ...[
-                        const SizedBox(height: 16),
-                        Text(
-                          context.trMessage(resetManager.state.error!),
-                          style: TextStyle(
-                            color: HuxTokens.textDestructive(context),
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 24),
-                      HuxButton(
-                        onPressed: resetManager.state.isLoading
-                            ? null
-                            : () => _submit(resetManager, controllers),
-                        isLoading: resetManager.state.isLoading,
-                        width: HuxButtonWidth.expand,
-                        icon: LucideIcons.send,
-                        child: Text(context.tr('Send Code')),
-                      ),
-                      const SizedBox(height: 16),
-                      HuxButton(
-                        onPressed: () {
-                          resetManager.reset();
-                          controllers.clear();
-                          context.pop();
-                        },
-                        variant: HuxButtonVariant.secondary,
-                        width: HuxButtonWidth.expand,
-                        child: Text(context.tr('Back to Login')),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
+    return AuthCardScaffold(
+      icon: LucideIcons.rotateCcwKey,
+      title: context.tr('Reset Your Password'),
+      subtitle: Text(
+        context.tr(
+          'Enter your email address and we\'ll send you a verification code.',
         ),
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: HuxTokens.textSecondary(context),
+        ),
+        textAlign: TextAlign.center,
       ),
+      children: [
+        HuxInput(
+          controller: controllers.email,
+          label: context.tr('Email'),
+          prefixIcon: const Icon(LucideIcons.mail),
+          keyboardType: TextInputType.emailAddress,
+          enabled: !resetManager.state.isLoading,
+          textInputAction: TextInputAction.done,
+          onSubmitted: (_) => _submit(resetManager, controllers),
+        ),
+        if (resetManager.state.error != null) ...[
+          const SizedBox(height: 16),
+          Text(
+            context.trMessage(resetManager.state.error!),
+            style: TextStyle(color: HuxTokens.textDestructive(context)),
+          ),
+        ],
+        const SizedBox(height: 24),
+        HuxButton(
+          onPressed: resetManager.state.isLoading
+              ? null
+              : () => _submit(resetManager, controllers),
+          isLoading: resetManager.state.isLoading,
+          width: HuxButtonWidth.expand,
+          icon: LucideIcons.send,
+          child: Text(context.tr('Send Code')),
+        ),
+        const SizedBox(height: 16),
+        HuxButton(
+          onPressed: () {
+            resetManager.reset();
+            controllers.clear();
+            context.pop();
+          },
+          variant: HuxButtonVariant.secondary,
+          width: HuxButtonWidth.expand,
+          child: Text(context.tr('Back to Login')),
+        ),
+      ],
     );
   }
 
