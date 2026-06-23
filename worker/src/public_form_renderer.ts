@@ -11,12 +11,6 @@ type PublicFormData = {
   choicesByQuestion: Record<string, ReturnType<typeof choiceToJson>[]>;
 };
 
-type PublicProjectData = {
-  project: ReturnType<typeof projectToJson>;
-  surveys: ReturnType<typeof surveyToJson>[];
-  selected: PublicFormData | null;
-};
-
 export function isPublicFormHtmlRequest(request: Request, path: string): boolean {
   const method = request.method.toUpperCase();
   if (method !== 'GET' && method !== 'HEAD') return false;
@@ -49,16 +43,14 @@ export async function renderPublicForm(request: Request, env: Env): Promise<Resp
     return html(request, renderNotFoundHtml(env, url), 404);
   }
 
-  return html(request, data.selected
-    ? renderSurveyHtml(env, url, data.selected)
-    : renderProjectListHtml(env, url, data));
+  return html(request, renderSurveyHtml(env, url, data));
 }
 
 async function loadProjectBySlug(
   env: Env,
   slug: string | null,
   surveyId: number | null,
-): Promise<PublicProjectData | null> {
+): Promise<PublicFormData | null> {
   if (!slug) return null;
   const project = await env.DB.prepare(
     `SELECT * FROM projects WHERE slug = ?`,
@@ -71,7 +63,7 @@ async function loadProjectByDomain(
   env: Env,
   host: string,
   surveyId: number | null,
-): Promise<PublicProjectData | null> {
+): Promise<PublicFormData | null> {
   let customDomain: string | null = null;
   try {
     customDomain = optionalCustomDomain(host);
@@ -91,7 +83,7 @@ async function loadProjectData(
   env: Env,
   project: ProjectRow,
   surveyId: number | null,
-): Promise<PublicProjectData | null> {
+): Promise<PublicFormData | null> {
   const rows = await env.DB.prepare(
     `SELECT * FROM surveys
      WHERE project_id = ? AND status = 'published' AND web_enabled = 1
@@ -103,13 +95,9 @@ async function loadProjectData(
   const selectedSurvey = surveyId == null
     ? surveys.length === 1 ? surveys[0] : null
     : surveys.find((survey) => survey.id === surveyId) ?? null;
-  if (surveyId != null && !selectedSurvey) return null;
+  if (!selectedSurvey) return null;
 
-  return {
-    project: projectToJson(project),
-    surveys: surveys.map(surveyToJson),
-    selected: selectedSurvey ? await loadPublicFormData(env, project, selectedSurvey) : null,
-  };
+  return loadPublicFormData(env, project, selectedSurvey);
 }
 
 async function loadPublicFormData(env: Env, project: ProjectRow, survey: SurveyRow): Promise<PublicFormData> {
@@ -171,46 +159,6 @@ function renderSurveyHtml(env: Env, url: URL, data: PublicFormData): string {
           <button class="w-full px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg disabled:opacity-50" disabled>
             ${locale === 'ja' ? '送信' : 'Submit'}
           </button>
-        </section>
-      </main>
-    `,
-  });
-}
-
-function renderProjectListHtml(env: Env, url: URL, data: PublicProjectData): string {
-  const locale = data.project.defaultLocale;
-  const title = textFor(data.project.nameTranslations, locale);
-  const description = textFor(data.project.descriptionTranslations, locale);
-  const assetBaseUrl = publicFormAssetBaseUrl(env);
-  const apiUrl = publicApiUrl(env);
-  const payload = { ...data, apiUrl };
-
-  return documentHtml({
-    lang: locale,
-    title,
-    description,
-    apiUrl,
-    assetBaseUrl,
-    payload,
-    body: `
-      <main id="form-concierge-ssr-root" class="survey-wrapper">
-        <section class="max-w-xl mx-auto bg-white rounded-xl shadow-md border border-slate-200 p-6">
-          <h1 class="text-2xl font-semibold text-slate-900">${escapeHtml(title)}</h1>
-          ${description ? `<p class="mt-4 text-slate-600 leading-relaxed">${escapeHtml(description)}</p>` : ''}
-          ${renderLocaleList(data.project.supportedLocales)}
-        </section>
-        <section class="max-w-xl mx-auto mt-6 space-y-3">
-          ${data.surveys.map((survey) => {
-            const surveyTitle = textFor(survey.titleTranslations, locale);
-            const surveyDescription = textFor(survey.descriptionTranslations, locale);
-            return `
-              <a class="block bg-white rounded-xl shadow-md border border-slate-200 p-5 hover:border-indigo-300"
-                 href="${escapeAttribute(surveyHref(env, url, data.project.slug, survey.id))}">
-                <h2 class="font-medium text-slate-900">${escapeHtml(surveyTitle)}</h2>
-                ${surveyDescription ? `<p class="mt-2 text-sm text-slate-600">${escapeHtml(surveyDescription)}</p>` : ''}
-              </a>
-            `;
-          }).join('')}
         </section>
       </main>
     `,
@@ -368,12 +316,6 @@ function surveyIdFromPathPart(value: string | undefined): SurveyIdPathPart {
     if (error instanceof HttpError) return { valid: false };
     throw error;
   }
-}
-
-function surveyHref(env: Env, url: URL, projectSlug: string, surveyId: number): string {
-  return isApiHost(env, url)
-    ? `/${encodeURIComponent(projectSlug)}/${surveyId}`
-    : `/${surveyId}`;
 }
 
 function isAccepting(survey: SurveyRow): boolean {

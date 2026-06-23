@@ -40,6 +40,21 @@ test('renderPublicForm rejects missing localized text instead of falling back', 
   );
 });
 
+test('renderPublicForm returns 404 for project root when multiple surveys are available', async () => {
+  const response = await renderPublicForm(
+    htmlRequest('https://example.com/acme'),
+    envWithPublicRows({
+      surveys: [
+        surveyRow({ id: 1 }),
+        surveyRow({ id: 2 }),
+      ],
+    }),
+  );
+
+  assert.equal(response.status, 404);
+  assert.match(await response.text(), /Page not found/);
+});
+
 function htmlRequest(url: string): Request {
   return new Request(url, {
     headers: {
@@ -51,9 +66,12 @@ function htmlRequest(url: string): Request {
 function envWithPublicRows(input: {
   project?: Partial<ProjectRow>;
   survey?: Partial<SurveyRow>;
+  surveys?: Partial<SurveyRow>[];
 }): Env {
   const project = projectRow(input.project);
-  const survey = surveyRow(input.survey);
+  const surveys = input.surveys?.map((item) => surveyRow(item)) ?? [
+    surveyRow(input.survey),
+  ];
   return {
     DB: {
       prepare(sql: string) {
@@ -66,7 +84,7 @@ function envWithPublicRows(input: {
             throw new Error(`Unexpected first query: ${sql}`);
           },
           async all<T>() {
-            if (sql.includes('FROM surveys')) return d1Result<T>([survey as T]);
+            if (sql.includes('FROM surveys')) return d1Result<T>(surveys as T[]);
             if (sql.includes('FROM questions')) return d1Result<T>([]);
             if (sql.includes('FROM question_visibility_rules')) return d1Result<T>([]);
             throw new Error(`Unexpected all query: ${sql}`);
@@ -103,8 +121,7 @@ function projectRow(overrides: Partial<ProjectRow> = {}): ProjectRow {
     custom_domain: null,
     default_locale: 'ja',
     supported_locales: '["en","ja"]',
-    name_translations: '{"en":"Project","ja":"Project"}',
-    description_translations: '{"en":"","ja":""}',
+    name: 'Project',
     created_by_admin_id: 'admin-1',
     created_at: '2026-01-01T00:00:00.000Z',
     updated_at: '2026-01-01T00:00:00.000Z',

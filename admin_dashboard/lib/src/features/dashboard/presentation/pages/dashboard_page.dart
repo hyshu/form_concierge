@@ -215,20 +215,11 @@ class _ProjectCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      project.nameFor(project.defaultLocale),
+                      project.name,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    if ((project.description ?? '').isNotEmpty) ...[
-                      const SizedBox(height: 6),
-                      Text(
-                        project.description!,
-                        style: TextStyle(
-                          color: HuxTokens.textSecondary(context),
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ),

@@ -7,7 +7,9 @@ import '../support/localized_test_app.dart';
 
 void main() {
   group('ProjectForm', () {
-    testWidgets('submits selected localized languages', (tester) async {
+    testWidgets('submits selected localized languages and project name', (
+      tester,
+    ) async {
       Project? savedProject;
 
       await tester.pumpWidget(
@@ -33,15 +35,11 @@ void main() {
       await tester.tap(find.text('Apply'));
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byType(TextFormField).at(0), 'feedback');
       await tester.enterText(
-        find.byType(TextFormField).at(2),
+        find.byType(TextFormField).at(0),
         'Customer Feedback',
       );
-      await tester.enterText(
-        find.byType(TextFormField).at(3),
-        '顧客フィードバック',
-      );
+      await tester.enterText(find.byType(TextFormField).at(1), 'feedback');
       await tester.ensureVisible(find.text('Create Project'));
       await tester.tap(find.text('Create Project'));
       await tester.pumpAndSettle();
@@ -49,11 +47,7 @@ void main() {
       expect(savedProject, isNotNull);
       expect(savedProject!.supportedLocales, ['en', 'ja']);
       expect(savedProject!.defaultLocale, 'en');
-      expect(savedProject!.nameTranslations.values.keys, ['en', 'ja']);
-      expect(
-        savedProject!.nameTranslations.valueFor('ja'),
-        '顧客フィードバック',
-      );
+      expect(savedProject!.name, 'Customer Feedback');
     });
 
     testWidgets('uses admin locale as initial project language', (
@@ -77,11 +71,11 @@ void main() {
         ),
       );
 
-      await tester.enterText(find.byType(TextFormField).at(0), 'feedback');
       await tester.enterText(
-        find.byType(TextFormField).at(2),
+        find.byType(TextFormField).at(0),
         '顧客フィードバック',
       );
+      await tester.enterText(find.byType(TextFormField).at(1), 'feedback');
       await tester.ensureVisible(find.text('プロジェクトを作成'));
       await tester.tap(find.text('プロジェクトを作成'));
       await tester.pumpAndSettle();
@@ -89,7 +83,37 @@ void main() {
       expect(savedProject, isNotNull);
       expect(savedProject!.supportedLocales, ['ja']);
       expect(savedProject!.defaultLocale, 'ja');
-      expect(savedProject!.nameTranslations.valueFor('ja'), '顧客フィードバック');
+      expect(savedProject!.name, '顧客フィードバック');
+    });
+
+    testWidgets('fills slug from English project name when slug is empty', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        localizedTestApp(
+          locale: const Locale('en', 'US'),
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: ProjectForm(
+                isSaving: false,
+                onSave: (_) async {},
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.enterText(
+        find.byType(TextFormField).at(0),
+        'Customer Feedback',
+      );
+      await tester.testTextInput.receiveAction(TextInputAction.next);
+      await tester.pump();
+
+      final slugField = tester.widget<TextFormField>(
+        find.byType(TextFormField).at(1),
+      );
+      expect(slugField.controller!.text, 'customer-feedback');
     });
   });
 }

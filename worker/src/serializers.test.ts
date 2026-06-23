@@ -98,11 +98,6 @@ test('localized text parsing keeps stored strings strict', () => {
     500,
     'Invalid localized text for locale: en',
   );
-  assertHttpError(
-    () => projectToJson(projectRow('["en"]', { name_translations: '{"en":7}' })),
-    500,
-    'Invalid localized text for locale: en',
-  );
 });
 
 test('supported locale request parsing rejects coerced values', () => {
@@ -151,8 +146,7 @@ function projectRow(
     custom_domain: null,
     default_locale: 'en',
     supported_locales: supportedLocales,
-    name_translations: '{"en":"Demo"}',
-    description_translations: '{"en":""}',
+    name: 'Demo',
     created_by_admin_id: 'admin-1',
     created_at: '2026-01-01T00:00:00.000Z',
     updated_at: '2026-01-01T00:00:00.000Z',

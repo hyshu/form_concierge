@@ -25,10 +25,10 @@ class ProjectForm extends StatefulWidget {
 
 class _ProjectFormState extends State<ProjectForm> {
   final _formKey = GlobalKey<FormState>();
+  final _name = TextEditingController();
+  final _nameFocusNode = FocusNode();
   final _slug = TextEditingController();
   final _customDomain = TextEditingController();
-  late final Map<String, TextEditingController> _nameTranslations;
-  late final Map<String, TextEditingController> _descriptionTranslations;
   String _defaultLocale = defaultFormContentLocale;
   List<String> _supportedLocales = const [defaultFormContentLocale];
   bool _didSetInitialLocale = false;
@@ -36,28 +36,20 @@ class _ProjectFormState extends State<ProjectForm> {
   @override
   void initState() {
     super.initState();
-    _nameTranslations = {
-      for (final locale in formContentLocaleCodes)
-        locale: TextEditingController(),
-    };
-    _descriptionTranslations = {
-      for (final locale in formContentLocaleCodes)
-        locale: TextEditingController(),
-    };
+    _nameFocusNode.addListener(() {
+      if (!_nameFocusNode.hasFocus) {
+        _fillSlugFromNameIfEmpty();
+      }
+    });
     final project = widget.existingProject;
     if (project != null) {
+      _name.text = project.name;
       _slug.text = project.slug;
       _customDomain.text = project.customDomain ?? '';
       _supportedLocales = orderedFormContentLocales(project.supportedLocales);
       _defaultLocale = _supportedLocales.contains(project.defaultLocale)
           ? project.defaultLocale
           : _supportedLocales.first;
-      for (final locale in formContentLocaleCodes) {
-        _nameTranslations[locale]!.text =
-            project.nameTranslations.values[locale] ?? '';
-        _descriptionTranslations[locale]!.text =
-            project.descriptionTranslations.values[locale] ?? '';
-      }
     }
   }
 
@@ -75,14 +67,10 @@ class _ProjectFormState extends State<ProjectForm> {
 
   @override
   void dispose() {
+    _name.dispose();
+    _nameFocusNode.dispose();
     _slug.dispose();
     _customDomain.dispose();
-    for (final controller in _nameTranslations.values) {
-      controller.dispose();
-    }
-    for (final controller in _descriptionTranslations.values) {
-      controller.dispose();
-    }
     super.dispose();
   }
 
@@ -94,6 +82,22 @@ class _ProjectFormState extends State<ProjectForm> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            HuxInput(
+              controller: _name,
+              focusNode: _nameFocusNode,
+              label: context.tr('Project name'),
+              hint: context.tr('Enter project name'),
+              enabled: !widget.isSaving,
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return context.tr('Project name is required');
+                }
+                return null;
+              },
+              textInputAction: TextInputAction.next,
+              onSubmitted: (_) => _fillSlugFromNameIfEmpty(),
+            ),
+            const SizedBox(height: 16),
             HuxInput(
               controller: _slug,
               label: context.tr('Project URL Slug'),
@@ -164,32 +168,6 @@ class _ProjectFormState extends State<ProjectForm> {
               ],
               onChanged: (value) => setState(() => _defaultLocale = value),
             ),
-            const SizedBox(height: 16),
-            Text(
-              context.tr('Project content'),
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            const SizedBox(height: 8),
-            LocalizedTextFieldGroup(
-              controllers: _nameTranslations,
-              primaryLocale: _defaultLocale,
-              locales: _supportedLocales,
-              labelText: context.tr('Project name'),
-              hintText: context.tr('Enter project name'),
-              enabled: !widget.isSaving,
-              requiredMessage: context.tr('Project name is required'),
-              textInputAction: TextInputAction.next,
-            ),
-            const SizedBox(height: 16),
-            LocalizedTextFieldGroup(
-              controllers: _descriptionTranslations,
-              primaryLocale: _defaultLocale,
-              locales: _supportedLocales,
-              labelText: context.tr('Description (optional)'),
-              hintText: context.tr('Brief description of the project'),
-              enabled: !widget.isSaving,
-              maxLines: 2,
-            ),
             if (widget.error != null) ...[
               const SizedBox(height: 16),
               Text(
@@ -230,21 +208,30 @@ class _ProjectFormState extends State<ProjectForm> {
         customDomain: _customDomainValue(),
         defaultLocale: _defaultLocale,
         supportedLocales: _supportedLocales,
-        nameTranslations: localizedTextFromControllers(
-          _nameTranslations,
-          primaryLocale: _defaultLocale,
-          locales: _supportedLocales,
-        ),
-        descriptionTranslations: localizedTextFromControllers(
-          _descriptionTranslations,
-          primaryLocale: _defaultLocale,
-          locales: _supportedLocales,
-        ),
+        name: _name.text.trim(),
         createdByUserId: existing?.createdByUserId,
         createdAt: existing?.createdAt ?? now,
         updatedAt: now,
       ),
     );
+  }
+
+  void _fillSlugFromNameIfEmpty() {
+    if (_slug.text.trim().isNotEmpty) return;
+    final slug = _slugFromEnglishName(_name.text);
+    if (slug == null) return;
+    _slug.text = slug;
+  }
+
+  String? _slugFromEnglishName(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return null;
+    if (!RegExp(r'^[\x00-\x7F]+$').hasMatch(trimmed)) return null;
+    final slug = trimmed
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+        .replaceAll(RegExp(r'^-+|-+$'), '');
+    return slug.isEmpty ? null : slug;
   }
 
   String? _customDomainValue() {

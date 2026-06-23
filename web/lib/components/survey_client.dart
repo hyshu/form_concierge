@@ -45,7 +45,6 @@ class SurveyClientState extends State<SurveyClient> {
   late Client _client;
   Project? _project;
   Survey? _survey;
-  List<Survey> _surveys = [];
   List<Question> _questions = [];
   List<QuestionVisibilityRule> _visibilityRules = [];
   Map<int, List<Choice>> _choicesByQuestion = {};
@@ -70,8 +69,10 @@ class SurveyClientState extends State<SurveyClient> {
       );
       if (payload != null) {
         _hydratePayload(payload);
-        _viewState = SurveyViewState.ready;
-        _ensureAnonymousAccount();
+        if (_viewState == SurveyViewState.loading) {
+          _viewState = SurveyViewState.ready;
+          _ensureAnonymousAccount();
+        }
         return;
       }
 
@@ -99,14 +100,10 @@ class SurveyClientState extends State<SurveyClient> {
     final project = Project.fromJson(
       Map<String, dynamic>.from(payload['project'] as Map),
     );
-    final surveys = (payload['surveys'] as List? ?? const [])
-        .whereType<Map>()
-        .map((item) => Survey.fromJson(Map<String, dynamic>.from(item)))
-        .toList();
     if (payload['survey'] == null) {
       _project = project;
-      _surveys = surveys;
       _locale = project.defaultLocale;
+      _viewState = SurveyViewState.notFound;
       return;
     }
 
@@ -170,10 +167,7 @@ class SurveyClientState extends State<SurveyClient> {
       final survey = _selectSurvey(project);
       if (survey == null) {
         setState(() {
-          _project = project.project;
-          _surveys = project.surveys;
-          _locale = project.project.defaultLocale;
-          _viewState = SurveyViewState.ready;
+          _viewState = SurveyViewState.notFound;
         });
         return;
       }
@@ -240,7 +234,6 @@ class SurveyClientState extends State<SurveyClient> {
   ) {
     _project = project;
     _survey = survey;
-    _surveys = [survey];
     _locale = project.defaultLocale;
     _questions = questions;
     _visibilityRules = visibilityRules;
@@ -358,13 +351,7 @@ class SurveyClientState extends State<SurveyClient> {
             onRetry: _loadSurvey,
           ),
         SurveyViewState.ready || SurveyViewState.submitting => survey == null
-            ? project == null
-                ? const SurveyLoading()
-                : _ProjectSurveyList(
-                    project: project,
-                    surveys: _surveys,
-                    locale: _locale,
-                  )
+            ? const NotFoundPage()
             : SurveyContent(
                 project: project!,
                 survey: survey,
@@ -386,59 +373,12 @@ class SurveyClientState extends State<SurveyClient> {
                 onSubmit: _submit,
               ),
         SurveyViewState.completed => survey == null
-            ? const SurveyLoading()
+            ? const NotFoundPage()
             : SurveyCompleted(
                 survey: survey,
                 locale: _locale,
               ),
       },
-    ]);
-  }
-}
-
-class _ProjectSurveyList extends StatelessComponent {
-  const _ProjectSurveyList({
-    required this.project,
-    required this.surveys,
-    required this.locale,
-  });
-
-  final Project project;
-  final List<Survey> surveys;
-  final String locale;
-
-  @override
-  Component build(BuildContext context) {
-    return div(classes: 'max-w-xl mx-auto', [
-      div(
-          classes:
-              'bg-white rounded-xl shadow-md border border-slate-200 p-6 mb-6',
-          [
-            h1(classes: 'text-xl font-semibold text-slate-900', [
-              Component.text(project.nameFor(locale)),
-            ]),
-            if ((project.description ?? '').isNotEmpty)
-              p(classes: 'mt-2 text-sm text-slate-600 leading-relaxed', [
-                Component.text(project.description!),
-              ]),
-          ]),
-      div(classes: 'space-y-3', [
-        for (final survey in surveys)
-          a(
-            [
-              h2(classes: 'font-medium text-slate-900', [
-                Component.text(survey.titleFor(locale)),
-              ]),
-              if (survey.descriptionFor(locale).trim().isNotEmpty)
-                p(classes: 'mt-2 text-sm text-slate-600', [
-                  Component.text(survey.descriptionFor(locale)),
-                ]),
-            ],
-            href: '/${project.slug}/${survey.id}',
-            classes:
-                'block bg-white rounded-xl shadow-md border border-slate-200 p-5 hover:border-indigo-300',
-          ),
-      ]),
     ]);
   }
 }

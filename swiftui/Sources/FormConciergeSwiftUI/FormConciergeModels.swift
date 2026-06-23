@@ -85,18 +85,9 @@ public struct Project: Codable, Identifiable, Sendable {
   public let customDomain: String?
   public let defaultLocale: String
   public let supportedLocales: [String]
-  public let nameTranslations: LocalizedText
-  public let descriptionTranslations: LocalizedText
+  public let name: String
   public let createdAt: Date
   public let updatedAt: Date
-
-  public func name(for locale: String) -> String {
-    nameTranslations.value(for: locale)
-  }
-
-  public func description(for locale: String) -> String {
-    descriptionTranslations.value(for: locale)
-  }
 }
 
 public struct PublicProject: Codable, Sendable {

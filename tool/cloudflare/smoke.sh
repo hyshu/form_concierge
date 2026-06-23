@@ -61,13 +61,25 @@ fi
 API_URL="${API_URL%/}"
 SMOKE_SLUG="cloudflare-smoke-$(date +%s)"
 
-echo "==> Create smoke survey"
-SURVEY_BODY="$(jq -n --arg slug "$SMOKE_SLUG" '{
-  survey: {
+echo "==> Create smoke project"
+PROJECT_BODY="$(jq -n --arg slug "$SMOKE_SLUG" '{
     slug: $slug,
     customDomain: null,
     defaultLocale: "en",
     supportedLocales: ["en", "ja", "zh-Hans", "zh-Hant", "ko", "de"],
+    name: "Cloudflare smoke test"
+}')"
+
+PROJECT="$(curl -fsS -X POST "$API_URL/api/admin/projects" \
+  -H "authorization: Bearer $ADMIN_TOKEN" \
+  -H 'content-type: application/json' \
+  -d "$PROJECT_BODY")"
+PROJECT_ID="$(jq -r '.id' <<<"$PROJECT")"
+
+echo "==> Create smoke survey"
+SURVEY_BODY="$(jq -n --argjson projectId "$PROJECT_ID" '{
+  survey: {
+    projectId: $projectId,
     titleTranslations: {
       en: "Cloudflare smoke test",
       ja: "Cloudflare smoke test",

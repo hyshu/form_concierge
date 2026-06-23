@@ -255,8 +255,7 @@ class Project {
   final String? customDomain;
   final String defaultLocale;
   final List<String> supportedLocales;
-  final LocalizedText nameTranslations;
-  final LocalizedText descriptionTranslations;
+  final String name;
   final String? createdByUserId;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -267,8 +266,7 @@ class Project {
     this.customDomain,
     this.defaultLocale = defaultFormContentLocale,
     this.supportedLocales = formContentLocaleCodes,
-    required this.nameTranslations,
-    required this.descriptionTranslations,
+    required this.name,
     this.createdByUserId,
     required this.createdAt,
     required this.updatedAt,
@@ -280,10 +278,7 @@ class Project {
     customDomain: _optionalString(json['customDomain']),
     defaultLocale: _string(json['defaultLocale']),
     supportedLocales: _stringList(json['supportedLocales']),
-    nameTranslations: LocalizedText.fromJson(json['nameTranslations']),
-    descriptionTranslations: LocalizedText.fromJson(
-      json['descriptionTranslations'],
-    ),
+    name: _string(json['name']),
     createdByUserId: _optionalString(json['createdByUserId']),
     createdAt: _date(json['createdAt']),
     updatedAt: _date(json['updatedAt']),
@@ -295,8 +290,7 @@ class Project {
     'customDomain': customDomain ?? '',
     'defaultLocale': defaultLocale,
     'supportedLocales': supportedLocales,
-    'nameTranslations': nameTranslations.toJson(),
-    'descriptionTranslations': descriptionTranslations.toJson(),
+    'name': name,
     'createdByUserId': createdByUserId,
     'createdAt': createdAt.toIso8601String(),
     'updatedAt': updatedAt.toIso8601String(),
@@ -309,8 +303,7 @@ class Project {
     bool clearCustomDomain = false,
     String? defaultLocale,
     List<String>? supportedLocales,
-    LocalizedText? nameTranslations,
-    LocalizedText? descriptionTranslations,
+    String? name,
     String? createdByUserId,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -323,23 +316,11 @@ class Project {
           : customDomain ?? this.customDomain,
       defaultLocale: defaultLocale ?? this.defaultLocale,
       supportedLocales: supportedLocales ?? this.supportedLocales,
-      nameTranslations: nameTranslations ?? this.nameTranslations,
-      descriptionTranslations:
-          descriptionTranslations ?? this.descriptionTranslations,
+      name: name ?? this.name,
       createdByUserId: createdByUserId ?? this.createdByUserId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
-  }
-
-  String nameFor(String locale) => nameTranslations.valueFor(locale);
-  String descriptionFor(String locale) =>
-      descriptionTranslations.valueFor(locale);
-
-  String get name => nameFor(defaultLocale);
-  String? get description {
-    final value = descriptionFor(defaultLocale);
-    return value.trim().isEmpty ? null : value;
   }
 }
 
