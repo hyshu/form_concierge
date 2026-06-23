@@ -3,7 +3,7 @@ import test from 'node:test';
 import {
   adminPostRequest,
   assertBadRequestAsync,
-  emptyD1Result,
+  d1Database,
   localizedText,
 } from '../test/helpers';
 import { createSurveyWithQuestions } from './admin_surveys';
@@ -100,29 +100,11 @@ function admin(): AdminContext {
 
 function envUnused(): Env {
   return {
-    DB: d1Unused(),
+    DB: d1Database(() => {
+      throw new Error('D1 should not be used by invalid question input tests');
+    }),
     MEDIA_BUCKET: {} as R2Bucket,
     PUBLIC_BASE_URL: 'https://api.example.com',
     PUBLIC_FORM_ASSET_BASE_URL: 'https://forms.example.com',
   };
-}
-
-function d1Unused(): D1Database {
-  return {
-    prepare() {
-      throw new Error('D1 should not be used by invalid question input tests');
-    },
-    async batch<T>() {
-      return [emptyD1Result<T>()];
-    },
-    async exec() {
-      return { count: 0, duration: 0 };
-    },
-    withSession() {
-      throw new Error('D1 sessions are not used by this test');
-    },
-    async dump() {
-      return new ArrayBuffer(0);
-    },
-  } satisfies D1Database;
 }

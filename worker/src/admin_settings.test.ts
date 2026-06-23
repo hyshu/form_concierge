@@ -1,7 +1,12 @@
 import test from 'node:test';
 
 import { integrationSettingsRow } from '../test/fixtures';
-import { adminPutRequest, assertHttpError, assertHttpErrorAsync } from '../test/helpers';
+import {
+  adminPutRequest,
+  assertHttpError,
+  assertHttpErrorAsync,
+  d1Database,
+} from '../test/helpers';
 import {
   getAdminIntegrationSettings,
   requireSmtpSettings,
@@ -84,21 +89,19 @@ function settingsRequest(body: unknown): Request {
 
 function envWithSettings(row: IntegrationSettingsRow | null): Env {
   return {
-    DB: {
-      prepare(sql: string) {
-        if (!sql.includes('SELECT * FROM integration_settings')) {
-          throw new Error('D1 write should not be used by invalid settings tests');
-        }
-        return {
-          bind() {
-            return this;
-          },
-          async first<T>() {
-            return row as T | null;
-          },
-        } as unknown as D1PreparedStatement;
-      },
-    } as unknown as D1Database,
+    DB: d1Database((sql: string) => {
+      if (!sql.includes('SELECT * FROM integration_settings')) {
+        throw new Error('D1 write should not be used by invalid settings tests');
+      }
+      return {
+        bind() {
+          return this;
+        },
+        async first<T>() {
+          return row as T | null;
+        },
+      } as unknown as D1PreparedStatement;
+    }),
     MEDIA_BUCKET: {} as R2Bucket,
     PUBLIC_BASE_URL: 'https://api.example.com',
     PUBLIC_FORM_ASSET_BASE_URL: 'https://assets.example.com',

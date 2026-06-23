@@ -2,8 +2,18 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { projectRow, questionRow, surveyRow } from '../test/fixtures';
-import { adminPostRequest, assertBadRequest, d1Meta, d1Result } from '../test/helpers';
-import { createQuestion, normalizeQuestionValidation, normalizeVisibilityConditionMode } from './admin_questions';
+import {
+  adminPostRequest,
+  assertBadRequest,
+  d1Database,
+  d1Meta,
+  d1Result,
+} from '../test/helpers';
+import {
+  createQuestion,
+  normalizeQuestionValidation,
+  normalizeVisibilityConditionMode,
+} from './admin_questions';
 import type { Env, ProjectRow, QuestionRow, SurveyRow } from './types';
 
 test('normalizeQuestionValidation rejects coerced numeric strings', () => {
@@ -89,43 +99,27 @@ function d1WithRows(rows: {
   survey: SurveyRow;
   insertedQuestion: QuestionRow;
 }): D1Database {
-  return {
-    prepare(sql: string) {
+  return d1Database((sql: string) => ({
+    bind() {
       return {
-        bind() {
-          return {
-            async first<T>() {
-              if (sql.includes('FROM surveys')) return rows.survey as T;
-              if (sql.includes('FROM projects')) return rows.project as T;
-              if (sql.includes('MAX(order_index)')) {
-                return { max_order: null } as T;
-              }
-              if (sql.includes('INSERT INTO questions')) {
-                return rows.insertedQuestion as T;
-              }
-              throw new Error(`Unexpected first SQL: ${sql}`);
-            },
-            async all<T>() {
-              return d1Result<T>([]);
-            },
-            async run() {
-              return d1Meta();
-            },
-          };
+        async first<T>() {
+          if (sql.includes('FROM surveys')) return rows.survey as T;
+          if (sql.includes('FROM projects')) return rows.project as T;
+          if (sql.includes('MAX(order_index)')) {
+            return { max_order: null } as T;
+          }
+          if (sql.includes('INSERT INTO questions')) {
+            return rows.insertedQuestion as T;
+          }
+          throw new Error(`Unexpected first SQL: ${sql}`);
+        },
+        async all<T>() {
+          return d1Result<T>([]);
+        },
+        async run() {
+          return d1Meta();
         },
       };
     },
-    async batch<T>() {
-      return [d1Result<T>([])];
-    },
-    async exec() {
-      return { count: 0, duration: 0 };
-    },
-    withSession() {
-      throw new Error('D1 sessions are not used by this test');
-    },
-    async dump() {
-      return new ArrayBuffer(0);
-    },
-  } as unknown as D1Database;
+  } as unknown as D1PreparedStatement));
 }
