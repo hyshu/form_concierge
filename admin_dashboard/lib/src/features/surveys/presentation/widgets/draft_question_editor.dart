@@ -4,6 +4,7 @@ import 'package:hux/hux.dart';
 
 import '../../../../core/extensions/question_type_presentation.dart';
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/widgets/hux_icon_tooltip_button.dart';
 import '../models/draft_question.dart';
 import 'localized_choice_dialog.dart';
 
@@ -169,39 +170,24 @@ class _DraftQuestionTileState extends State<_DraftQuestionTile> {
                 ),
               ),
               if (widget.question.hasChoices)
-                Tooltip(
-                  message: context.tr('Choices'),
-                  child: HuxButton(
-                    onPressed: () => setState(() => _isExpanded = !_isExpanded),
-                    variant: HuxButtonVariant.ghost,
-                    size: HuxButtonSize.small,
-                    icon: _isExpanded
-                        ? LucideIcons.chevronUp
-                        : LucideIcons.chevronDown,
-                    child: const SizedBox(width: 0),
-                  ),
+                HuxIconTooltipButton(
+                  tooltip: context.tr('Choices'),
+                  onPressed: () => setState(() => _isExpanded = !_isExpanded),
+                  icon: _isExpanded
+                      ? LucideIcons.chevronUp
+                      : LucideIcons.chevronDown,
                 ),
               if (widget.enabled) ...[
-                Tooltip(
-                  message: context.tr('Edit'),
-                  child: HuxButton(
-                    onPressed: widget.onEdit,
-                    variant: HuxButtonVariant.ghost,
-                    size: HuxButtonSize.small,
-                    icon: LucideIcons.pencil,
-                    child: const SizedBox(width: 0),
-                  ),
+                HuxIconTooltipButton(
+                  tooltip: context.tr('Edit'),
+                  onPressed: widget.onEdit,
+                  icon: LucideIcons.pencil,
                 ),
-                Tooltip(
-                  message: context.tr('Delete'),
-                  child: HuxButton(
-                    onPressed: widget.onDelete,
-                    variant: HuxButtonVariant.ghost,
-                    size: HuxButtonSize.small,
-                    icon: LucideIcons.trash2,
-                    textColor: HuxTokens.textDestructive(context),
-                    child: const SizedBox(width: 0),
-                  ),
+                HuxIconTooltipButton(
+                  tooltip: context.tr('Delete'),
+                  onPressed: widget.onDelete,
+                  icon: LucideIcons.trash2,
+                  textColor: HuxTokens.textDestructive(context),
                 ),
               ],
             ],
@@ -323,26 +309,16 @@ class _DraftChoiceTile extends StatelessWidget {
             child: Text(choice.textTranslations.valueFor(primaryLocale)),
           ),
           if (enabled) ...[
-            Tooltip(
-              message: context.tr('Edit'),
-              child: HuxButton(
-                onPressed: () => _showEditDialog(context),
-                variant: HuxButtonVariant.ghost,
-                size: HuxButtonSize.small,
-                icon: LucideIcons.pencil,
-                child: const SizedBox(width: 0),
-              ),
+            HuxIconTooltipButton(
+              tooltip: context.tr('Edit'),
+              onPressed: () => _showEditDialog(context),
+              icon: LucideIcons.pencil,
             ),
-            Tooltip(
-              message: context.tr('Delete'),
-              child: HuxButton(
-                onPressed: onDelete,
-                variant: HuxButtonVariant.ghost,
-                size: HuxButtonSize.small,
-                icon: LucideIcons.trash2,
-                textColor: HuxTokens.textDestructive(context),
-                child: const SizedBox(width: 0),
-              ),
+            HuxIconTooltipButton(
+              tooltip: context.tr('Delete'),
+              onPressed: onDelete,
+              icon: LucideIcons.trash2,
+              textColor: HuxTokens.textDestructive(context),
             ),
           ],
         ],
