@@ -80,23 +80,12 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
   @override
   void initState() {
     super.initState();
-    _textControllers = {
-      for (final locale in formContentLocaleCodes)
-        locale: TextEditingController(
-          text:
-              widget.existingQuestion?.textTranslations.valueFor(locale) ?? '',
-        ),
-    };
-    _placeholderControllers = {
-      for (final locale in formContentLocaleCodes)
-        locale: TextEditingController(
-          text:
-              widget.existingQuestion?.placeholderTranslations.valueFor(
-                locale,
-              ) ??
-              '',
-        ),
-    };
+    _textControllers = createLocalizedTextControllers(
+      widget.existingQuestion?.textTranslations,
+    );
+    _placeholderControllers = createLocalizedTextControllers(
+      widget.existingQuestion?.placeholderTranslations,
+    );
     _minLengthController = TextEditingController(
       text: widget.existingQuestion?.minLength?.toString() ?? '',
     );
@@ -118,12 +107,8 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
 
   @override
   void dispose() {
-    for (final controller in _textControllers.values) {
-      controller.dispose();
-    }
-    for (final controller in _placeholderControllers.values) {
-      controller.dispose();
-    }
+    disposeLocalizedTextControllers(_textControllers);
+    disposeLocalizedTextControllers(_placeholderControllers);
     _minLengthController.dispose();
     _maxLengthController.dispose();
     _minSelectedController.dispose();

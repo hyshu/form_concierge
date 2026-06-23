@@ -179,6 +179,23 @@ LocalizedText localizedTextFromControllers(
   });
 }
 
+Map<String, TextEditingController> createLocalizedTextControllers([
+  LocalizedText? initialText,
+]) {
+  return {
+    for (final locale in formContentLocaleCodes)
+      locale: TextEditingController(text: initialText?.valueFor(locale) ?? ''),
+  };
+}
+
+void disposeLocalizedTextControllers(
+  Map<String, TextEditingController> controllers,
+) {
+  for (final controller in controllers.values) {
+    controller.dispose();
+  }
+}
+
 List<String> orderedFormContentLocales(Iterable<String> locales) {
   final normalized = locales.map(normalizeFormContentLocale).toSet();
   final ordered = formContentLocaleCodes
