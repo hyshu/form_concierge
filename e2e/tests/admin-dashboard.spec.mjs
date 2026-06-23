@@ -19,7 +19,9 @@ async function typeIntoFlutterInput(locator, value) {
   await expect(locator).toBeVisible();
   await locator.scrollIntoViewIfNeeded();
   await locator.click({ force: true });
-  await locator.fill(value);
+  await locator.press(process.platform === 'darwin' ? 'Meta+A' : 'Control+A');
+  await locator.press('Backspace');
+  await locator.pressSequentially(value, { delay: 10 });
   await expect(locator).toHaveValue(value);
 }
 
