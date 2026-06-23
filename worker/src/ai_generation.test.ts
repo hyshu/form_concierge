@@ -1,5 +1,6 @@
 import test from 'node:test';
 
+import { integrationSettingsRow } from '../test/fixtures';
 import {
   adminPostRequest,
   assertHttpErrorAsync,
@@ -8,7 +9,7 @@ import {
   localizedText,
 } from '../test/helpers';
 import { generateSurveyQuestions } from './ai_generation';
-import type { Env, IntegrationSettingsRow } from './types';
+import type { Env } from './types';
 
 test('generateSurveyQuestions rejects coercible integer fields from providers', async () => {
   await withOpenAiQuestion({ minLength: '3' }, async () => {
@@ -126,7 +127,13 @@ function d1WithSettings(): D1Database {
       return statement;
     },
     async first<T>() {
-      return integrationSettings() as T;
+      return integrationSettingsRow({
+        ai_provider: 'openai',
+        openai_api_key: 'openai-key',
+        smtp_host: null,
+        smtp_port: null,
+        smtp_from_email: null,
+      }) as T;
     },
     async run<T>() {
       return emptyD1Result<T>();
@@ -154,25 +161,6 @@ function d1WithSettings(): D1Database {
       return new ArrayBuffer(0);
     },
   } satisfies D1Database;
-}
-
-function integrationSettings(): IntegrationSettingsRow {
-  return {
-    id: 1,
-    ai_provider: 'openai',
-    gemini_api_key: null,
-    openai_api_key: 'openai-key',
-    claude_api_key: null,
-    cerebras_api_key: null,
-    smtp_host: null,
-    smtp_port: null,
-    smtp_username: null,
-    smtp_password: null,
-    smtp_from_email: null,
-    smtp_from_name: null,
-    smtp_secure_mode: 'starttls',
-    updated_at: '2026-01-01T00:00:00.000Z',
-  };
 }
 
 async function assertProviderError(action: () => Promise<unknown>, message: string): Promise<void> {
