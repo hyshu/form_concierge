@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:hux/hux.dart';
 
+import '../../../../core/forms/email_validation.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/hux_states.dart';
 import 'admin_settings_form_widgets.dart';
@@ -129,7 +130,7 @@ class AdminSettingsSmtpSection extends StatelessWidget {
                       'From email is required when SMTP settings are present',
                     );
                   }
-                  if (!RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(trimmed)) {
+                  if (!isValidEmailAddress(trimmed)) {
                     return context.tr('Enter a valid email address');
                   }
                   return null;
