@@ -1,10 +1,8 @@
-import assert from 'node:assert/strict';
 import test from 'node:test';
 
+import { assertHttpErrorAsync, emptyD1Raw, emptyD1Result } from '../test/helpers';
 import { generateSurveyQuestions } from './ai_generation';
-import { emptyD1Raw, emptyD1Result } from './test_helpers';
 import type { Env, IntegrationSettingsRow } from './types';
-import { HttpError } from './utils';
 
 const locales = ['en', 'ja', 'zh-Hans', 'zh-Hant', 'ko', 'de'] as const;
 
@@ -181,9 +179,5 @@ function integrationSettings(): IntegrationSettingsRow {
 }
 
 async function assertProviderError(action: () => Promise<unknown>, message: string): Promise<void> {
-  await assert.rejects(action, (error: unknown) =>
-    error instanceof HttpError &&
-    error.status === 502 &&
-    error.message === message,
-  );
+  await assertHttpErrorAsync(action, 502, message);
 }

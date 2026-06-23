@@ -10,8 +10,8 @@ import {
   responseToJson,
   visibilityRuleToJson,
 } from './serializers';
+import { assertHttpError } from '../test/helpers';
 import type { AdminRow, AnswerRow, ProjectRow, ResponseRow, VisibilityRuleRow } from './types';
-import { HttpError } from './utils';
 
 test('serializers keep stored JSON arrays strict', () => {
   assert.deepEqual(answerToJson(answerRow('[1,2]')).selectedChoiceIds, [1, 2]);
@@ -108,14 +108,6 @@ test('supported locale request parsing rejects coerced values', () => {
     'supportedLocales[1] must be a string',
   );
 });
-
-function assertHttpError(action: () => unknown, status: number, message: string): void {
-  assert.throws(action, (error: unknown) =>
-    error instanceof HttpError &&
-    error.status === status &&
-    error.message === message,
-  );
-}
 
 function answerRow(selectedChoiceIds: string | null): AnswerRow {
   return {

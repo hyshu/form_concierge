@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
+import { assertBadRequest, assertHttpError } from '../test/helpers';
 import type { QuestionRow, VisibilityRuleRow } from './types';
-import { HttpError } from './utils';
 import { normalizeRuleInput, visibleQuestionIds } from './visibility_rules';
 
 test('visibleQuestionIds evaluates choice rules with strict selected ids', () => {
@@ -19,7 +19,7 @@ test('visibleQuestionIds evaluates choice rules with strict selected ids', () =>
 });
 
 test('visibleQuestionIds rejects coerced selected choice ids', () => {
-  assertHttpError(
+  assertBadRequest(
     () => visibleQuestionIds(
       [
         question({ id: 1, type: 'singleChoice', order_index: 0 }),
@@ -48,7 +48,7 @@ test('visibleQuestionIds rejects non-string text rule values', () => {
 });
 
 test('normalizeRuleInput rejects coerced operators', () => {
-  assertHttpError(
+  assertBadRequest(
     () => normalizeRuleInput({
       targetQuestionId: 2,
       sourceQuestionId: 1,
@@ -90,18 +90,4 @@ function rule(overrides: Partial<VisibilityRuleRow>): VisibilityRuleRow {
     updated_at: '2026-06-22T00:00:00.000Z',
     ...overrides,
   };
-}
-
-function assertHttpError(
-  action: () => unknown,
-  statusOrMessage: number | string,
-  maybeMessage?: string,
-): void {
-  const status = typeof statusOrMessage === 'number' ? statusOrMessage : 400;
-  const message = maybeMessage ?? statusOrMessage;
-  assert.throws(action, (error: unknown) =>
-    error instanceof HttpError &&
-    error.status === status &&
-    error.message === message,
-  );
 }
