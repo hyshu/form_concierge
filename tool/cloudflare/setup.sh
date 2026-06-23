@@ -6,18 +6,26 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 WORKER_DIR="$ROOT_DIR/worker"
 ADMIN_DIR="$ROOT_DIR/admin_dashboard"
 WEB_DIR="$ROOT_DIR/web"
+WRANGLER_BIN="$WORKER_DIR/node_modules/.bin/wrangler"
 
-WORKER_NAME="${WORKER_NAME:-form-concierge-api}"
-D1_DATABASE_NAME="${D1_DATABASE_NAME:-form_concierge}"
+DEFAULT_WORKER_NAME="${DEFAULT_WORKER_NAME:-form-concierge-api}"
+WORKER_NAME="${WORKER_NAME:-}"
+DEFAULT_D1_DATABASE_NAME="${DEFAULT_D1_DATABASE_NAME:-form_concierge}"
+D1_DATABASE_NAME="${D1_DATABASE_NAME:-}"
 D1_DATABASE_ID="${D1_DATABASE_ID:-}"
 PROJECT_ID="${PROJECT_ID:-}"
 API_URL="${API_URL:-}"
-ADMIN_PROJECT="${ADMIN_PROJECT:-form-concierge-admin}"
-WEB_PROJECT="${WEB_PROJECT:-form-concierge-web}"
+DEFAULT_ADMIN_PROJECT="${DEFAULT_ADMIN_PROJECT:-form-concierge-admin}"
+ADMIN_PROJECT="${ADMIN_PROJECT:-}"
+DEFAULT_WEB_PROJECT="${DEFAULT_WEB_PROJECT:-form-concierge-web}"
+WEB_PROJECT="${WEB_PROJECT:-}"
 WEB_ASSET_BASE_URL="${WEB_ASSET_BASE_URL:-}"
-R2_BUCKET_NAME="${R2_BUCKET_NAME:-form-concierge-media}"
+DEFAULT_R2_BUCKET_NAME="${DEFAULT_R2_BUCKET_NAME:-form-concierge-media}"
+R2_BUCKET_NAME="${R2_BUCKET_NAME:-}"
 R2_BINDING="${R2_BINDING:-MEDIA_BUCKET}"
 LOCAL_D1_PERSIST_TO="${LOCAL_D1_PERSIST_TO:-}"
+REMOTE_BINDINGS_FOR_LOCAL_DEV="${REMOTE_BINDINGS_FOR_LOCAL_DEV:-}"
+WRANGLER_UPDATE_CONFIG="${WRANGLER_UPDATE_CONFIG:-}"
 SEED_FILE=""
 LIST_LOCAL_PROJECTS=0
 PREFLIGHT_ONLY=0
@@ -37,14 +45,22 @@ Options:
   --seed-project-id <id>   Optional local Form Concierge project ID to seed remotely
   --project-id <id>        Alias for --seed-project-id
   --database-id <id>       Cloudflare D1 database UUID
-  --database-name <name>   D1 database name (default: form_concierge)
-  --worker-name <name>     Worker name (default: form-concierge-api)
+  --database-name <name>   D1 database name
+  --worker-name <name>     Worker name
   --r2-bucket-name <name>
-                           R2 bucket for future media uploads (default: form-concierge-media)
+                           R2 bucket for future media uploads
   --r2-binding <name>      Worker R2 binding name (default: MEDIA_BUCKET)
+  --wrangler-update-config
+                           Let Wrangler update config when creating D1/R2 resources
+  --no-wrangler-update-config
+                           Do not let Wrangler update config when creating D1/R2 resources
+  --remote-bindings-for-local-dev
+                           Use remote D1/R2 bindings during wrangler dev
+  --local-bindings-for-local-dev
+                           Use local D1/R2 bindings during wrangler dev (default)
   --api-url <url>          Public Worker API URL. If omitted, deploy output is used.
-  --admin-project <name>   Pages project for admin (default: form-concierge-admin)
-  --web-project <name>     Pages project for public assets (default: form-concierge-web)
+  --admin-project <name>   Pages project for admin
+  --web-project <name>     Pages project for public assets
   --web-asset-base-url <url>
                            Asset base used by SSR HTML (default: https://<web-project>.pages.dev)
   --local-d1-persist-to <path>
@@ -72,6 +88,15 @@ when missing.
 Run setup:
 
   ./setup.sh
+
+By default, wrangler dev uses local D1/R2 resources. To use remote bindings
+for local dev too:
+
+  ./setup.sh --remote-bindings-for-local-dev
+
+Resource names are prompted during interactive setup. For non-interactive setup,
+pass --worker-name, --database-name, --r2-bucket-name, --admin-project, and
+--web-project, or set the matching environment variables.
 
 After setup, open the deployed admin Pages URL, create the first admin, and
 create projects there.
@@ -104,19 +129,31 @@ install_worker_dependencies() {
 
 ensure_wrangler_auth() {
   echo "==> Wrangler auth"
-  if ! (cd "$WORKER_DIR" && npx wrangler whoami >/dev/null 2>&1); then
+  local output_file
+  output_file="$(mktemp)"
+  set +e
+  (cd "$WORKER_DIR" && npx wrangler whoami) >"$output_file" 2>&1
+  local status="$?"
+  set -e
+  if [[ "$status" -ne 0 ]]; then
+    cat "$output_file" >&2
+    rm -f "$output_file"
     cat >&2 <<'ERROR'
-Cloudflare Wrangler is not authenticated.
 
-Run one of:
+Wrangler preflight failed.
+
+If this is an authentication failure, run one of:
 
   cd worker
   npx wrangler login
 
 or set CLOUDFLARE_API_TOKEN with permissions for Workers, D1, R2, and Pages.
+
+If Wrangler reported a configuration error above, fix worker/wrangler.jsonc first.
 ERROR
     exit 1
   fi
+  rm -f "$output_file"
 }
 
 ensure_jaspr() {
@@ -126,6 +163,112 @@ ensure_jaspr() {
     JASPR_CMD=(dart pub global run jaspr_cli:jaspr)
   else
     JASPR_CMD=(jaspr)
+  fi
+}
+
+normalize_remote_bindings_for_local_dev() {
+  case "$REMOTE_BINDINGS_FOR_LOCAL_DEV" in
+    1|true|TRUE|y|Y|yes|YES) REMOTE_BINDINGS_FOR_LOCAL_DEV=1 ;;
+    0|false|FALSE|n|N|no|NO|"") REMOTE_BINDINGS_FOR_LOCAL_DEV=0 ;;
+    *)
+      echo "REMOTE_BINDINGS_FOR_LOCAL_DEV must be 0/1, true/false, or yes/no." >&2
+      exit 1
+      ;;
+  esac
+}
+
+normalize_wrangler_update_config() {
+  case "$WRANGLER_UPDATE_CONFIG" in
+    1|true|TRUE|y|Y|yes|YES|"") WRANGLER_UPDATE_CONFIG=1 ;;
+    0|false|FALSE|n|N|no|NO) WRANGLER_UPDATE_CONFIG=0 ;;
+    *)
+      echo "WRANGLER_UPDATE_CONFIG must be 0/1, true/false, or yes/no." >&2
+      exit 1
+      ;;
+  esac
+}
+
+select_wrangler_update_config() {
+  if [[ -z "$WRANGLER_UPDATE_CONFIG" && -t 0 ]]; then
+    local answer
+    printf 'Let Wrangler add created D1/R2 resources to worker/wrangler.jsonc? [Y/n] ' >&2
+    if read -r answer; then
+      WRANGLER_UPDATE_CONFIG="$answer"
+    fi
+  fi
+  normalize_wrangler_update_config
+}
+
+select_remote_bindings_for_local_dev() {
+  if [[ -z "$REMOTE_BINDINGS_FOR_LOCAL_DEV" && -t 0 ]]; then
+    local answer
+    printf 'Use remote D1/R2 bindings for local wrangler dev? [y/N] ' >&2
+    if read -r answer; then
+      REMOTE_BINDINGS_FOR_LOCAL_DEV="$answer"
+    fi
+  fi
+  normalize_remote_bindings_for_local_dev
+}
+
+prompt_name() {
+  local label="$1"
+  local default_value="$2"
+  local value
+  if [[ -t 0 ]]; then
+    local answer
+    printf '%s \033[2m%s\033[0m ' "$label" "$default_value" >&2
+    if read -r answer; then
+      value="${answer:-$default_value}"
+    fi
+  else
+    value=""
+  fi
+  printf '%s' "$value"
+}
+
+select_resource_names() {
+  if [[ -z "$WORKER_NAME" ]]; then
+    WORKER_NAME="$(prompt_name "Worker name" "$DEFAULT_WORKER_NAME")"
+  fi
+  if [[ -z "$D1_DATABASE_NAME" ]]; then
+    D1_DATABASE_NAME="$(prompt_name "D1 database name" "$DEFAULT_D1_DATABASE_NAME")"
+  fi
+  if [[ -z "$R2_BUCKET_NAME" ]]; then
+    R2_BUCKET_NAME="$(prompt_name "R2 bucket name" "$DEFAULT_R2_BUCKET_NAME")"
+  fi
+  if [[ -z "$ADMIN_PROJECT" ]]; then
+    ADMIN_PROJECT="$(prompt_name "Admin Pages project" "$DEFAULT_ADMIN_PROJECT")"
+  fi
+  if [[ -z "$WEB_PROJECT" ]]; then
+    WEB_PROJECT="$(prompt_name "Public assets Pages project" "$DEFAULT_WEB_PROJECT")"
+  fi
+
+  if [[ -z "$WORKER_NAME" || -z "$D1_DATABASE_NAME" || -z "$R2_BUCKET_NAME" || -z "$ADMIN_PROJECT" || -z "$WEB_PROJECT" ]]; then
+    cat >&2 <<'ERROR'
+Resource names are required.
+
+Run setup interactively, or pass one of:
+
+  ./setup.sh --worker-name <worker-name> \
+    --database-name <database-name> \
+    --r2-bucket-name <bucket-name> \
+    --admin-project <pages-project> \
+    --web-project <pages-project>
+
+or set environment variables:
+
+  WORKER_NAME=<worker-name> \
+    D1_DATABASE_NAME=<database-name> \
+    R2_BUCKET_NAME=<bucket-name> \
+    ADMIN_PROJECT=<pages-project> \
+    WEB_PROJECT=<pages-project> \
+    ./setup.sh
+
+At minimum, include:
+
+  ./setup.sh --r2-bucket-name <bucket-name>
+ERROR
+    exit 1
   fi
 }
 
@@ -159,6 +302,10 @@ while [[ $# -gt 0 ]]; do
     --worker-name) WORKER_NAME="$2"; shift 2 ;;
     --r2-bucket-name) R2_BUCKET_NAME="$2"; shift 2 ;;
     --r2-binding) R2_BINDING="$2"; shift 2 ;;
+    --wrangler-update-config) WRANGLER_UPDATE_CONFIG=1; shift ;;
+    --no-wrangler-update-config) WRANGLER_UPDATE_CONFIG=0; shift ;;
+    --remote-bindings-for-local-dev) REMOTE_BINDINGS_FOR_LOCAL_DEV=1; shift ;;
+    --local-bindings-for-local-dev) REMOTE_BINDINGS_FOR_LOCAL_DEV=0; shift ;;
     --api-url) API_URL="$2"; shift 2 ;;
     --admin-project) ADMIN_PROJECT="$2"; shift 2 ;;
     --web-project) WEB_PROJECT="$2"; shift 2 ;;
@@ -184,6 +331,7 @@ fi
 if [[ "$LIST_LOCAL_PROJECTS" == "1" ]]; then
   check_commands
   install_worker_dependencies
+  D1_DATABASE_NAME="${D1_DATABASE_NAME:-$DEFAULT_D1_DATABASE_NAME}"
   (cd "$WORKER_DIR" && LOCAL_D1_PERSIST_TO="$LOCAL_D1_PERSIST_TO" node "$ROOT_DIR/tool/cloudflare/list_local_projects.mjs" "$D1_DATABASE_NAME")
   exit 0
 fi
@@ -193,10 +341,6 @@ if [[ -n "$PROJECT_ID" ]]; then
     echo "Project ID must be a positive integer." >&2
     exit 1
   fi
-fi
-
-if [[ -z "$WEB_ASSET_BASE_URL" ]]; then
-  WEB_ASSET_BASE_URL="https://${WEB_PROJECT}.pages.dev"
 fi
 
 cleanup() {
@@ -237,8 +381,19 @@ ensure_d1_database() {
   fi
 
   if [[ -z "$D1_DATABASE_ID" ]]; then
+    local update_config_arg="false"
+    local use_remote_arg="false"
+    [[ "$WRANGLER_UPDATE_CONFIG" == "1" ]] && update_config_arg="true"
+    [[ "$REMOTE_BINDINGS_FOR_LOCAL_DEV" == "1" ]] && use_remote_arg="true"
+
     echo "==> Create D1 database: $D1_DATABASE_NAME"
-    (cd "$WORKER_DIR" && npx wrangler d1 create "$D1_DATABASE_NAME")
+    (
+      cd "$WORKER_DIR"
+      npx wrangler d1 create "$D1_DATABASE_NAME" \
+        "--update-config=$update_config_arg" \
+        --binding=DB \
+        "--use-remote=$use_remote_arg"
+    )
     D1_DATABASE_ID="$(find_d1_database_id)"
   fi
 
@@ -254,7 +409,31 @@ ensure_r2_bucket() {
   fi
 
   echo "==> Create R2 bucket: $R2_BUCKET_NAME"
-  (cd "$WORKER_DIR" && npx wrangler r2 bucket create "$R2_BUCKET_NAME")
+  local update_config_arg="false"
+  local use_remote_arg="false"
+  [[ "$WRANGLER_UPDATE_CONFIG" == "1" ]] && update_config_arg="true"
+  [[ "$REMOTE_BINDINGS_FOR_LOCAL_DEV" == "1" ]] && use_remote_arg="true"
+
+  (
+    cd "$WORKER_DIR"
+    npx wrangler r2 bucket create "$R2_BUCKET_NAME" \
+      "--update-config=$update_config_arg" \
+      "--binding=$R2_BINDING" \
+      "--use-remote=$use_remote_arg"
+  )
+}
+
+wait_for_r2_bucket() {
+  local attempt
+  for attempt in {1..30}; do
+    if (cd "$WORKER_DIR" && npx wrangler r2 bucket info "$R2_BUCKET_NAME" >/dev/null 2>&1); then
+      return 0
+    fi
+    sleep 2
+  done
+
+  echo "R2 bucket is not visible to Wrangler yet: $R2_BUCKET_NAME" >&2
+  exit 1
 }
 
 export_local_project_seed() {
@@ -263,9 +442,10 @@ export_local_project_seed() {
 }
 
 update_wrangler() {
-  node - "$WORKER_DIR/wrangler.jsonc" "$WORKER_NAME" "$D1_DATABASE_NAME" "$D1_DATABASE_ID" "$API_URL" "$WEB_ASSET_BASE_URL" "$R2_BUCKET_NAME" "$R2_BINDING" <<'NODE'
+  node - "$WORKER_DIR/wrangler.jsonc" "$WORKER_NAME" "$D1_DATABASE_NAME" "$D1_DATABASE_ID" "$API_URL" "$WEB_ASSET_BASE_URL" "$R2_BUCKET_NAME" "$R2_BINDING" "$REMOTE_BINDINGS_FOR_LOCAL_DEV" <<'NODE'
 const fs = require('fs');
-const [file, workerName, databaseName, databaseId, apiUrl, assetBaseUrl, r2BucketName, r2Binding] = process.argv.slice(2);
+const [file, workerName, databaseName, databaseId, apiUrl, assetBaseUrl, r2BucketName, r2Binding, remoteBindingsForLocalDev] = process.argv.slice(2);
+const remote = remoteBindingsForLocalDev === '1';
 const config = JSON.parse(fs.readFileSync(file, 'utf8'));
 config.name = workerName;
 config.d1_databases = [{
@@ -273,10 +453,12 @@ config.d1_databases = [{
   database_name: databaseName,
   database_id: databaseId,
   migrations_dir: 'migrations',
+  remote,
 }];
 config.r2_buckets = [{
   binding: r2Binding,
   bucket_name: r2BucketName,
+  remote,
 }];
 config.vars = config.vars ?? {};
 if (apiUrl) config.vars.PUBLIC_BASE_URL = apiUrl.replace(/\/+$/, '');
@@ -286,19 +468,39 @@ NODE
 }
 
 deploy_worker() {
-  local output_file parsed_url
-  output_file="$(mktemp)"
-  (cd "$WORKER_DIR" && npx wrangler deploy) 2>&1 | tee "$output_file" >&2
-  parsed_url="$(grep -Eo 'https://[^[:space:]]+workers.dev' "$output_file" | tail -n 1 || true)"
-  rm -f "$output_file"
-  if [[ -n "$parsed_url" ]]; then
-    printf '%s' "$parsed_url"
-  fi
+  local attempt output_file parsed_url status
+  for attempt in 1 2 3; do
+    output_file="$(mktemp)"
+    set +e
+    (cd "$WORKER_DIR" && npx wrangler deploy) 2>&1 | tee "$output_file" >&2
+    status="${PIPESTATUS[0]}"
+    set -e
+
+    parsed_url="$(grep -Eo 'https://[^[:space:]]+workers.dev' "$output_file" | tail -n 1 || true)"
+    if [[ "$status" -eq 0 ]]; then
+      rm -f "$output_file"
+      if [[ -n "$parsed_url" ]]; then
+        printf '%s' "$parsed_url"
+      fi
+      return 0
+    fi
+
+    if grep -q "R2 bucket .* not found" "$output_file" && [[ "$attempt" -lt 3 ]]; then
+      rm -f "$output_file"
+      echo "R2 bucket is not visible to Worker deploy yet; retrying..." >&2
+      wait_for_r2_bucket
+      sleep $((attempt * 5))
+      continue
+    fi
+
+    rm -f "$output_file"
+    return "$status"
+  done
 }
 
 ensure_pages_project() {
   local project="$1"
-  (cd "$WORKER_DIR" && npx wrangler pages project create "$project" --production-branch=main) >/dev/null 2>&1 || true
+  (cd "$ROOT_DIR" && "$WRANGLER_BIN" pages project create "$project" --production-branch=main) >/dev/null 2>&1 || true
 }
 
 seed_remote_project() {
@@ -328,6 +530,26 @@ if [[ "$PREFLIGHT_ONLY" == "1" ]]; then
   exit 0
 fi
 
+select_wrangler_update_config
+select_remote_bindings_for_local_dev
+select_resource_names
+
+if [[ -z "$WEB_ASSET_BASE_URL" ]]; then
+  WEB_ASSET_BASE_URL="https://${WEB_PROJECT}.pages.dev"
+fi
+
+if [[ "$WRANGLER_UPDATE_CONFIG" == "1" ]]; then
+  echo "==> Wrangler config update: yes"
+else
+  echo "==> Wrangler config update: no"
+fi
+
+if [[ "$REMOTE_BINDINGS_FOR_LOCAL_DEV" == "1" ]]; then
+  echo "==> Local dev bindings: remote D1/R2"
+else
+  echo "==> Local dev bindings: local D1/R2"
+fi
+
 if [[ -z "$API_URL" ]]; then
   API_URL="$(read_wrangler_value public_base_url)"
 fi
@@ -345,6 +567,7 @@ fi
 
 ensure_d1_database
 ensure_r2_bucket
+wait_for_r2_bucket
 
 echo "==> Configure Worker"
 update_wrangler
@@ -353,7 +576,7 @@ echo "==> Worker typecheck"
 (cd "$WORKER_DIR" && npm run typecheck)
 
 echo "==> Apply D1 migrations"
-(cd "$WORKER_DIR" && npx wrangler d1 migrations apply "$D1_DATABASE_NAME" --remote)
+(cd "$WORKER_DIR" && CI=1 npx wrangler d1 migrations apply "$D1_DATABASE_NAME" --remote)
 
 if [[ -n "$PROJECT_ID" ]]; then
   echo "==> Seed remote D1 project: $PROJECT_ID"
@@ -379,7 +602,7 @@ printf '{"apiUrl":"%s"}' "$API_URL" > "$ADMIN_DIR/build/web/assets/assets/config
 
 echo "==> Deploy admin Pages: $ADMIN_PROJECT"
 ensure_pages_project "$ADMIN_PROJECT"
-(cd "$WORKER_DIR" && npx wrangler pages deploy "$ADMIN_DIR/build/web" --project-name "$ADMIN_PROJECT" --commit-dirty=true)
+(cd "$ROOT_DIR" && "$WRANGLER_BIN" pages deploy "$ADMIN_DIR/build/web" --project-name "$ADMIN_PROJECT" --commit-dirty=true)
 
 echo "==> Build public form assets"
 (cd "$WEB_DIR" && dart pub get >/dev/null && "${JASPR_CMD[@]}" build)
@@ -387,7 +610,7 @@ inject_web_index_api_url
 
 echo "==> Deploy public form assets Pages: $WEB_PROJECT"
 ensure_pages_project "$WEB_PROJECT"
-(cd "$WORKER_DIR" && npx wrangler pages deploy "$WEB_DIR/build/jaspr" --project-name "$WEB_PROJECT" --commit-dirty=true)
+(cd "$ROOT_DIR" && "$WRANGLER_BIN" pages deploy "$WEB_DIR/build/jaspr" --project-name "$WEB_PROJECT" --commit-dirty=true)
 
 echo "==> Done"
 echo "API: $API_URL"
