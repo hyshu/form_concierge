@@ -12,6 +12,7 @@ import {
   optionalString,
   readJson,
   requireObject,
+  requireSlug,
   requiredBoolean,
   requiredInteger,
   requiredRow,
@@ -56,16 +57,18 @@ async function insertSurvey(
   const projectId = requireProjectId(body.projectId);
   const resolvedProject = project ?? await mustProject(db, projectId);
   const content = parseSurveyContent(body, resolvedProject);
+  const slug = await resolveSurveySlug(db, body.slug, resolvedProject, content);
   const now = nowIso();
   const row = await db.prepare(
     `INSERT INTO surveys
-       (project_id, title_translations, description_translations, status, web_enabled, created_by_admin_id,
+       (project_id, slug, title_translations, description_translations, status, web_enabled, created_by_admin_id,
         created_at, updated_at, starts_at, ends_at)
-     VALUES (?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?)
+     VALUES (?, ?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?)
      RETURNING *`,
   )
     .bind(
       projectId,
+      slug,
       JSON.stringify(content.titleTranslations),
       JSON.stringify(content.descriptionTranslations),
       Object.hasOwn(body, 'webEnabled') ? boolToInt(requiredBoolean(body.webEnabled, 'webEnabled')) : 1,
@@ -107,13 +110,18 @@ export async function updateSurvey(request: Request, env: Env, surveyId: number)
   const body = await readJson(request);
   const project = await mustProject(env.DB, existing.project_id);
   const content = parseSurveyContent(body, project);
+  const slug = Object.hasOwn(body, 'slug')
+    ? requireSurveySlug(body.slug)
+    : existing.slug;
+  await ensureUniqueSurveySlug(env.DB, project.id, slug, surveyId);
   const row = await env.DB.prepare(
     `UPDATE surveys
-     SET title_translations = ?, description_translations = ?,
+     SET slug = ?, title_translations = ?, description_translations = ?,
          web_enabled = ?, starts_at = ?, ends_at = ?, updated_at = ?
      WHERE id = ?
      RETURNING *`,
   ).bind(
+    slug,
     JSON.stringify(content.titleTranslations),
     JSON.stringify(content.descriptionTranslations),
     Object.hasOwn(body, 'webEnabled') ? boolToInt(requiredBoolean(body.webEnabled, 'webEnabled')) : existing.web_enabled,
@@ -214,6 +222,86 @@ function parseSurveyContent(body: Record<string, unknown>, project: ProjectRow):
       { allowEmpty: true },
     ),
   };
+}
+
+type SurveyContent = ReturnType<typeof parseSurveyContent>;
+
+async function resolveSurveySlug(
+  db: D1Database,
+  value: unknown,
+  project: ProjectRow,
+  content: SurveyContent,
+): Promise<string> {
+  if (value != null && value !== '') {
+    const slug = requireSurveySlug(value);
+    await ensureUniqueSurveySlug(db, project.id, slug);
+    return slug;
+  }
+  const base = slugFromSurveyTitle(content, project.default_locale) ?? 'survey';
+  return uniqueSurveySlug(db, project.id, base);
+}
+
+function requireSurveySlug(value: unknown): string {
+  const slug = requireSlug(value);
+  if (/^\d+$/.test(slug)) {
+    throw new HttpError(400, 'slug must include at least one lowercase letter');
+  }
+  return slug;
+}
+
+function slugFromSurveyTitle(
+  content: SurveyContent,
+  defaultLocale: string,
+): string | null {
+  const candidates = [
+    content.titleTranslations[defaultLocale],
+    content.titleTranslations[DEFAULT_FORM_CONTENT_LOCALE],
+    ...Object.values(content.titleTranslations),
+  ];
+  for (const candidate of candidates) {
+    if (typeof candidate !== 'string') continue;
+    const slug = candidate
+      .trim()
+      .toLowerCase()
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .replace(/-{2,}/g, '-');
+    if (slug && /[a-z]/.test(slug)) return slug;
+  }
+  return null;
+}
+
+async function uniqueSurveySlug(
+  db: D1Database,
+  projectId: number,
+  base: string,
+): Promise<string> {
+  for (let index = 0; index < 100; index++) {
+    const slug = index === 0 ? base : `${base}-${index + 1}`;
+    const row = await db.prepare(
+      `SELECT id FROM surveys WHERE project_id = ? AND slug = ?`,
+    ).bind(projectId, slug).first<{ id: number }>();
+    if (!row) return slug;
+  }
+  throw new HttpError(400, 'Unable to generate a unique survey slug');
+}
+
+async function ensureUniqueSurveySlug(
+  db: D1Database,
+  projectId: number,
+  slug: string,
+  exceptSurveyId?: number,
+): Promise<void> {
+  const row = exceptSurveyId == null
+    ? await db.prepare(
+        `SELECT id FROM surveys WHERE project_id = ? AND slug = ?`,
+      ).bind(projectId, slug).first<{ id: number }>()
+    : await db.prepare(
+        `SELECT id FROM surveys WHERE project_id = ? AND slug = ? AND id != ?`,
+      ).bind(projectId, slug, exceptSurveyId).first<{ id: number }>();
+  if (row) throw new HttpError(400, 'A survey with this slug already exists');
 }
 
 function requireProjectId(value: unknown): number {

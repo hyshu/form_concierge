@@ -98,6 +98,7 @@ public struct PublicProject: Codable, Sendable {
 public struct Survey: Codable, Identifiable, Sendable {
   public let id: Int
   public let projectId: Int
+  public let slug: String
   public let titleTranslations: LocalizedText
   public let descriptionTranslations: LocalizedText
   public let status: SurveyStatus

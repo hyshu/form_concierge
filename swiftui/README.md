@@ -7,6 +7,7 @@ let client = FormConciergeClient(baseURL: URL(string: "https://your-worker.examp
 
 FormConciergeSurveyView(
     client: client,
+    projectSlug: "demo-project",
     surveySlug: "customer-feedback",
     anonymousToken: savedAnonymousToken,
     locale: "ja_JP",

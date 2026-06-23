@@ -347,12 +347,14 @@ class SurveyEditorPage extends RearchConsumer {
       showSubmitButton: !isNewSurvey,
       onSave:
           ({
+            required String slug,
             required LocalizedText titleTranslations,
             required LocalizedText descriptionTranslations,
           }) async {
             if (isNewSurvey) {
               final created = await formManager.createSurveyWithQuestions(
                 projectId: projectId!,
+                slug: slug,
                 titleTranslations: titleTranslations,
                 descriptionTranslations: descriptionTranslations,
               );
@@ -364,6 +366,7 @@ class SurveyEditorPage extends RearchConsumer {
               }
             } else {
               final updated = survey!.copyWith(
+                slug: slug,
                 titleTranslations: titleTranslations,
                 descriptionTranslations: descriptionTranslations,
                 updatedAt: DateTime.now(),

@@ -11,6 +11,7 @@ import 'widgets/survey_content.dart';
 class FormConciergeSurvey extends StatefulWidget {
   final Client client;
   final String projectSlug;
+  final String? surveySlug;
   final int? surveyId;
   final VoidCallback? onSubmitted;
   final ValueChanged<SurveyResponse>? onResponseSubmitted;
@@ -25,6 +26,7 @@ class FormConciergeSurvey extends StatefulWidget {
     super.key,
     required this.client,
     required this.projectSlug,
+    this.surveySlug,
     this.surveyId,
     this.onSubmitted,
     this.onResponseSubmitted,
@@ -107,6 +109,13 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
 
   Survey? _selectSurvey(PublicProject? project) {
     if (project == null || project.surveys.isEmpty) return null;
+    final surveySlug = widget.surveySlug?.trim();
+    if (surveySlug != null && surveySlug.isNotEmpty) {
+      for (final survey in project.surveys) {
+        if (survey.slug == surveySlug) return survey;
+      }
+      return null;
+    }
     final surveyId = widget.surveyId;
     if (surveyId == null) {
       return project.surveys.length == 1 ? project.surveys.first : null;

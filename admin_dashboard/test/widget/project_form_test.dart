@@ -115,5 +115,72 @@ void main() {
       );
       expect(slugField.controller!.text, 'customer-feedback');
     });
+
+    testWidgets('keeps generated slug in sync while name is still automatic', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        localizedTestApp(
+          locale: const Locale('en', 'US'),
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: ProjectForm(
+                isSaving: false,
+                onSave: (_) async {},
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final nameField = find.byType(TextFormField).at(0);
+      final slugField = tester.widget<TextFormField>(
+        find.byType(TextFormField).at(1),
+      );
+
+      await tester.enterText(nameField, 'C');
+      await tester.testTextInput.receiveAction(TextInputAction.next);
+      await tester.pump();
+      expect(slugField.controller!.text, 'c');
+
+      await tester.enterText(nameField, 'Customer Feedback');
+      await tester.testTextInput.receiveAction(TextInputAction.next);
+      await tester.pump();
+      expect(slugField.controller!.text, 'customer-feedback');
+    });
+
+    testWidgets('does not overwrite manually edited slug', (tester) async {
+      await tester.pumpWidget(
+        localizedTestApp(
+          locale: const Locale('en', 'US'),
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: ProjectForm(
+                isSaving: false,
+                onSave: (_) async {},
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final nameField = find.byType(TextFormField).at(0);
+      final slugField = tester.widget<TextFormField>(
+        find.byType(TextFormField).at(1),
+      );
+
+      await tester.enterText(nameField, 'Customer');
+      await tester.testTextInput.receiveAction(TextInputAction.next);
+      await tester.pump();
+      expect(slugField.controller!.text, 'customer');
+
+      await tester.enterText(find.byType(TextFormField).at(1), 'custom-slug');
+      await tester.pump();
+      await tester.enterText(nameField, 'Customer Feedback');
+      await tester.testTextInput.receiveAction(TextInputAction.next);
+      await tester.pump();
+
+      expect(slugField.controller!.text, 'custom-slug');
+    });
   });
 }

@@ -107,6 +107,7 @@ Survey _survey({String description = ''}) {
   return Survey(
     id: 1,
     projectId: 1,
+    slug: 'customer-feedback',
     titleTranslations: LocalizedText({
       for (final locale in formContentLocaleCodes)
         locale: locale == 'en' ? 'Customer feedback' : 'Title $locale',

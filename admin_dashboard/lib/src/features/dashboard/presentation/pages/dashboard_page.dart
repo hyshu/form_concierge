@@ -383,9 +383,19 @@ class _SurveyRow extends StatelessWidget {
                     ),
                   ],
                   const SizedBox(height: 8),
-                  _MetadataItem(
-                    icon: LucideIcons.clock3,
-                    text: survey.updatedAt.toIsoDateString(),
+                  Wrap(
+                    spacing: 16,
+                    runSpacing: 8,
+                    children: [
+                      _MetadataItem(
+                        icon: LucideIcons.link,
+                        text: survey.slug,
+                      ),
+                      _MetadataItem(
+                        icon: LucideIcons.clock3,
+                        text: survey.updatedAt.toIsoDateString(),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 8),
                   Row(

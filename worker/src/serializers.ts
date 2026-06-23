@@ -21,6 +21,7 @@ export function surveyToJson(row: SurveyRow) {
   return {
     id: row.id,
     projectId: row.project_id,
+    slug: row.slug,
     titleTranslations: parseLocalizedText(row.title_translations),
     descriptionTranslations: parseLocalizedText(row.description_translations),
     status: row.status,

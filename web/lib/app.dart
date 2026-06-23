@@ -11,13 +11,19 @@ class App extends StatelessComponent {
   @override
   Component build(BuildContext context) {
     final parts = _pathParts(currentPathname());
-    final projectSlug = parts.isEmpty ? null : parts.first;
-    final surveyId = parts.length >= 2
-        ? int.tryParse(parts[1])
-        : (parts.length == 1 ? int.tryParse(parts[0]) : null);
+    final isApiHost = Uri.parse(serverUrl).host == currentHostname();
+    final projectSlug = isApiHost && parts.isNotEmpty ? parts.first : null;
+    final surveyKey = isApiHost
+        ? (parts.length >= 2 ? parts[1] : null)
+        : (parts.isNotEmpty ? parts.first : null);
+    final surveyId = surveyKey != null && RegExp(r'^\d+$').hasMatch(surveyKey)
+        ? int.tryParse(surveyKey)
+        : null;
+    final surveySlug = surveyKey != null && surveyId == null ? surveyKey : null;
     return SurveyClient(
       serverUrl: serverUrl,
       projectSlug: projectSlug,
+      surveySlug: surveySlug,
       surveyId: surveyId,
       domain: currentHostname(),
     );

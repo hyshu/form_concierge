@@ -3,6 +3,7 @@ import SwiftUI
 public struct FormConciergeSurveyView: View {
   private let client: FormConciergeClient
   private let projectSlug: String
+  private let surveySlug: String?
   private let surveyId: Int?
   private let anonymousToken: String?
   private let locale: String?
@@ -26,6 +27,7 @@ public struct FormConciergeSurveyView: View {
   public init(
     client: FormConciergeClient,
     projectSlug: String,
+    surveySlug: String? = nil,
     surveyId: Int? = nil,
     anonymousToken: String? = nil,
     locale: String? = nil,
@@ -37,6 +39,7 @@ public struct FormConciergeSurveyView: View {
   ) {
     self.client = client
     self.projectSlug = projectSlug
+    self.surveySlug = surveySlug
     self.surveyId = surveyId
     self.anonymousToken = anonymousToken
     self.locale = locale
@@ -159,6 +162,9 @@ public struct FormConciergeSurveyView: View {
   }
 
   private func selectedSurvey(from project: PublicProject) -> Survey? {
+    if let surveySlug {
+      return project.surveys.first { $0.slug == surveySlug }
+    }
     if let surveyId {
       return project.surveys.first { $0.id == surveyId }
     }

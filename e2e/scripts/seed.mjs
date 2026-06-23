@@ -70,6 +70,7 @@ async function seed() {
     body: {
       survey: {
         projectId: project.id,
+        slug: 'customer-feedback',
         titleTranslations: {
           en: 'Customer feedback',
           ja: '顧客フィードバック',
@@ -108,6 +109,7 @@ async function seed() {
     projectId: project.id,
     projectSlug: project.slug,
     surveyId: published.id,
+    surveySlug: published.slug,
     locales: allLocales,
   };
   await mkdir(artifactDir, { recursive: true });

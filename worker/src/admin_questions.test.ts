@@ -177,6 +177,7 @@ function surveyRow(overrides: Partial<SurveyRow> = {}): SurveyRow {
   return {
     id: 1,
     project_id: 10,
+    slug: 'customer-feedback',
     title_translations: '{"ja":"調査"}',
     description_translations: '{"ja":""}',
     status: 'draft',

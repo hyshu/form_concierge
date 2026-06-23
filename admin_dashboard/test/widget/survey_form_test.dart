@@ -40,6 +40,7 @@ void main() {
               locales: locales,
               onSave:
                   ({
+                    required String slug,
                     required LocalizedText titleTranslations,
                     required LocalizedText descriptionTranslations,
                   }) async {
@@ -81,6 +82,41 @@ void main() {
         expect(savedTitleTranslations!.valueFor('en'), 'My Survey');
       },
     );
+
+    testWidgets('keeps generated slug in sync while title is still automatic', (
+      tester,
+    ) async {
+      await tester.pumpWidget(buildSubject());
+
+      final titleField = _fieldFor(
+        controllers.titleTranslations[defaultFormContentLocale]!,
+      );
+      await tester.enterText(titleField, 'C');
+      await tester.pump();
+      expect(controllers.slug.text, 'c');
+
+      await tester.enterText(titleField, 'Customer Feedback');
+      await tester.pump();
+      expect(controllers.slug.text, 'customer-feedback');
+    });
+
+    testWidgets('does not overwrite manually edited slug', (tester) async {
+      await tester.pumpWidget(buildSubject());
+
+      final titleField = _fieldFor(
+        controllers.titleTranslations[defaultFormContentLocale]!,
+      );
+      await tester.enterText(titleField, 'Customer');
+      await tester.pump();
+      expect(controllers.slug.text, 'customer');
+
+      await tester.enterText(_fieldFor(controllers.slug), 'custom-slug');
+      await tester.pump();
+      await tester.enterText(titleField, 'Customer Feedback');
+      await tester.pump();
+
+      expect(controllers.slug.text, 'custom-slug');
+    });
 
     scenarioWidget(
       'empty secondary titles block save',
@@ -137,6 +173,7 @@ void main() {
               primaryLocale: defaultFormContentLocale,
               onSave:
                   ({
+                    required String slug,
                     required LocalizedText titleTranslations,
                     required LocalizedText descriptionTranslations,
                   }) async {},
@@ -188,6 +225,7 @@ void main() {
     ) async {
       await tester.pumpWidget(buildSubject());
 
+      expect(find.text('Localized titles'), findsNothing);
       expect(find.text('Title (English)'), findsOneWidget);
       expect(find.text('Title (日本語)'), findsOneWidget);
       expect(find.text('Other languages'), findsOneWidget);
@@ -208,6 +246,7 @@ void main() {
     test('populateFrom fills titles and descriptions', () {
       controllers.populateFrom(_survey());
 
+      expect(controllers.slug.text, 'title-en');
       for (final locale in formContentLocaleCodes) {
         expect(controllers.titleTranslations[locale]!.text, 'Title $locale');
         expect(
@@ -236,6 +275,7 @@ void main() {
 }
 
 SurveyFormControllers _controllers() => SurveyFormControllers(
+  slug: TextEditingController(),
   titleTranslations: {
     for (final locale in formContentLocaleCodes)
       locale: TextEditingController(),
@@ -259,11 +299,18 @@ Future<void> _tapCreateSurvey(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
+Finder _fieldFor(TextEditingController controller) {
+  return find.byWidgetPredicate(
+    (widget) => widget is TextFormField && widget.controller == controller,
+  );
+}
+
 Survey _survey() {
   final now = DateTime.utc(2026, 6, 22, 10);
   return Survey(
     id: 1,
     projectId: 1,
+    slug: 'title-en',
     titleTranslations: LocalizedText({
       for (final locale in formContentLocaleCodes) locale: 'Title $locale',
     }),

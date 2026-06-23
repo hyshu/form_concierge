@@ -67,6 +67,41 @@ void main() {
     );
   });
 
+  testWidgets('selects survey by slug when provided', (tester) async {
+    final paths = <String>[];
+    final client = _client((request) {
+      paths.add('${request.method} ${request.url.path}');
+      return switch ((request.method, request.url.path)) {
+        ('GET', '/api/projects/customer-feedback') => _json(
+          _projectJson(
+            surveys: [
+              _surveyJson(),
+              _surveyJson(id: 2, slug: 'nps'),
+            ],
+          ),
+        ),
+        ('GET', '/api/surveys/id/2/questions') => _json([]),
+        ('GET', '/api/surveys/id/2/visibility-rules') => _json([]),
+        ('POST', '/api/anonymous/accounts') => _json(_anonymousSessionJson()),
+        _ => http.Response('Unexpected ${request.method} ${request.url}', 404),
+      };
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: FormConciergeSurvey(
+          client: client,
+          projectSlug: 'customer-feedback',
+          surveySlug: 'nps',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(paths, contains('GET /api/surveys/id/2/questions'));
+    expect(find.text('Customer feedback'), findsOneWidget);
+  });
+
   testWidgets(
     'uses provided anonymous token instead of creating a new session',
     (tester) async {
@@ -133,7 +168,7 @@ http.Response _json(Object? body) {
   );
 }
 
-Map<String, Object?> _projectJson() => {
+Map<String, Object?> _projectJson({List<Map<String, Object?>>? surveys}) => {
   'project': {
     'id': 1,
     'slug': 'customer-feedback',
@@ -144,12 +179,16 @@ Map<String, Object?> _projectJson() => {
     'createdAt': '2026-06-22T10:00:00.000Z',
     'updatedAt': '2026-06-22T10:00:00.000Z',
   },
-  'surveys': [_surveyJson()],
+  'surveys': surveys ?? [_surveyJson()],
 };
 
-Map<String, Object?> _surveyJson() => {
-  'id': 1,
+Map<String, Object?> _surveyJson({
+  int id = 1,
+  String slug = 'customer-feedback',
+}) => {
+  'id': id,
   'projectId': 1,
+  'slug': slug,
   'titleTranslations': {'en': 'Customer feedback'},
   'descriptionTranslations': {'en': 'Tell us what you think'},
   'status': 'published',
