@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { projectRow, surveyRow } from '../test/fixtures';
-import { assertHttpErrorAsync, d1Result } from '../test/helpers';
+import { assertHttpErrorAsync, d1Database, d1Result } from '../test/helpers';
 import { renderPublicForm } from './public_form_renderer';
 import type { Env, ProjectRow, SurveyRow } from './types';
 
@@ -85,25 +85,21 @@ function envWithPublicRows(input: {
     }),
   ];
   return {
-    DB: {
-      prepare(sql: string) {
-        return {
-          bind() {
-            return this;
-          },
-          async first<T>() {
-            if (sql.includes('FROM projects')) return project as T;
-            throw new Error(`Unexpected first query: ${sql}`);
-          },
-          async all<T>() {
-            if (sql.includes('FROM surveys')) return d1Result<T>(surveys as T[]);
-            if (sql.includes('FROM questions')) return d1Result<T>([]);
-            if (sql.includes('FROM question_visibility_rules')) return d1Result<T>([]);
-            throw new Error(`Unexpected all query: ${sql}`);
-          },
-        } as unknown as D1PreparedStatement;
+    DB: d1Database((sql: string) => ({
+      bind() {
+        return this;
       },
-    } as unknown as D1Database,
+      async first<T>() {
+        if (sql.includes('FROM projects')) return project as T;
+        throw new Error(`Unexpected first query: ${sql}`);
+      },
+      async all<T>() {
+        if (sql.includes('FROM surveys')) return d1Result<T>(surveys as T[]);
+        if (sql.includes('FROM questions')) return d1Result<T>([]);
+        if (sql.includes('FROM question_visibility_rules')) return d1Result<T>([]);
+        throw new Error(`Unexpected all query: ${sql}`);
+      },
+    } as unknown as D1PreparedStatement)),
     MEDIA_BUCKET: {} as R2Bucket,
     PUBLIC_BASE_URL: publicBaseUrl,
     PUBLIC_FORM_ASSET_BASE_URL: 'https://assets.example.com',

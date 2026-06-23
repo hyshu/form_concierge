@@ -78,6 +78,28 @@ export async function emptyD1Raw(_options?: { columnNames?: boolean }): Promise<
   return [];
 }
 
+export function d1Database(
+  prepare: (sql: string) => D1PreparedStatement = () => {
+    throw new Error('D1 prepare should not be used by this test');
+  },
+): D1Database {
+  return {
+    prepare,
+    async batch<T>() {
+      return [emptyD1Result<T>()];
+    },
+    async exec() {
+      return { count: 0, duration: 0 };
+    },
+    withSession() {
+      throw new Error('D1 sessions are not used by this test');
+    },
+    async dump() {
+      return new ArrayBuffer(0);
+    },
+  } satisfies D1Database;
+}
+
 function adminJsonRequest(path: string, method: 'POST' | 'PUT', body: unknown): Request {
   return new Request(`${adminApiBaseUrl}/${path}`, {
     method,

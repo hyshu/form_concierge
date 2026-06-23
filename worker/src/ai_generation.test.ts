@@ -4,6 +4,7 @@ import { integrationSettingsRow } from '../test/fixtures';
 import {
   adminPostRequest,
   assertHttpErrorAsync,
+  d1Database,
   emptyD1Raw,
   emptyD1Result,
   localizedText,
@@ -144,23 +145,7 @@ function d1WithSettings(): D1Database {
     raw: emptyD1Raw,
   };
 
-  return {
-    prepare() {
-      return statement;
-    },
-    async batch<T>() {
-      return [emptyD1Result<T>()];
-    },
-    async exec() {
-      return { count: 0, duration: 0 };
-    },
-    withSession() {
-      throw new Error('D1 sessions are not used by this test');
-    },
-    async dump() {
-      return new ArrayBuffer(0);
-    },
-  } satisfies D1Database;
+  return d1Database(() => statement);
 }
 
 async function assertProviderError(action: () => Promise<unknown>, message: string): Promise<void> {
