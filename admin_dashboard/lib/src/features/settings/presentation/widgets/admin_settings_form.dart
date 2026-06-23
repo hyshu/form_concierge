@@ -331,7 +331,7 @@ class _AiSection extends StatelessWidget {
                 !_selectedProviderClearFlag,
           ),
           const SizedBox(height: 16),
-          _LabeledControl(
+          HuxLabeledControl(
             label: context.tr('AI Provider'),
             child: HuxDropdown<AiProvider>(
               value: provider,
@@ -597,7 +597,7 @@ class _SmtpSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          _LabeledControl(
+          HuxLabeledControl(
             label: context.tr('Security'),
             child: HuxDropdown<SmtpSecureMode>(
               value: secureMode,
@@ -730,30 +730,6 @@ class _ResponsiveFields extends StatelessWidget {
           ],
         );
       },
-    );
-  }
-}
-
-class _LabeledControl extends StatelessWidget {
-  const _LabeledControl({required this.label, required this.child});
-
-  final String label;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-            color: HuxTokens.textSecondary(context),
-          ),
-        ),
-        const SizedBox(height: 6),
-        SizedBox(width: double.infinity, child: child),
-      ],
     );
   }
 }

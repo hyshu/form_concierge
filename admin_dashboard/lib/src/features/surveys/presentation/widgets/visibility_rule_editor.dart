@@ -3,6 +3,7 @@ import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:hux/hux.dart';
 
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/widgets/hux_states.dart';
 
 class VisibilityRuleEditor extends StatefulWidget {
   const VisibilityRuleEditor({
@@ -232,7 +233,7 @@ class _RuleRow extends StatelessWidget {
             children: [
               Expanded(
                 flex: 2,
-                child: _LabeledControl(
+                child: HuxLabeledControl(
                   label: context.tr('Question'),
                   child: HuxDropdown<int>(
                     value: source.id,
@@ -259,7 +260,7 @@ class _RuleRow extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _LabeledControl(
+                child: HuxLabeledControl(
                   label: context.tr('Condition'),
                   child: HuxDropdown<VisibilityOperator>(
                     value: operators.contains(rule.operator)
@@ -333,30 +334,6 @@ class _RuleRow extends StatelessWidget {
   }
 }
 
-class _LabeledControl extends StatelessWidget {
-  const _LabeledControl({required this.label, required this.child});
-
-  final String label;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-            color: HuxTokens.textSecondary(context),
-          ),
-        ),
-        const SizedBox(height: 6),
-        SizedBox(width: double.infinity, child: child),
-      ],
-    );
-  }
-}
-
 class _ValueField extends StatefulWidget {
   const _ValueField({
     required this.source,
@@ -409,7 +386,7 @@ class _ValueFieldState extends State<_ValueField> {
           .map((choice) => choice.id)
           .whereType<int>();
       final current = widget.value is int ? widget.value as int : null;
-      return _LabeledControl(
+      return HuxLabeledControl(
         label: context.tr('Choice'),
         child: HuxDropdown<int>(
           value: choiceIds.contains(current) ? current : null,
