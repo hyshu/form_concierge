@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { assertBadRequest, d1Meta, d1Result } from '../test/helpers';
+import { adminPostRequest, assertBadRequest, d1Meta, d1Result } from '../test/helpers';
 import { createQuestion, normalizeQuestionValidation, normalizeVisibilityConditionMode } from './admin_questions';
 import type { Env, ProjectRow, QuestionRow, SurveyRow } from './types';
 
@@ -48,7 +48,7 @@ test('createQuestion validates localized text against project supported locales'
     }),
   });
   const response = await createQuestion(
-    requestWithBody({
+    adminPostRequest('questions', {
       surveyId: 1,
       textTranslations: { ja: '質問' },
       type: 'textSingle',
@@ -63,13 +63,6 @@ test('createQuestion validates localized text against project supported locales'
   assert.equal(response.status, 201);
   assert.deepEqual(body.textTranslations, { ja: '質問' });
 });
-
-function requestWithBody(body: unknown): Request {
-  return new Request('https://example.com/api/admin/questions', {
-    method: 'POST',
-    body: JSON.stringify(body),
-  });
-}
 
 function envWithRows(rows: {
   project: ProjectRow;

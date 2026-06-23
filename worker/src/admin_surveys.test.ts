@@ -1,26 +1,43 @@
 import test from 'node:test';
 
-import { assertBadRequestAsync, emptyD1Result } from '../test/helpers';
+import {
+  adminPostRequest,
+  assertBadRequestAsync,
+  emptyD1Result,
+  localizedText,
+} from '../test/helpers';
 import { createSurveyWithQuestions } from './admin_surveys';
 import type { AdminContext, Env } from './types';
 
 test('createSurveyWithQuestions requires a questions array', async () => {
   await assertBadRequestAsync(
-    () => createSurveyWithQuestions(requestWithBody({ survey: {}, questions: null }), envUnused(), admin()),
+    () => createSurveyWithQuestions(
+      createSurveyWithQuestionsRequest({ survey: {}, questions: null }),
+      envUnused(),
+      admin(),
+    ),
     'questions must be an array',
   );
 });
 
 test('createSurveyWithQuestions requires a survey object', async () => {
   await assertBadRequestAsync(
-    () => createSurveyWithQuestions(requestWithBody({ survey: null, questions: [] }), envUnused(), admin()),
+    () => createSurveyWithQuestions(
+      createSurveyWithQuestionsRequest({ survey: null, questions: [] }),
+      envUnused(),
+      admin(),
+    ),
     'survey must be an object',
   );
 });
 
 test('createSurveyWithQuestions rejects non-object question items', async () => {
   await assertBadRequestAsync(
-    () => createSurveyWithQuestions(requestWithBody({ survey: {}, questions: [null] }), envUnused(), admin()),
+    () => createSurveyWithQuestions(
+      createSurveyWithQuestionsRequest({ survey: {}, questions: [null] }),
+      envUnused(),
+      admin(),
+    ),
     'questions[0] must be an object',
   );
 });
@@ -28,7 +45,7 @@ test('createSurveyWithQuestions rejects non-object question items', async () => 
 test('createSurveyWithQuestions validates choice translations shape by question type', async () => {
   await assertBadRequestAsync(
     () => createSurveyWithQuestions(
-      requestWithBody({
+      createSurveyWithQuestionsRequest({
         survey: {},
         questions: [{ ...questionInput('singleChoice'), choiceTranslations: [] }],
       }),
@@ -40,9 +57,11 @@ test('createSurveyWithQuestions validates choice translations shape by question 
 
   await assertBadRequestAsync(
     () => createSurveyWithQuestions(
-      requestWithBody({
+      createSurveyWithQuestionsRequest({
         survey: {},
-        questions: [{ ...questionInput('textSingle'), choiceTranslations: [localizedText('Choice')] }],
+        questions: [
+          { ...questionInput('textSingle'), choiceTranslations: [localizedText('Choice')] },
+        ],
       }),
       envUnused(),
       admin(),
@@ -51,11 +70,8 @@ test('createSurveyWithQuestions validates choice translations shape by question 
   );
 });
 
-function requestWithBody(body: unknown): Request {
-  return new Request('https://example.com/api/admin/surveys/with-questions', {
-    method: 'POST',
-    body: JSON.stringify(body),
-  });
+function createSurveyWithQuestionsRequest(body: unknown): Request {
+  return adminPostRequest('surveys/with-questions', body);
 }
 
 function questionInput(type: string): Record<string, unknown> {
@@ -70,17 +86,6 @@ function questionInput(type: string): Record<string, unknown> {
     maxSelected: null,
     visibilityConditionMode: 'all',
     choiceTranslations: [localizedText('Choice')],
-  };
-}
-
-function localizedText(value: string): Record<string, string> {
-  return {
-    en: value,
-    ja: value,
-    'zh-Hans': value,
-    'zh-Hant': value,
-    ko: value,
-    de: value,
   };
 }
 
