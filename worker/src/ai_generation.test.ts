@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { generateSurveyQuestions } from './ai_generation';
+import { emptyD1Raw, emptyD1Result } from './test_helpers';
 import type { Env, IntegrationSettingsRow } from './types';
 import { HttpError } from './utils';
 
@@ -133,12 +134,12 @@ function d1WithSettings(): D1Database {
       return integrationSettings() as T;
     },
     async run<T>() {
-      return unusedD1Result<T>();
+      return emptyD1Result<T>();
     },
     async all<T>() {
-      return unusedD1Result<T>();
+      return emptyD1Result<T>();
     },
-    raw: unusedRaw,
+    raw: emptyD1Raw,
   };
 
   return {
@@ -146,7 +147,7 @@ function d1WithSettings(): D1Database {
       return statement;
     },
     async batch<T>() {
-      return [unusedD1Result<T>()];
+      return [emptyD1Result<T>()];
     },
     async exec() {
       return { count: 0, duration: 0 };
@@ -158,28 +159,6 @@ function d1WithSettings(): D1Database {
       return new ArrayBuffer(0);
     },
   } satisfies D1Database;
-}
-
-function unusedRaw<T = unknown[]>(options: { columnNames: true }): Promise<[string[], ...T[]]>;
-function unusedRaw<T = unknown[]>(options?: { columnNames?: false }): Promise<T[]>;
-async function unusedRaw(_options?: { columnNames?: boolean }): Promise<unknown[]> {
-  return [];
-}
-
-function unusedD1Result<T>(): D1Result<T> {
-  return {
-    success: true,
-    meta: {
-      duration: 0,
-      size_after: 0,
-      rows_read: 0,
-      rows_written: 0,
-      last_row_id: 0,
-      changed_db: false,
-      changes: 0,
-    },
-    results: [],
-  };
 }
 
 function integrationSettings(): IntegrationSettingsRow {

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { createSurveyWithQuestions } from './admin_surveys';
+import { emptyD1Result } from './test_helpers';
 import type { AdminContext, Env } from './types';
 import { HttpError } from './utils';
 
@@ -120,7 +121,7 @@ function d1Unused(): D1Database {
       throw new Error('D1 should not be used by invalid question input tests');
     },
     async batch<T>() {
-      return [unusedD1Result<T>()];
+      return [emptyD1Result<T>()];
     },
     async exec() {
       return { count: 0, duration: 0 };
@@ -132,20 +133,4 @@ function d1Unused(): D1Database {
       return new ArrayBuffer(0);
     },
   } satisfies D1Database;
-}
-
-function unusedD1Result<T>(): D1Result<T> {
-  return {
-    success: true,
-    meta: {
-      duration: 0,
-      size_after: 0,
-      rows_read: 0,
-      rows_written: 0,
-      last_row_id: 0,
-      changed_db: false,
-      changes: 0,
-    },
-    results: [],
-  };
 }
