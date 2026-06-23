@@ -3,6 +3,7 @@ import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:hux/hux.dart';
 
 import '../../../../core/localization/app_localizations.dart';
+import 'localized_text_helpers.dart';
 
 class LocalizedTextFieldGroup extends StatelessWidget {
   const LocalizedTextFieldGroup({
@@ -164,49 +165,4 @@ class _LocalizedField extends StatelessWidget {
       validator: validator,
     );
   }
-}
-
-LocalizedText localizedTextFromControllers(
-  Map<String, TextEditingController> controllers, {
-  required String primaryLocale,
-  Iterable<String> locales = formContentLocaleCodes,
-}) {
-  final supportedLocales = orderedFormContentLocales(locales);
-
-  return LocalizedText({
-    for (final locale in supportedLocales)
-      locale: controllers[locale]?.text.trim() ?? '',
-  });
-}
-
-Map<String, TextEditingController> createLocalizedTextControllers([
-  LocalizedText? initialText,
-]) {
-  return {
-    for (final locale in formContentLocaleCodes)
-      locale: TextEditingController(text: initialText?.valueFor(locale) ?? ''),
-  };
-}
-
-void disposeLocalizedTextControllers(
-  Map<String, TextEditingController> controllers,
-) {
-  for (final controller in controllers.values) {
-    controller.dispose();
-  }
-}
-
-List<String> orderedFormContentLocales(Iterable<String> locales) {
-  final normalized = locales.map(normalizeFormContentLocale).toSet();
-  final ordered = formContentLocaleCodes
-      .where((locale) => normalized.contains(locale))
-      .toList(growable: false);
-  return ordered.isEmpty ? const [defaultFormContentLocale] : ordered;
-}
-
-String normalizedPrimaryLocale(String locale) {
-  final normalized = normalizeFormContentLocale(locale);
-  return formContentLocaleCodes.contains(normalized)
-      ? normalized
-      : defaultFormContentLocale;
 }

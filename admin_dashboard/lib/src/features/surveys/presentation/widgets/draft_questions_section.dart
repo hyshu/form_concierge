@@ -9,7 +9,7 @@ import '../models/draft_question.dart';
 import 'ai_prompt_input.dart';
 import 'ai_question_preview_dialog.dart';
 import 'draft_question_editor.dart';
-import 'localized_text_field_group.dart';
+import 'localized_text_helpers.dart';
 import 'question_form_dialog.dart';
 
 class DraftQuestionsSection extends StatelessWidget {

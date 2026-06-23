@@ -5,6 +5,7 @@ import 'package:hux/hux.dart';
 import '../../../../core/extensions/question_type_presentation.dart';
 import '../../../../core/localization/app_localizations.dart';
 import 'localized_text_field_group.dart';
+import 'localized_text_helpers.dart';
 
 /// Dialog for creating/editing a question.
 class QuestionFormDialog extends StatefulWidget {
@@ -295,7 +296,6 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
       widget.onSave(
         textTranslations: localizedTextFromControllers(
           _textControllers,
-          primaryLocale: widget.primaryLocale,
           locales: widget.locales,
         ),
         type: _type,
@@ -303,7 +303,6 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
         placeholderTranslations: _type.usesTextAnswer
             ? localizedTextFromControllers(
                 _placeholderControllers,
-                primaryLocale: widget.primaryLocale,
                 locales: widget.locales,
               )
             : LocalizedText.filled('', locales: widget.locales),

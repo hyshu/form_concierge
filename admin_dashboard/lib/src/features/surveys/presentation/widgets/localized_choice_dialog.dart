@@ -4,6 +4,7 @@ import 'package:hux/hux.dart';
 
 import '../../../../core/localization/app_localizations.dart';
 import 'localized_text_field_group.dart';
+import 'localized_text_helpers.dart';
 
 Future<void> showLocalizedChoiceDialog(
   BuildContext context, {
@@ -49,7 +50,6 @@ Future<void> showLocalizedChoiceDialog(
               onSubmit(
                 localizedTextFromControllers(
                   controllers,
-                  primaryLocale: primaryLocale,
                   locales: locales,
                 ),
               );

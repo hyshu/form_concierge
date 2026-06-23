@@ -4,7 +4,7 @@ import 'package:hux/hux.dart';
 
 import '../../../../core/forms/slug_auto_fill.dart';
 import '../../../../core/localization/app_localizations.dart';
-import '../../../surveys/presentation/widgets/localized_text_field_group.dart';
+import '../../../surveys/presentation/widgets/localized_text_helpers.dart';
 
 class ProjectForm extends StatefulWidget {
   final Project? existingProject;
