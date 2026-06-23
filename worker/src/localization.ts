@@ -52,8 +52,11 @@ export function requireLocalizedText(
   return localized;
 }
 
-export function defaultLocalizedText(value: string): LocalizedText {
-  return Object.fromEntries(FORM_CONTENT_LOCALES.map((locale) => [locale, value]));
+export function defaultLocalizedText(
+  value: string,
+  locales: readonly string[] = FORM_CONTENT_LOCALES,
+): LocalizedText {
+  return Object.fromEntries(locales.map((locale) => [locale, value]));
 }
 
 export function defaultLocalizedTextJson(value: string): string {

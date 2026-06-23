@@ -18,8 +18,8 @@ import {
   updateOrder,
 } from './utils';
 import { choiceToJson, questionToJson } from './serializers';
-import { mustChoice, mustQuestion, mustSurvey } from './admin_records';
-import { FORM_CONTENT_LOCALES, defaultLocalizedText, requireLocalizedText } from './localization';
+import { mustChoice, mustProject, mustQuestion, mustSurvey, projectSupportedLocales } from './admin_records';
+import { defaultLocalizedText, requireLocalizedText } from './localization';
 
 type InsertQuestionInput = {
   surveyId: number;
@@ -39,7 +39,7 @@ type InsertQuestionInput = {
 export async function createQuestion(request: Request, env: Env): Promise<Response> {
   const body = await readJson(request);
   const surveyId = requiredInteger(body.surveyId, 'surveyId', { min: 1 });
-  await mustSurvey(env.DB, surveyId);
+  const locales = await surveySupportedLocales(env.DB, surveyId);
   const type = normalizeQuestionType(body.type);
   const validation = normalizeQuestionValidation(body, type);
   const max = await env.DB.prepare(
@@ -47,21 +47,21 @@ export async function createQuestion(request: Request, env: Env): Promise<Respon
   ).bind(surveyId).first<{ max_order: number | null }>();
   const question = await insertQuestion(env.DB, {
     surveyId,
-    textTranslations: requireLocalizedText(body.textTranslations, 'textTranslations', FORM_CONTENT_LOCALES),
+    textTranslations: requireLocalizedText(body.textTranslations, 'textTranslations', locales),
     type,
     orderIndex: (max?.max_order ?? -1) + 1,
     isRequired: optionalBoolean(body.isRequired, 'isRequired') ?? true,
     placeholderTranslations: requireLocalizedText(
       body.placeholderTranslations,
       'placeholderTranslations',
-      FORM_CONTENT_LOCALES,
+      locales,
       { allowEmpty: true },
     ),
     ...validation,
     visibilityConditionMode: normalizeVisibilityConditionMode(body.visibilityConditionMode),
     choiceTranslations: [
-      defaultLocalizedText('Choice 1'),
-      defaultLocalizedText('Choice 2'),
+      defaultLocalizedText('Choice 1', locales),
+      defaultLocalizedText('Choice 2', locales),
     ],
   });
   return json(questionToJson(question), 201);
@@ -96,6 +96,7 @@ export async function insertQuestion(db: D1Database, input: InsertQuestionInput)
 
 export async function updateQuestion(request: Request, env: Env, questionId: number): Promise<Response> {
   const existing = await mustQuestion(env.DB, questionId);
+  const locales = await surveySupportedLocales(env.DB, existing.survey_id);
   const body = await readJson(request);
   const type = normalizeQuestionType(body.type ?? existing.type);
   const validation = normalizeQuestionValidation(
@@ -115,14 +116,14 @@ export async function updateQuestion(request: Request, env: Env, questionId: num
      WHERE id = ?
      RETURNING *`,
   ).bind(
-    JSON.stringify(requireLocalizedText(body.textTranslations, 'textTranslations', FORM_CONTENT_LOCALES)),
+    JSON.stringify(requireLocalizedText(body.textTranslations, 'textTranslations', locales)),
     type,
     optionalInteger(body.orderIndex, 'orderIndex', { min: 0 }) ?? existing.order_index,
     boolToInt(optionalBoolean(body.isRequired, 'isRequired') ?? (existing.is_required === 1)),
     JSON.stringify(requireLocalizedText(
       body.placeholderTranslations,
       'placeholderTranslations',
-      FORM_CONTENT_LOCALES,
+      locales,
       { allowEmpty: true },
     )),
     validation.minLength,
@@ -227,6 +228,7 @@ export async function getQuestion(env: Env, questionId: number): Promise<Respons
 export async function createChoice(request: Request, env: Env): Promise<Response> {
   const body = await readJson(request);
   const question = await mustQuestion(env.DB, requiredInteger(body.questionId, 'questionId', { min: 1 }));
+  const locales = await surveySupportedLocales(env.DB, question.survey_id);
   if (!isChoiceQuestionType(question.type)) {
     throw new HttpError(400, 'Only choice questions can have choices');
   }
@@ -239,7 +241,7 @@ export async function createChoice(request: Request, env: Env): Promise<Response
      RETURNING *`,
   ).bind(
     question.id,
-    JSON.stringify(requireLocalizedText(body.textTranslations, 'textTranslations', FORM_CONTENT_LOCALES)),
+    JSON.stringify(requireLocalizedText(body.textTranslations, 'textTranslations', locales)),
     (max?.max_order ?? -1) + 1,
     optionalString(body.value, 'value'),
   ).first<ChoiceRow>();
@@ -248,16 +250,24 @@ export async function createChoice(request: Request, env: Env): Promise<Response
 
 export async function updateChoice(request: Request, env: Env, choiceId: number): Promise<Response> {
   const existing = await mustChoice(env.DB, choiceId);
+  const question = await mustQuestion(env.DB, existing.question_id);
+  const locales = await surveySupportedLocales(env.DB, question.survey_id);
   const body = await readJson(request);
   const row = await env.DB.prepare(
     `UPDATE choices SET text_translations = ?, order_index = ?, value = ? WHERE id = ? RETURNING *`,
   ).bind(
-    JSON.stringify(requireLocalizedText(body.textTranslations, 'textTranslations', FORM_CONTENT_LOCALES)),
+    JSON.stringify(requireLocalizedText(body.textTranslations, 'textTranslations', locales)),
     optionalInteger(body.orderIndex, 'orderIndex', { min: 0 }) ?? existing.order_index,
     optionalString(body.value ?? existing.value, 'value'),
     choiceId,
   ).first<ChoiceRow>();
   return json(choiceToJson(requiredRow(row, 'Choice')));
+}
+
+async function surveySupportedLocales(db: D1Database, surveyId: number): Promise<string[]> {
+  const survey = await mustSurvey(db, surveyId);
+  const project = await mustProject(db, survey.project_id);
+  return projectSupportedLocales(project);
 }
 
 export async function deleteChoice(env: Env, choiceId: number): Promise<Response> {

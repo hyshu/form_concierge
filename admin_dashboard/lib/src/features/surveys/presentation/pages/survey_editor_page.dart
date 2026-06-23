@@ -30,6 +30,10 @@ class SurveyEditorPage extends RearchConsumer {
     final questionManager = use(questionListManagerCapsule);
     final surveyListManager = use(surveyListCapsule);
     final controllers = use(surveyFormControllersCapsule);
+    final surveyFormKey = use.memo(
+      () => GlobalKey<SurveyFormWidgetState>(),
+      [surveyId, projectId],
+    );
     final publicConfig = use(publicConfigCapsule);
     final client = use(clientCapsule);
 
@@ -85,6 +89,7 @@ class SurveyEditorPage extends RearchConsumer {
     final project = formState.project;
     final activeDefaultLocale =
         project?.defaultLocale ?? defaultFormContentLocale;
+    final activeLocales = project?.supportedLocales ?? formContentLocaleCodes;
     if (isNewSurvey && (projectId == null || project == null)) {
       return HuxAdminShell(
         title: context.tr('Project not found'),
@@ -175,25 +180,42 @@ class SurveyEditorPage extends RearchConsumer {
                 formManager,
                 surveyListManager,
                 controllers,
+                surveyFormKey,
                 formState,
                 survey,
                 isNewSurvey,
+                activeDefaultLocale,
+                activeLocales,
               ),
-              const SizedBox(height: 48),
-              if (isNewSurvey)
+              const SizedBox(height: 32),
+              if (isNewSurvey) ...[
                 DraftQuestionsSection(
                   formManager: formManager,
                   formState: formState,
                   aiGenerationEnabled: aiGenerationEnabled,
                   primaryLocale: activeDefaultLocale,
-                )
-              else
+                  locales: activeLocales,
+                ),
+                const SizedBox(height: 24),
+                HuxButton(
+                  onPressed: formState.isSaving
+                      ? null
+                      : () {
+                          surveyFormKey.currentState?.submit();
+                        },
+                  isLoading: formState.isSaving,
+                  width: HuxButtonWidth.expand,
+                  icon: LucideIcons.plus,
+                  child: Text(context.tr('Create Survey')),
+                ),
+              ] else
                 QuestionList(
                   surveyId: surveyId!,
                   questions: questionState!.questions,
                   choicesByQuestion: questionState.choicesByQuestion,
                   visibilityRules: questionState.visibilityRules,
                   primaryLocale: activeDefaultLocale,
+                  locales: activeLocales,
                   isLoading: questionState.isLoading,
                   enabled: canEdit,
                   onAddQuestion:
@@ -307,18 +329,22 @@ class SurveyEditorPage extends RearchConsumer {
     SurveyFormManager formManager,
     SurveyListManager surveyListManager,
     SurveyFormControllers controllers,
+    GlobalKey<SurveyFormWidgetState> surveyFormKey,
     SurveyFormState formState,
     Survey? survey,
     bool isNewSurvey,
+    String primaryLocale,
+    Iterable<String> locales,
   ) {
-    final project = formState.project;
     return SurveyForm(
+      key: surveyFormKey,
       controllers: controllers,
       existingSurvey: survey,
       isSaving: formState.isSaving,
       error: formState.error,
-      primaryLocale: project?.defaultLocale ?? defaultFormContentLocale,
-      locales: project?.supportedLocales ?? formContentLocaleCodes,
+      primaryLocale: primaryLocale,
+      locales: locales,
+      showSubmitButton: !isNewSurvey,
       onSave:
           ({
             required LocalizedText titleTranslations,

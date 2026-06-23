@@ -233,12 +233,26 @@ class _ProjectCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              HuxButton(
-                onPressed: onEditProject,
-                variant: HuxButtonVariant.secondary,
-                size: HuxButtonSize.small,
-                icon: LucideIcons.settings,
-                child: Text(context.tr('Settings')),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                alignment: WrapAlignment.end,
+                children: [
+                  HuxButton(
+                    onPressed: canWrite ? onCreateSurvey : null,
+                    variant: HuxButtonVariant.secondary,
+                    size: HuxButtonSize.small,
+                    icon: LucideIcons.plus,
+                    child: Text(context.tr('Create Survey')),
+                  ),
+                  HuxButton(
+                    onPressed: onEditProject,
+                    variant: HuxButtonVariant.secondary,
+                    size: HuxButtonSize.small,
+                    icon: LucideIcons.settings,
+                    child: Text(context.tr('Settings')),
+                  ),
+                ],
               ),
             ],
           ),
@@ -263,9 +277,15 @@ class _ProjectCard extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           if (item.surveys.isEmpty)
-            Text(
-              context.tr('No surveys yet'),
-              style: TextStyle(color: HuxTokens.textSecondary(context)),
+            HuxEmptyState(
+              icon: LucideIcons.circleHelp,
+              title: context.tr('No surveys yet'),
+              message: context.tr('Create your first survey to get started'),
+              action: HuxButton(
+                onPressed: canWrite ? onCreateSurvey : null,
+                icon: LucideIcons.plus,
+                child: Text(context.tr('Create Survey')),
+              ),
             )
           else
             Column(
@@ -293,14 +313,6 @@ class _ProjectCard extends StatelessWidget {
                   ),
               ],
             ),
-          const SizedBox(height: 16),
-          HuxButton(
-            onPressed: canWrite ? onCreateSurvey : null,
-            variant: HuxButtonVariant.secondary,
-            width: HuxButtonWidth.expand,
-            icon: LucideIcons.plus,
-            child: Text(context.tr('Create Survey')),
-          ),
         ],
       ),
     );

@@ -9,6 +9,7 @@ class VisibilityRuleEditor extends StatefulWidget {
     super.key,
     required this.surveyId,
     required this.targetQuestion,
+    required this.primaryLocale,
     required this.sourceQuestions,
     required this.choicesByQuestion,
     required this.rules,
@@ -18,6 +19,7 @@ class VisibilityRuleEditor extends StatefulWidget {
 
   final int surveyId;
   final Question targetQuestion;
+  final String primaryLocale;
   final List<Question> sourceQuestions;
   final Map<int, List<Choice>> choicesByQuestion;
   final List<QuestionVisibilityRule> rules;
@@ -110,6 +112,7 @@ class _VisibilityRuleEditorState extends State<VisibilityRuleEditor> {
               key: ValueKey('visibility_rule_${entry.key}'),
               surveyId: widget.surveyId,
               rule: entry.value,
+              primaryLocale: widget.primaryLocale,
               sourceQuestions: widget.sourceQuestions,
               choicesByQuestion: widget.choicesByQuestion,
               enabled: widget.enabled && !_isSaving,
@@ -193,6 +196,7 @@ class _RuleRow extends StatelessWidget {
     super.key,
     required this.surveyId,
     required this.rule,
+    required this.primaryLocale,
     required this.sourceQuestions,
     required this.choicesByQuestion,
     required this.enabled,
@@ -202,6 +206,7 @@ class _RuleRow extends StatelessWidget {
 
   final int surveyId;
   final QuestionVisibilityRule rule;
+  final String primaryLocale;
   final List<Question> sourceQuestions;
   final Map<int, List<Choice>> choicesByQuestion;
   final bool enabled;
@@ -238,7 +243,7 @@ class _RuleRow extends StatelessWidget {
                         HuxDropdownItem(
                           value: question.id!,
                           child: Text(
-                            question.text,
+                            question.textFor(primaryLocale),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
@@ -303,6 +308,7 @@ class _RuleRow extends StatelessWidget {
               source: source,
               value: rule.value,
               choices: choicesByQuestion[source.id] ?? const [],
+              primaryLocale: primaryLocale,
               enabled: enabled,
               onChanged: (value) => onChanged(rule.copyWith(value: value)),
             ),
@@ -356,6 +362,7 @@ class _ValueField extends StatefulWidget {
     required this.source,
     required this.value,
     required this.choices,
+    required this.primaryLocale,
     required this.enabled,
     required this.onChanged,
   });
@@ -363,6 +370,7 @@ class _ValueField extends StatefulWidget {
   final Question source;
   final Object? value;
   final List<Choice> choices;
+  final String primaryLocale;
   final bool enabled;
   final ValueChanged<Object?> onChanged;
 
@@ -409,7 +417,10 @@ class _ValueFieldState extends State<_ValueField> {
           enabled: widget.enabled,
           items: [
             for (final choice in widget.choices)
-              HuxDropdownItem(value: choice.id!, child: Text(choice.text)),
+              HuxDropdownItem(
+                value: choice.id!,
+                child: Text(choice.textFor(widget.primaryLocale)),
+              ),
           ],
           onChanged: widget.onChanged,
         ),

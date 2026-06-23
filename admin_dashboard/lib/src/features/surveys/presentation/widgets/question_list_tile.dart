@@ -11,6 +11,7 @@ class QuestionListTile extends StatelessWidget {
   final Question question;
   final List<Choice> choices;
   final String primaryLocale;
+  final Iterable<String> locales;
   final List<QuestionVisibilityRule> visibilityRules;
   final Widget visibilityRuleEditor;
   final bool enabled;
@@ -26,6 +27,7 @@ class QuestionListTile extends StatelessWidget {
     required this.question,
     required this.choices,
     this.primaryLocale = defaultFormContentLocale,
+    this.locales = formContentLocaleCodes,
     required this.visibilityRules,
     required this.visibilityRuleEditor,
     required this.enabled,
@@ -140,6 +142,7 @@ class QuestionListTile extends StatelessWidget {
               ChoiceEditor(
                 choices: choices,
                 primaryLocale: primaryLocale,
+                locales: locales,
                 enabled: enabled,
                 onAdd: onAddChoice,
                 onUpdate: onUpdateChoice,

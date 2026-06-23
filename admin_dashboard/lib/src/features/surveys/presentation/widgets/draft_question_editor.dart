@@ -11,6 +11,7 @@ import 'localized_text_field_group.dart';
 class DraftQuestionEditor extends StatelessWidget {
   final List<DraftQuestion> questions;
   final String primaryLocale;
+  final Iterable<String> locales;
   final bool enabled;
   final void Function(DraftQuestion question) onEdit;
   final void Function(DraftQuestion question) onDelete;
@@ -30,6 +31,7 @@ class DraftQuestionEditor extends StatelessWidget {
     super.key,
     required this.questions,
     this.primaryLocale = defaultFormContentLocale,
+    this.locales = formContentLocaleCodes,
     required this.enabled,
     required this.onEdit,
     required this.onDelete,
@@ -58,6 +60,7 @@ class DraftQuestionEditor extends StatelessWidget {
           index: index,
           question: question,
           primaryLocale: primaryLocale,
+          locales: locales,
           enabled: enabled,
           onEdit: () => onEdit(question),
           onDelete: () => onDelete(question),
@@ -75,6 +78,7 @@ class _DraftQuestionTile extends StatefulWidget {
   final int index;
   final DraftQuestion question;
   final String primaryLocale;
+  final Iterable<String> locales;
   final bool enabled;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
@@ -88,6 +92,7 @@ class _DraftQuestionTile extends StatefulWidget {
     required this.index,
     required this.question,
     required this.primaryLocale,
+    required this.locales,
     required this.enabled,
     required this.onEdit,
     required this.onDelete,
@@ -205,6 +210,7 @@ class _DraftQuestionTileState extends State<_DraftQuestionTile> {
             _ChoicesSection(
               choices: widget.question.choices,
               primaryLocale: widget.primaryLocale,
+              locales: widget.locales,
               enabled: widget.enabled,
               onAdd: widget.onAddChoice,
               onUpdate: widget.onUpdateChoice,
@@ -219,6 +225,7 @@ class _DraftQuestionTileState extends State<_DraftQuestionTile> {
 class _ChoicesSection extends StatelessWidget {
   final List<DraftChoice> choices;
   final String primaryLocale;
+  final Iterable<String> locales;
   final bool enabled;
   final void Function(LocalizedText textTranslations) onAdd;
   final void Function(DraftChoice choice, LocalizedText textTranslations)
@@ -228,6 +235,7 @@ class _ChoicesSection extends StatelessWidget {
   const _ChoicesSection({
     required this.choices,
     required this.primaryLocale,
+    required this.locales,
     required this.enabled,
     required this.onAdd,
     required this.onUpdate,
@@ -251,6 +259,7 @@ class _ChoicesSection extends StatelessWidget {
             (choice) => _DraftChoiceTile(
               choice: choice,
               primaryLocale: primaryLocale,
+              locales: locales,
               enabled: enabled,
               onUpdate: (textTranslations) =>
                   onUpdate(choice, textTranslations),
@@ -271,6 +280,7 @@ class _ChoicesSection extends StatelessWidget {
                 context,
                 title: context.tr('Add Choice'),
                 primaryLocale: primaryLocale,
+                locales: locales,
                 onSubmit: onAdd,
               ),
               variant: HuxButtonVariant.outline,
@@ -286,6 +296,7 @@ class _ChoicesSection extends StatelessWidget {
 class _DraftChoiceTile extends StatelessWidget {
   final DraftChoice choice;
   final String primaryLocale;
+  final Iterable<String> locales;
   final bool enabled;
   final void Function(LocalizedText textTranslations) onUpdate;
   final VoidCallback onDelete;
@@ -293,6 +304,7 @@ class _DraftChoiceTile extends StatelessWidget {
   const _DraftChoiceTile({
     required this.choice,
     required this.primaryLocale,
+    required this.locales,
     required this.enabled,
     required this.onUpdate,
     required this.onDelete,
@@ -343,6 +355,7 @@ class _DraftChoiceTile extends StatelessWidget {
       context,
       title: context.tr('Edit Choice'),
       primaryLocale: primaryLocale,
+      locales: locales,
       initialText: choice.textTranslations,
       onSubmit: onUpdate,
     );
@@ -353,6 +366,7 @@ void _showChoiceDialog(
   BuildContext context, {
   required String title,
   required String primaryLocale,
+  required Iterable<String> locales,
   required void Function(LocalizedText textTranslations) onSubmit,
   LocalizedText? initialText,
 }) {
@@ -375,6 +389,7 @@ void _showChoiceDialog(
             child: LocalizedTextFieldGroup(
               controllers: controllers,
               primaryLocale: primaryLocale,
+              locales: locales,
               labelText: context.tr('Choice text'),
               requiredMessage: context.tr('Choice text is required'),
               autofocus: initialText == null,
@@ -395,6 +410,7 @@ void _showChoiceDialog(
                 localizedTextFromControllers(
                   controllers,
                   primaryLocale: primaryLocale,
+                  locales: locales,
                 ),
               );
               Navigator.pop(context);
