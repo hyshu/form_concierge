@@ -17,7 +17,10 @@ async function enableFlutterSemantics(page) {
 
 async function typeIntoFlutterInput(page, locator, value) {
   await expect(locator).toBeVisible();
-  await locator.fill(value);
+  await locator.click();
+  await page.keyboard.press('Control+A');
+  await page.keyboard.press('Backspace');
+  await page.keyboard.insertText(value);
   await expect(locator).toHaveValue(value);
 }
 
