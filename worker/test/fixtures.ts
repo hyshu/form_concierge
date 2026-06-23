@@ -1,6 +1,7 @@
 import type {
   AdminRow,
   AnswerRow,
+  IntegrationSettingsRow,
   ProjectRow,
   QuestionRow,
   ResponseRow,
@@ -25,6 +26,28 @@ export function answerRow(overrides: Partial<AnswerRow> = {}): AnswerRow {
     question_id: 1,
     text_value: null,
     selected_choice_ids: null,
+    ...overrides,
+  };
+}
+
+export function integrationSettingsRow(
+  overrides: Partial<IntegrationSettingsRow> = {},
+): IntegrationSettingsRow {
+  return {
+    id: 1,
+    ai_provider: 'gemini',
+    gemini_api_key: null,
+    openai_api_key: null,
+    claude_api_key: null,
+    cerebras_api_key: null,
+    smtp_host: 'smtp.example.com',
+    smtp_port: 587,
+    smtp_username: null,
+    smtp_password: null,
+    smtp_from_email: 'forms@example.com',
+    smtp_from_name: null,
+    smtp_secure_mode: 'starttls',
+    updated_at: '2026-01-01T00:00:00.000Z',
     ...overrides,
   };
 }

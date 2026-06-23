@@ -1,5 +1,6 @@
 import test from 'node:test';
 
+import { integrationSettingsRow } from '../test/fixtures';
 import { adminPutRequest, assertHttpError, assertHttpErrorAsync } from '../test/helpers';
 import {
   getAdminIntegrationSettings,
@@ -64,12 +65,14 @@ test('updateAdminIntegrationSettings rejects coerced settings values', async () 
 
 test('stored integration setting enums fail closed', async () => {
   await assertHttpErrorAsync(
-    () => getAdminIntegrationSettings(envWithSettings(settingsRow({ ai_provider: 'bedrock' }))),
+    () => getAdminIntegrationSettings(envWithSettings(
+      integrationSettingsRow({ ai_provider: 'bedrock' }),
+    )),
     500,
     'Invalid stored AI provider',
   );
   assertHttpError(
-    () => requireSmtpSettings(settingsRow({ smtp_secure_mode: 'ssl' })),
+    () => requireSmtpSettings(integrationSettingsRow({ smtp_secure_mode: 'ssl' })),
     500,
     'Invalid stored SMTP secure mode',
   );
@@ -99,25 +102,5 @@ function envWithSettings(row: IntegrationSettingsRow | null): Env {
     MEDIA_BUCKET: {} as R2Bucket,
     PUBLIC_BASE_URL: 'https://api.example.com',
     PUBLIC_FORM_ASSET_BASE_URL: 'https://assets.example.com',
-  };
-}
-
-function settingsRow(overrides: Partial<IntegrationSettingsRow> = {}): IntegrationSettingsRow {
-  return {
-    id: 1,
-    ai_provider: 'gemini',
-    gemini_api_key: null,
-    openai_api_key: null,
-    claude_api_key: null,
-    cerebras_api_key: null,
-    smtp_host: 'smtp.example.com',
-    smtp_port: 587,
-    smtp_username: null,
-    smtp_password: null,
-    smtp_from_email: 'forms@example.com',
-    smtp_from_name: null,
-    smtp_secure_mode: 'starttls',
-    updated_at: '2026-01-01T00:00:00.000Z',
-    ...overrides,
   };
 }
