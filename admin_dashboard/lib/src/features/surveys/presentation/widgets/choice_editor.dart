@@ -3,7 +3,7 @@ import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:hux/hux.dart';
 
 import '../../../../core/localization/app_localizations.dart';
-import '../../../../core/widgets/hux_icon_tooltip_button.dart';
+import '../../../../core/widgets/hux_icon_action_button.dart';
 import 'localized_choice_dialog.dart';
 
 /// Widget for editing question choices.
@@ -107,16 +107,16 @@ class _ChoiceTile extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(child: Text(choice.textFor(primaryLocale))),
           if (enabled) ...[
-            HuxIconTooltipButton(
+            HuxIconActionButton(
               tooltip: context.tr('Edit'),
               onPressed: () => _showEditDialog(context),
               icon: LucideIcons.pencil,
             ),
-            HuxIconTooltipButton(
+            HuxIconActionButton(
               tooltip: context.tr('Delete'),
               onPressed: onDelete,
               icon: LucideIcons.trash2,
-              textColor: HuxTokens.textDestructive(context),
+              destructive: true,
             ),
           ],
         ],

@@ -4,7 +4,7 @@ import 'package:hux/hux.dart';
 
 import '../../../../core/extensions/question_type_presentation.dart';
 import '../../../../core/localization/app_localizations.dart';
-import '../../../../core/widgets/hux_icon_tooltip_button.dart';
+import '../../../../core/widgets/hux_icon_action_button.dart';
 import '../models/draft_question.dart';
 import 'localized_choice_dialog.dart';
 
@@ -170,7 +170,7 @@ class _DraftQuestionTileState extends State<_DraftQuestionTile> {
                 ),
               ),
               if (widget.question.hasChoices)
-                HuxIconTooltipButton(
+                HuxIconActionButton(
                   tooltip: context.tr('Choices'),
                   onPressed: () => setState(() => _isExpanded = !_isExpanded),
                   icon: _isExpanded
@@ -178,16 +178,16 @@ class _DraftQuestionTileState extends State<_DraftQuestionTile> {
                       : LucideIcons.chevronDown,
                 ),
               if (widget.enabled) ...[
-                HuxIconTooltipButton(
+                HuxIconActionButton(
                   tooltip: context.tr('Edit'),
                   onPressed: widget.onEdit,
                   icon: LucideIcons.pencil,
                 ),
-                HuxIconTooltipButton(
+                HuxIconActionButton(
                   tooltip: context.tr('Delete'),
                   onPressed: widget.onDelete,
                   icon: LucideIcons.trash2,
-                  textColor: HuxTokens.textDestructive(context),
+                  destructive: true,
                 ),
               ],
             ],
@@ -309,16 +309,16 @@ class _DraftChoiceTile extends StatelessWidget {
             child: Text(choice.textTranslations.valueFor(primaryLocale)),
           ),
           if (enabled) ...[
-            HuxIconTooltipButton(
+            HuxIconActionButton(
               tooltip: context.tr('Edit'),
               onPressed: () => _showEditDialog(context),
               icon: LucideIcons.pencil,
             ),
-            HuxIconTooltipButton(
+            HuxIconActionButton(
               tooltip: context.tr('Delete'),
               onPressed: onDelete,
               icon: LucideIcons.trash2,
-              textColor: HuxTokens.textDestructive(context),
+              destructive: true,
             ),
           ],
         ],
