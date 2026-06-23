@@ -116,42 +116,54 @@ class _AdminSettingsFormState extends State<AdminSettingsForm> {
   }
 
   void _setClearGeminiKey(bool value) {
-    setState(() {
-      _clearGeminiKey = value;
-      _hasChanges = true;
-      if (value) _geminiKeyController.clear();
-    });
+    _setClearSecret(
+      value: value,
+      updateFlag: (next) => _clearGeminiKey = next,
+      controller: _geminiKeyController,
+    );
   }
 
   void _setClearOpenaiKey(bool value) {
-    setState(() {
-      _clearOpenaiKey = value;
-      _hasChanges = true;
-      if (value) _openaiKeyController.clear();
-    });
+    _setClearSecret(
+      value: value,
+      updateFlag: (next) => _clearOpenaiKey = next,
+      controller: _openaiKeyController,
+    );
   }
 
   void _setClearClaudeKey(bool value) {
-    setState(() {
-      _clearClaudeKey = value;
-      _hasChanges = true;
-      if (value) _claudeKeyController.clear();
-    });
+    _setClearSecret(
+      value: value,
+      updateFlag: (next) => _clearClaudeKey = next,
+      controller: _claudeKeyController,
+    );
   }
 
   void _setClearCerebrasKey(bool value) {
-    setState(() {
-      _clearCerebrasKey = value;
-      _hasChanges = true;
-      if (value) _cerebrasKeyController.clear();
-    });
+    _setClearSecret(
+      value: value,
+      updateFlag: (next) => _clearCerebrasKey = next,
+      controller: _cerebrasKeyController,
+    );
   }
 
   void _setClearSmtpPassword(bool value) {
+    _setClearSecret(
+      value: value,
+      updateFlag: (next) => _clearSmtpPassword = next,
+      controller: _smtpPasswordController,
+    );
+  }
+
+  void _setClearSecret({
+    required bool value,
+    required ValueChanged<bool> updateFlag,
+    required TextEditingController controller,
+  }) {
     setState(() {
-      _clearSmtpPassword = value;
+      updateFlag(value);
       _hasChanges = true;
-      if (value) _smtpPasswordController.clear();
+      if (value) controller.clear();
     });
   }
 
