@@ -56,12 +56,13 @@ test('admin dashboard logs in and renders seeded project data', async ({ page })
     page.locator('input[autocomplete="email"]'),
     seed.adminEmail,
   );
+  const passwordInput = page.locator('input[type="password"]');
   await typeIntoFlutterInput(
     page,
-    page.locator('input[type="password"]'),
+    passwordInput,
     seed.adminPassword,
   );
-  await page.keyboard.press('Enter');
+  await passwordInput.press('Enter');
 
   await loginResponsePromise;
   const projectResponse = await projectResponsePromise;
