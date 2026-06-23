@@ -14,6 +14,7 @@ const _defaultProjectSlug = String.fromEnvironment(
   'FORM_CONCIERGE_PROJECT_SLUG',
   defaultValue: 'demo-project',
 );
+const _defaultSurveySlug = String.fromEnvironment('FORM_CONCIERGE_SURVEY_SLUG');
 const _defaultSurveyId = int.fromEnvironment('FORM_CONCIERGE_SURVEY_ID');
 const _defaultLocale = String.fromEnvironment(
   'FORM_CONCIERGE_LOCALE',
@@ -21,6 +22,7 @@ const _defaultLocale = String.fromEnvironment(
 );
 
 const _projectSlugKey = 'form_concierge.flutter_mobile_full.project_slug';
+const _surveySlugKey = 'form_concierge.flutter_mobile_full.survey_slug';
 const _surveyIdKey = 'form_concierge.flutter_mobile_full.survey_id';
 const _appLocaleKey = 'form_concierge.flutter_mobile_full.app_locale';
 const _formLocaleKey = 'form_concierge.flutter_mobile_full.form_locale';
@@ -120,6 +122,7 @@ class FlutterMobileFullHomePage extends StatefulWidget {
 class _FlutterMobileFullHomePageState extends State<FlutterMobileFullHomePage> {
   late final Client _client;
   late final TextEditingController _projectSlugController;
+  late final TextEditingController _surveySlugController;
   late final TextEditingController _surveyIdController;
   late String _formLocale;
   String? _anonymousToken;
@@ -138,6 +141,9 @@ class _FlutterMobileFullHomePageState extends State<FlutterMobileFullHomePage> {
     _projectSlugController = TextEditingController(
       text: widget.prefs.getString(_projectSlugKey) ?? _defaultProjectSlug,
     );
+    _surveySlugController = TextEditingController(
+      text: widget.prefs.getString(_surveySlugKey) ?? _defaultSurveySlug,
+    );
     _surveyIdController = TextEditingController(text: _initialSurveyIdText());
     _formLocale = _normalizedFormLocale(
       widget.prefs.getString(_formLocaleKey) ?? _defaultLocale,
@@ -154,6 +160,7 @@ class _FlutterMobileFullHomePageState extends State<FlutterMobileFullHomePage> {
   @override
   void dispose() {
     _projectSlugController.dispose();
+    _surveySlugController.dispose();
     _surveyIdController.dispose();
     _client.close();
     super.dispose();
@@ -195,6 +202,16 @@ class _FlutterMobileFullHomePageState extends State<FlutterMobileFullHomePage> {
                   controller: _projectSlugController,
                   decoration: InputDecoration(
                     labelText: strings.text('project_slug'),
+                    border: const OutlineInputBorder(),
+                  ),
+                  textInputAction: TextInputAction.next,
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _surveySlugController,
+                  decoration: InputDecoration(
+                    labelText: strings.text('survey_slug'),
+                    helperText: strings.text('survey_slug_helper'),
                     border: const OutlineInputBorder(),
                   ),
                   textInputAction: TextInputAction.next,
@@ -341,6 +358,12 @@ class _FlutterMobileFullHomePageState extends State<FlutterMobileFullHomePage> {
     if (projectSlug.isNotEmpty) {
       await widget.prefs.setString(_projectSlugKey, projectSlug);
     }
+    final surveySlug = _surveySlugController.text.trim();
+    if (surveySlug.isEmpty) {
+      await widget.prefs.remove(_surveySlugKey);
+    } else {
+      await widget.prefs.setString(_surveySlugKey, surveySlug);
+    }
     await widget.prefs.setString(_formLocaleKey, _formLocale);
     final surveyId = int.tryParse(_surveyIdController.text.trim());
     if (surveyId == null) {
@@ -364,6 +387,9 @@ class _FlutterMobileFullHomePageState extends State<FlutterMobileFullHomePage> {
         builder: (context) => SurveyScreen(
           client: _client,
           projectSlug: projectSlug,
+          surveySlug: _surveySlugController.text.trim().isEmpty
+              ? null
+              : _surveySlugController.text.trim(),
           surveyId: int.tryParse(_surveyIdController.text.trim()),
           locale: _formLocale,
           anonymousToken: _anonymousToken,
@@ -414,6 +440,7 @@ class _FlutterMobileFullHomePageState extends State<FlutterMobileFullHomePage> {
 
   Future<void> _clearLocalState() async {
     await widget.prefs.remove(_projectSlugKey);
+    await widget.prefs.remove(_surveySlugKey);
     await widget.prefs.remove(_surveyIdKey);
     await widget.prefs.remove(_lastResponseIdKey);
     await widget.prefs.remove(_appLocaleKey);
@@ -423,6 +450,7 @@ class _FlutterMobileFullHomePageState extends State<FlutterMobileFullHomePage> {
     if (!mounted) return;
     setState(() {
       _projectSlugController.text = _defaultProjectSlug;
+      _surveySlugController.text = _defaultSurveySlug;
       _surveyIdController.text = _defaultSurveyId == 0
           ? ''
           : '$_defaultSurveyId';
@@ -452,6 +480,7 @@ class SurveyScreen extends StatelessWidget {
     super.key,
     required this.client,
     required this.projectSlug,
+    required this.surveySlug,
     required this.surveyId,
     required this.locale,
     required this.anonymousToken,
@@ -460,6 +489,7 @@ class SurveyScreen extends StatelessWidget {
 
   final Client client;
   final String projectSlug;
+  final String? surveySlug;
   final int? surveyId;
   final String locale;
   final String? anonymousToken;
@@ -473,6 +503,7 @@ class SurveyScreen extends StatelessWidget {
       body: FormConciergeSurvey(
         client: client,
         projectSlug: projectSlug,
+        surveySlug: surveySlug,
         surveyId: surveyId,
         locale: locale,
         anonymousToken: anonymousToken,
@@ -487,6 +518,7 @@ class SurveyScreen extends StatelessWidget {
           'source': 'flutter-mobile-full',
           'locale': locale,
           'projectSlug': projectSlug,
+          if (surveySlug != null) 'surveySlug': surveySlug,
           if (surveyId != null) 'surveyId': surveyId,
         },
         onAnonymousSession: onAnonymousSession,
@@ -596,8 +628,11 @@ const _values = {
     'api_url': 'API URL',
     'project_slug': 'Project slug',
     'project_slug_required': 'Project slug is required.',
+    'survey_slug': 'Survey slug',
+    'survey_slug_helper':
+        'Preferred. Leave empty to use survey ID or the first published survey.',
     'survey_id': 'Survey ID',
-    'survey_id_helper': 'Leave empty to use the first published survey.',
+    'survey_id_helper': 'Optional fallback for older survey URLs.',
     'localization': 'Localization',
     'form_language': 'Form language',
     'localization_note':
@@ -637,8 +672,10 @@ const _values = {
     'api_url': 'API URL',
     'project_slug': 'プロジェクト slug',
     'project_slug_required': 'プロジェクト slug は必須です。',
+    'survey_slug': 'フォーム slug',
+    'survey_slug_helper': '推奨。空ならフォーム ID または最初の公開フォームを使います。',
     'survey_id': 'フォーム ID',
-    'survey_id_helper': '空なら最初の公開フォームを開きます。',
+    'survey_id_helper': '古いフォームURL向けの任意fallbackです。',
     'localization': 'ローカライズ',
     'form_language': 'フォーム言語',
     'localization_note':

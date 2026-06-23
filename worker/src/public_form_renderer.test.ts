@@ -5,20 +5,22 @@ import { renderPublicForm } from './public_form_renderer';
 import type { Env, ProjectRow, SurveyRow } from './types';
 import { HttpError } from './utils';
 
-test('renderPublicForm returns 404 for invalid API-host survey path ids before storage access', async () => {
+test('renderPublicForm returns 404 for missing API-host survey slug', async () => {
   const response = await renderPublicForm(
     htmlRequest('https://example.com/acme/1e2'),
-    envWithoutDb('https://example.com'),
+    envWithPublicRows({}),
   );
 
   assert.equal(response.status, 404);
   assert.match(await response.text(), /Page not found/);
 });
 
-test('renderPublicForm returns 404 for invalid custom-domain survey path ids before storage access', async () => {
+test('renderPublicForm returns 404 for missing custom-domain survey slug', async () => {
   const response = await renderPublicForm(
     htmlRequest('https://forms.example.com/1.0'),
-    envWithoutDb('https://api.example.com'),
+    envWithPublicRows({
+      project: { custom_domain: 'forms.example.com' },
+    }, 'https://api.example.com'),
   );
 
   assert.equal(response.status, 404);
@@ -67,7 +69,7 @@ function envWithPublicRows(input: {
   project?: Partial<ProjectRow>;
   survey?: Partial<SurveyRow>;
   surveys?: Partial<SurveyRow>[];
-}): Env {
+}, publicBaseUrl = 'https://example.com'): Env {
   const project = projectRow(input.project);
   const surveys = input.surveys?.map((item) => surveyRow(item)) ?? [
     surveyRow(input.survey),
@@ -93,7 +95,7 @@ function envWithPublicRows(input: {
       },
     } as unknown as D1Database,
     MEDIA_BUCKET: {} as R2Bucket,
-    PUBLIC_BASE_URL: 'https://example.com',
+    PUBLIC_BASE_URL: publicBaseUrl,
     PUBLIC_FORM_ASSET_BASE_URL: 'https://assets.example.com',
   };
 }
@@ -133,6 +135,7 @@ function surveyRow(overrides: Partial<SurveyRow> = {}): SurveyRow {
   return {
     id: 1,
     project_id: 1,
+    slug: 'customer-feedback',
     title_translations: '{"en":"Survey","ja":"Survey"}',
     description_translations: '{"en":"","ja":""}',
     status: 'published',
@@ -144,18 +147,5 @@ function surveyRow(overrides: Partial<SurveyRow> = {}): SurveyRow {
     starts_at: null,
     ends_at: null,
     ...overrides,
-  };
-}
-
-function envWithoutDb(publicBaseUrl: string): Env {
-  return {
-    DB: new Proxy({}, {
-      get() {
-        throw new Error('DB should not be accessed for invalid public form path ids');
-      },
-    }) as D1Database,
-    MEDIA_BUCKET: {} as R2Bucket,
-    PUBLIC_BASE_URL: publicBaseUrl,
-    PUBLIC_FORM_ASSET_BASE_URL: 'https://assets.example.com',
   };
 }

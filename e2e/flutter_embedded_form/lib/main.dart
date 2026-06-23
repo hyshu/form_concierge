@@ -12,6 +12,7 @@ const _projectSlug = String.fromEnvironment(
   'FORM_CONCIERGE_PROJECT_SLUG',
   defaultValue: 'demo-project',
 );
+const _surveySlug = String.fromEnvironment('FORM_CONCIERGE_SURVEY_SLUG');
 const _surveyIdValue = int.fromEnvironment('FORM_CONCIERGE_SURVEY_ID');
 const _locale = String.fromEnvironment('FORM_CONCIERGE_LOCALE');
 
@@ -83,6 +84,7 @@ class SurveyPage extends StatelessWidget {
       body: FormConciergeSurvey(
         client: client,
         projectSlug: _projectSlug,
+        surveySlug: _surveySlug.isEmpty ? null : _surveySlug,
         surveyId: _surveyIdValue == 0 ? null : _surveyIdValue,
         locale: _locale.isEmpty ? null : _locale,
         metadata: const {'source': 'embedded-form-example'},

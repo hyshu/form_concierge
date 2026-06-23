@@ -93,6 +93,7 @@ class SurveyFormManager {
   /// Create a new survey.
   Future<Survey?> createSurvey({
     required int projectId,
+    required String slug,
     required LocalizedText titleTranslations,
     required LocalizedText descriptionTranslations,
   }) async {
@@ -101,6 +102,7 @@ class SurveyFormManager {
       final created = await _client.surveyAdmin.create(
         _draftSurvey(
           projectId: projectId,
+          slug: slug,
           titleTranslations: titleTranslations,
           descriptionTranslations: descriptionTranslations,
         ),
@@ -276,6 +278,7 @@ class SurveyFormManager {
   /// Create a new survey with questions.
   Future<Survey?> createSurveyWithQuestions({
     required int projectId,
+    required String slug,
     required LocalizedText titleTranslations,
     required LocalizedText descriptionTranslations,
   }) async {
@@ -289,6 +292,7 @@ class SurveyFormManager {
       final created = await _client.surveyAdmin.createWithQuestions(
         _draftSurvey(
           projectId: projectId,
+          slug: slug,
           titleTranslations: titleTranslations,
           descriptionTranslations: descriptionTranslations,
         ),
@@ -313,12 +317,14 @@ class SurveyFormManager {
 
   Survey _draftSurvey({
     required int projectId,
+    required String slug,
     required LocalizedText titleTranslations,
     required LocalizedText descriptionTranslations,
   }) {
     final now = DateTime.now();
     return Survey(
       projectId: projectId,
+      slug: slug,
       titleTranslations: titleTranslations,
       descriptionTranslations: descriptionTranslations,
       status: SurveyStatus.draft,

@@ -12,7 +12,7 @@ async function seedData() {
 
 test('Jaspr web form loads and submits a response', async ({ page, baseURL }) => {
   const seed = await seedData();
-  await page.goto(`${baseURL}/${seed.projectSlug}/${seed.surveyId}`);
+  await page.goto(`${baseURL}/${seed.projectSlug}/${seed.surveySlug}`);
 
   await expect(page.getByText('Customer feedback')).toBeVisible();
   await expect(page.getByText('Tell us what you think')).toBeVisible();

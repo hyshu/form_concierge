@@ -29,6 +29,7 @@ export type ProjectRow = {
 export type SurveyRow = {
   id: number;
   project_id: number;
+  slug: string;
   title_translations: string;
   description_translations: string;
   status: string;

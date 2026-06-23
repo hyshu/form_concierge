@@ -22,6 +22,7 @@ class SurveyClient extends StatefulComponent {
     this.choicesByQuestionJson = const {},
     this.projectJson,
     this.projectSlug,
+    this.surveySlug,
     this.surveyId,
     this.domain,
     super.key,
@@ -34,6 +35,7 @@ class SurveyClient extends StatefulComponent {
   final Map<String, List<Map<String, dynamic>>> choicesByQuestionJson;
   final String serverUrl;
   final String? projectSlug;
+  final String? surveySlug;
   final int? surveyId;
   final String? domain;
 
@@ -215,6 +217,13 @@ class SurveyClientState extends State<SurveyClient> {
   }
 
   Survey? _selectSurvey(PublicProject project) {
+    final surveySlug = component.surveySlug?.trim();
+    if (surveySlug != null && surveySlug.isNotEmpty) {
+      for (final survey in project.surveys) {
+        if (survey.slug == surveySlug) return survey;
+      }
+      return null;
+    }
     final surveyId = component.surveyId;
     if (surveyId == null) {
       return project.surveys.length == 1 ? project.surveys.first : null;

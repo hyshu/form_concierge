@@ -340,6 +340,7 @@ final class FormConciergeSwiftUITests: XCTestCase {
     [
       "id": 1,
       "projectId": 1,
+      "slug": "customer-feedback",
       "titleTranslations": ["en": "Customer feedback", "ja": "顧客フィードバック"],
       "descriptionTranslations": ["en": "Tell us", "ja": "ご意見をお聞かせください"],
       "status": "published",

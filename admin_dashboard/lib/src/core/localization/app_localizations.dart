@@ -301,6 +301,8 @@ const _localizedValues = <String, Map<String, String>>{
     'Other languages': 'Other languages',
     'URL Slug': 'URL Slug',
     'Slug is required': 'Slug is required',
+    'Slug must include a lowercase letter':
+        'Slug must include a lowercase letter',
     'Only lowercase letters, numbers, and hyphens allowed':
         'Only lowercase letters, numbers, and hyphens allowed',
     'Custom domain (optional)': 'Custom domain (optional)',
@@ -662,6 +664,7 @@ const _localizedValues = <String, Map<String, String>>{
     'Other languages': '他の言語',
     'URL Slug': 'URLスラッグ',
     'Slug is required': 'スラッグは必須です',
+    'Slug must include a lowercase letter': 'スラッグには小文字の英字を含めてください',
     'Only lowercase letters, numbers, and hyphens allowed':
         '小文字、数字、ハイフンのみ使用できます',
     'Custom domain (optional)': 'カスタムドメイン (任意)',
@@ -1001,6 +1004,7 @@ const _localizedValues = <String, Map<String, String>>{
     'Other languages': '其他语言',
     'URL Slug': 'URL 标识',
     'Slug is required': 'URL 标识为必填项',
+    'Slug must include a lowercase letter': 'URL 标识必须包含小写字母',
     'Only lowercase letters, numbers, and hyphens allowed': '只能使用小写字母、数字和连字符',
     'Description (optional)': '描述（可选）',
     'Brief description of the survey': '问卷的简短描述',
@@ -1291,6 +1295,7 @@ const _localizedValues = <String, Map<String, String>>{
     'Other languages': '其他語言',
     'URL Slug': 'URL 識別碼',
     'Slug is required': 'URL 識別碼為必填',
+    'Slug must include a lowercase letter': 'URL 識別碼必須包含小寫字母',
     'Only lowercase letters, numbers, and hyphens allowed': '只能使用小寫字母、數字和連字號',
     'Description (optional)': '描述（選填）',
     'Brief description of the survey': '問卷的簡短描述',
@@ -1583,6 +1588,7 @@ const _localizedValues = <String, Map<String, String>>{
     'Other languages': '다른 언어',
     'URL Slug': 'URL 슬러그',
     'Slug is required': '슬러그는 필수입니다',
+    'Slug must include a lowercase letter': '슬러그에는 소문자 영문자가 포함되어야 합니다',
     'Only lowercase letters, numbers, and hyphens allowed':
         '소문자, 숫자, 하이픈만 사용할 수 있습니다',
     'Description (optional)': '설명(선택 사항)',
@@ -1892,6 +1898,8 @@ const _localizedValues = <String, Map<String, String>>{
     'Other languages': 'Andere Sprachen',
     'URL Slug': 'URL-Slug',
     'Slug is required': 'Slug ist erforderlich',
+    'Slug must include a lowercase letter':
+        'Slug muss einen Kleinbuchstaben enthalten',
     'Only lowercase letters, numbers, and hyphens allowed':
         'Nur Kleinbuchstaben, Zahlen und Bindestriche sind erlaubt',
     'Description (optional)': 'Beschreibung (optional)',

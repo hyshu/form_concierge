@@ -352,6 +352,7 @@ class PublicProject {
 class Survey {
   final int? id;
   final int projectId;
+  final String slug;
   final LocalizedText titleTranslations;
   final LocalizedText descriptionTranslations;
   final SurveyStatus status;
@@ -365,6 +366,7 @@ class Survey {
   const Survey({
     this.id,
     required this.projectId,
+    required this.slug,
     required this.titleTranslations,
     required this.descriptionTranslations,
     this.status = SurveyStatus.draft,
@@ -379,6 +381,7 @@ class Survey {
   factory Survey.fromJson(Map<String, dynamic> json) => Survey(
     id: json['id'] == null ? null : _int(json['id']),
     projectId: _int(json['projectId']),
+    slug: _string(json['slug']),
     titleTranslations: LocalizedText.fromJson(json['titleTranslations']),
     descriptionTranslations: LocalizedText.fromJson(
       json['descriptionTranslations'],
@@ -395,6 +398,7 @@ class Survey {
   Map<String, dynamic> toJson() => _withoutNulls({
     'id': id,
     'projectId': projectId,
+    'slug': slug,
     'titleTranslations': titleTranslations.toJson(),
     'descriptionTranslations': descriptionTranslations.toJson(),
     'status': _enumName(status),
@@ -409,6 +413,7 @@ class Survey {
   Survey copyWith({
     int? id,
     int? projectId,
+    String? slug,
     LocalizedText? titleTranslations,
     LocalizedText? descriptionTranslations,
     SurveyStatus? status,
@@ -422,6 +427,7 @@ class Survey {
     return Survey(
       id: id ?? this.id,
       projectId: projectId ?? this.projectId,
+      slug: slug ?? this.slug,
       titleTranslations: titleTranslations ?? this.titleTranslations,
       descriptionTranslations:
           descriptionTranslations ?? this.descriptionTranslations,

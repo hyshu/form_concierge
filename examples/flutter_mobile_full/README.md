@@ -21,5 +21,6 @@ flutter run \
 
 Optional configuration:
 
-- `FORM_CONCIERGE_SURVEY_ID`: open a specific survey in the project.
+- `FORM_CONCIERGE_SURVEY_SLUG`: open a specific survey in the project.
+- `FORM_CONCIERGE_SURVEY_ID`: legacy fallback for older survey URLs.
 - `FORM_CONCIERGE_LOCALE`: initial form content locale, such as `ja` or `ja_JP`.

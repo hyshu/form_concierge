@@ -15,6 +15,7 @@ final client = Client('https://your-worker.example.com');
 ```dart
 FormConciergeSurvey(
   client: client,
+  projectSlug: 'demo-project',
   surveySlug: 'customer-feedback',
   anonymousToken: savedAnonymousToken,
   locale: 'ja_JP',

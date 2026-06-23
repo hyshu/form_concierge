@@ -180,6 +180,7 @@ Survey _survey() {
   return Survey(
     id: 1,
     projectId: 1,
+    slug: 'customer-feedback',
     titleTranslations: const LocalizedText({
       'en': 'Customer feedback',
       'ja': '顧客フィードバック',

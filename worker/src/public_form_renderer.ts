@@ -1,6 +1,6 @@
 import type { ChoiceRow, Env, ProjectRow, QuestionRow, SurveyRow } from './types';
 import { choiceToJson, projectToJson, questionToJson, surveyToJson, visibilityRuleToJson } from './serializers';
-import { HttpError, optionalCustomDomain, requiredIntegerParam } from './utils';
+import { HttpError, optionalCustomDomain } from './utils';
 import { getVisibilityRules } from './visibility_rules';
 
 type PublicFormData = {
@@ -26,15 +26,10 @@ export function isPublicFormHtmlRequest(request: Request, path: string): boolean
 export async function renderPublicForm(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const pathParts = pathPartsFromPath(url.pathname);
-  const surveyId = isApiHost(env, url)
-    ? surveyIdFromPathPart(pathParts[1])
-    : surveyIdFromPathPart(pathParts[0]);
-  if (!surveyId.valid) {
-    return html(request, renderNotFoundHtml(env, url), 404);
-  }
+  const surveyKey = isApiHost(env, url) ? pathParts[1] ?? null : pathParts[0] ?? null;
   const data = isApiHost(env, url)
-    ? await loadProjectBySlug(env, pathParts[0] ?? null, surveyId.value)
-    : await loadProjectByDomain(env, url.hostname, surveyId.value);
+    ? await loadProjectBySlug(env, pathParts[0] ?? null, surveyKey)
+    : await loadProjectByDomain(env, url.hostname, surveyKey);
 
   if (!data) {
     if (pathParts.length === 0 && isApiHost(env, url)) {
@@ -49,20 +44,20 @@ export async function renderPublicForm(request: Request, env: Env): Promise<Resp
 async function loadProjectBySlug(
   env: Env,
   slug: string | null,
-  surveyId: number | null,
+  surveyKey: string | null,
 ): Promise<PublicFormData | null> {
   if (!slug) return null;
   const project = await env.DB.prepare(
     `SELECT * FROM projects WHERE slug = ?`,
   ).bind(slug).first<ProjectRow>();
   if (!project) return null;
-  return loadProjectData(env, project, surveyId);
+  return loadProjectData(env, project, surveyKey);
 }
 
 async function loadProjectByDomain(
   env: Env,
   host: string,
-  surveyId: number | null,
+  surveyKey: string | null,
 ): Promise<PublicFormData | null> {
   let customDomain: string | null = null;
   try {
@@ -76,13 +71,13 @@ async function loadProjectByDomain(
     `SELECT * FROM projects WHERE custom_domain = ?`,
   ).bind(customDomain).first<ProjectRow>();
   if (!project) return null;
-  return loadProjectData(env, project, surveyId);
+  return loadProjectData(env, project, surveyKey);
 }
 
 async function loadProjectData(
   env: Env,
   project: ProjectRow,
-  surveyId: number | null,
+  surveyKey: string | null,
 ): Promise<PublicFormData | null> {
   const rows = await env.DB.prepare(
     `SELECT * FROM surveys
@@ -92,12 +87,25 @@ async function loadProjectData(
   const surveys = rows.results.filter(isAccepting);
   if (surveys.length === 0) return null;
 
-  const selectedSurvey = surveyId == null
+  const selectedSurvey = surveyKey == null
     ? surveys.length === 1 ? surveys[0] : null
-    : surveys.find((survey) => survey.id === surveyId) ?? null;
+    : selectSurveyByKey(surveys, surveyKey);
   if (!selectedSurvey) return null;
 
   return loadPublicFormData(env, project, selectedSurvey);
+}
+
+function selectSurveyByKey(
+  surveys: SurveyRow[],
+  key: string,
+): SurveyRow | null {
+  if (/^\d+$/.test(key)) {
+    const id = Number(key);
+    return Number.isSafeInteger(id)
+      ? surveys.find((survey) => survey.id === id) ?? null
+      : null;
+  }
+  return surveys.find((survey) => survey.slug === key) ?? null;
 }
 
 async function loadPublicFormData(env: Env, project: ProjectRow, survey: SurveyRow): Promise<PublicFormData> {
@@ -299,23 +307,6 @@ function textFor(translations: Record<string, string>, locale: string): string {
 
 function pathPartsFromPath(pathname: string): string[] {
   return pathname.split('/').filter(Boolean).map(decodeURIComponent);
-}
-
-type SurveyIdPathPart = {
-  valid: true;
-  value: number | null;
-} | {
-  valid: false;
-};
-
-function surveyIdFromPathPart(value: string | undefined): SurveyIdPathPart {
-  if (value == null || value.length === 0) return { valid: true, value: null };
-  try {
-    return { valid: true, value: requiredIntegerParam(value, 'surveyId', { min: 1 }) };
-  } catch (error) {
-    if (error instanceof HttpError) return { valid: false };
-    throw error;
-  }
 }
 
 function isAccepting(survey: SurveyRow): boolean {

@@ -45,6 +45,7 @@ CREATE UNIQUE INDEX projects_custom_domain_unique ON projects(custom_domain);
 CREATE TABLE surveys (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  slug TEXT NOT NULL,
   title_translations TEXT NOT NULL,
   description_translations TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'draft',
@@ -58,6 +59,7 @@ CREATE TABLE surveys (
 );
 
 CREATE INDEX surveys_project_id ON surveys(project_id);
+CREATE UNIQUE INDEX surveys_project_slug_unique ON surveys(project_id, slug);
 CREATE INDEX surveys_status ON surveys(status);
 CREATE INDEX surveys_created_by_admin_id ON surveys(created_by_admin_id);
 

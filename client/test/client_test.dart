@@ -244,6 +244,7 @@ void main() {
 Map<String, dynamic> _surveyJson() => {
   'id': 1,
   'projectId': 7,
+  'slug': 'intake',
   'titleTranslations': {'en': 'Intake'},
   'descriptionTranslations': {'en': ''},
   'status': 'published',

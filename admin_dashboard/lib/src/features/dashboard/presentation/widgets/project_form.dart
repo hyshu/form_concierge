@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:hux/hux.dart';
 
+import '../../../../core/forms/slug_auto_fill.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../surveys/presentation/widgets/localized_text_field_group.dart';
 
@@ -29,6 +30,7 @@ class _ProjectFormState extends State<ProjectForm> {
   final _nameFocusNode = FocusNode();
   final _slug = TextEditingController();
   final _customDomain = TextEditingController();
+  final _slugAutoFill = SlugAutoFill();
   String _defaultLocale = defaultFormContentLocale;
   List<String> _supportedLocales = const [defaultFormContentLocale];
   bool _didSetInitialLocale = false;
@@ -217,21 +219,11 @@ class _ProjectFormState extends State<ProjectForm> {
   }
 
   void _fillSlugFromNameIfEmpty() {
-    if (_slug.text.trim().isNotEmpty) return;
-    final slug = _slugFromEnglishName(_name.text);
-    if (slug == null) return;
-    _slug.text = slug;
-  }
-
-  String? _slugFromEnglishName(String value) {
-    final trimmed = value.trim();
-    if (trimmed.isEmpty) return null;
-    if (!RegExp(r'^[\x00-\x7F]+$').hasMatch(trimmed)) return null;
-    final slug = trimmed
-        .toLowerCase()
-        .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
-        .replaceAll(RegExp(r'^-+|-+$'), '');
-    return slug.isEmpty ? null : slug;
+    _slugAutoFill.update(
+      slugController: _slug,
+      sourceValues: [_name.text],
+      requireLowercaseLetter: false,
+    );
   }
 
   String? _customDomainValue() {
