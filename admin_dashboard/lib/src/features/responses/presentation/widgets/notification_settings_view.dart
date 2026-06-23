@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:hux/hux.dart';
 
+import '../../../../core/forms/email_validation.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/hux_states.dart';
 
@@ -167,8 +168,7 @@ class _NotificationSettingsViewState extends State<NotificationSettingsView> {
                       if (value == null || value.trim().isEmpty) {
                         return context.tr('Email is required');
                       }
-                      final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
-                      if (!emailRegex.hasMatch(value.trim())) {
+                      if (!isValidEmailAddress(value)) {
                         return context.tr('Enter a valid email address');
                       }
                       return null;
