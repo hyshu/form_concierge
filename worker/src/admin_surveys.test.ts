@@ -108,6 +108,7 @@ function admin(): AdminContext {
 function envUnused(): Env {
   return {
     DB: d1Unused(),
+    MEDIA_BUCKET: {} as R2Bucket,
     PUBLIC_BASE_URL: 'https://api.example.com',
     PUBLIC_FORM_ASSET_BASE_URL: 'https://forms.example.com',
   };

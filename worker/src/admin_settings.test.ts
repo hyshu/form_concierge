@@ -94,6 +94,7 @@ function envWithSettings(row: IntegrationSettingsRow | null): Env {
         } as unknown as D1PreparedStatement;
       },
     } as unknown as D1Database,
+    MEDIA_BUCKET: {} as R2Bucket,
     PUBLIC_BASE_URL: 'https://api.example.com',
     PUBLIC_FORM_ASSET_BASE_URL: 'https://assets.example.com',
   };
