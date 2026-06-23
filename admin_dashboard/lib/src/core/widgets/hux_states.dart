@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hux/hux.dart';
 
 import '../localization/app_localizations.dart';
+import 'hux_icon_action_button.dart';
 
 class HuxPageBody extends StatelessWidget {
   const HuxPageBody({
@@ -211,13 +212,11 @@ class HuxMessageCard extends StatelessWidget {
             child: Text(message, style: TextStyle(color: color)),
           ),
           if (onClose != null)
-            HuxButton(
+            HuxIconActionButton(
               onPressed: onClose,
-              variant: HuxButtonVariant.ghost,
-              size: HuxButtonSize.small,
               icon: LucideIcons.x,
+              tooltip: context.tr('Close'),
               textColor: color,
-              child: const SizedBox(width: 0),
             ),
         ],
       ),
