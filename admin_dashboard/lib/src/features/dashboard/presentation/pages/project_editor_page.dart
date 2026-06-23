@@ -9,6 +9,7 @@ import '../../../../core/capsules/auth_state_capsule.dart';
 import '../../../../core/capsules/client_capsule.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/hux_admin_shell.dart';
+import '../../../../core/widgets/hux_icon_action_button.dart';
 import '../../../../core/widgets/hux_states.dart';
 import '../capsules/survey_list_capsule.dart';
 import '../widgets/project_form.dart';
@@ -83,15 +84,11 @@ class ProjectEditorPage extends RearchConsumer {
       showSettings: canManageUsers,
       onBack: () => context.go('/admin'),
       actions: [
-        Tooltip(
-          message: context.tr('Logout'),
-          child: HuxButton(
-            onPressed: authManager.logout,
-            variant: HuxButtonVariant.ghost,
-            size: HuxButtonSize.medium,
-            icon: LucideIcons.logOut,
-            child: const SizedBox(width: 0),
-          ),
+        HuxIconActionButton(
+          onPressed: authManager.logout,
+          icon: LucideIcons.logOut,
+          tooltip: context.tr('Logout'),
+          size: HuxButtonSize.medium,
         ),
       ],
       child: SafeArea(child: child),

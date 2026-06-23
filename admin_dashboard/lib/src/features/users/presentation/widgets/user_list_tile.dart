@@ -3,6 +3,7 @@ import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:hux/hux.dart';
 
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/widgets/hux_icon_action_button.dart';
 
 class UserListTile extends StatelessWidget {
   const UserListTile({
@@ -147,16 +148,11 @@ class _UserControls extends StatelessWidget {
             onChanged: onRoleChanged,
           ),
         ),
-        Tooltip(
-          message: context.tr('Delete'),
-          child: HuxButton(
-            onPressed: onDelete,
-            variant: HuxButtonVariant.ghost,
-            size: HuxButtonSize.small,
-            icon: LucideIcons.trash2,
-            textColor: HuxTokens.textDestructive(context),
-            child: const SizedBox(width: 0),
-          ),
+        HuxIconActionButton(
+          onPressed: onDelete,
+          icon: LucideIcons.trash2,
+          tooltip: context.tr('Delete'),
+          destructive: true,
         ),
       ],
     );

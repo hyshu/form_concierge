@@ -4,6 +4,7 @@ import 'package:hux/hux.dart';
 
 import '../../../../core/constants/pagination.dart';
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/widgets/hux_icon_action_button.dart';
 import '../../../../core/widgets/hux_states.dart';
 
 /// Widget showing a paginated list of individual responses.
@@ -87,17 +88,12 @@ class ResponseList extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Tooltip(
-                  message: context.tr('Previous page'),
-                  child: HuxButton(
-                    onPressed: currentPage > 0
-                        ? () => onPageChange(currentPage - 1)
-                        : null,
-                    variant: HuxButtonVariant.ghost,
-                    size: HuxButtonSize.small,
-                    icon: LucideIcons.chevronLeft,
-                    child: const SizedBox(width: 0),
-                  ),
+                HuxIconActionButton(
+                  onPressed: currentPage > 0
+                      ? () => onPageChange(currentPage - 1)
+                      : null,
+                  icon: LucideIcons.chevronLeft,
+                  tooltip: context.tr('Previous page'),
                 ),
                 const SizedBox(width: 16),
                 Text(
@@ -108,17 +104,12 @@ class ResponseList extends StatelessWidget {
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(width: 16),
-                Tooltip(
-                  message: context.tr('Next page'),
-                  child: HuxButton(
-                    onPressed: currentPage < totalPages - 1
-                        ? () => onPageChange(currentPage + 1)
-                        : null,
-                    variant: HuxButtonVariant.ghost,
-                    size: HuxButtonSize.small,
-                    icon: LucideIcons.chevronRight,
-                    child: const SizedBox(width: 0),
-                  ),
+                HuxIconActionButton(
+                  onPressed: currentPage < totalPages - 1
+                      ? () => onPageChange(currentPage + 1)
+                      : null,
+                  icon: LucideIcons.chevronRight,
+                  tooltip: context.tr('Next page'),
                 ),
               ],
             ),
@@ -242,26 +233,16 @@ class _ResponseTile extends StatelessWidget {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Tooltip(
-                  message: context.tr('Reply'),
-                  child: HuxButton(
-                    onPressed: onReply,
-                    variant: HuxButtonVariant.ghost,
-                    size: HuxButtonSize.small,
-                    icon: LucideIcons.reply,
-                    child: const SizedBox(width: 0),
-                  ),
+                HuxIconActionButton(
+                  onPressed: onReply,
+                  icon: LucideIcons.reply,
+                  tooltip: context.tr('Reply'),
                 ),
-                Tooltip(
-                  message: context.tr('Delete response'),
-                  child: HuxButton(
-                    onPressed: onDelete,
-                    variant: HuxButtonVariant.ghost,
-                    size: HuxButtonSize.small,
-                    icon: LucideIcons.trash2,
-                    textColor: HuxTokens.textDestructive(context),
-                    child: const SizedBox(width: 0),
-                  ),
+                HuxIconActionButton(
+                  onPressed: onDelete,
+                  icon: LucideIcons.trash2,
+                  tooltip: context.tr('Delete response'),
+                  destructive: true,
                 ),
               ],
             ),
