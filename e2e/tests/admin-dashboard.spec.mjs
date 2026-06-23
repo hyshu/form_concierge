@@ -15,12 +15,11 @@ async function enableFlutterSemantics(page) {
   await page.evaluate(() => document.querySelector('flt-semantics-placeholder')?.click());
 }
 
-async function typeIntoFlutterInput(page, locator, value) {
+async function typeIntoFlutterInput(locator, value) {
   await expect(locator).toBeVisible();
-  await locator.click();
-  await page.keyboard.press('Control+A');
-  await page.keyboard.press('Backspace');
-  await page.keyboard.insertText(value);
+  await locator.scrollIntoViewIfNeeded();
+  await locator.click({ force: true });
+  await locator.fill(value);
   await expect(locator).toHaveValue(value);
 }
 
@@ -51,17 +50,9 @@ test('admin dashboard logs in and renders seeded project data', async ({ page })
     apiResponse(apiUrl, '/api/admin/projects'),
   );
 
-  await typeIntoFlutterInput(
-    page,
-    page.locator('input[autocomplete="email"]'),
-    seed.adminEmail,
-  );
+  await typeIntoFlutterInput(page.locator('input[autocomplete="email"]'), seed.adminEmail);
   const passwordInput = page.locator('input[type="password"]');
-  await typeIntoFlutterInput(
-    page,
-    passwordInput,
-    seed.adminPassword,
-  );
+  await typeIntoFlutterInput(passwordInput, seed.adminPassword);
   await passwordInput.press('Enter');
 
   await loginResponsePromise;
