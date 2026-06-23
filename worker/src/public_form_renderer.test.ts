@@ -74,6 +74,7 @@ function envWithPublicRows(input: {
         } as unknown as D1PreparedStatement;
       },
     } as unknown as D1Database,
+    MEDIA_BUCKET: {} as R2Bucket,
     PUBLIC_BASE_URL: 'https://example.com',
     PUBLIC_FORM_ASSET_BASE_URL: 'https://assets.example.com',
   };
@@ -136,6 +137,7 @@ function envWithoutDb(publicBaseUrl: string): Env {
         throw new Error('DB should not be accessed for invalid public form path ids');
       },
     }) as D1Database,
+    MEDIA_BUCKET: {} as R2Bucket,
     PUBLIC_BASE_URL: publicBaseUrl,
     PUBLIC_FORM_ASSET_BASE_URL: 'https://assets.example.com',
   };

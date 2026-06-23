@@ -21,6 +21,12 @@
       "migrations_dir": "migrations"
     }
   ],
+  "r2_buckets": [
+    {
+      "binding": "MEDIA_BUCKET",
+      "bucket_name": "form-concierge-media"
+    }
+  ],
   "vars": {
     "PUBLIC_BASE_URL": "http://localhost:8787",
     "PUBLIC_FORM_ASSET_BASE_URL": "http://localhost:8081"

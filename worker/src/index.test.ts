@@ -37,6 +37,7 @@ function envWithoutDb(): Env {
         throw new Error('DB should not be accessed for invalid route ids');
       },
     }) as D1Database,
+    MEDIA_BUCKET: {} as R2Bucket,
     PUBLIC_BASE_URL: 'https://example.com',
     PUBLIC_FORM_ASSET_BASE_URL: 'https://forms.example.com',
   };

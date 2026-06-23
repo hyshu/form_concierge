@@ -52,23 +52,26 @@ Survey forms backed by Cloudflare Workers and D1. Respondents use generated anon
 
 ## Cloudflare Deployment
 
-1. Create a D1 database:
+Run the setup script to create or reuse Cloudflare D1, R2, Workers, and Pages resources:
 
-   ```bash
-   cd worker
-   npx wrangler d1 create form_concierge
-   ```
+```bash
+./setup.sh
+```
 
-2. Put the returned `database_id` into `worker/wrangler.jsonc`.
+The script checks required local tools and Wrangler authentication before creating resources. To run only those checks:
 
-3. Apply migrations and deploy:
+```bash
+./setup.sh --preflight-only
+```
 
-   ```bash
-   npm run d1:migrate:remote
-   npm run deploy
-   ```
+After deployment, open the admin Pages URL, create the first admin, and create projects in the deployed dashboard.
 
-4. Point `admin_dashboard/assets/config.json` and `FORM_CONCIERGE_API_URL` at the deployed Worker URL.
+Seeding an existing local project is optional:
+
+```bash
+./setup.sh --list-local-projects
+./setup.sh --seed-project-id <project-id>
+```
 
 ## Verification
 
