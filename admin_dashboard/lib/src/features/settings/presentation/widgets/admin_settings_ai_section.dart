@@ -44,6 +44,7 @@ class AdminSettingsAiSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final key = _selectedProviderKey;
     return HuxCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -51,9 +52,7 @@ class AdminSettingsAiSection extends StatelessWidget {
           AdminSettingsSectionHeader(
             icon: LucideIcons.sparkles,
             title: context.tr('AI Generation'),
-            configured:
-                _selectedProviderSettings.hasApiKey &&
-                !_selectedProviderClearFlag,
+            configured: key.settings.hasApiKey && !key.clearApiKey,
           ),
           const SizedBox(height: 16),
           HuxLabeledControl(
@@ -72,70 +71,80 @@ class AdminSettingsAiSection extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          _selectedProviderKeyField(context),
+          _AiProviderKeyField(
+            label: context.tr(key.label),
+            hint: key.hint,
+            controller: key.controller,
+            hasApiKey: key.settings.hasApiKey,
+            clearApiKey: key.clearApiKey,
+            clearLabel: context.tr(key.clearLabel),
+            onClearChanged: key.onClearChanged,
+          ),
         ],
       ),
     );
   }
 
-  Widget _selectedProviderKeyField(BuildContext context) {
+  _SelectedAiProviderKey get _selectedProviderKey {
     return switch (provider) {
-      AiProvider.gemini => _AiProviderKeyField(
-        label: context.tr('Gemini API Key'),
+      AiProvider.gemini => _SelectedAiProviderKey(
+        label: 'Gemini API Key',
         hint: 'AIza...',
+        settings: settings.gemini,
         controller: geminiKeyController,
-        hasApiKey: settings.gemini.hasApiKey,
         clearApiKey: clearGeminiKey,
-        clearLabel: context.tr('Clear saved Gemini API key'),
+        clearLabel: 'Clear saved Gemini API key',
         onClearChanged: onClearGeminiChanged,
       ),
-      AiProvider.openai => _AiProviderKeyField(
-        label: context.tr('OpenAI API Key'),
+      AiProvider.openai => _SelectedAiProviderKey(
+        label: 'OpenAI API Key',
         hint: 'sk-...',
+        settings: settings.openai,
         controller: openaiKeyController,
-        hasApiKey: settings.openai.hasApiKey,
         clearApiKey: clearOpenaiKey,
-        clearLabel: context.tr('Clear saved OpenAI API key'),
+        clearLabel: 'Clear saved OpenAI API key',
         onClearChanged: onClearOpenaiChanged,
       ),
-      AiProvider.claude => _AiProviderKeyField(
-        label: context.tr('Claude API Key'),
+      AiProvider.claude => _SelectedAiProviderKey(
+        label: 'Claude API Key',
         hint: 'sk-ant-...',
+        settings: settings.claude,
         controller: claudeKeyController,
-        hasApiKey: settings.claude.hasApiKey,
         clearApiKey: clearClaudeKey,
-        clearLabel: context.tr('Clear saved Claude API key'),
+        clearLabel: 'Clear saved Claude API key',
         onClearChanged: onClearClaudeChanged,
       ),
-      AiProvider.cerebras => _AiProviderKeyField(
-        label: context.tr('Cerebras API Key'),
+      AiProvider.cerebras => _SelectedAiProviderKey(
+        label: 'Cerebras API Key',
         hint: 'csk-...',
+        settings: settings.cerebras,
         controller: cerebrasKeyController,
-        hasApiKey: settings.cerebras.hasApiKey,
         clearApiKey: clearCerebrasKey,
-        clearLabel: context.tr('Clear saved Cerebras API key'),
+        clearLabel: 'Clear saved Cerebras API key',
         onClearChanged: onClearCerebrasChanged,
       ),
     };
   }
+}
 
-  AiProviderKeySettings get _selectedProviderSettings {
-    return switch (provider) {
-      AiProvider.gemini => settings.gemini,
-      AiProvider.openai => settings.openai,
-      AiProvider.claude => settings.claude,
-      AiProvider.cerebras => settings.cerebras,
-    };
-  }
+class _SelectedAiProviderKey {
+  const _SelectedAiProviderKey({
+    required this.label,
+    required this.hint,
+    required this.settings,
+    required this.controller,
+    required this.clearApiKey,
+    required this.clearLabel,
+    required this.onClearChanged,
+  });
 
-  bool get _selectedProviderClearFlag {
-    return switch (provider) {
-      AiProvider.gemini => clearGeminiKey,
-      AiProvider.openai => clearOpenaiKey,
-      AiProvider.claude => clearClaudeKey,
-      AiProvider.cerebras => clearCerebrasKey,
-    };
-  }
+  final String label;
+  final String hint;
+  final AiProviderKeySettings settings;
+  final TextEditingController controller;
+  final bool clearApiKey;
+  final String clearLabel;
+  final ValueChanged<bool> onClearChanged;
 }
 
 class _AiProviderKeyField extends StatelessWidget {
