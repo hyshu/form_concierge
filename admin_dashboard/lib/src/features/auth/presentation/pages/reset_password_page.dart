@@ -3,6 +3,7 @@ import 'package:flutter_rearch/flutter_rearch.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hux/hux.dart';
 
+import '../../../../core/forms/password_validation.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../capsules/password_reset_capsule.dart';
 
@@ -186,7 +187,7 @@ class ResetPasswordPage extends RearchConsumer {
       return;
     }
 
-    if (password.length < 8) {
+    if (!hasMinimumPasswordLength(password)) {
       context.showHuxSnackbar(
         message: context.tr('Password must be at least 8 characters'),
         variant: HuxSnackbarVariant.error,

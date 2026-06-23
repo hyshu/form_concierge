@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:hux/hux.dart';
 
+import '../../../../core/forms/email_validation.dart';
+import '../../../../core/forms/password_validation.dart';
 import '../../../../core/localization/app_localizations.dart';
 
 class CreateUserDialog extends StatefulWidget {
@@ -59,7 +61,7 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
                   if (value == null || value.trim().isEmpty) {
                     return context.tr('Email is required');
                   }
-                  if (!value.contains('@')) {
+                  if (!isValidEmailAddress(value)) {
                     return context.tr('Please enter a valid email');
                   }
                   return null;
@@ -75,7 +77,7 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
                   if (value == null || value.isEmpty) {
                     return context.tr('Password is required');
                   }
-                  if (value.length < 8) {
+                  if (!hasMinimumPasswordLength(value)) {
                     return context.tr('Password must be at least 8 characters');
                   }
                   return null;
