@@ -29,9 +29,19 @@ class DashboardPage extends RearchConsumer {
     final canManageUsers = role == AdminRole.admin;
     final (isSavingProject, setSavingProject) = use.state(false);
 
-    if (use.isFirstBuild()) {
-      surveyManager.loadProjects();
-    }
+    use.effect(
+      () {
+        if (authManager.state.hasCheckedAuth &&
+            authManager.state.isAuthenticated) {
+          surveyManager.loadProjects();
+        }
+        return null;
+      },
+      [
+        authManager.state.hasCheckedAuth,
+        authManager.state.isAuthenticated,
+      ],
+    );
 
     return HuxAdminShell(
       title: context.tr('Surveys'),
