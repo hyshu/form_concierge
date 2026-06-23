@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { renderPublicForm } from './public_form_renderer';
+import { d1Result } from './test_helpers';
 import type { Env, ProjectRow, SurveyRow } from './types';
 import { HttpError } from './utils';
 
@@ -97,22 +98,6 @@ function envWithPublicRows(input: {
     MEDIA_BUCKET: {} as R2Bucket,
     PUBLIC_BASE_URL: publicBaseUrl,
     PUBLIC_FORM_ASSET_BASE_URL: 'https://assets.example.com',
-  };
-}
-
-function d1Result<T>(results: T[]): D1Result<T> {
-  return {
-    success: true,
-    meta: {
-      duration: 0,
-      size_after: 0,
-      rows_read: 0,
-      rows_written: 0,
-      last_row_id: 0,
-      changed_db: false,
-      changes: 0,
-    },
-    results,
   };
 }
 

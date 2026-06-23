@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { createQuestion, normalizeQuestionValidation, normalizeVisibilityConditionMode } from './admin_questions';
+import { d1Meta, d1Result } from './test_helpers';
 import type { Env, ProjectRow, QuestionRow, SurveyRow } from './types';
 import { HttpError } from './utils';
 
@@ -136,26 +137,6 @@ function d1WithRows(rows: {
       return new ArrayBuffer(0);
     },
   } as unknown as D1Database;
-}
-
-function d1Result<T>(results: T[]): D1Result<T> {
-  return {
-    success: true,
-    meta: d1Meta(),
-    results,
-  };
-}
-
-function d1Meta() {
-  return {
-    duration: 0,
-    size_after: 0,
-    rows_read: 0,
-    rows_written: 0,
-    last_row_id: 0,
-    changed_db: false,
-    changes: 0,
-  };
 }
 
 function projectRow(overrides: Partial<ProjectRow> = {}): ProjectRow {
