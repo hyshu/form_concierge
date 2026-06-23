@@ -224,6 +224,48 @@ class HuxMessageCard extends StatelessWidget {
   }
 }
 
+class HuxFeedbackMessages extends StatelessWidget {
+  const HuxFeedbackMessages({
+    super.key,
+    this.error,
+    this.successMessage,
+    this.onClose,
+    this.spacing = 16,
+  });
+
+  final String? error;
+  final String? successMessage;
+  final VoidCallback? onClose;
+  final double spacing;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (error != null) ...[
+          HuxMessageCard(
+            icon: LucideIcons.circleAlert,
+            message: context.trMessage(error!),
+            destructive: true,
+            onClose: onClose,
+          ),
+          SizedBox(height: spacing),
+        ],
+        if (successMessage != null) ...[
+          HuxMessageCard(
+            icon: LucideIcons.circleCheck,
+            message: context.trMessage(successMessage!),
+            onClose: onClose,
+          ),
+          SizedBox(height: spacing),
+        ],
+      ],
+    );
+  }
+}
+
 class HuxMetadataItem extends StatelessWidget {
   const HuxMetadataItem({
     super.key,

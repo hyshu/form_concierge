@@ -119,23 +119,11 @@ class _NotificationSettingsViewState extends State<NotificationSettingsView> {
             ),
             const SizedBox(height: 16),
           ],
-          if (widget.error != null) ...[
-            HuxMessageCard(
-              icon: LucideIcons.circleAlert,
-              message: context.trMessage(widget.error!),
-              destructive: true,
-              onClose: widget.onClearMessages,
-            ),
-            const SizedBox(height: 16),
-          ],
-          if (widget.successMessage != null) ...[
-            HuxMessageCard(
-              icon: LucideIcons.circleCheck,
-              message: context.trMessage(widget.successMessage!),
-              onClose: widget.onClearMessages,
-            ),
-            const SizedBox(height: 16),
-          ],
+          HuxFeedbackMessages(
+            error: widget.error,
+            successMessage: widget.successMessage,
+            onClose: widget.onClearMessages,
+          ),
           HuxCard(
             child: Form(
               key: _formKey,
