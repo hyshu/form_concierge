@@ -42,7 +42,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run API, admin, web, and in-app E2E in Docker
+      - name: Run API, admin, web, and Flutter embedded form E2E in Docker
         run: docker compose -f tool/ci/docker-compose.e2e.yml run --rm e2e
 
   swift:

@@ -31,7 +31,17 @@ fi
 )
 
 (
-  cd examples/inappform
+  cd e2e/flutter_embedded_form
+  flutter pub get
+)
+
+(
+  cd examples/flutter_mobile_simple
+  flutter pub get
+)
+
+(
+  cd examples/flutter_mobile_full
   flutter pub get
 )
 
@@ -40,8 +50,12 @@ dart format --set-exit-if-changed \
   admin_dashboard/test \
   client/lib \
   client/test \
-  examples/inappform/lib \
-  examples/inappform/integration_test \
+  e2e/flutter_embedded_form/lib \
+  e2e/flutter_embedded_form/integration_test \
+  examples/flutter_mobile_simple/lib \
+  examples/flutter_mobile_simple/test \
+  examples/flutter_mobile_full/lib \
+  examples/flutter_mobile_full/test \
   web/lib \
   widget/lib \
   widget/test
@@ -88,7 +102,21 @@ mkdir -p .tmp
 )
 
 (
-  cd examples/inappform
+  cd e2e/flutter_embedded_form
   flutter pub get
   flutter analyze
+)
+
+(
+  cd examples/flutter_mobile_simple
+  flutter pub get
+  flutter analyze
+  flutter test
+)
+
+(
+  cd examples/flutter_mobile_full
+  flutter pub get
+  flutter analyze
+  flutter test
 )

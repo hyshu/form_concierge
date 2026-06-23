@@ -113,16 +113,16 @@ wait_for "$WEB_FORM_URL"
 if [[ "$(uname -s)" == "Linux" ]]; then
   flutter config --enable-linux-desktop
   (
-    cd examples/inappform
+    cd e2e/flutter_embedded_form
     flutter pub get
     flutter build linux \
       --dart-define=FORM_CONCIERGE_API_URL="$API_URL" \
       --dart-define=FORM_CONCIERGE_PROJECT_SLUG=demo-project
-    xvfb-run -a flutter test integration_test/inappform_e2e_test.dart \
+    xvfb-run -a flutter test integration_test/flutter_embedded_form_e2e_test.dart \
       -d linux \
       --dart-define=FORM_CONCIERGE_API_URL="$API_URL" \
       --dart-define=FORM_CONCIERGE_PROJECT_SLUG=demo-project
   )
 else
-  echo "Skipping Linux in-app form E2E on $(uname -s)."
+  echo "Skipping Linux Flutter embedded form E2E on $(uname -s)."
 fi
