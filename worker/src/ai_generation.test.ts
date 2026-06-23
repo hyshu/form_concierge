@@ -1,10 +1,14 @@
 import test from 'node:test';
 
-import { assertHttpErrorAsync, emptyD1Raw, emptyD1Result } from '../test/helpers';
+import {
+  adminPostRequest,
+  assertHttpErrorAsync,
+  emptyD1Raw,
+  emptyD1Result,
+  localizedText,
+} from '../test/helpers';
 import { generateSurveyQuestions } from './ai_generation';
 import type { Env, IntegrationSettingsRow } from './types';
-
-const locales = ['en', 'ja', 'zh-Hans', 'zh-Hant', 'ko', 'de'] as const;
 
 test('generateSurveyQuestions rejects coercible integer fields from providers', async () => {
   await withOpenAiQuestion({ minLength: '3' }, async () => {
@@ -102,15 +106,8 @@ function generatedQuestion(overrides: Record<string, unknown>) {
   };
 }
 
-function localizedText(value: string): Record<string, string> {
-  return Object.fromEntries(locales.map((locale) => [locale, value]));
-}
-
 function promptRequest(): Request {
-  return new Request('https://example.com/api/admin/ai/questions', {
-    method: 'POST',
-    body: JSON.stringify({ prompt: 'Build a short survey' }),
-  });
+  return adminPostRequest('ai/questions', { prompt: 'Build a short survey' });
 }
 
 function envWithSettings(): Env {

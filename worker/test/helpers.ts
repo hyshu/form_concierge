@@ -2,6 +2,9 @@ import assert from 'node:assert/strict';
 
 import { HttpError } from '../src/utils';
 
+const adminApiBaseUrl = 'https://example.com/api/admin';
+const localizedTextLocales = ['en', 'ja', 'zh-Hans', 'zh-Hant', 'ko', 'de'] as const;
+
 export function assertHttpError(action: () => unknown, status: number, message: string): void {
   assert.throws(action, (error: unknown) =>
     error instanceof HttpError &&
@@ -33,6 +36,18 @@ export async function assertBadRequestAsync(
   await assertHttpErrorAsync(action, 400, message);
 }
 
+export function adminPostRequest(path: string, body: unknown): Request {
+  return adminJsonRequest(path, 'POST', body);
+}
+
+export function adminPutRequest(path: string, body: unknown): Request {
+  return adminJsonRequest(path, 'PUT', body);
+}
+
+export function localizedText(value: string): Record<string, string> {
+  return Object.fromEntries(localizedTextLocales.map((locale) => [locale, value]));
+}
+
 export function d1Meta(): D1Result<unknown>['meta'] {
   return {
     duration: 0,
@@ -61,4 +76,11 @@ export function emptyD1Raw<T = unknown[]>(options: { columnNames: true }): Promi
 export function emptyD1Raw<T = unknown[]>(options?: { columnNames?: false }): Promise<T[]>;
 export async function emptyD1Raw(_options?: { columnNames?: boolean }): Promise<unknown[]> {
   return [];
+}
+
+function adminJsonRequest(path: string, method: 'POST' | 'PUT', body: unknown): Request {
+  return new Request(`${adminApiBaseUrl}/${path}`, {
+    method,
+    body: JSON.stringify(body),
+  });
 }

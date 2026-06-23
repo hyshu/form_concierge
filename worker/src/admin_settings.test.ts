@@ -1,6 +1,6 @@
 import test from 'node:test';
 
-import { assertHttpError, assertHttpErrorAsync } from '../test/helpers';
+import { adminPutRequest, assertHttpError, assertHttpErrorAsync } from '../test/helpers';
 import {
   getAdminIntegrationSettings,
   requireSmtpSettings,
@@ -10,12 +10,18 @@ import type { Env, IntegrationSettingsRow } from './types';
 
 test('updateAdminIntegrationSettings requires settings objects', async () => {
   await assertHttpErrorAsync(
-    () => updateAdminIntegrationSettings(settingsRequest({ ai: null, smtp: {} }), envWithSettings(null)),
+    () => updateAdminIntegrationSettings(
+      settingsRequest({ ai: null, smtp: {} }),
+      envWithSettings(null),
+    ),
     400,
     'ai must be an object',
   );
   await assertHttpErrorAsync(
-    () => updateAdminIntegrationSettings(settingsRequest({ ai: { provider: 'gemini' }, smtp: null }), envWithSettings(null)),
+    () => updateAdminIntegrationSettings(
+      settingsRequest({ ai: { provider: 'gemini' }, smtp: null }),
+      envWithSettings(null),
+    ),
     400,
     'smtp must be an object',
   );
@@ -70,10 +76,7 @@ test('stored integration setting enums fail closed', async () => {
 });
 
 function settingsRequest(body: unknown): Request {
-  return new Request('https://example.com/api/admin/settings', {
-    method: 'PUT',
-    body: JSON.stringify(body),
-  });
+  return adminPutRequest('settings', body);
 }
 
 function envWithSettings(row: IntegrationSettingsRow | null): Env {
