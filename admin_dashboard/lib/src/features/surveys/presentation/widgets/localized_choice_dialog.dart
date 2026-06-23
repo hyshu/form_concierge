@@ -14,10 +14,7 @@ Future<void> showLocalizedChoiceDialog(
   LocalizedText? initialText,
 }) {
   final formKey = GlobalKey<FormState>();
-  final controllers = {
-    for (final locale in formContentLocaleCodes)
-      locale: TextEditingController(text: initialText?.valueFor(locale) ?? ''),
-  };
+  final controllers = createLocalizedTextControllers(initialText);
 
   return showDialog<void>(
     context: context,
@@ -64,9 +61,5 @@ Future<void> showLocalizedChoiceDialog(
         ),
       ],
     ),
-  ).whenComplete(() {
-    for (final controller in controllers.values) {
-      controller.dispose();
-    }
-  });
+  ).whenComplete(() => disposeLocalizedTextControllers(controllers));
 }
