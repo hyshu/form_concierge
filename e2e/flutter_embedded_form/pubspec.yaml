@@ -1,0 +1,25 @@
+name: flutter_embedded_form
+description: Flutter embedded Form Concierge E2E app.
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.10.7
+
+dependencies:
+  flutter:
+    sdk: flutter
+  form_concierge_survey_widget:
+    path: ../../widget
+  form_concierge_client:
+    path: ../../client
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
