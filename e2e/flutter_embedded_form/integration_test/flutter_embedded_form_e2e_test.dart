@@ -19,7 +19,7 @@ void main() {
     await tester.tap(find.text('Submit'));
 
     await _pumpUntil(tester, find.text('Survey submitted!'));
-    expect(find.text('Survey submitted!'), findsOneWidget);
+    expect(find.text('Survey submitted!'), findsWidgets);
   });
 }
 

@@ -72,6 +72,12 @@ node e2e/scripts/seed.mjs
   flutter pub get
   flutter build web --release --dart-define=FORM_CONCIERGE_API_URL="$API_URL"
 )
+node <<'EOF'
+const fs = require('fs');
+const file = 'admin_dashboard/build/web/assets/assets/config.json';
+const apiUrl = process.env.API_URL;
+fs.writeFileSync(file, `${JSON.stringify({ apiUrl })}\n`);
+EOF
 start_background bash -lc "cd '$ROOT_DIR/e2e' && npx serve -s ../admin_dashboard/build/web -l tcp://127.0.0.1:8080 --no-clipboard"
 wait_for "$ADMIN_URL"
 
