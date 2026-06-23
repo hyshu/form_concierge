@@ -179,3 +179,105 @@ class HuxErrorState extends StatelessWidget {
     );
   }
 }
+
+class HuxMessageCard extends StatelessWidget {
+  const HuxMessageCard({
+    super.key,
+    required this.icon,
+    required this.message,
+    this.destructive = false,
+    this.onClose,
+  });
+
+  final IconData icon;
+  final String message;
+  final bool destructive;
+  final VoidCallback? onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = destructive
+        ? HuxTokens.textDestructive(context)
+        : HuxTokens.textSuccess(context);
+    return HuxCard(
+      backgroundColor: destructive
+          ? HuxTokens.surfaceDestructive(context)
+          : HuxTokens.surfaceSuccess(context),
+      child: Row(
+        children: [
+          Icon(icon, color: color),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(message, style: TextStyle(color: color)),
+          ),
+          if (onClose != null)
+            HuxButton(
+              onPressed: onClose,
+              variant: HuxButtonVariant.ghost,
+              size: HuxButtonSize.small,
+              icon: LucideIcons.x,
+              textColor: color,
+              child: const SizedBox(width: 0),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class HuxIconActionButton extends StatelessWidget {
+  const HuxIconActionButton({
+    super.key,
+    required this.icon,
+    required this.onPressed,
+    required this.tooltip,
+    this.destructive = false,
+  });
+
+  final IconData icon;
+  final VoidCallback? onPressed;
+  final String tooltip;
+  final bool destructive;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: HuxButton(
+        onPressed: onPressed,
+        variant: HuxButtonVariant.ghost,
+        size: HuxButtonSize.small,
+        icon: icon,
+        textColor: destructive ? HuxTokens.textDestructive(context) : null,
+        child: const SizedBox(width: 0),
+      ),
+    );
+  }
+}
+
+class HuxMetadataItem extends StatelessWidget {
+  const HuxMetadataItem({
+    super.key,
+    required this.icon,
+    required this.text,
+  });
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = HuxTokens.textSecondary(context);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 16, color: color),
+        const SizedBox(width: 4),
+        Text(
+          text,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: color),
+        ),
+      ],
+    );
+  }
+}

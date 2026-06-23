@@ -262,13 +262,13 @@ class _ProjectCard extends StatelessWidget {
             spacing: 16,
             runSpacing: 8,
             children: [
-              _MetadataItem(icon: LucideIcons.link, text: '/${project.slug}'),
+              HuxMetadataItem(icon: LucideIcons.link, text: '/${project.slug}'),
               if (project.customDomain != null)
-                _MetadataItem(
+                HuxMetadataItem(
                   icon: LucideIcons.globe,
                   text: project.customDomain!,
                 ),
-              _MetadataItem(
+              HuxMetadataItem(
                 icon: LucideIcons.languages,
                 text:
                     formContentLocaleLabels[project.defaultLocale] ??
@@ -387,11 +387,11 @@ class _SurveyRow extends StatelessWidget {
                     spacing: 16,
                     runSpacing: 8,
                     children: [
-                      _MetadataItem(
+                      HuxMetadataItem(
                         icon: LucideIcons.link,
                         text: survey.slug,
                       ),
-                      _MetadataItem(
+                      HuxMetadataItem(
                         icon: LucideIcons.clock3,
                         text: survey.updatedAt.toIsoDateString(),
                       ),
@@ -453,87 +453,35 @@ class _SurveyActions extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (onPublish != null)
-          _ActionButton(
+          HuxIconActionButton(
             icon: LucideIcons.upload,
             onPressed: onPublish,
             tooltip: context.tr('Publish'),
           ),
         if (onClose != null)
-          _ActionButton(
+          HuxIconActionButton(
             icon: LucideIcons.circleStop,
             onPressed: onClose,
             tooltip: context.tr('Close'),
           ),
         if (onReopen != null)
-          _ActionButton(
+          HuxIconActionButton(
             icon: LucideIcons.circlePlay,
             onPressed: onReopen,
             tooltip: context.tr('Reopen'),
           ),
-        _ActionButton(
+        HuxIconActionButton(
           icon: LucideIcons.chartNoAxesColumn,
           onPressed: onViewResponses,
           tooltip: context.tr('View Responses'),
         ),
         if (onDelete != null)
-          _ActionButton(
+          HuxIconActionButton(
             icon: LucideIcons.trash2,
             onPressed: onDelete,
             tooltip: context.tr('Delete'),
             destructive: true,
           ),
-      ],
-    );
-  }
-}
-
-class _ActionButton extends StatelessWidget {
-  const _ActionButton({
-    required this.icon,
-    required this.onPressed,
-    required this.tooltip,
-    this.destructive = false,
-  });
-
-  final IconData icon;
-  final VoidCallback? onPressed;
-  final String tooltip;
-  final bool destructive;
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: HuxButton(
-        onPressed: onPressed,
-        variant: HuxButtonVariant.ghost,
-        size: HuxButtonSize.small,
-        icon: icon,
-        textColor: destructive ? HuxTokens.textDestructive(context) : null,
-        child: const SizedBox(width: 0),
-      ),
-    );
-  }
-}
-
-class _MetadataItem extends StatelessWidget {
-  final IconData icon;
-  final String text;
-
-  const _MetadataItem({required this.icon, required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    final color = HuxTokens.textSecondary(context);
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 16, color: color),
-        const SizedBox(width: 4),
-        Text(
-          text,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: color),
-        ),
       ],
     );
   }
