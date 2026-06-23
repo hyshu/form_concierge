@@ -281,3 +281,31 @@ class HuxMetadataItem extends StatelessWidget {
     );
   }
 }
+
+class HuxLabeledControl extends StatelessWidget {
+  const HuxLabeledControl({
+    super.key,
+    required this.label,
+    required this.child,
+  });
+
+  final String label;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            color: HuxTokens.textSecondary(context),
+          ),
+        ),
+        const SizedBox(height: 6),
+        SizedBox(width: double.infinity, child: child),
+      ],
+    );
+  }
+}
