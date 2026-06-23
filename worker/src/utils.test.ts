@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
+import { assertBadRequest, assertBadRequestAsync, assertHttpErrorAsync } from '../test/helpers';
 import {
-  HttpError,
   boolToInt,
   countRows,
   integerParam,
@@ -29,15 +29,15 @@ test('readJson accepts object bodies only', async () => {
     })),
     { name: 'Ada' },
   );
-  await assertHttpErrorAsync(
+  await assertBadRequestAsync(
     () => readJson(new Request('https://example.com', { method: 'POST', body: '[]' })),
     'JSON body must be an object',
   );
-  await assertHttpErrorAsync(
+  await assertBadRequestAsync(
     () => readJson(new Request('https://example.com', { method: 'POST', body: '"text"' })),
     'JSON body must be an object',
   );
-  await assertHttpErrorAsync(
+  await assertBadRequestAsync(
     () => readJson(new Request('https://example.com', { method: 'POST', body: '{' })),
     'Invalid JSON body',
   );
@@ -48,7 +48,7 @@ test('readJson handles optional empty bodies', async () => {
     await readJson(new Request('https://example.com', { method: 'POST' }), true),
     {},
   );
-  await assertHttpErrorAsync(
+  await assertBadRequestAsync(
     () => readJson(new Request('https://example.com', { method: 'POST' })),
     'JSON body required',
   );
@@ -69,7 +69,7 @@ test('readJson rejects oversized JSON bodies before parsing', async () => {
     413,
     'JSON body too large',
   );
-  await assertHttpErrorAsync(
+  await assertBadRequestAsync(
     () => readJson(new Request('https://example.com', {
       method: 'POST',
       headers: { 'content-length': '1.5' },
@@ -80,9 +80,9 @@ test('readJson rejects oversized JSON bodies before parsing', async () => {
 
 test('requireObject rejects non-object values', () => {
   assert.deepEqual(requireObject({ name: 'Ada' }, 'profile'), { name: 'Ada' });
-  assertHttpError(() => requireObject(null, 'profile'), 'profile must be an object');
-  assertHttpError(() => requireObject([], 'profile'), 'profile must be an object');
-  assertHttpError(() => requireObject('name', 'profile'), 'profile must be an object');
+  assertBadRequest(() => requireObject(null, 'profile'), 'profile must be an object');
+  assertBadRequest(() => requireObject([], 'profile'), 'profile must be an object');
+  assertBadRequest(() => requireObject('name', 'profile'), 'profile must be an object');
 });
 
 test('countRows rejects missing or non-numeric count results', async () => {
@@ -137,45 +137,45 @@ test('optionalIntegerParam returns null for missing values', () => {
 test('optionalIntegerParam accepts decimal integer syntax only', () => {
   assert.equal(optionalIntegerParam('42', 'limit'), 42);
   assert.equal(optionalIntegerParam('-2', 'offset'), -2);
-  assertHttpError(() => optionalIntegerParam(' 42 ', 'limit'), 'limit must be an integer');
-  assertHttpError(() => optionalIntegerParam('1.5', 'limit'), 'limit must be an integer');
-  assertHttpError(() => optionalIntegerParam('1e2', 'limit'), 'limit must be an integer');
-  assertHttpError(() => optionalIntegerParam('Infinity', 'limit'), 'limit must be an integer');
-  assertHttpError(() => optionalIntegerParam('9007199254740992', 'limit'), 'limit must be a safe integer');
+  assertBadRequest(() => optionalIntegerParam(' 42 ', 'limit'), 'limit must be an integer');
+  assertBadRequest(() => optionalIntegerParam('1.5', 'limit'), 'limit must be an integer');
+  assertBadRequest(() => optionalIntegerParam('1e2', 'limit'), 'limit must be an integer');
+  assertBadRequest(() => optionalIntegerParam('Infinity', 'limit'), 'limit must be an integer');
+  assertBadRequest(() => optionalIntegerParam('9007199254740992', 'limit'), 'limit must be a safe integer');
 });
 
 test('optionalInteger validates JSON body values without numeric coercion', () => {
   assert.equal(optionalInteger(9, 'questionId', { min: 1 }), 9);
-  assertHttpError(() => optionalInteger('9', 'questionId', { min: 1 }), 'questionId must be an integer');
-  assertHttpError(() => optionalInteger('', 'questionId'), 'questionId must be an integer');
-  assertHttpError(() => optionalInteger(1.5, 'questionId'), 'questionId must be an integer');
-  assertHttpError(() => optionalInteger(false, 'questionId'), 'questionId must be an integer');
-  assertHttpError(() => optionalInteger(0, 'questionId', { min: 1 }), 'questionId must be at least 1');
+  assertBadRequest(() => optionalInteger('9', 'questionId', { min: 1 }), 'questionId must be an integer');
+  assertBadRequest(() => optionalInteger('', 'questionId'), 'questionId must be an integer');
+  assertBadRequest(() => optionalInteger(1.5, 'questionId'), 'questionId must be an integer');
+  assertBadRequest(() => optionalInteger(false, 'questionId'), 'questionId must be an integer');
+  assertBadRequest(() => optionalInteger(0, 'questionId', { min: 1 }), 'questionId must be at least 1');
 });
 
 test('optionalString rejects coerced values', () => {
   assert.equal(optionalString(null, 'startsAt'), null);
   assert.equal(optionalString('', 'startsAt'), null);
   assert.equal(optionalString(' 2026-01-01 ', 'startsAt'), '2026-01-01');
-  assertHttpError(() => optionalString(7, 'startsAt'), 'startsAt must be a string');
-  assertHttpError(() => optionalString(false, 'value'), 'value must be a string');
+  assertBadRequest(() => optionalString(7, 'startsAt'), 'startsAt must be a string');
+  assertBadRequest(() => optionalString(false, 'value'), 'value must be a string');
 });
 
 test('integerParam applies defaults and inclusive bounds', () => {
   assert.equal(integerParam(null, 'limit', 50, { min: 1, max: 100 }), 50);
   assert.equal(integerParam('100', 'limit', 50, { min: 1, max: 100 }), 100);
-  assertHttpError(() => integerParam('0', 'limit', 50, { min: 1 }), 'limit must be at least 1');
-  assertHttpError(() => integerParam('101', 'limit', 50, { max: 100 }), 'limit must be at most 100');
+  assertBadRequest(() => integerParam('0', 'limit', 50, { min: 1 }), 'limit must be at least 1');
+  assertBadRequest(() => integerParam('101', 'limit', 50, { max: 100 }), 'limit must be at most 100');
 });
 
 test('requiredIntegerParam rejects omitted path ids', () => {
   assert.equal(requiredIntegerParam('7', 'surveyId', { min: 1 }), 7);
-  assertHttpError(() => requiredIntegerParam(undefined, 'surveyId'), 'surveyId is required');
+  assertBadRequest(() => requiredIntegerParam(undefined, 'surveyId'), 'surveyId is required');
 });
 
 test('requiredInteger rejects omitted body ids', () => {
   assert.equal(requiredInteger(7, 'surveyId', { min: 1 }), 7);
-  assertHttpError(() => requiredInteger(null, 'surveyId'), 'surveyId is required');
+  assertBadRequest(() => requiredInteger(null, 'surveyId'), 'surveyId is required');
 });
 
 test('boolean helpers reject coerced values', () => {
@@ -184,50 +184,28 @@ test('boolean helpers reject coerced values', () => {
   assert.equal(requiredBoolean(false, 'enabled'), false);
   assert.equal(boolToInt(true), 1);
   assert.equal(boolToInt(false), 0);
-  assertHttpError(() => optionalBoolean('true', 'enabled'), 'enabled must be a boolean');
-  assertHttpError(() => optionalBoolean(1, 'enabled'), 'enabled must be a boolean');
-  assertHttpError(() => requiredBoolean(undefined, 'enabled'), 'enabled is required');
+  assertBadRequest(() => optionalBoolean('true', 'enabled'), 'enabled must be a boolean');
+  assertBadRequest(() => optionalBoolean(1, 'enabled'), 'enabled must be a boolean');
+  assertBadRequest(() => requiredBoolean(undefined, 'enabled'), 'enabled is required');
 });
 
 test('requireNumberList validates arrays as strict integer lists', () => {
   assert.deepEqual(requireNumberList([1, 2], 'choiceIds', { min: 1 }), [1, 2]);
-  assertHttpError(() => requireNumberList('1,2', 'choiceIds'), 'choiceIds must be an array');
-  assertHttpError(() => requireNumberList(['1'], 'choiceIds', { min: 1 }), 'choiceIds[0] must be an integer');
-  assertHttpError(() => requireNumberList([true], 'choiceIds', { min: 1 }), 'choiceIds[0] must be an integer');
-  assertHttpError(() => requireNumberList([1.5], 'choiceIds', { min: 1 }), 'choiceIds[0] must be an integer');
-  assertHttpError(() => requireNumberList([0], 'choiceIds', { min: 1 }), 'choiceIds[0] must be at least 1');
+  assertBadRequest(() => requireNumberList('1,2', 'choiceIds'), 'choiceIds must be an array');
+  assertBadRequest(() => requireNumberList(['1'], 'choiceIds', { min: 1 }), 'choiceIds[0] must be an integer');
+  assertBadRequest(() => requireNumberList([true], 'choiceIds', { min: 1 }), 'choiceIds[0] must be an integer');
+  assertBadRequest(() => requireNumberList([1.5], 'choiceIds', { min: 1 }), 'choiceIds[0] must be an integer');
+  assertBadRequest(() => requireNumberList([0], 'choiceIds', { min: 1 }), 'choiceIds[0] must be at least 1');
 });
 
 test('normalizeQuestionType rejects coerced values', () => {
   assert.equal(normalizeQuestionType('textSingle'), 'textSingle');
-  assertHttpError(() => normalizeQuestionType(1), 'Invalid question type');
-  assertHttpError(
+  assertBadRequest(() => normalizeQuestionType(1), 'Invalid question type');
+  assertBadRequest(
     () => normalizeQuestionType({ toString: () => 'textSingle' }),
     'Invalid question type',
   );
 });
-
-function assertHttpError(action: () => unknown, message: string): void {
-  assert.throws(action, (error: unknown) =>
-    error instanceof HttpError &&
-    error.status === 400 &&
-    error.message === message,
-  );
-}
-
-async function assertHttpErrorAsync(
-  action: () => Promise<unknown>,
-  statusOrMessage: number | string,
-  maybeMessage?: string,
-): Promise<void> {
-  const status = typeof statusOrMessage === 'number' ? statusOrMessage : 400;
-  const message = maybeMessage ?? statusOrMessage;
-  await assert.rejects(action, (error: unknown) =>
-    error instanceof HttpError &&
-    error.status === status &&
-    error.message === message,
-  );
-}
 
 function captureConsoleError(action: () => void): string[] {
   const original = console.error;

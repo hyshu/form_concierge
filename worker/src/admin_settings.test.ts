@@ -1,13 +1,12 @@
-import assert from 'node:assert/strict';
 import test from 'node:test';
 
+import { assertHttpError, assertHttpErrorAsync } from '../test/helpers';
 import {
   getAdminIntegrationSettings,
   requireSmtpSettings,
   updateAdminIntegrationSettings,
 } from './admin_settings';
 import type { Env, IntegrationSettingsRow } from './types';
-import { HttpError } from './utils';
 
 test('updateAdminIntegrationSettings requires settings objects', async () => {
   await assertHttpErrorAsync(
@@ -118,24 +117,4 @@ function settingsRow(overrides: Partial<IntegrationSettingsRow> = {}): Integrati
     updated_at: '2026-01-01T00:00:00.000Z',
     ...overrides,
   };
-}
-
-function assertHttpError(action: () => unknown, status: number, message: string): void {
-  assert.throws(action, (error: unknown) =>
-    error instanceof HttpError &&
-    error.status === status &&
-    error.message === message,
-  );
-}
-
-async function assertHttpErrorAsync(
-  action: () => Promise<unknown>,
-  status: number,
-  message: string,
-): Promise<void> {
-  await assert.rejects(action, (error: unknown) =>
-    error instanceof HttpError &&
-    error.status === status &&
-    error.message === message,
-  );
 }

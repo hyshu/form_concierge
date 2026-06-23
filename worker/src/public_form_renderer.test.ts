@@ -1,10 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
+import { assertHttpErrorAsync, d1Result } from '../test/helpers';
 import { renderPublicForm } from './public_form_renderer';
-import { d1Result } from './test_helpers';
 import type { Env, ProjectRow, SurveyRow } from './types';
-import { HttpError } from './utils';
 
 test('renderPublicForm returns 404 for missing API-host survey slug', async () => {
   const response = await renderPublicForm(
@@ -29,17 +28,15 @@ test('renderPublicForm returns 404 for missing custom-domain survey slug', async
 });
 
 test('renderPublicForm rejects missing localized text instead of falling back', async () => {
-  await assert.rejects(
+  await assertHttpErrorAsync(
     () => renderPublicForm(
       htmlRequest('https://example.com/acme'),
       envWithPublicRows({
         survey: surveyRow({ title_translations: '{"en":"Survey"}' }),
       }),
     ),
-    (error: unknown) =>
-      error instanceof HttpError &&
-      error.status === 500 &&
-      error.message === 'Missing localized text for locale: ja',
+    500,
+    'Missing localized text for locale: ja',
   );
 });
 

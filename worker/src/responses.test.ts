@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import type { AnswerRow, QuestionRow } from './types';
-import { HttpError } from './utils';
+import { assertHttpError } from '../test/helpers';
 import { formatAnswerForCsv, incrementChoiceCount } from './responses';
+import type { AnswerRow, QuestionRow } from './types';
 
 test('incrementChoiceCount rejects unknown choice ids', () => {
   const counts = { '1': 0 };
@@ -66,16 +66,4 @@ function answer(overrides: Partial<AnswerRow>): AnswerRow {
     selected_choice_ids: null,
     ...overrides,
   };
-}
-
-function assertHttpError(
-  action: () => unknown,
-  status: number,
-  message: string,
-): void {
-  assert.throws(action, (error: unknown) =>
-    error instanceof HttpError &&
-    error.status === status &&
-    error.message === message,
-  );
 }

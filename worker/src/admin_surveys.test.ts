@@ -1,34 +1,32 @@
-import assert from 'node:assert/strict';
 import test from 'node:test';
 
+import { assertBadRequestAsync, emptyD1Result } from '../test/helpers';
 import { createSurveyWithQuestions } from './admin_surveys';
-import { emptyD1Result } from './test_helpers';
 import type { AdminContext, Env } from './types';
-import { HttpError } from './utils';
 
 test('createSurveyWithQuestions requires a questions array', async () => {
-  await assertHttpErrorAsync(
+  await assertBadRequestAsync(
     () => createSurveyWithQuestions(requestWithBody({ survey: {}, questions: null }), envUnused(), admin()),
     'questions must be an array',
   );
 });
 
 test('createSurveyWithQuestions requires a survey object', async () => {
-  await assertHttpErrorAsync(
+  await assertBadRequestAsync(
     () => createSurveyWithQuestions(requestWithBody({ survey: null, questions: [] }), envUnused(), admin()),
     'survey must be an object',
   );
 });
 
 test('createSurveyWithQuestions rejects non-object question items', async () => {
-  await assertHttpErrorAsync(
+  await assertBadRequestAsync(
     () => createSurveyWithQuestions(requestWithBody({ survey: {}, questions: [null] }), envUnused(), admin()),
     'questions[0] must be an object',
   );
 });
 
 test('createSurveyWithQuestions validates choice translations shape by question type', async () => {
-  await assertHttpErrorAsync(
+  await assertBadRequestAsync(
     () => createSurveyWithQuestions(
       requestWithBody({
         survey: {},
@@ -40,7 +38,7 @@ test('createSurveyWithQuestions validates choice translations shape by question 
     'questions[0].choiceTranslations must not be empty',
   );
 
-  await assertHttpErrorAsync(
+  await assertBadRequestAsync(
     () => createSurveyWithQuestions(
       requestWithBody({
         survey: {},
@@ -52,17 +50,6 @@ test('createSurveyWithQuestions validates choice translations shape by question 
     'questions[0].choiceTranslations must be empty for text questions',
   );
 });
-
-async function assertHttpErrorAsync(
-  action: () => Promise<Response>,
-  message: string,
-): Promise<void> {
-  await assert.rejects(action, (error: unknown) =>
-    error instanceof HttpError &&
-    error.status === 400 &&
-    error.message === message,
-  );
-}
 
 function requestWithBody(body: unknown): Request {
   return new Request('https://example.com/api/admin/surveys/with-questions', {
