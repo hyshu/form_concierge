@@ -7,6 +7,7 @@ import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/hux_icon_action_button.dart';
 import '../models/draft_question.dart';
 import 'localized_choice_dialog.dart';
+import 'localized_choice_tile.dart';
 
 /// Widget for editing draft questions and their choices.
 class DraftQuestionEditor extends StatelessWidget {
@@ -242,8 +243,8 @@ class _ChoicesSection extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           ...choices.map(
-            (choice) => _DraftChoiceTile(
-              choice: choice,
+            (choice) => LocalizedChoiceTile(
+              textTranslations: choice.textTranslations,
               primaryLocale: primaryLocale,
               locales: locales,
               enabled: enabled,
@@ -275,65 +276,6 @@ class _ChoicesSection extends StatelessWidget {
             ),
         ],
       ),
-    );
-  }
-}
-
-class _DraftChoiceTile extends StatelessWidget {
-  final DraftChoice choice;
-  final String primaryLocale;
-  final Iterable<String> locales;
-  final bool enabled;
-  final void Function(LocalizedText textTranslations) onUpdate;
-  final VoidCallback onDelete;
-
-  const _DraftChoiceTile({
-    required this.choice,
-    required this.primaryLocale,
-    required this.locales,
-    required this.enabled,
-    required this.onUpdate,
-    required this.onDelete,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return HuxCard(
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      backgroundColor: HuxTokens.surfaceSecondary(context),
-      onTap: enabled ? () => _showEditDialog(context) : null,
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(choice.textTranslations.valueFor(primaryLocale)),
-          ),
-          if (enabled) ...[
-            HuxIconActionButton(
-              tooltip: context.tr('Edit'),
-              onPressed: () => _showEditDialog(context),
-              icon: LucideIcons.pencil,
-            ),
-            HuxIconActionButton(
-              tooltip: context.tr('Delete'),
-              onPressed: onDelete,
-              icon: LucideIcons.trash2,
-              destructive: true,
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  void _showEditDialog(BuildContext context) {
-    showLocalizedChoiceDialog(
-      context,
-      title: context.tr('Edit Choice'),
-      primaryLocale: primaryLocale,
-      locales: locales,
-      initialText: choice.textTranslations,
-      onSubmit: onUpdate,
     );
   }
 }
