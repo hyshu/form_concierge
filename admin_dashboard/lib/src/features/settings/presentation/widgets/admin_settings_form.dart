@@ -4,6 +4,7 @@ import 'package:hux/hux.dart';
 
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/hux_states.dart';
+import 'admin_settings_form_widgets.dart';
 
 class AdminSettingsForm extends StatefulWidget {
   const AdminSettingsForm({
@@ -323,7 +324,7 @@ class _AiSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _SectionHeader(
+          AdminSettingsSectionHeader(
             icon: LucideIcons.sparkles,
             title: context.tr('AI Generation'),
             configured:
@@ -449,7 +450,7 @@ class _AiProviderKeyField extends StatelessWidget {
         ),
         if (hasApiKey) ...[
           const SizedBox(height: 12),
-          _SwitchRow(
+          AdminSettingsSwitchRow(
             label: clearLabel,
             value: clearApiKey,
             onChanged: onClearChanged,
@@ -493,13 +494,13 @@ class _SmtpSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _SectionHeader(
+          AdminSettingsSectionHeader(
             icon: LucideIcons.mail,
             title: context.tr('SMTP Server'),
             configured: settings.configured,
           ),
           const SizedBox(height: 16),
-          _ResponsiveFields(
+          AdminSettingsResponsiveFields(
             children: [
               HuxInput(
                 controller: hostController,
@@ -537,7 +538,7 @@ class _SmtpSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          _ResponsiveFields(
+          AdminSettingsResponsiveFields(
             children: [
               HuxInput(
                 controller: usernameController,
@@ -558,14 +559,14 @@ class _SmtpSection extends StatelessWidget {
           ),
           if (settings.hasPassword) ...[
             const SizedBox(height: 12),
-            _SwitchRow(
+            AdminSettingsSwitchRow(
               label: context.tr('Clear saved SMTP password'),
               value: clearPassword,
               onChanged: onClearPasswordChanged,
             ),
           ],
           const SizedBox(height: 16),
-          _ResponsiveFields(
+          AdminSettingsResponsiveFields(
             children: [
               HuxInput(
                 controller: fromEmailController,
@@ -639,98 +640,6 @@ class _SmtpSection extends StatelessWidget {
       fromNameController.text,
     ].any((value) => value.trim().isNotEmpty);
     return anySmtpField ? context.tr(messageKey) : null;
-  }
-}
-
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({
-    required this.icon,
-    required this.title,
-    required this.configured,
-  });
-
-  final IconData icon;
-  final String title;
-  final bool configured;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, color: HuxTokens.primary(context)),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            title,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-        HuxBadge(
-          label: context.tr(configured ? 'Configured' : 'Not configured'),
-          variant: configured
-              ? HuxBadgeVariant.success
-              : HuxBadgeVariant.secondary,
-          size: HuxBadgeSize.small,
-        ),
-      ],
-    );
-  }
-}
-
-class _SwitchRow extends StatelessWidget {
-  const _SwitchRow({
-    required this.label,
-    required this.value,
-    required this.onChanged,
-  });
-
-  final String label;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(child: Text(label)),
-        HuxSwitch(value: value, onChanged: onChanged),
-      ],
-    );
-  }
-}
-
-class _ResponsiveFields extends StatelessWidget {
-  const _ResponsiveFields({required this.children});
-
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth < 620) {
-          return Column(
-            children: [
-              for (var index = 0; index < children.length; index++) ...[
-                children[index],
-                if (index != children.length - 1) const SizedBox(height: 16),
-              ],
-            ],
-          );
-        }
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            for (var index = 0; index < children.length; index++) ...[
-              Expanded(child: children[index]),
-              if (index != children.length - 1) const SizedBox(width: 16),
-            ],
-          ],
-        );
-      },
-    );
   }
 }
 
