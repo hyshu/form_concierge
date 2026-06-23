@@ -2,6 +2,7 @@ import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:rearch/rearch.dart';
 
 import '../../../../core/capsules/client_capsule.dart';
+import '../../../../core/capsules/manager_operation.dart';
 
 /// State for the user list.
 class UserListState {
@@ -75,20 +76,24 @@ class UserListManager {
     required String password,
     required AdminRole role,
   }) async {
-    return _runAndReload(
-      () => _client.userAdmin.createUser(
+    return runVoidAndReload(
+      action: () => _client.userAdmin.createUser(
         email: email,
         password: password,
         role: role,
       ),
-      'Failed to create user',
+      reload: loadUsers,
+      setError: _setError,
+      errorMessage: 'Failed to create user',
     );
   }
 
   Future<bool> updateUserRole(UuidValue userId, AdminRole role) async {
-    return _runAndReload(
-      () => _client.userAdmin.updateRole(userId, role),
-      'Failed to update role',
+    return runVoidAndReload(
+      action: () => _client.userAdmin.updateRole(userId, role),
+      reload: loadUsers,
+      setError: _setError,
+      errorMessage: 'Failed to update role',
     );
   }
 
@@ -104,23 +109,13 @@ class UserListManager {
       }
       return (true, wasSelfDeletion);
     } on Exception catch (e) {
-      _setState(state.copyWith(error: 'Failed to delete user: $e'));
+      _setError('Failed to delete user: $e');
       return (false, false);
     }
   }
 
-  Future<bool> _runAndReload(
-    Future<void> Function() action,
-    String errorMessage,
-  ) async {
-    try {
-      await action();
-      await loadUsers();
-      return true;
-    } on Exception catch (e) {
-      _setState(state.copyWith(error: '$errorMessage: $e'));
-      return false;
-    }
+  void _setError(String error) {
+    _setState(state.copyWith(error: error));
   }
 
   /// Clear any error message.
