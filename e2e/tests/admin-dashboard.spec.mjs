@@ -61,7 +61,7 @@ test('admin dashboard logs in and renders seeded project data', async ({ page })
     page.locator('input[type="password"]'),
     seed.adminPassword,
   );
-  await page.getByRole('button', { name: 'Login' }).click();
+  await page.keyboard.press('Enter');
 
   await loginResponsePromise;
   const projectResponse = await projectResponsePromise;
