@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:hux/hux.dart';
 
-class HuxIconTooltipButton extends StatelessWidget {
-  const HuxIconTooltipButton({
+class HuxIconActionButton extends StatelessWidget {
+  const HuxIconActionButton({
     super.key,
-    required this.tooltip,
     required this.icon,
     required this.onPressed,
-    this.textColor,
+    required this.tooltip,
+    this.destructive = false,
   });
 
-  final String tooltip;
   final IconData icon;
   final VoidCallback? onPressed;
-  final Color? textColor;
+  final String tooltip;
+  final bool destructive;
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +24,7 @@ class HuxIconTooltipButton extends StatelessWidget {
         variant: HuxButtonVariant.ghost,
         size: HuxButtonSize.small,
         icon: icon,
-        textColor: textColor,
+        textColor: destructive ? HuxTokens.textDestructive(context) : null,
         child: const SizedBox(width: 0),
       ),
     );
