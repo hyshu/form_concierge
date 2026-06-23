@@ -8,6 +8,7 @@ class HuxIconActionButton extends StatelessWidget {
     required this.onPressed,
     required this.tooltip,
     this.destructive = false,
+    this.textColor,
     this.size = HuxButtonSize.small,
   });
 
@@ -15,6 +16,7 @@ class HuxIconActionButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final String tooltip;
   final bool destructive;
+  final Color? textColor;
   final HuxButtonSize size;
 
   @override
@@ -26,7 +28,9 @@ class HuxIconActionButton extends StatelessWidget {
         variant: HuxButtonVariant.ghost,
         size: size,
         icon: icon,
-        textColor: destructive ? HuxTokens.textDestructive(context) : null,
+        textColor:
+            textColor ??
+            (destructive ? HuxTokens.textDestructive(context) : null),
         child: const SizedBox(width: 0),
       ),
     );

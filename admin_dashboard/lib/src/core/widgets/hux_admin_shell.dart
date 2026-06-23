@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hux/hux.dart';
 
 import '../localization/app_localizations.dart';
+import 'hux_icon_action_button.dart';
 
 class HuxAdminShell extends StatelessWidget {
   const HuxAdminShell({
@@ -296,12 +297,10 @@ class _TopBar extends StatelessWidget {
         child: Row(
           children: [
             if (onBack != null) ...[
-              HuxButton(
+              HuxIconActionButton(
                 onPressed: onBack,
-                variant: HuxButtonVariant.ghost,
-                size: HuxButtonSize.small,
                 icon: LucideIcons.arrowLeft,
-                child: const SizedBox(width: 0),
+                tooltip: context.tr('Back'),
               ),
               const SizedBox(width: 8),
             ] else if (showMenu) ...[
