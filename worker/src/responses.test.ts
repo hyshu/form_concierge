@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
+import { questionRow } from '../test/fixtures';
 import { assertHttpError } from '../test/helpers';
 import { formatAnswerForCsv, incrementChoiceCount } from './responses';
-import type { AnswerRow, QuestionRow } from './types';
+import type { AnswerRow } from './types';
 
 test('incrementChoiceCount rejects unknown choice ids', () => {
   const counts = { '1': 0 };
@@ -20,7 +21,7 @@ test('incrementChoiceCount rejects unknown choice ids', () => {
 test('formatAnswerForCsv rejects missing choice text', () => {
   assert.equal(
     formatAnswerForCsv(
-      question({ id: 10, type: 'multipleChoice' }),
+      questionRow({ id: 10, type: 'multipleChoice' }),
       answer({ question_id: 10, selected_choice_ids: '[1]' }),
       new Map([[1, 'Yes']]),
     ),
@@ -29,7 +30,7 @@ test('formatAnswerForCsv rejects missing choice text', () => {
 
   assertHttpError(
     () => formatAnswerForCsv(
-      question({ id: 10, type: 'multipleChoice' }),
+      questionRow({ id: 10, type: 'multipleChoice' }),
       answer({ question_id: 10, selected_choice_ids: '[2]' }),
       new Map([[1, 'Yes']]),
     ),
@@ -37,25 +38,6 @@ test('formatAnswerForCsv rejects missing choice text', () => {
     'Unknown choice id 2',
   );
 });
-
-function question(overrides: Partial<QuestionRow>): QuestionRow {
-  return {
-    id: 0,
-    survey_id: 1,
-    text_translations: '{"en":"Question"}',
-    type: 'textSingle',
-    order_index: 0,
-    is_required: 0,
-    placeholder_translations: '{}',
-    min_length: null,
-    max_length: null,
-    min_selected: null,
-    max_selected: null,
-    visibility_condition_mode: 'all',
-    is_deleted: 0,
-    ...overrides,
-  };
-}
 
 function answer(overrides: Partial<AnswerRow>): AnswerRow {
   return {
