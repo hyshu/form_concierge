@@ -7,6 +7,7 @@ import '../../../../core/forms/password_validation.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../capsules/password_reset_capsule.dart';
 import '../widgets/auth_card_scaffold.dart';
+import '../widgets/auth_page_scaffold.dart';
 
 /// Page for entering new password to complete reset.
 class ResetPasswordPage extends RearchConsumer {
@@ -28,52 +29,43 @@ class ResetPasswordPage extends RearchConsumer {
 
     // Show success state
     if (resetManager.state.step == PasswordResetStep.completed) {
-      return Scaffold(
-        body: SafeArea(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 400),
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      LucideIcons.circleCheck,
-                      size: 80,
-                      color: HuxTokens.primary(context),
-                    ),
-                    const SizedBox(height: 24),
-                    Text(
-                      context.tr('Password Reset Complete'),
-                      style: Theme.of(context).textTheme.headlineSmall,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      context.tr(
-                        'Your password has been successfully reset. You can now login with your new password.',
-                      ),
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: HuxTokens.textSecondary(context),
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 32),
-                    HuxButton(
-                      onPressed: () {
-                        resetManager.reset();
-                        controllers.clear();
-                        context.go('/login');
-                      },
-                      icon: LucideIcons.logIn,
-                      child: Text(context.tr('Go to Login')),
-                    ),
-                  ],
-                ),
-              ),
+      return AuthPageScaffold(
+        scrollable: false,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              LucideIcons.circleCheck,
+              size: 80,
+              color: HuxTokens.primary(context),
             ),
-          ),
+            const SizedBox(height: 24),
+            Text(
+              context.tr('Password Reset Complete'),
+              style: Theme.of(context).textTheme.headlineSmall,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              context.tr(
+                'Your password has been successfully reset. You can now login with your new password.',
+              ),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: HuxTokens.textSecondary(context),
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            HuxButton(
+              onPressed: () {
+                resetManager.reset();
+                controllers.clear();
+                context.go('/login');
+              },
+              icon: LucideIcons.logIn,
+              child: Text(context.tr('Go to Login')),
+            ),
+          ],
         ),
       );
     }
