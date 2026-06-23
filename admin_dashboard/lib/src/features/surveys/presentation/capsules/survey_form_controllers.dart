@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:rearch/rearch.dart';
 
+import '../widgets/localized_text_helpers.dart';
+
 /// Form controllers for survey editing.
 class SurveyFormControllers {
   final TextEditingController slug;
@@ -16,36 +18,28 @@ class SurveyFormControllers {
 
   void dispose() {
     slug.dispose();
-    for (final controller in titleTranslations.values) {
-      controller.dispose();
-    }
-    for (final controller in descriptionTranslations.values) {
-      controller.dispose();
-    }
+    disposeLocalizedTextControllers(titleTranslations);
+    disposeLocalizedTextControllers(descriptionTranslations);
   }
 
   void populateFrom(Survey survey) {
     slug.text = survey.slug;
-    for (final locale in formContentLocaleCodes) {
-      titleTranslations[locale]!.text =
-          survey.titleTranslations.values[locale] ?? '';
-      descriptionTranslations[locale]!.text =
-          survey.descriptionTranslations.values[locale] ?? '';
-    }
+    populateLocalizedTextControllers(
+      titleTranslations,
+      survey.titleTranslations,
+    );
+    populateLocalizedTextControllers(
+      descriptionTranslations,
+      survey.descriptionTranslations,
+    );
   }
 
   LocalizedText titleValue() {
-    return LocalizedText({
-      for (final locale in formContentLocaleCodes)
-        locale: titleTranslations[locale]!.text.trim(),
-    });
+    return localizedTextFromControllers(titleTranslations);
   }
 
   LocalizedText descriptionValue() {
-    return LocalizedText({
-      for (final locale in formContentLocaleCodes)
-        locale: descriptionTranslations[locale]!.text.trim(),
-    });
+    return localizedTextFromControllers(descriptionTranslations);
   }
 }
 
@@ -54,14 +48,8 @@ SurveyFormControllers surveyFormControllersCapsule(CapsuleHandle use) {
   final controllers = use.memo(
     () => SurveyFormControllers(
       slug: TextEditingController(),
-      titleTranslations: {
-        for (final locale in formContentLocaleCodes)
-          locale: TextEditingController(),
-      },
-      descriptionTranslations: {
-        for (final locale in formContentLocaleCodes)
-          locale: TextEditingController(),
-      },
+      titleTranslations: createLocalizedTextControllers(),
+      descriptionTranslations: createLocalizedTextControllers(),
     ),
   );
 

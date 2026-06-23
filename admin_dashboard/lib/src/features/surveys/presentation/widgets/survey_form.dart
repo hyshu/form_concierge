@@ -6,6 +6,7 @@ import '../../../../core/forms/slug_auto_fill.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../capsules/survey_form_capsule.dart';
 import 'localized_text_field_group.dart';
+import 'localized_text_helpers.dart';
 
 /// Form widget for creating/editing survey basic info (title, slug, etc.).
 class SurveyForm extends StatefulWidget {
@@ -171,12 +172,10 @@ class SurveyFormWidgetState extends State<SurveyForm> {
       slug: widget.controllers.slug.text.trim(),
       titleTranslations: localizedTextFromControllers(
         widget.controllers.titleTranslations,
-        primaryLocale: widget.primaryLocale,
         locales: widget.locales,
       ),
       descriptionTranslations: localizedTextFromControllers(
         widget.controllers.descriptionTranslations,
-        primaryLocale: widget.primaryLocale,
         locales: widget.locales,
       ),
     );
