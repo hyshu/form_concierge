@@ -6,6 +6,7 @@ import 'package:hux/hux.dart';
 import '../../../../core/forms/password_validation.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../capsules/password_reset_capsule.dart';
+import '../widgets/auth_card_scaffold.dart';
 
 /// Page for entering new password to complete reset.
 class ResetPasswordPage extends RearchConsumer {
@@ -77,97 +78,64 @@ class ResetPasswordPage extends RearchConsumer {
       );
     }
 
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 400),
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: HuxCard(
-                  size: HuxCardSize.large,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Icon(
-                        LucideIcons.lock,
-                        size: 64,
-                        color: HuxTokens.primary(context),
-                      ),
-                      const SizedBox(height: 24),
-                      Text(
-                        context.tr('Create New Password'),
-                        style: Theme.of(context).textTheme.headlineSmall,
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        context.tr('Enter a new password for your account.'),
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: HuxTokens.textSecondary(context),
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 32),
-                      HuxInput(
-                        controller: controllers.password,
-                        label: context.tr('New Password'),
-                        prefixIcon: const Icon(LucideIcons.lock),
-                        obscureText: true,
-                        enabled: !resetManager.state.isLoading,
-                        textInputAction: TextInputAction.next,
-                      ),
-                      const SizedBox(height: 16),
-                      HuxInput(
-                        controller: controllers.confirmPassword,
-                        label: context.tr('Confirm Password'),
-                        prefixIcon: const Icon(LucideIcons.lock),
-                        obscureText: true,
-                        enabled: !resetManager.state.isLoading,
-                        textInputAction: TextInputAction.done,
-                        onSubmitted: (_) =>
-                            _submit(context, resetManager, controllers),
-                      ),
-                      if (resetManager.state.error != null) ...[
-                        const SizedBox(height: 16),
-                        Text(
-                          context.trMessage(resetManager.state.error!),
-                          style: TextStyle(
-                            color: HuxTokens.textDestructive(context),
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 24),
-                      HuxButton(
-                        onPressed: resetManager.state.isLoading
-                            ? null
-                            : () => _submit(context, resetManager, controllers),
-                        isLoading: resetManager.state.isLoading,
-                        width: HuxButtonWidth.expand,
-                        icon: LucideIcons.keyRound,
-                        child: Text(context.tr('Reset Password')),
-                      ),
-                      const SizedBox(height: 16),
-                      HuxButton(
-                        onPressed: () {
-                          resetManager.reset();
-                          controllers.clear();
-                          context.go('/login');
-                        },
-                        variant: HuxButtonVariant.secondary,
-                        width: HuxButtonWidth.expand,
-                        child: Text(context.tr('Cancel')),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
+    return AuthCardScaffold(
+      icon: LucideIcons.lock,
+      title: context.tr('Create New Password'),
+      subtitle: Text(
+        context.tr('Enter a new password for your account.'),
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: HuxTokens.textSecondary(context),
         ),
+        textAlign: TextAlign.center,
       ),
+      children: [
+        HuxInput(
+          controller: controllers.password,
+          label: context.tr('New Password'),
+          prefixIcon: const Icon(LucideIcons.lock),
+          obscureText: true,
+          enabled: !resetManager.state.isLoading,
+          textInputAction: TextInputAction.next,
+        ),
+        const SizedBox(height: 16),
+        HuxInput(
+          controller: controllers.confirmPassword,
+          label: context.tr('Confirm Password'),
+          prefixIcon: const Icon(LucideIcons.lock),
+          obscureText: true,
+          enabled: !resetManager.state.isLoading,
+          textInputAction: TextInputAction.done,
+          onSubmitted: (_) => _submit(context, resetManager, controllers),
+        ),
+        if (resetManager.state.error != null) ...[
+          const SizedBox(height: 16),
+          Text(
+            context.trMessage(resetManager.state.error!),
+            style: TextStyle(color: HuxTokens.textDestructive(context)),
+          ),
+        ],
+        const SizedBox(height: 24),
+        HuxButton(
+          onPressed: resetManager.state.isLoading
+              ? null
+              : () => _submit(context, resetManager, controllers),
+          isLoading: resetManager.state.isLoading,
+          width: HuxButtonWidth.expand,
+          icon: LucideIcons.keyRound,
+          child: Text(context.tr('Reset Password')),
+        ),
+        const SizedBox(height: 16),
+        HuxButton(
+          onPressed: () {
+            resetManager.reset();
+            controllers.clear();
+            context.go('/login');
+          },
+          variant: HuxButtonVariant.secondary,
+          width: HuxButtonWidth.expand,
+          child: Text(context.tr('Cancel')),
+        ),
+      ],
     );
   }
 
