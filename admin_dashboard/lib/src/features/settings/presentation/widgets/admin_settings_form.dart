@@ -218,23 +218,11 @@ class _AdminSettingsFormState extends State<AdminSettingsForm> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  if (widget.error != null) ...[
-                    HuxMessageCard(
-                      icon: LucideIcons.circleAlert,
-                      message: context.trMessage(widget.error!),
-                      destructive: true,
-                      onClose: widget.onClearMessages,
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-                  if (widget.successMessage != null) ...[
-                    HuxMessageCard(
-                      icon: LucideIcons.circleCheck,
-                      message: context.trMessage(widget.successMessage!),
-                      onClose: widget.onClearMessages,
-                    ),
-                    const SizedBox(height: 16),
-                  ],
+                  HuxFeedbackMessages(
+                    error: widget.error,
+                    successMessage: widget.successMessage,
+                    onClose: widget.onClearMessages,
+                  ),
                   AdminSettingsAiSection(
                     settings: settings.ai,
                     provider: _aiProvider,
