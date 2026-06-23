@@ -3,6 +3,7 @@ import 'package:rearch/rearch.dart';
 
 import '../../../../core/capsules/client_capsule.dart';
 import '../../../../core/capsules/keyed_state.dart';
+import '../../../../core/capsules/manager_operation.dart';
 import '../../../../core/constants/pagination.dart';
 
 /// State for the response list.
@@ -173,15 +174,13 @@ class ResponseListManager {
     Future<void> Function() action,
     String errorMessage,
   ) async {
-    try {
-      final page = getState(surveyId).currentPage;
-      await action();
-      await loadResponses(surveyId, page: page);
-      return true;
-    } on Exception catch (e) {
-      _setError(surveyId, '$errorMessage: $e');
-      return false;
-    }
+    final page = getState(surveyId).currentPage;
+    return runVoidAndReload(
+      action: action,
+      reload: () => loadResponses(surveyId, page: page),
+      setError: (error) => _setError(surveyId, error),
+      errorMessage: errorMessage,
+    );
   }
 
   /// Clear error for a survey.

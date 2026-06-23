@@ -2,6 +2,7 @@ import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:rearch/rearch.dart';
 
 import '../../../../core/capsules/client_capsule.dart';
+import '../../../../core/capsules/manager_operation.dart';
 
 /// State for the survey list.
 class SurveyListState {
@@ -90,87 +91,85 @@ class SurveyListManager {
   }
 
   Future<Project?> createProject(Project project) async {
-    try {
-      final created = await _client.projectAdmin.create(project);
-      await loadProjects();
-      return created;
-    } on Exception catch (e) {
-      _setState(state.copyWith(error: 'Failed to create project: $e'));
-      return null;
-    }
+    return runAndReload(
+      action: () => _client.projectAdmin.create(project),
+      reload: loadProjects,
+      setError: _setError,
+      errorMessage: 'Failed to create project',
+    );
   }
 
   Future<Project?> updateProject(Project project) async {
-    try {
-      final updated = await _client.projectAdmin.update(project);
-      await loadProjects();
-      return updated;
-    } on Exception catch (e) {
-      _setState(state.copyWith(error: 'Failed to update project: $e'));
-      return null;
-    }
+    return runAndReload(
+      action: () => _client.projectAdmin.update(project),
+      reload: loadProjects,
+      setError: _setError,
+      errorMessage: 'Failed to update project',
+    );
   }
 
   Future<bool> deleteProject(int projectId) async {
-    return _runAndReload(
-      () => _client.projectAdmin.delete(projectId),
-      'Failed to delete project',
+    return runVoidAndReload(
+      action: () => _client.projectAdmin.delete(projectId),
+      reload: loadSurveys,
+      setError: _setError,
+      errorMessage: 'Failed to delete project',
     );
   }
 
   /// Delete a survey by ID.
   Future<bool> deleteSurvey(int surveyId) async {
-    return _runAndReload(
-      () => _client.surveyAdmin.delete(surveyId),
-      'Failed to delete survey',
+    return runVoidAndReload(
+      action: () => _client.surveyAdmin.delete(surveyId),
+      reload: loadSurveys,
+      setError: _setError,
+      errorMessage: 'Failed to delete survey',
     );
   }
 
   /// Publish a survey.
   Future<bool> publishSurvey(int surveyId) async {
-    return _runAndReload(
-      () => _client.surveyAdmin.publish(surveyId),
-      'Failed to publish survey',
+    return runVoidAndReload(
+      action: () => _client.surveyAdmin.publish(surveyId),
+      reload: loadSurveys,
+      setError: _setError,
+      errorMessage: 'Failed to publish survey',
     );
   }
 
   /// Close a survey.
   Future<bool> closeSurvey(int surveyId) async {
-    return _runAndReload(
-      () => _client.surveyAdmin.close(surveyId),
-      'Failed to close survey',
+    return runVoidAndReload(
+      action: () => _client.surveyAdmin.close(surveyId),
+      reload: loadSurveys,
+      setError: _setError,
+      errorMessage: 'Failed to close survey',
     );
   }
 
   /// Reopen a closed survey.
   Future<bool> reopenSurvey(int surveyId) async {
-    return _runAndReload(
-      () => _client.surveyAdmin.reopen(surveyId),
-      'Failed to reopen survey',
+    return runVoidAndReload(
+      action: () => _client.surveyAdmin.reopen(surveyId),
+      reload: loadSurveys,
+      setError: _setError,
+      errorMessage: 'Failed to reopen survey',
     );
   }
 
   Future<bool> updateSurveyWebEnabled(Survey survey, bool enabled) async {
-    return _runAndReload(
-      () => _client.surveyAdmin.update(
+    return runVoidAndReload(
+      action: () => _client.surveyAdmin.update(
         survey.copyWith(webEnabled: enabled, updatedAt: DateTime.now()),
       ),
-      'Failed to update web publication',
+      reload: loadSurveys,
+      setError: _setError,
+      errorMessage: 'Failed to update web publication',
     );
   }
 
-  Future<bool> _runAndReload(
-    Future<void> Function() action,
-    String errorMessage,
-  ) async {
-    try {
-      await action();
-      await loadSurveys();
-      return true;
-    } on Exception catch (e) {
-      _setState(state.copyWith(error: '$errorMessage: $e'));
-      return false;
-    }
+  void _setError(String error) {
+    _setState(state.copyWith(error: error));
   }
 
   /// Clear any error message.

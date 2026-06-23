@@ -3,6 +3,7 @@ import 'package:rearch/rearch.dart';
 
 import '../../../../core/capsules/client_capsule.dart';
 import '../../../../core/capsules/keyed_state.dart';
+import '../../../../core/capsules/manager_operation.dart';
 
 /// State for the question list.
 class QuestionListState {
@@ -241,14 +242,12 @@ class QuestionListManager {
     Future<T> Function() action,
     String errorMessage,
   ) async {
-    try {
-      final result = await action();
-      await loadQuestions(surveyId);
-      return result;
-    } on Exception catch (e) {
-      _setError(surveyId, '$errorMessage: $e');
-      return null;
-    }
+    return runAndReload(
+      action: action,
+      reload: () => loadQuestions(surveyId),
+      setError: (error) => _setError(surveyId, error),
+      errorMessage: errorMessage,
+    );
   }
 
   Future<bool> _runBoolAndReload(
@@ -256,15 +255,12 @@ class QuestionListManager {
     Future<void> Function() action,
     String errorMessage,
   ) async {
-    final result = await _runAndReload(
-      surveyId,
-      () async {
-        await action();
-        return true;
-      },
-      errorMessage,
+    return runVoidAndReload(
+      action: action,
+      reload: () => loadQuestions(surveyId),
+      setError: (error) => _setError(surveyId, error),
+      errorMessage: errorMessage,
     );
-    return result ?? false;
   }
 
   /// Clear error for a survey.
