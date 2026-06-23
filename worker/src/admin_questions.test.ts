@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
+import { projectRow, questionRow, surveyRow } from '../test/fixtures';
 import { adminPostRequest, assertBadRequest, d1Meta, d1Result } from '../test/helpers';
 import { createQuestion, normalizeQuestionValidation, normalizeVisibilityConditionMode } from './admin_questions';
 import type { Env, ProjectRow, QuestionRow, SurveyRow } from './types';
@@ -39,12 +40,18 @@ test('normalizeVisibilityConditionMode rejects coerced values', () => {
 
 test('createQuestion validates localized text against project supported locales', async () => {
   const env = envWithRows({
-    project: projectRow({ supported_locales: '["ja"]' }),
-    survey: surveyRow(),
+    project: projectRow({
+      id: 10,
+      default_locale: 'ja',
+      supported_locales: '["ja"]',
+    }),
+    survey: surveyRow({ project_id: 10 }),
     insertedQuestion: questionRow({
+      id: 5,
       text_translations: '{"ja":"質問"}',
       placeholder_translations: '{"ja":""}',
       type: 'textSingle',
+      is_required: 1,
     }),
   });
   const response = await createQuestion(
@@ -121,57 +128,4 @@ function d1WithRows(rows: {
       return new ArrayBuffer(0);
     },
   } as unknown as D1Database;
-}
-
-function projectRow(overrides: Partial<ProjectRow> = {}): ProjectRow {
-  return {
-    id: 10,
-    slug: 'demo',
-    custom_domain: null,
-    default_locale: 'ja',
-    supported_locales: '["ja"]',
-    name: 'Demo',
-    created_by_admin_id: 'admin-1',
-    created_at: '2026-01-01T00:00:00.000Z',
-    updated_at: '2026-01-01T00:00:00.000Z',
-    ...overrides,
-  };
-}
-
-function surveyRow(overrides: Partial<SurveyRow> = {}): SurveyRow {
-  return {
-    id: 1,
-    project_id: 10,
-    slug: 'customer-feedback',
-    title_translations: '{"ja":"調査"}',
-    description_translations: '{"ja":""}',
-    status: 'draft',
-    web_enabled: 1,
-    auth_requirement: 'anonymous',
-    created_by_admin_id: 'admin-1',
-    created_at: '2026-01-01T00:00:00.000Z',
-    updated_at: '2026-01-01T00:00:00.000Z',
-    starts_at: null,
-    ends_at: null,
-    ...overrides,
-  };
-}
-
-function questionRow(overrides: Partial<QuestionRow> = {}): QuestionRow {
-  return {
-    id: 5,
-    survey_id: 1,
-    text_translations: '{"ja":"質問"}',
-    type: 'textSingle',
-    order_index: 0,
-    is_required: 1,
-    placeholder_translations: '{"ja":""}',
-    min_length: null,
-    max_length: null,
-    min_selected: null,
-    max_selected: null,
-    visibility_condition_mode: 'all',
-    is_deleted: 0,
-    ...overrides,
-  };
 }

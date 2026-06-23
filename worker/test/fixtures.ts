@@ -4,6 +4,7 @@ import type {
   ProjectRow,
   QuestionRow,
   ResponseRow,
+  SurveyRow,
   VisibilityRuleRow,
 } from '../src/types';
 
@@ -84,6 +85,25 @@ export function responseRow(overrides: Partial<ResponseRow> = {}): ResponseRow {
     device_pixel_ratio: null,
     device_info: null,
     metadata: null,
+    ...overrides,
+  };
+}
+
+export function surveyRow(overrides: Partial<SurveyRow> = {}): SurveyRow {
+  return {
+    id: 1,
+    project_id: 1,
+    slug: 'customer-feedback',
+    title_translations: '{"en":"Survey"}',
+    description_translations: '{"en":""}',
+    status: 'draft',
+    web_enabled: 1,
+    auth_requirement: 'anonymous',
+    created_by_admin_id: 'admin-1',
+    created_at: '2026-01-01T00:00:00.000Z',
+    updated_at: '2026-01-01T00:00:00.000Z',
+    starts_at: null,
+    ends_at: null,
     ...overrides,
   };
 }
