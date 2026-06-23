@@ -30,14 +30,24 @@ void main() {
       );
     }
 
-    testWidgets('saves AI keys without requiring SMTP fields', (
+    testWidgets('shows only the selected AI provider key field', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        buildSubject(_settings(aiProvider: AiProvider.openai)),
+      );
+
+      expect(find.text('OpenAI API Key'), findsOneWidget);
+      expect(find.text('Gemini API Key'), findsNothing);
+      expect(find.text('Claude API Key'), findsNothing);
+      expect(find.text('Cerebras API Key'), findsNothing);
+    });
+
+    testWidgets('saves selected AI key without requiring SMTP fields', (
       tester,
     ) async {
       await tester.pumpWidget(buildSubject(_settings()));
       await _enterText(tester, 'Gemini API Key', 'gemini-key');
-      await _enterText(tester, 'OpenAI API Key', 'openai-key');
-      await _enterText(tester, 'Claude API Key', 'claude-key');
-      await _enterText(tester, 'Cerebras API Key', 'cerebras-key');
       await tester.pump();
 
       await _tapSave(tester);
@@ -45,9 +55,9 @@ void main() {
       expect(savedInput, isNotNull);
       expect(savedInput!.aiProvider, AiProvider.gemini);
       expect(savedInput!.geminiApiKey, 'gemini-key');
-      expect(savedInput!.openaiApiKey, 'openai-key');
-      expect(savedInput!.claudeApiKey, 'claude-key');
-      expect(savedInput!.cerebrasApiKey, 'cerebras-key');
+      expect(savedInput!.openaiApiKey, isNull);
+      expect(savedInput!.claudeApiKey, isNull);
+      expect(savedInput!.cerebrasApiKey, isNull);
       expect(savedInput!.smtpHost, isNull);
       expect(savedInput!.smtpPort, isNull);
     });

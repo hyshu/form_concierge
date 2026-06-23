@@ -157,14 +157,23 @@ class _AdminSettingsFormState extends State<AdminSettingsForm> {
     final success = await widget.onSave(
       AdminIntegrationSettingsInput(
         aiProvider: _aiProvider,
-        geminiApiKey: _nullIfBlank(_geminiKeyController.text),
-        clearGeminiApiKey: _clearGeminiKey,
-        openaiApiKey: _nullIfBlank(_openaiKeyController.text),
-        clearOpenaiApiKey: _clearOpenaiKey,
-        claudeApiKey: _nullIfBlank(_claudeKeyController.text),
-        clearClaudeApiKey: _clearClaudeKey,
-        cerebrasApiKey: _nullIfBlank(_cerebrasKeyController.text),
-        clearCerebrasApiKey: _clearCerebrasKey,
+        geminiApiKey: _aiProvider == AiProvider.gemini
+            ? _nullIfBlank(_geminiKeyController.text)
+            : null,
+        clearGeminiApiKey: _aiProvider == AiProvider.gemini && _clearGeminiKey,
+        openaiApiKey: _aiProvider == AiProvider.openai
+            ? _nullIfBlank(_openaiKeyController.text)
+            : null,
+        clearOpenaiApiKey: _aiProvider == AiProvider.openai && _clearOpenaiKey,
+        claudeApiKey: _aiProvider == AiProvider.claude
+            ? _nullIfBlank(_claudeKeyController.text)
+            : null,
+        clearClaudeApiKey: _aiProvider == AiProvider.claude && _clearClaudeKey,
+        cerebrasApiKey: _aiProvider == AiProvider.cerebras
+            ? _nullIfBlank(_cerebrasKeyController.text)
+            : null,
+        clearCerebrasApiKey:
+            _aiProvider == AiProvider.cerebras && _clearCerebrasKey,
         smtpHost: _nullIfBlank(_smtpHostController.text),
         smtpPort: _smtpPortController.text.trim().isEmpty
             ? null
@@ -337,54 +346,51 @@ class _AiSection extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          _ResponsiveFields(
-            children: [
-              _AiProviderKeyField(
-                label: context.tr('Gemini API Key'),
-                hint: 'AIza...',
-                controller: geminiKeyController,
-                hasApiKey: settings.gemini.hasApiKey,
-                clearApiKey: clearGeminiKey,
-                clearLabel: context.tr('Clear saved Gemini API key'),
-                onClearChanged: onClearGeminiChanged,
-              ),
-              _AiProviderKeyField(
-                label: context.tr('OpenAI API Key'),
-                hint: 'sk-...',
-                controller: openaiKeyController,
-                hasApiKey: settings.openai.hasApiKey,
-                clearApiKey: clearOpenaiKey,
-                clearLabel: context.tr('Clear saved OpenAI API key'),
-                onClearChanged: onClearOpenaiChanged,
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _ResponsiveFields(
-            children: [
-              _AiProviderKeyField(
-                label: context.tr('Claude API Key'),
-                hint: 'sk-ant-...',
-                controller: claudeKeyController,
-                hasApiKey: settings.claude.hasApiKey,
-                clearApiKey: clearClaudeKey,
-                clearLabel: context.tr('Clear saved Claude API key'),
-                onClearChanged: onClearClaudeChanged,
-              ),
-              _AiProviderKeyField(
-                label: context.tr('Cerebras API Key'),
-                hint: 'csk-...',
-                controller: cerebrasKeyController,
-                hasApiKey: settings.cerebras.hasApiKey,
-                clearApiKey: clearCerebrasKey,
-                clearLabel: context.tr('Clear saved Cerebras API key'),
-                onClearChanged: onClearCerebrasChanged,
-              ),
-            ],
-          ),
+          _selectedProviderKeyField(context),
         ],
       ),
     );
+  }
+
+  Widget _selectedProviderKeyField(BuildContext context) {
+    return switch (provider) {
+      AiProvider.gemini => _AiProviderKeyField(
+        label: context.tr('Gemini API Key'),
+        hint: 'AIza...',
+        controller: geminiKeyController,
+        hasApiKey: settings.gemini.hasApiKey,
+        clearApiKey: clearGeminiKey,
+        clearLabel: context.tr('Clear saved Gemini API key'),
+        onClearChanged: onClearGeminiChanged,
+      ),
+      AiProvider.openai => _AiProviderKeyField(
+        label: context.tr('OpenAI API Key'),
+        hint: 'sk-...',
+        controller: openaiKeyController,
+        hasApiKey: settings.openai.hasApiKey,
+        clearApiKey: clearOpenaiKey,
+        clearLabel: context.tr('Clear saved OpenAI API key'),
+        onClearChanged: onClearOpenaiChanged,
+      ),
+      AiProvider.claude => _AiProviderKeyField(
+        label: context.tr('Claude API Key'),
+        hint: 'sk-ant-...',
+        controller: claudeKeyController,
+        hasApiKey: settings.claude.hasApiKey,
+        clearApiKey: clearClaudeKey,
+        clearLabel: context.tr('Clear saved Claude API key'),
+        onClearChanged: onClearClaudeChanged,
+      ),
+      AiProvider.cerebras => _AiProviderKeyField(
+        label: context.tr('Cerebras API Key'),
+        hint: 'csk-...',
+        controller: cerebrasKeyController,
+        hasApiKey: settings.cerebras.hasApiKey,
+        clearApiKey: clearCerebrasKey,
+        clearLabel: context.tr('Clear saved Cerebras API key'),
+        onClearChanged: onClearCerebrasChanged,
+      ),
+    };
   }
 
   AiProviderKeySettings get _selectedProviderSettings {
