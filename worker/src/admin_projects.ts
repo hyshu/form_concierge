@@ -6,14 +6,13 @@ import {
   optionalCustomDomain,
   readJson,
   requireSlug,
+  requireString,
   requiredRow,
 } from './utils';
 import { projectToJson, surveyToJson } from './serializers';
 import { mustProject } from './admin_records';
 import {
-  LocalizedText,
   requireDefaultLocale,
-  requireLocalizedText,
   requireSupportedLocales,
 } from './localization';
 
@@ -61,17 +60,16 @@ export async function createProject(request: Request, env: Env, admin: AdminCont
   const now = nowIso();
   const row = await env.DB.prepare(
     `INSERT INTO projects
-       (slug, custom_domain, default_locale, supported_locales, name_translations,
-        description_translations, created_by_admin_id, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+       (slug, custom_domain, default_locale, supported_locales, name,
+        created_by_admin_id, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
      RETURNING *`,
   ).bind(
     slug,
     customDomain,
     content.defaultLocale,
     JSON.stringify(content.supportedLocales),
-    JSON.stringify(content.nameTranslations),
-    JSON.stringify(content.descriptionTranslations),
+    content.name,
     admin.id,
     now,
     now,
@@ -92,7 +90,7 @@ export async function updateProject(request: Request, env: Env, projectId: numbe
   const row = await env.DB.prepare(
     `UPDATE projects
      SET slug = ?, custom_domain = ?, default_locale = ?, supported_locales = ?,
-         name_translations = ?, description_translations = ?, updated_at = ?
+         name = ?, updated_at = ?
      WHERE id = ?
      RETURNING *`,
   ).bind(
@@ -100,8 +98,7 @@ export async function updateProject(request: Request, env: Env, projectId: numbe
     customDomain,
     content.defaultLocale,
     JSON.stringify(content.supportedLocales),
-    JSON.stringify(content.nameTranslations),
-    JSON.stringify(content.descriptionTranslations),
+    content.name,
     nowIso(),
     projectId,
   ).first<ProjectRow>();
@@ -116,21 +113,14 @@ export async function deleteProject(env: Env, projectId: number): Promise<Respon
 function parseProjectContent(body: Record<string, unknown>): {
   supportedLocales: string[];
   defaultLocale: string;
-  nameTranslations: LocalizedText;
-  descriptionTranslations: LocalizedText;
+  name: string;
 } {
   const supportedLocales = requireSupportedLocales(body.supportedLocales);
   const defaultLocale = requireDefaultLocale(body.defaultLocale, supportedLocales);
   return {
     supportedLocales,
     defaultLocale,
-    nameTranslations: requireLocalizedText(body.nameTranslations, 'nameTranslations', supportedLocales),
-    descriptionTranslations: requireLocalizedText(
-      body.descriptionTranslations,
-      'descriptionTranslations',
-      supportedLocales,
-      { allowEmpty: true },
-    ),
+    name: requireString(body.name, 'name'),
   };
 }
 

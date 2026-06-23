@@ -33,8 +33,7 @@ CREATE TABLE projects (
   custom_domain TEXT,
   default_locale TEXT NOT NULL DEFAULT 'en',
   supported_locales TEXT NOT NULL,
-  name_translations TEXT NOT NULL,
-  description_translations TEXT NOT NULL,
+  name TEXT NOT NULL,
   created_by_admin_id TEXT REFERENCES admins(id) ON DELETE SET NULL,
   created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
   updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))

@@ -61,14 +61,7 @@ async function seed() {
       customDomain: '',
       defaultLocale: 'en',
       supportedLocales: ['en', 'ja'],
-      nameTranslations: {
-        en: 'Customer feedback',
-        ja: '顧客フィードバック',
-      },
-      descriptionTranslations: {
-        en: 'Seeded E2E project',
-        ja: 'E2E用プロジェクト',
-      },
+      name: 'Customer feedback',
     },
   });
 

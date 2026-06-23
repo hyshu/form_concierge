@@ -80,12 +80,9 @@ void main() {
           'Localized languages',
           'Select languages',
           'Default language',
-          'Project content',
           'Project name',
           'Enter project name',
           'Project name is required',
-          'Localized descriptions',
-          'Brief description of the project',
           'Web public',
         ];
 

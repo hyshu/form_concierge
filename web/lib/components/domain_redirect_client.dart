@@ -39,12 +39,11 @@ class DomainRedirectClientState extends State<DomainRedirectClient> {
           await Client(component.serverUrl).survey.getProjectByDomain(
                 domain,
               );
-      if (project == null || project.surveys.isEmpty) {
+      if (project == null || project.surveys.length != 1) {
         setState(() => _state = _DomainRedirectState.notFound);
         return;
       }
-      replaceLocation(
-          project.surveys.length == 1 ? '/${project.surveys.first.id}' : '/');
+      replaceLocation('/${project.surveys.first.id}');
     } on Exception catch (_) {
       setState(() => _state = _DomainRedirectState.error);
     }

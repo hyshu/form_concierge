@@ -108,7 +108,9 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
   Survey? _selectSurvey(PublicProject? project) {
     if (project == null || project.surveys.isEmpty) return null;
     final surveyId = widget.surveyId;
-    if (surveyId == null) return project.surveys.first;
+    if (surveyId == null) {
+      return project.surveys.length == 1 ? project.surveys.first : null;
+    }
     for (final survey in project.surveys) {
       if (survey.id == surveyId) return survey;
     }

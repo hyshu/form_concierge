@@ -20,8 +20,7 @@ export type ProjectRow = {
   custom_domain: string | null;
   default_locale: string;
   supported_locales: string;
-  name_translations: string;
-  description_translations: string;
+  name: string;
   created_by_admin_id: string | null;
   created_at: string;
   updated_at: string;

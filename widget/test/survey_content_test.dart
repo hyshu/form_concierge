@@ -201,11 +201,7 @@ Project _project() {
     slug: 'customer-feedback',
     defaultLocale: 'en',
     supportedLocales: const ['en', 'ja'],
-    nameTranslations: const LocalizedText({
-      'en': 'Customer feedback',
-      'ja': '顧客フィードバック',
-    }),
-    descriptionTranslations: const LocalizedText({'en': '', 'ja': ''}),
+    name: 'Customer feedback',
     createdAt: now,
     updatedAt: now,
   );
