@@ -61,7 +61,12 @@ class LocalizedText {
 
   Map<String, dynamic> toJson() => Map<String, dynamic>.from(values);
 
-  String valueFor(String locale) => values[normalizeFormContentLocale(locale)]!;
+  String valueFor(String locale) {
+    final normalized = normalizeFormContentLocale(locale);
+    return values[normalized] ??
+        values[defaultFormContentLocale] ??
+        (values.isEmpty ? '' : values.values.first);
+  }
 
   LocalizedText copyWithLocale(String locale, String value) {
     return LocalizedText({

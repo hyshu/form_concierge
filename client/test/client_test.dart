@@ -183,6 +183,13 @@ void main() {
     );
   });
 
+  test('localized text falls back when a locale is not stored', () {
+    const text = LocalizedText({'ja': '質問'});
+
+    expect(text.valueFor('ja'), '質問');
+    expect(text.valueFor('en'), '質問');
+  });
+
   test('choice count decoding accepts only integer JSON keys and values', () {
     final result = QuestionResult.fromJson({
       'questionId': 1,

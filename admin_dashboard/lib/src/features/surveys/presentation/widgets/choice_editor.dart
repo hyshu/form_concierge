@@ -9,6 +9,7 @@ import 'localized_text_field_group.dart';
 class ChoiceEditor extends StatelessWidget {
   final List<Choice> choices;
   final String primaryLocale;
+  final Iterable<String> locales;
   final bool enabled;
   final void Function(LocalizedText textTranslations) onAdd;
   final void Function(Choice choice, LocalizedText textTranslations) onUpdate;
@@ -18,6 +19,7 @@ class ChoiceEditor extends StatelessWidget {
     super.key,
     required this.choices,
     this.primaryLocale = defaultFormContentLocale,
+    this.locales = formContentLocaleCodes,
     required this.enabled,
     required this.onAdd,
     required this.onUpdate,
@@ -33,6 +35,7 @@ class ChoiceEditor extends StatelessWidget {
           (choice) => _ChoiceTile(
             choice: choice,
             primaryLocale: primaryLocale,
+            locales: locales,
             enabled: enabled,
             onUpdate: (textTranslations) => onUpdate(choice, textTranslations),
             onDelete: () => onDelete(choice),
@@ -63,6 +66,7 @@ class ChoiceEditor extends StatelessWidget {
       context,
       title: context.tr('Add Choice'),
       primaryLocale: primaryLocale,
+      locales: locales,
       onSubmit: onAdd,
     );
   }
@@ -71,6 +75,7 @@ class ChoiceEditor extends StatelessWidget {
 class _ChoiceTile extends StatelessWidget {
   final Choice choice;
   final String primaryLocale;
+  final Iterable<String> locales;
   final bool enabled;
   final void Function(LocalizedText textTranslations) onUpdate;
   final VoidCallback onDelete;
@@ -78,6 +83,7 @@ class _ChoiceTile extends StatelessWidget {
   const _ChoiceTile({
     required this.choice,
     required this.primaryLocale,
+    required this.locales,
     required this.enabled,
     required this.onUpdate,
     required this.onDelete,
@@ -132,6 +138,7 @@ class _ChoiceTile extends StatelessWidget {
       context,
       title: context.tr('Edit Choice'),
       primaryLocale: primaryLocale,
+      locales: locales,
       initialText: choice.textTranslations,
       onSubmit: onUpdate,
     );
@@ -142,6 +149,7 @@ void _showChoiceDialog(
   BuildContext context, {
   required String title,
   required String primaryLocale,
+  required Iterable<String> locales,
   required void Function(LocalizedText textTranslations) onSubmit,
   LocalizedText? initialText,
 }) {
@@ -164,6 +172,7 @@ void _showChoiceDialog(
             child: LocalizedTextFieldGroup(
               controllers: controllers,
               primaryLocale: primaryLocale,
+              locales: locales,
               labelText: context.tr('Choice text'),
               requiredMessage: context.tr('Choice text is required'),
               autofocus: initialText == null,
@@ -184,6 +193,7 @@ void _showChoiceDialog(
                 localizedTextFromControllers(
                   controllers,
                   primaryLocale: primaryLocale,
+                  locales: locales,
                 ),
               );
               Navigator.pop(context);

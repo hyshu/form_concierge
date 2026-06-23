@@ -9,6 +9,7 @@ import '../models/draft_question.dart';
 import 'ai_prompt_input.dart';
 import 'ai_question_preview_dialog.dart';
 import 'draft_question_editor.dart';
+import 'localized_text_field_group.dart';
 import 'question_form_dialog.dart';
 
 class DraftQuestionsSection extends StatelessWidget {
@@ -18,12 +19,14 @@ class DraftQuestionsSection extends StatelessWidget {
     required this.formState,
     required this.aiGenerationEnabled,
     required this.primaryLocale,
+    required this.locales,
   });
 
   final SurveyFormManager formManager;
   final SurveyFormState formState;
   final bool aiGenerationEnabled;
   final String primaryLocale;
+  final Iterable<String> locales;
 
   @override
   Widget build(BuildContext context) {
@@ -73,6 +76,7 @@ class DraftQuestionsSection extends StatelessWidget {
               DraftQuestionEditor(
                 questions: draftQuestions,
                 primaryLocale: primaryLocale,
+                locales: locales,
                 enabled: !formState.isSaving,
                 onEdit: (question) => _showEditDialog(context, question),
                 onDelete: (question) =>
@@ -111,6 +115,7 @@ class DraftQuestionsSection extends StatelessWidget {
     QuestionFormDialog.show(
       context,
       primaryLocale: primaryLocale,
+      locales: locales,
       onSave:
           ({
             required LocalizedText textTranslations,
@@ -132,8 +137,8 @@ class DraftQuestionsSection extends StatelessWidget {
               maxLength: maxLength,
               minSelected: minSelected,
               maxSelected: maxSelected,
-              firstChoiceTranslations: _defaultChoiceTranslations(1),
-              secondChoiceTranslations: _defaultChoiceTranslations(2),
+              firstChoiceTranslations: _defaultChoiceTranslations(1, locales),
+              secondChoiceTranslations: _defaultChoiceTranslations(2, locales),
             );
           },
     );
@@ -157,6 +162,7 @@ class DraftQuestionsSection extends StatelessWidget {
       context,
       existingQuestion: tempQuestion,
       primaryLocale: primaryLocale,
+      locales: locales,
       onSave:
           ({
             required LocalizedText textTranslations,
@@ -185,14 +191,23 @@ class DraftQuestionsSection extends StatelessWidget {
   }
 }
 
-LocalizedText _defaultChoiceTranslations(int number) => LocalizedText({
-  'en': 'Choice $number',
-  'ja': '選択肢 $number',
-  'zh-Hans': '选项 $number',
-  'zh-Hant': '選項 $number',
-  'ko': '선택지 $number',
-  'de': 'Auswahl $number',
-});
+LocalizedText _defaultChoiceTranslations(
+  int number,
+  Iterable<String> locales,
+) {
+  final labels = {
+    'en': 'Choice $number',
+    'ja': '選択肢 $number',
+    'zh-Hans': '选项 $number',
+    'zh-Hant': '選項 $number',
+    'ko': '선택지 $number',
+    'de': 'Auswahl $number',
+  };
+  return LocalizedText({
+    for (final locale in orderedFormContentLocales(locales))
+      locale: labels[locale] ?? 'Choice $number',
+  });
+}
 
 class _EmptyDraftQuestions extends StatelessWidget {
   const _EmptyDraftQuestions({required this.isSaving, required this.onAdd});

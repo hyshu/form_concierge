@@ -10,6 +10,7 @@ import 'localized_text_field_group.dart';
 class QuestionFormDialog extends StatefulWidget {
   final Question? existingQuestion;
   final String primaryLocale;
+  final Iterable<String> locales;
   final void Function({
     required LocalizedText textTranslations,
     required QuestionType type,
@@ -27,6 +28,7 @@ class QuestionFormDialog extends StatefulWidget {
     super.key,
     this.existingQuestion,
     this.primaryLocale = defaultFormContentLocale,
+    this.locales = formContentLocaleCodes,
     required this.onSave,
   });
 
@@ -34,6 +36,7 @@ class QuestionFormDialog extends StatefulWidget {
     BuildContext context, {
     Question? existingQuestion,
     String primaryLocale = defaultFormContentLocale,
+    Iterable<String> locales = formContentLocaleCodes,
     required void Function({
       required LocalizedText textTranslations,
       required QuestionType type,
@@ -52,6 +55,7 @@ class QuestionFormDialog extends StatefulWidget {
       builder: (context) => QuestionFormDialog(
         existingQuestion: existingQuestion,
         primaryLocale: primaryLocale,
+        locales: locales,
         onSave: onSave,
       ),
     );
@@ -148,6 +152,7 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
                 LocalizedTextFieldGroup(
                   controllers: _textControllers,
                   primaryLocale: widget.primaryLocale,
+                  locales: widget.locales,
                   labelText: context.tr('Question text'),
                   hintText: context.tr('Enter your question'),
                   maxLines: 2,
@@ -183,6 +188,7 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
                   LocalizedTextFieldGroup(
                     controllers: _placeholderControllers,
                     primaryLocale: widget.primaryLocale,
+                    locales: widget.locales,
                     labelText: context.tr('Placeholder (optional)'),
                     hintText: context.tr('Placeholder text for the input'),
                   ),
@@ -305,6 +311,7 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
         textTranslations: localizedTextFromControllers(
           _textControllers,
           primaryLocale: widget.primaryLocale,
+          locales: widget.locales,
         ),
         type: _type,
         isRequired: _isRequired,
@@ -312,8 +319,9 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
             ? localizedTextFromControllers(
                 _placeholderControllers,
                 primaryLocale: widget.primaryLocale,
+                locales: widget.locales,
               )
-            : LocalizedText.filled(''),
+            : LocalizedText.filled('', locales: widget.locales),
         minLength: _parseInt(_minLengthController.text),
         maxLength: _parseInt(_maxLengthController.text),
         minSelected: _parseInt(_minSelectedController.text),

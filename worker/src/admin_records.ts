@@ -24,3 +24,16 @@ export async function mustChoice(db: D1Database, id: number): Promise<ChoiceRow>
   if (!row) throw new HttpError(404, 'Choice not found');
   return row;
 }
+
+export function projectSupportedLocales(project: ProjectRow): string[] {
+  try {
+    const decoded = JSON.parse(project.supported_locales);
+    if (!Array.isArray(decoded)) throw new Error('not an array');
+    return decoded.map((locale, index) => {
+      if (typeof locale !== 'string') throw new Error(`locale ${index} is not a string`);
+      return locale;
+    });
+  } catch {
+    throw new HttpError(500, 'Invalid project supported locales');
+  }
+}

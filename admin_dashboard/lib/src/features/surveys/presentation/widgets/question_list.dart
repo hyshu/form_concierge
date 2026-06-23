@@ -16,6 +16,7 @@ class QuestionList extends StatelessWidget {
   final Map<int, List<Choice>> choicesByQuestion;
   final List<QuestionVisibilityRule> visibilityRules;
   final String primaryLocale;
+  final Iterable<String> locales;
   final bool isLoading;
   final bool enabled;
   final void Function({
@@ -63,6 +64,7 @@ class QuestionList extends StatelessWidget {
     required this.choicesByQuestion,
     required this.visibilityRules,
     this.primaryLocale = defaultFormContentLocale,
+    this.locales = formContentLocaleCodes,
     required this.isLoading,
     required this.enabled,
     required this.onAddQuestion,
@@ -145,10 +147,12 @@ class QuestionList extends StatelessWidget {
                             question: question,
                             choices: choicesByQuestion[question.id] ?? [],
                             primaryLocale: primaryLocale,
+                            locales: locales,
                             visibilityRules: questionRules,
                             visibilityRuleEditor: VisibilityRuleEditor(
                               surveyId: surveyId,
                               targetQuestion: question,
+                              primaryLocale: primaryLocale,
                               sourceQuestions: questions
                                   .where(
                                     (candidate) =>
@@ -197,6 +201,7 @@ class QuestionList extends StatelessWidget {
     QuestionFormDialog.show(
       context,
       primaryLocale: primaryLocale,
+      locales: locales,
       onSave:
           ({
             required LocalizedText textTranslations,
@@ -229,6 +234,7 @@ class QuestionList extends StatelessWidget {
       context,
       existingQuestion: question,
       primaryLocale: primaryLocale,
+      locales: locales,
       onSave:
           ({
             required LocalizedText textTranslations,
@@ -262,7 +268,7 @@ class QuestionList extends StatelessWidget {
       context,
       title: context.tr('Delete Question'),
       content: context.tr('Delete question confirmation', {
-        'question': question.text,
+        'question': question.textFor(primaryLocale),
       }),
     );
 

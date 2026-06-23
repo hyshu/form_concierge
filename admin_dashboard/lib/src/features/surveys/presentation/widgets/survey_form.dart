@@ -14,6 +14,7 @@ class SurveyForm extends StatefulWidget {
   final String? error;
   final String primaryLocale;
   final Iterable<String> locales;
+  final bool showSubmitButton;
   final Future<void> Function({
     required LocalizedText titleTranslations,
     required LocalizedText descriptionTranslations,
@@ -28,14 +29,15 @@ class SurveyForm extends StatefulWidget {
     this.error,
     required this.primaryLocale,
     this.locales = formContentLocaleCodes,
+    this.showSubmitButton = true,
     required this.onSave,
   });
 
   @override
-  State<SurveyForm> createState() => _SurveyFormState();
+  SurveyFormWidgetState createState() => SurveyFormWidgetState();
 }
 
-class _SurveyFormState extends State<SurveyForm> {
+class SurveyFormWidgetState extends State<SurveyForm> {
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -91,42 +93,44 @@ class _SurveyFormState extends State<SurveyForm> {
                 style: TextStyle(color: HuxTokens.textDestructive(context)),
               ),
             ],
-            const SizedBox(height: 24),
-            HuxButton(
-              onPressed: widget.isSaving ? null : _submit,
-              isLoading: widget.isSaving,
-              width: HuxButtonWidth.expand,
-              icon: widget.existingSurvey != null
-                  ? LucideIcons.save
-                  : LucideIcons.plus,
-              child: Text(
-                context.tr(
-                  widget.existingSurvey != null
-                      ? 'Save Changes'
-                      : 'Create Survey',
+            if (widget.showSubmitButton) ...[
+              const SizedBox(height: 24),
+              HuxButton(
+                onPressed: widget.isSaving ? null : () => submit(),
+                isLoading: widget.isSaving,
+                width: HuxButtonWidth.expand,
+                icon: widget.existingSurvey != null
+                    ? LucideIcons.save
+                    : LucideIcons.plus,
+                child: Text(
+                  context.tr(
+                    widget.existingSurvey != null
+                        ? 'Save Changes'
+                        : 'Create Survey',
+                  ),
                 ),
               ),
-            ),
+            ],
           ],
         ),
       ),
     );
   }
 
-  void _submit() {
-    if (_formKey.currentState?.validate() ?? false) {
-      widget.onSave(
-        titleTranslations: localizedTextFromControllers(
-          widget.controllers.titleTranslations,
-          primaryLocale: widget.primaryLocale,
-          locales: widget.locales,
-        ),
-        descriptionTranslations: localizedTextFromControllers(
-          widget.controllers.descriptionTranslations,
-          primaryLocale: widget.primaryLocale,
-          locales: widget.locales,
-        ),
-      );
-    }
+  Future<bool> submit() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return false;
+    await widget.onSave(
+      titleTranslations: localizedTextFromControllers(
+        widget.controllers.titleTranslations,
+        primaryLocale: widget.primaryLocale,
+        locales: widget.locales,
+      ),
+      descriptionTranslations: localizedTextFromControllers(
+        widget.controllers.descriptionTranslations,
+        primaryLocale: widget.primaryLocale,
+        locales: widget.locales,
+      ),
+    );
+    return true;
   }
 }
