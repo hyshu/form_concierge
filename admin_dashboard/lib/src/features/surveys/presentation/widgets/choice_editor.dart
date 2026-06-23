@@ -3,7 +3,7 @@ import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:hux/hux.dart';
 
 import '../../../../core/localization/app_localizations.dart';
-import 'localized_text_field_group.dart';
+import 'localized_choice_dialog.dart';
 
 /// Widget for editing question choices.
 class ChoiceEditor extends StatelessWidget {
@@ -62,7 +62,7 @@ class ChoiceEditor extends StatelessWidget {
   }
 
   void _showAddDialog(BuildContext context) {
-    _showChoiceDialog(
+    showLocalizedChoiceDialog(
       context,
       title: context.tr('Add Choice'),
       primaryLocale: primaryLocale,
@@ -134,7 +134,7 @@ class _ChoiceTile extends StatelessWidget {
   }
 
   void _showEditDialog(BuildContext context) {
-    _showChoiceDialog(
+    showLocalizedChoiceDialog(
       context,
       title: context.tr('Edit Choice'),
       primaryLocale: primaryLocale,
@@ -143,70 +143,4 @@ class _ChoiceTile extends StatelessWidget {
       onSubmit: onUpdate,
     );
   }
-}
-
-void _showChoiceDialog(
-  BuildContext context, {
-  required String title,
-  required String primaryLocale,
-  required Iterable<String> locales,
-  required void Function(LocalizedText textTranslations) onSubmit,
-  LocalizedText? initialText,
-}) {
-  final formKey = GlobalKey<FormState>();
-  final controllers = {
-    for (final locale in formContentLocaleCodes)
-      locale: TextEditingController(text: initialText?.valueFor(locale) ?? ''),
-  };
-
-  showDialog(
-    context: context,
-    builder: (context) => HuxDialog(
-      title: title,
-      size: HuxDialogSize.medium,
-      content: SizedBox(
-        width: 420,
-        child: Form(
-          key: formKey,
-          child: SingleChildScrollView(
-            child: LocalizedTextFieldGroup(
-              controllers: controllers,
-              primaryLocale: primaryLocale,
-              locales: locales,
-              labelText: context.tr('Choice text'),
-              requiredMessage: context.tr('Choice text is required'),
-              autofocus: initialText == null,
-            ),
-          ),
-        ),
-      ),
-      actions: [
-        HuxButton(
-          onPressed: () => Navigator.pop(context),
-          variant: HuxButtonVariant.secondary,
-          child: Text(context.tr('Cancel')),
-        ),
-        HuxButton(
-          onPressed: () {
-            if (formKey.currentState?.validate() ?? false) {
-              onSubmit(
-                localizedTextFromControllers(
-                  controllers,
-                  primaryLocale: primaryLocale,
-                  locales: locales,
-                ),
-              );
-              Navigator.pop(context);
-            }
-          },
-          icon: initialText == null ? LucideIcons.plus : LucideIcons.save,
-          child: Text(context.tr(initialText == null ? 'Add' : 'Save')),
-        ),
-      ],
-    ),
-  ).whenComplete(() {
-    for (final controller in controllers.values) {
-      controller.dispose();
-    }
-  });
 }
