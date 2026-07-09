@@ -36,7 +36,13 @@ export async function verifyPassword(password: string, stored: string): Promise<
   const parts = stored.split(':');
   if (parts.length !== 4) return false;
   const [algorithm, iterationsRaw, saltRaw, hashRaw] = parts;
-  if (algorithm !== PASSWORD_ALGORITHM || iterationsRaw !== String(PASSWORD_ITERATIONS)) {
+  // Use the iterations stored with the hash so raising PASSWORD_ITERATIONS does
+  // not invalidate existing passwords (new hashes use the current constant).
+  if (algorithm !== PASSWORD_ALGORITHM || !/^\d+$/.test(iterationsRaw)) {
+    return false;
+  }
+  const iterations = Number(iterationsRaw);
+  if (!Number.isInteger(iterations) || iterations < 1 || iterations > 10_000_000) {
     return false;
   }
   const salt = base64UrlDecode(saltRaw);
@@ -58,7 +64,7 @@ export async function verifyPassword(password: string, stored: string): Promise<
       ['deriveBits'],
     );
     const bits = await crypto.subtle.deriveBits(
-      { name: 'PBKDF2', hash: 'SHA-256', salt, iterations: PASSWORD_ITERATIONS },
+      { name: 'PBKDF2', hash: 'SHA-256', salt, iterations },
       key,
       PASSWORD_HASH_BYTES * 8,
     );
