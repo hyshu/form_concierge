@@ -41,12 +41,17 @@ await client.setAnonymousToken(savedAnonymousToken)
 let replies = try await client.replies(responseId: responseId)
 ```
 
-To check whether new admin replies exist without downloading the full reply list, use the reply checker. The server returns only the latest reply timestamp; the checker stores the last seen timestamp in `UserDefaults`.
+To check whether new admin replies exist without downloading the full reply list, use the reply checker. The server returns only the latest reply timestamp; **the host app owns last-seen persistence** (same as the Flutter widget — this package does not write to `UserDefaults` by default).
 
 ```swift
+// Host provides storage (UserDefaults is one option among many).
+let store = FormConciergeReplySeenStore.userDefaults(.standard)
+// Or: FormConciergeReplySeenStore(read:write:remove:)
+
 let checker = FormConciergeReplyChecker(
     client: client,
     anonymousToken: savedAnonymousToken,
+    store: store,
     responseId: responseId
 )
 

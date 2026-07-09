@@ -263,15 +263,14 @@ final class FormConciergeSwiftUITests: XCTestCase {
 
   func testReplyCheckerPersistsAndClearsSeenTimestamp() async throws {
     let latest = "2026-06-22T10:15:30.500Z"
-    let defaults = makeDefaults()
     let client = makeClient { _ in
       self.jsonResponse(["latestReplyAt": latest])
     }
     let checker = FormConciergeReplyChecker(
       client: client,
       anonymousToken: "anon-token",
-      responseId: 9,
-      userDefaults: defaults
+      store: .memory(),
+      responseId: 9
     )
 
     let fractional = ISO8601DateFormatter()
@@ -291,6 +290,28 @@ final class FormConciergeSwiftUITests: XCTestCase {
 
     checker.clearSeen()
     XCTAssertNil(checker.lastSeenReplyAt)
+  }
+
+  func testReplyCheckerCanUseHostUserDefaultsStore() async throws {
+    let latest = "2026-06-22T10:15:30.500Z"
+    let defaults = makeDefaults()
+    let client = makeClient { _ in
+      self.jsonResponse(["latestReplyAt": latest])
+    }
+    let checker = FormConciergeReplyChecker(
+      client: client,
+      anonymousToken: "anon-token",
+      store: .userDefaults(defaults),
+      responseId: 3
+    )
+
+    _ = try await checker.check(markSeen: true)
+    XCTAssertNotNil(checker.lastSeenReplyAt)
+    let key = FormConciergeReplyChecker.defaultStorageKey(
+      anonymousToken: "anon-token",
+      responseId: 3
+    )
+    XCTAssertNotNil(defaults.string(forKey: key))
   }
 
   func testReplyCheckerStorageKeyDoesNotExposeRawToken() {

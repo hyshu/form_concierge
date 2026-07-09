@@ -12,11 +12,67 @@ public struct AdminReplyCheckStatus: Sendable {
   }
 }
 
+/// Host-provided persistence for last-seen reply timestamps.
+///
+/// The package never writes to disk by itself — the host app owns
+/// `UserDefaults`, Keychain, or any other backend (same as Flutter widget).
+public struct FormConciergeReplySeenStore: @unchecked Sendable {
+  private let _read: (String) -> String?
+  private let _write: (String, String) -> Void
+  private let _remove: (String) -> Void
+
+  public init(
+    read: @escaping (String) -> String?,
+    write: @escaping (String, String) -> Void,
+    remove: @escaping (String) -> Void
+  ) {
+    self._read = read
+    self._write = write
+    self._remove = remove
+  }
+
+  public func read(_ key: String) -> String? { _read(key) }
+  public func write(_ key: String, _ value: String) { _write(key, value) }
+  public func remove(_ key: String) { _remove(key) }
+
+  /// Optional host convenience. The host must still pass this store explicitly.
+  public static func userDefaults(_ defaults: UserDefaults) -> FormConciergeReplySeenStore {
+    FormConciergeReplySeenStore(
+      read: { defaults.string(forKey: $0) },
+      write: { defaults.set($1, forKey: $0) },
+      remove: { defaults.removeObject(forKey: $0) }
+    )
+  }
+
+  /// In-memory store (tests / non-persistent hosts).
+  public static func memory() -> FormConciergeReplySeenStore {
+    let lock = NSLock()
+    var values: [String: String] = [:]
+    return FormConciergeReplySeenStore(
+      read: { key in
+        lock.lock()
+        defer { lock.unlock() }
+        return values[key]
+      },
+      write: { key, value in
+        lock.lock()
+        defer { lock.unlock() }
+        values[key] = value
+      },
+      remove: { key in
+        lock.lock()
+        defer { lock.unlock() }
+        values.removeValue(forKey: key)
+      }
+    )
+  }
+}
+
 public final class FormConciergeReplyChecker {
   private let client: FormConciergeClient
   private let anonymousToken: String
   private let responseId: Int?
-  private let userDefaults: UserDefaults
+  private let store: FormConciergeReplySeenStore
   private let storageKey: String
   /// Worker timestamps include fractional seconds (toISOString / SQLite %f).
   /// Default ISO8601DateFormatter truncates them on encode, so latestReplyAt
@@ -35,14 +91,14 @@ public final class FormConciergeReplyChecker {
   public init(
     client: FormConciergeClient,
     anonymousToken: String,
+    store: FormConciergeReplySeenStore,
     responseId: Int? = nil,
-    userDefaults: UserDefaults = .standard,
     storageKey: String? = nil
   ) {
     self.client = client
     self.anonymousToken = anonymousToken
+    self.store = store
     self.responseId = responseId
-    self.userDefaults = userDefaults
     self.storageKey = storageKey ?? Self.defaultStorageKey(
       anonymousToken: anonymousToken,
       responseId: responseId
@@ -74,7 +130,7 @@ public final class FormConciergeReplyChecker {
   }
 
   public var lastSeenReplyAt: Date? {
-    guard let value = userDefaults.string(forKey: storageKey) else {
+    guard let value = store.read(storageKey) else {
       return nil
     }
     return Self.fractionalFormatter.date(from: value)
@@ -82,7 +138,7 @@ public final class FormConciergeReplyChecker {
   }
 
   public func markSeen(at date: Date = Date()) {
-    userDefaults.set(Self.fractionalFormatter.string(from: date), forKey: storageKey)
+    store.write(storageKey, Self.fractionalFormatter.string(from: date))
   }
 
   public func markLatestSeen() async throws {
@@ -93,6 +149,6 @@ public final class FormConciergeReplyChecker {
   }
 
   public func clearSeen() {
-    userDefaults.removeObject(forKey: storageKey)
+    store.remove(storageKey)
   }
 }
