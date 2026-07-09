@@ -78,10 +78,11 @@ class SurveyContent extends StatelessComponent {
               span(classes: 'text-sm', [Component.text(errorMessage!)]),
             ]),
 
-      // Questions
+      // Questions — key by id so visibility changes do not reuse sibling state.
       div(classes: 'space-y-5', [
         for (final question in questions)
           QuestionWidget(
+            key: ValueKey(question.id),
             question: question,
             choices: choicesByQuestion[question.id] ?? [],
             value: answers[question.id],

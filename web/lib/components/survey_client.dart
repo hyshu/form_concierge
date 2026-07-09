@@ -319,11 +319,24 @@ class SurveyClientState extends State<SurveyClient> {
       if (!hasAnonymousAccount) return;
 
       final answers = buildAnswers(_answers, visible);
-      await _client.survey.submitResponse(
-        surveyId: survey.id!,
-        answers: answers,
-        deviceInfo: _deviceInfo(),
-      );
+      try {
+        await _client.survey.submitResponse(
+          surveyId: survey.id!,
+          answers: answers,
+          deviceInfo: _deviceInfo(),
+        );
+      } on ApiException catch (e) {
+        // Stale localStorage token (e.g. after DB rebuild) → recreate once.
+        if (e.statusCode != 401) rethrow;
+        await _resetAnonymousAccount();
+        final recreated = await _ensureAnonymousAccount();
+        if (!recreated) return;
+        await _client.survey.submitResponse(
+          surveyId: survey.id!,
+          answers: answers,
+          deviceInfo: _deviceInfo(),
+        );
+      }
 
       setState(() {
         _viewState = SurveyViewState.completed;
@@ -333,6 +346,14 @@ class SurveyClientState extends State<SurveyClient> {
         _viewState = SurveyViewState.ready;
         _errorMessage = FormContentMessages.text(_locale, 'submitFailed');
       });
+    }
+  }
+
+  Future<void> _resetAnonymousAccount() async {
+    final storageKey = _anonymousTokenStorageKey;
+    _client.anonymous.clear();
+    if (storageKey != null) {
+      clearAnonymousToken(storageKey);
     }
   }
 
