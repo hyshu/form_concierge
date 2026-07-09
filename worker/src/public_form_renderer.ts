@@ -1,6 +1,7 @@
 import type { ChoiceRow, Env, ProjectRow, QuestionRow, SurveyRow } from './types';
 import { choiceToJson, projectToJson, questionToJson, surveyToJson, visibilityRuleToJson } from './serializers';
 import { HttpError, optionalCustomDomain } from './utils';
+import { DEFAULT_FORM_CONTENT_LOCALE } from './localization';
 import { getVisibilityRules } from './visibility_rules';
 
 type PublicFormData = {
@@ -298,7 +299,11 @@ function renderQuestionInput(
 }
 
 function textFor(translations: Record<string, string>, locale: string): string {
-  const text = translations[locale];
+  // Match localizedTextFor: prefer requested locale, then default, then any.
+  const text =
+    translations[locale] ??
+    translations[DEFAULT_FORM_CONTENT_LOCALE] ??
+    Object.values(translations).find((item): item is string => typeof item === 'string');
   if (typeof text !== 'string') {
     throw new HttpError(500, `Missing localized text for locale: ${locale}`);
   }

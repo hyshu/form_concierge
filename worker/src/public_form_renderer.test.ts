@@ -28,12 +28,25 @@ test('renderPublicForm returns 404 for missing custom-domain survey slug', async
   assert.match(await response.text(), /Page not found/);
 });
 
-test('renderPublicForm rejects missing localized text instead of falling back', async () => {
+test('renderPublicForm falls back when preferred locale text is missing', async () => {
+  const response = await renderPublicForm(
+    htmlRequest('https://example.com/acme'),
+    envWithPublicRows({
+      // Project default is ja, but survey only has en — should not 500.
+      survey: surveyRow({ title_translations: '{"en":"Survey"}' }),
+    }),
+  );
+
+  assert.equal(response.status, 200);
+  assert.match(await response.text(), /Survey/);
+});
+
+test('renderPublicForm rejects surveys with no localized text at all', async () => {
   await assertHttpErrorAsync(
     () => renderPublicForm(
       htmlRequest('https://example.com/acme'),
       envWithPublicRows({
-        survey: surveyRow({ title_translations: '{"en":"Survey"}' }),
+        survey: surveyRow({ title_translations: '{}' }),
       }),
     ),
     500,
