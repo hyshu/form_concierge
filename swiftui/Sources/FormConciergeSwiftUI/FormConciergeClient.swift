@@ -149,10 +149,19 @@ public actor FormConciergeClient {
       throw FormConciergeError.invalidResponse
     }
     if !(200..<300).contains(http.statusCode) {
-      let payload = try decoder.decode(APIErrorPayload.self, from: data)
+      // Proxy HTML 502s and other non-JSON bodies must not become DecodingError
+      // (which drops status/message). Match the Dart client's ApiException fallback.
+      if let payload = try? decoder.decode(APIErrorPayload.self, from: data),
+         !payload.error.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+      {
+        throw FormConciergeError.api(
+          status: http.statusCode,
+          message: payload.error
+        )
+      }
       throw FormConciergeError.api(
         status: http.statusCode,
-        message: payload.error
+        message: "Request failed with status \(http.statusCode)"
       )
     }
     return try decoder.decode(T.self, from: data)
