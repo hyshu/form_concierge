@@ -10,7 +10,7 @@ export async function getPublicProject(env: Env, slug: string): Promise<Response
   const project = await env.DB.prepare(
     `SELECT * FROM projects WHERE slug = ?`,
   ).bind(slug).first<ProjectRow>();
-  if (!project) return json(null);
+  if (!project) throw new HttpError(404, 'Project not found');
   return json(await publicProjectPayload(env, project));
 }
 
@@ -19,14 +19,14 @@ export async function getPublicProjectByDomain(env: Env, domainValue: string | n
   try {
     customDomain = optionalCustomDomain(domainValue);
   } catch (error) {
-    if (error instanceof HttpError) return json(null);
+    if (error instanceof HttpError) throw new HttpError(404, 'Project not found');
     throw error;
   }
-  if (!customDomain) return json(null);
+  if (!customDomain) throw new HttpError(404, 'Project not found');
   const project = await env.DB.prepare(
     `SELECT * FROM projects WHERE custom_domain = ?`,
   ).bind(customDomain).first<ProjectRow>();
-  if (!project) return json(null);
+  if (!project) throw new HttpError(404, 'Project not found');
   return json(await publicProjectPayload(env, project));
 }
 
@@ -204,6 +204,13 @@ async function validateAnswers(
     if (!questionIds.has(questionId)) throw new HttpError(400, 'Answer question does not belong to survey');
     if (!visibleQuestionIdSet.has(questionId)) throw new HttpError(400, 'Answer question is not visible');
   }
+
+  // One query for all choice ids in the survey (avoids N+1 per choice question).
+  const choiceQuestionIds = questions
+    .filter((question) => isChoiceQuestionType(question.type) && visibleQuestionIdSet.has(question.id))
+    .map((question) => question.id);
+  const validChoicesByQuestion = await loadValidChoiceIdsByQuestion(env.DB, choiceQuestionIds);
+
   for (const question of questions) {
     if (!visibleQuestionIdSet.has(question.id)) continue;
     const questionText = localizedTextFor(question.text_translations, DEFAULT_FORM_CONTENT_LOCALE);
@@ -246,16 +253,31 @@ async function validateAnswers(
     if (question.max_selected != null && selected.length > question.max_selected) {
       throw new HttpError(400, `Question "${questionText}" allows at most ${question.max_selected} choices`);
     }
-    const choices = await env.DB.prepare(
-      `SELECT id FROM choices WHERE question_id = ?`,
-    ).bind(question.id).all<{ id: number }>();
-    const validChoices = new Set(choices.results.map((choice) => choice.id));
+    const validChoices = validChoicesByQuestion.get(question.id) ?? new Set<number>();
     for (const choiceId of selected) {
       if (!validChoices.has(choiceId)) throw new HttpError(400, 'Choice does not belong to question');
     }
     answer.textValue = null;
     answer.selectedChoiceIds = selected;
   }
+}
+
+async function loadValidChoiceIdsByQuestion(
+  db: D1Database,
+  questionIds: number[],
+): Promise<Map<number, Set<number>>> {
+  const map = new Map<number, Set<number>>();
+  if (questionIds.length === 0) return map;
+  const placeholders = questionIds.map(() => '?').join(', ');
+  const rows = await db.prepare(
+    `SELECT id, question_id FROM choices WHERE question_id IN (${placeholders})`,
+  ).bind(...questionIds).all<{ id: number; question_id: number }>();
+  for (const row of rows.results) {
+    const set = map.get(row.question_id) ?? new Set<number>();
+    set.add(row.id);
+    map.set(row.question_id, set);
+  }
+  return map;
 }
 
 function isAccepting(survey: SurveyRow): boolean {

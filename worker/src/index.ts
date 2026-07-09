@@ -236,14 +236,14 @@ async function routeAdmin(
   if (parts[2] === 'projects') {
     if (method === 'GET') requireScope(admin, 'survey:read');
     if (method !== 'GET') requireScope(admin, 'survey:write');
-    if (method === 'GET' && parts.length === 3) return listProjects(env);
+    if (method === 'GET' && parts.length === 3) return listProjects(env, url);
     if (method === 'POST' && parts.length === 3) return createProject(request, env, admin);
     const projectId = optionalIntegerParam(parts[3] ?? null, 'projectId', { min: 1 });
     if (projectId != null) {
       if (method === 'GET' && parts.length === 4) return getAdminProject(env, projectId);
       if (method === 'PUT' && parts.length === 4) return updateProject(request, env, projectId);
       if (method === 'DELETE' && parts.length === 4) return deleteProject(env, projectId);
-      if (method === 'GET' && parts[4] === 'surveys') return listSurveys(env, projectId);
+      if (method === 'GET' && parts[4] === 'surveys') return listSurveys(env, projectId, url);
     }
   }
 
@@ -251,7 +251,11 @@ async function routeAdmin(
     if (method === 'GET') requireScope(admin, 'survey:read');
     if (method !== 'GET') requireScope(admin, 'survey:write');
     if (method === 'GET' && parts.length === 3) {
-      return listSurveys(env, optionalIntegerParam(url.searchParams.get('projectId'), 'projectId', { min: 1 }) ?? undefined);
+      return listSurveys(
+        env,
+        optionalIntegerParam(url.searchParams.get('projectId'), 'projectId', { min: 1 }) ?? undefined,
+        url,
+      );
     }
     if (method === 'POST' && parts.length === 3) return createSurvey(request, env, admin);
     if (method === 'POST' && parts[3] === 'with-questions') {
@@ -341,7 +345,7 @@ async function routeAdmin(
     if (responseId != null) {
       if (method === 'GET') requireScope(admin, 'response:read');
       if (method !== 'GET') requireScope(admin, 'response:write');
-      if (method === 'GET' && parts[4] === 'answers') return responseAnswers(env, responseId);
+      if (method === 'GET' && parts[4] === 'answers') return responseAnswers(env, responseId, url);
       if (method === 'DELETE' && parts.length === 4) return deleteResponse(env, responseId);
       if (method === 'GET' && parts[4] === 'replies') return getReplies(env, responseId);
       if (method === 'POST' && parts[4] === 'replies') {

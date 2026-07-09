@@ -49,3 +49,19 @@ test('csvCell neutralizes formula injection prefixes', () => {
   assert.equal(csvCell('plain'), 'plain');
   assert.equal(csvCell('say "hi"'), '"say ""hi"""');
 });
+
+test('isUniqueConstraintError ignores generic FK constraint failures', async () => {
+  const { isUniqueConstraintError } = await import('./utils');
+  assert.equal(
+    isUniqueConstraintError(new Error('UNIQUE constraint failed: admins.email')),
+    true,
+  );
+  assert.equal(
+    isUniqueConstraintError(new Error('FOREIGN KEY constraint failed')),
+    false,
+  );
+  assert.equal(
+    isUniqueConstraintError(new Error('SQLITE_CONSTRAINT_UNIQUE')),
+    true,
+  );
+});

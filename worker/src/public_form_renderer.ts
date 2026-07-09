@@ -133,10 +133,17 @@ async function loadChoicesByQuestion(
 ): Promise<Record<string, ReturnType<typeof choiceToJson>[]>> {
   const choicesByQuestion: Record<string, ReturnType<typeof choiceToJson>[]> = {};
   for (const question of questions) {
-    const rows = await env.DB.prepare(
-      `SELECT * FROM choices WHERE question_id = ? ORDER BY order_index`,
-    ).bind(question.id).all<ChoiceRow>();
-    choicesByQuestion[String(question.id)] = rows.results.map(choiceToJson);
+    choicesByQuestion[String(question.id)] = [];
+  }
+  const questionIds = questions.map((question) => question.id);
+  if (questionIds.length === 0) return choicesByQuestion;
+  const placeholders = questionIds.map(() => '?').join(', ');
+  const rows = await env.DB.prepare(
+    `SELECT * FROM choices WHERE question_id IN (${placeholders}) ORDER BY order_index`,
+  ).bind(...questionIds).all<ChoiceRow>();
+  for (const row of rows.results) {
+    const key = String(row.question_id);
+    (choicesByQuestion[key] ??= []).push(choiceToJson(row));
   }
   return choicesByQuestion;
 }

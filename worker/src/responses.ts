@@ -30,10 +30,13 @@ export async function responseCount(env: Env, surveyId: number): Promise<Respons
   });
 }
 
-export async function responseAnswers(env: Env, responseId: number): Promise<Response> {
+export async function responseAnswers(env: Env, responseId: number, url: URL): Promise<Response> {
+  const limit = integerParam(url.searchParams.get('limit'), 'limit', 500, { min: 1, max: 2000 });
+  const offset = integerParam(url.searchParams.get('offset'), 'offset', 0, { min: 0 });
   const rows = await env.DB.prepare(
-    `SELECT * FROM answers WHERE survey_response_id = ?`,
-  ).bind(responseId).all<AnswerRow>();
+    `SELECT * FROM answers WHERE survey_response_id = ?
+     ORDER BY id LIMIT ? OFFSET ?`,
+  ).bind(responseId, limit, offset).all<AnswerRow>();
   return json(rows.results.map(answerToJson));
 }
 
@@ -46,41 +49,62 @@ export async function aggregatedResults(env: Env, surveyId: number): Promise<Res
   const questions = await env.DB.prepare(
     `SELECT * FROM questions WHERE survey_id = ? ORDER BY order_index`,
   ).bind(surveyId).all<QuestionRow>();
-  const questionResults = [];
-  for (const question of questions.results) {
-    const answers = await env.DB.prepare(
-      `SELECT * FROM answers WHERE question_id = ?`,
-    ).bind(question.id).all<AnswerRow>();
+  const questionIds = questions.results.map((question) => question.id);
+  const [allAnswers, allChoices] = await Promise.all([
+    loadAnswersForQuestions(env.DB, questionIds),
+    loadChoicesForQuestions(env.DB, questionIds),
+  ]);
+  const answersByQuestion = groupBy(allAnswers, (answer) => answer.question_id);
+  const choicesByQuestion = groupBy(allChoices, (choice) => choice.question_id);
+
+  const questionResults = questions.results.map((question) => {
+    const answers = answersByQuestion.get(question.id) ?? [];
     if (isChoiceQuestionType(question.type)) {
-      const choices = await env.DB.prepare(
-        `SELECT * FROM choices WHERE question_id = ?`,
-      ).bind(question.id).all<ChoiceRow>();
+      const choices = choicesByQuestion.get(question.id) ?? [];
       const counts: Record<string, number> = {};
-      for (const choice of choices.results) counts[String(choice.id)] = 0;
-      for (const answer of answers.results) {
-        const selected = parseChoiceIds(answer.selected_choice_ids);
-        for (const choiceId of selected) incrementChoiceCount(counts, choiceId);
+      for (const choice of choices) counts[String(choice.id)] = 0;
+      for (const answer of answers) {
+        for (const choiceId of parseChoiceIds(answer.selected_choice_ids)) {
+          incrementChoiceCount(counts, choiceId);
+        }
       }
-      questionResults.push({
+      return {
         questionId: question.id,
         questionText: localizedTextFor(question.text_translations, DEFAULT_FORM_CONTENT_LOCALE),
         questionType: question.type,
         choiceCounts: counts,
         textResponses: null,
-      });
-    } else {
-      questionResults.push({
-        questionId: question.id,
-        questionText: localizedTextFor(question.text_translations, DEFAULT_FORM_CONTENT_LOCALE),
-        questionType: question.type,
-        choiceCounts: null,
-        textResponses: answers.results
-          .map((answer) => answer.text_value)
-          .filter((value): value is string => Boolean(value)),
-      });
+      };
     }
-  }
+    return {
+      questionId: question.id,
+      questionText: localizedTextFor(question.text_translations, DEFAULT_FORM_CONTENT_LOCALE),
+      questionType: question.type,
+      choiceCounts: null,
+      textResponses: answers
+        .map((answer) => answer.text_value)
+        .filter((value): value is string => Boolean(value)),
+    };
+  });
   return json({ surveyId, totalResponses, questionResults });
+}
+
+async function loadAnswersForQuestions(db: D1Database, questionIds: number[]): Promise<AnswerRow[]> {
+  if (questionIds.length === 0) return [];
+  const placeholders = questionIds.map(() => '?').join(', ');
+  const rows = await db.prepare(
+    `SELECT * FROM answers WHERE question_id IN (${placeholders})`,
+  ).bind(...questionIds).all<AnswerRow>();
+  return rows.results;
+}
+
+async function loadChoicesForQuestions(db: D1Database, questionIds: number[]): Promise<ChoiceRow[]> {
+  if (questionIds.length === 0) return [];
+  const placeholders = questionIds.map(() => '?').join(', ');
+  const rows = await db.prepare(
+    `SELECT * FROM choices WHERE question_id IN (${placeholders}) ORDER BY order_index`,
+  ).bind(...questionIds).all<ChoiceRow>();
+  return rows.results;
 }
 
 export async function responseTrends(env: Env, surveyId: number, url: URL): Promise<Response> {
@@ -130,7 +154,8 @@ export async function exportResponses(env: Env, surveyId: number, url: URL): Pro
     });
   }
 
-  return new Response(toExportCsv(data), {
+  // UTF-8 BOM so Excel opens Japanese (and other non-ASCII) correctly.
+  return new Response(`\uFEFF${toExportCsv(data)}`, {
     headers: exportHeaders('text/csv; charset=utf-8', filename),
   });
 }
