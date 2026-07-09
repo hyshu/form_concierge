@@ -18,7 +18,19 @@ public final class FormConciergeReplyChecker {
   private let responseId: Int?
   private let userDefaults: UserDefaults
   private let storageKey: String
-  private let formatter = ISO8601DateFormatter()
+  /// Worker timestamps include fractional seconds (toISOString / SQLite %f).
+  /// Default ISO8601DateFormatter truncates them on encode, so latestReplyAt
+  /// would always stay "newer" than lastSeen and the badge never clears.
+  private static let fractionalFormatter: ISO8601DateFormatter = {
+    let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    return formatter
+  }()
+  private static let plainFormatter: ISO8601DateFormatter = {
+    let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = [.withInternetDateTime]
+    return formatter
+  }()
 
   public init(
     client: FormConciergeClient,
@@ -65,11 +77,12 @@ public final class FormConciergeReplyChecker {
     guard let value = userDefaults.string(forKey: storageKey) else {
       return nil
     }
-    return formatter.date(from: value)
+    return Self.fractionalFormatter.date(from: value)
+      ?? Self.plainFormatter.date(from: value)
   }
 
   public func markSeen(at date: Date = Date()) {
-    userDefaults.set(formatter.string(from: date), forKey: storageKey)
+    userDefaults.set(Self.fractionalFormatter.string(from: date), forKey: storageKey)
   }
 
   public func markLatestSeen() async throws {

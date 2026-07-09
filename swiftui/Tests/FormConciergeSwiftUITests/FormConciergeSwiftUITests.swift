@@ -211,7 +211,7 @@ final class FormConciergeSwiftUITests: XCTestCase {
     }
   }
 
-  func testApiErrorsRejectBodiesWithoutServerErrorMessage() async throws {
+  func testApiErrorsFallBackWhenBodyLacksServerErrorMessage() async throws {
     let client = makeClient { _ in
       let data = try! JSONSerialization.data(withJSONObject: ["message": "Forbidden"])
       let response = HTTPURLResponse(
@@ -227,15 +227,42 @@ final class FormConciergeSwiftUITests: XCTestCase {
 
     do {
       _ = try await client.latestReplyAt()
-      XCTFail("Expected decoding error")
-    } catch is DecodingError {
+      XCTFail("Expected API error")
+    } catch FormConciergeError.api(let status, let message) {
+      XCTAssertEqual(status, 403)
+      XCTAssertEqual(message, "Request failed with status 403")
+    } catch {
+      XCTFail("Unexpected error: \(error)")
+    }
+  }
+
+  func testApiErrorsFallBackOnNonJSONErrorBodies() async throws {
+    let client = makeClient { _ in
+      let data = Data("<html>Bad Gateway</html>".utf8)
+      let response = HTTPURLResponse(
+        url: URL(string: "https://api.example.com/api/anonymous/replies/latest")!,
+        statusCode: 502,
+        httpVersion: nil,
+        headerFields: ["content-type": "text/html"]
+      )!
+      return (response, data)
+    }
+
+    await client.setAnonymousToken("anon-token")
+
+    do {
+      _ = try await client.latestReplyAt()
+      XCTFail("Expected API error")
+    } catch FormConciergeError.api(let status, let message) {
+      XCTAssertEqual(status, 502)
+      XCTAssertEqual(message, "Request failed with status 502")
     } catch {
       XCTFail("Unexpected error: \(error)")
     }
   }
 
   func testReplyCheckerPersistsAndClearsSeenTimestamp() async throws {
-    let latest = "2026-06-22T10:15:30Z"
+    let latest = "2026-06-22T10:15:30.500Z"
     let defaults = makeDefaults()
     let client = makeClient { _ in
       self.jsonResponse(["latestReplyAt": latest])
@@ -247,13 +274,17 @@ final class FormConciergeSwiftUITests: XCTestCase {
       userDefaults: defaults
     )
 
+    let fractional = ISO8601DateFormatter()
+    fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    let expected = fractional.date(from: latest)
+
     let first = try await checker.check()
     XCTAssertTrue(first.hasNewReplies)
     XCTAssertNil(checker.lastSeenReplyAt)
 
     let marked = try await checker.check(markSeen: true)
     XCTAssertTrue(marked.hasNewReplies)
-    XCTAssertEqual(checker.lastSeenReplyAt, ISO8601DateFormatter().date(from: latest))
+    XCTAssertEqual(checker.lastSeenReplyAt, expected)
 
     let afterMark = try await checker.check()
     XCTAssertFalse(afterMark.hasNewReplies)
