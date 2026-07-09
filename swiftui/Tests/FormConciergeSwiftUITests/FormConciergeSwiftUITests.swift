@@ -59,6 +59,20 @@ final class FormConciergeSwiftUITests: XCTestCase {
     XCTAssertEqual(latestReplyAt, ISO8601DateFormatter().date(from: "2026-06-22T10:15:30Z"))
   }
 
+  func testDecodesFractionalISO8601DatesFromWorker() async throws {
+    let client = makeClient { request in
+      XCTAssertEqual(request.url?.path, "/api/anonymous/replies/latest")
+      return self.jsonResponse(["latestReplyAt": "2026-06-22T10:15:30.123Z"])
+    }
+
+    await client.setAnonymousToken("anon-token")
+    let latestReplyAt = try await client.latestReplyAt()
+
+    let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    XCTAssertEqual(latestReplyAt, formatter.date(from: "2026-06-22T10:15:30.123Z"))
+  }
+
   func testCreateAnonymousAccountStoresTokenAndSendsDisplayName() async throws {
     let client = makeClient { request in
       XCTAssertEqual(request.httpMethod, "POST")

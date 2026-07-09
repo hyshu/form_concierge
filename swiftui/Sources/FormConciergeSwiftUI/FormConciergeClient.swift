@@ -7,11 +7,38 @@ public actor FormConciergeClient {
   private let decoder: JSONDecoder
   private let encoder: JSONEncoder
 
+  private static let fractionalISO8601: ISO8601DateFormatter = {
+    let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    return formatter
+  }()
+
+  private static let plainISO8601: ISO8601DateFormatter = {
+    let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = [.withInternetDateTime]
+    return formatter
+  }()
+
   public init(baseURL: URL, session: URLSession = .shared) {
     self.baseURL = baseURL
     self.session = session
     self.decoder = JSONDecoder()
-    self.decoder.dateDecodingStrategy = .iso8601
+    // Worker emits fractional seconds (toISOString / SQLite %f). Foundation's
+    // .iso8601 strategy rejects those strings, so decode with a fractional-aware
+    // formatter and fall back to whole-second ISO-8601.
+    self.decoder.dateDecodingStrategy = .custom { decoder in
+      let container = try decoder.singleValueContainer()
+      let value = try container.decode(String.self)
+      if let date = Self.fractionalISO8601.date(from: value)
+        ?? Self.plainISO8601.date(from: value)
+      {
+        return date
+      }
+      throw DecodingError.dataCorruptedError(
+        in: container,
+        debugDescription: "Invalid ISO-8601 date: \(value)"
+      )
+    }
     self.encoder = JSONEncoder()
     self.encoder.dateEncodingStrategy = .iso8601
   }
@@ -106,7 +133,7 @@ public actor FormConciergeClient {
     body: Encodable? = nil,
     bearerToken: String? = nil
   ) async throws -> T {
-    var request = URLRequest(url: URL(string: path, relativeTo: baseURL)!)
+    var request = URLRequest(url: try resolveURL(path))
     request.httpMethod = method
     request.setValue("application/json", forHTTPHeaderField: "Accept")
     if let bearerToken {
@@ -129,6 +156,21 @@ public actor FormConciergeClient {
       )
     }
     return try decoder.decode(T.self, from: data)
+  }
+
+  /// Join path onto baseURL without dropping a base path prefix.
+  /// `URL(string:relativeTo:)` treats a leading `/` as host-absolute and would
+  /// discard e.g. `https://host/prefix` when path is `/api/...`.
+  private func resolveURL(_ path: String) throws -> URL {
+    var base = baseURL.absoluteString
+    if base.hasSuffix("/") {
+      base = String(base.dropLast())
+    }
+    let suffix = path.hasPrefix("/") ? path : "/\(path)"
+    guard let url = URL(string: base + suffix) else {
+      throw FormConciergeError.invalidResponse
+    }
+    return url
   }
 }
 
