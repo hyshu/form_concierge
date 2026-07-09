@@ -3,7 +3,7 @@ import 'package:form_concierge_client/form_concierge_client.dart';
 
 import 'questions/question_widget.dart';
 
-class SurveyContent extends StatelessWidget {
+class SurveyContent extends StatefulWidget {
   final Project project;
   final Survey survey;
   final List<Question> questions;
@@ -34,90 +34,169 @@ class SurveyContent extends StatelessWidget {
   });
 
   @override
+  State<SurveyContent> createState() => _SurveyContentState();
+}
+
+class _SurveyContentState extends State<SurveyContent> {
+  final _scrollController = ScrollController();
+  final _questionKeys = <int, GlobalKey>{};
+  final _submitSectionKey = GlobalKey();
+
+  @override
+  void didUpdateWidget(covariant SurveyContent oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final validationChanged =
+        !identical(widget.validationErrors, oldWidget.validationErrors) &&
+        widget.validationErrors.isNotEmpty;
+    final submitErrorAppeared =
+        widget.errorMessage != null &&
+        widget.errorMessage != oldWidget.errorMessage;
+    if (validationChanged || submitErrorAppeared) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (validationChanged) {
+          _scrollToFirstValidationError();
+        } else if (submitErrorAppeared) {
+          _scrollToKey(_submitSectionKey);
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  GlobalKey _keyForQuestion(int questionId) {
+    return _questionKeys.putIfAbsent(questionId, GlobalKey.new);
+  }
+
+  void _scrollToFirstValidationError() {
+    for (final question in widget.questions) {
+      final id = question.id;
+      if (id == null) continue;
+      if (!widget.validationErrors.containsKey(id)) continue;
+      _scrollToKey(_keyForQuestion(id));
+      return;
+    }
+  }
+
+  void _scrollToKey(GlobalKey key) {
+    final context = key.currentContext;
+    if (context == null) return;
+    Scrollable.ensureVisible(
+      context,
+      alignment: 0.1,
+      duration: MediaQuery.disableAnimationsOf(context)
+          ? Duration.zero
+          : const Duration(milliseconds: 150),
+      curve: Curves.easeOut,
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return SingleChildScrollView(
+      controller: _scrollController,
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            survey.titleFor(locale),
+            widget.survey.titleFor(widget.locale),
             style: Theme.of(context).textTheme.headlineSmall,
           ),
-          if (survey.descriptionFor(locale).isNotEmpty) ...[
+          if (widget.survey.descriptionFor(widget.locale).isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(
-              survey.descriptionFor(locale),
+              widget.survey.descriptionFor(widget.locale),
               style: Theme.of(context).textTheme.bodyMedium,
             ),
           ],
-          if (project.supportedLocales.length > 1) ...[
+          if (widget.project.supportedLocales.length > 1) ...[
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              initialValue: locale,
+              initialValue: widget.locale,
               decoration: const InputDecoration(
                 isDense: true,
                 border: OutlineInputBorder(),
               ),
               items: [
-                for (final option in project.supportedLocales)
+                for (final option in widget.project.supportedLocales)
                   DropdownMenuItem(
                     value: option,
-                    child: Text(formContentLocaleLabels[option]!),
+                    child: Text(
+                      formContentLocaleLabels[option] ?? option,
+                    ),
                   ),
               ],
-              onChanged: isSubmitting
+              onChanged: widget.isSubmitting
                   ? null
                   : (value) {
-                      if (value != null) onLocaleChanged(value);
+                      if (value != null) widget.onLocaleChanged(value);
                     },
             ),
           ],
           const SizedBox(height: 24),
-          if (errorMessage != null) ...[
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: colorScheme.errorContainer,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                errorMessage!,
-                style: TextStyle(color: colorScheme.onErrorContainer),
-              ),
-            ),
-            const SizedBox(height: 16),
-          ],
-          ...questions.map((question) {
-            final choices = choicesByQuestion[question.id] ?? [];
-            final error = validationErrors[question.id];
+          ...widget.questions.map((question) {
+            final choices = widget.choicesByQuestion[question.id] ?? [];
+            final error = widget.validationErrors[question.id];
+            final questionId = question.id;
 
             return Padding(
-              key: ValueKey(question.id),
+              key: questionId == null ? null : _keyForQuestion(questionId),
               padding: const EdgeInsets.only(bottom: 24),
               child: QuestionWidget(
                 key: ValueKey('question-${question.id}'),
                 question: question,
                 choices: choices,
-                value: answers[question.id],
+                value: widget.answers[question.id],
                 error: error,
-                locale: locale,
-                onChanged: (value) => onAnswerChanged(question.id!, value),
+                locale: widget.locale,
+                onChanged: (value) =>
+                    widget.onAnswerChanged(question.id!, value),
               ),
             );
           }),
           const SizedBox(height: 8),
-          FilledButton(
-            onPressed: isSubmitting ? null : onSubmit,
-            child: isSubmitting
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : Text(FormContentMessages.text(locale, 'submit')),
+          // Errors sit next to the submit action (ui-baseline), not at page top.
+          KeyedSubtree(
+            key: _submitSectionKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (widget.errorMessage != null) ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: colorScheme.errorContainer,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      widget.errorMessage!,
+                      style: TextStyle(color: colorScheme.onErrorContainer),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                FilledButton(
+                  onPressed: widget.isSubmitting ? null : widget.onSubmit,
+                  child: widget.isSubmitting
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(
+                          FormContentMessages.text(widget.locale, 'submit'),
+                        ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
