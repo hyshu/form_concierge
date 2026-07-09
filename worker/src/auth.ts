@@ -12,6 +12,11 @@ const LOGIN_RATE_LIMIT = 20;
 const LOGIN_RATE_WINDOW_MS = 15 * 60 * 1000;
 const ANON_CREATE_RATE_LIMIT = 30;
 const ANON_CREATE_RATE_WINDOW_MS = 60 * 60 * 1000;
+const ADMIN_SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+/** Refresh session expiry when less than this remains (sliding window). */
+const ADMIN_SESSION_SLIDE_THRESHOLD_MS = 15 * 24 * 60 * 60 * 1000;
+/** Drop unused anonymous accounts (no responses) older than this. */
+const ANON_ACCOUNT_TTL_MS = 90 * 24 * 60 * 60 * 1000;
 const BOOTSTRAP_SCOPES = JSON.stringify([
   'admin',
   'survey:read',
@@ -84,6 +89,7 @@ export async function createAnonymousAccount(request: Request, env: Env): Promis
   const tokenHash = await sha256Hex(token);
   const id = crypto.randomUUID();
   const now = nowIso();
+  await pruneStaleAnonymousAccounts(env.DB, now);
   await env.DB.prepare(
     `INSERT INTO anonymous_accounts (id, token_hash, display_name, created_at, last_seen_at)
      VALUES (?, ?, ?, ?, ?)`,
@@ -100,12 +106,19 @@ export async function requireAdmin(request: Request, env: Env): Promise<AdminCon
   const tokenHash = await sha256Hex(token);
   const now = nowIso();
   const row = await env.DB.prepare(
-    `SELECT a.id, a.email, a.scope_names, a.created_at
+    `SELECT a.id, a.email, a.scope_names, a.created_at, s.expires_at AS session_expires_at
      FROM admin_sessions s
      JOIN admins a ON a.id = s.admin_id
      WHERE s.token_hash = ? AND s.expires_at > ?`,
-  ).bind(tokenHash, now).first<AdminRow>();
+  ).bind(tokenHash, now).first<AdminRow & { session_expires_at: string }>();
   if (!row) throw new HttpError(401, 'Admin authentication required');
+  const expiresMs = Date.parse(row.session_expires_at);
+  if (Number.isFinite(expiresMs) && expiresMs - Date.now() < ADMIN_SESSION_SLIDE_THRESHOLD_MS) {
+    const newExpiry = new Date(Date.now() + ADMIN_SESSION_TTL_MS).toISOString();
+    await env.DB.prepare(
+      `UPDATE admin_sessions SET expires_at = ? WHERE token_hash = ?`,
+    ).bind(newExpiry, tokenHash).run();
+  }
   // Scope checks are done per-route via requireScope (editor/viewer lack "admin").
   return adminRowToContext(row);
 }
@@ -161,10 +174,27 @@ async function createAdminSession(db: D1Database, user: AdminContext) {
     ).bind(
       await sha256Hex(token),
       user.id,
-      new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      new Date(Date.now() + ADMIN_SESSION_TTL_MS).toISOString(),
     ),
   ]);
   return { token, user: adminContextToJson(user) };
+}
+
+/** Delete old anonymous accounts that never submitted a response (bounded batch). */
+async function pruneStaleAnonymousAccounts(db: D1Database, now: string): Promise<void> {
+  const cutoff = new Date(Date.parse(now) - ANON_ACCOUNT_TTL_MS).toISOString();
+  // Keep accounts referenced by responses so history stays intact.
+  await db.prepare(
+    `DELETE FROM anonymous_accounts
+     WHERE last_seen_at < ?
+       AND id NOT IN (SELECT DISTINCT anonymous_account_id FROM survey_responses)
+       AND rowid IN (
+         SELECT rowid FROM anonymous_accounts
+         WHERE last_seen_at < ?
+           AND id NOT IN (SELECT DISTINCT anonymous_account_id FROM survey_responses)
+         LIMIT 100
+       )`,
+  ).bind(cutoff, cutoff).run();
 }
 
 export async function getAdminById(db: D1Database, id: string): Promise<AdminContext | null> {
