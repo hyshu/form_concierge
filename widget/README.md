@@ -56,13 +56,25 @@ client.anonymous.useToken(savedAnonymousToken);
 final replies = await client.anonymous.getReplies(responseId: responseId);
 ```
 
-To check whether new admin replies exist without downloading the full reply list, use the reply checker. The server returns only the latest reply timestamp; the checker stores the last seen timestamp locally.
+To check whether new admin replies exist without downloading the full reply list, use the reply checker. The server returns only the latest reply timestamp; **the host app owns last-seen persistence** (this package does not depend on SharedPreferences).
 
 ```dart
+final prefs = await SharedPreferences.getInstance(); // or your own store
+final store = FormConciergeReplySeenStore(
+  read: prefs.getString,
+  write: (key, value) async {
+    await prefs.setString(key, value);
+  },
+  remove: (key) async {
+    await prefs.remove(key);
+  },
+);
+
 final checker = FormConciergeReplyChecker(
   client: client,
   anonymousToken: savedAnonymousToken,
   responseId: responseId,
+  store: store,
 );
 
 final result = await checker.check();

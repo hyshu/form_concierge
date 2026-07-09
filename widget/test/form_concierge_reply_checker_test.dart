@@ -5,16 +5,9 @@ import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:form_concierge_survey_widget/form_concierge_survey_widget.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
-
   const latestIso = '2026-06-22T10:15:30.000Z';
-
-  setUp(() {
-    SharedPreferences.setMockInitialValues({});
-  });
 
   group('FormConciergeReplyCheckResult', () {
     test('hasNewReplies is false when latest reply is absent', () {
@@ -95,6 +88,7 @@ void main() {
         }),
         anonymousToken: 'token-1',
         responseId: 7,
+        store: _memoryStore(),
       );
 
       final result = await checker.check();
@@ -106,10 +100,11 @@ void main() {
       expect(await checker.readLastSeenReplyAt(), isNull);
     });
 
-    test('check(markSeen: true) stores latest timestamp locally', () async {
+    test('check(markSeen: true) stores latest timestamp via host store', () async {
       final checker = FormConciergeReplyChecker(
         client: _client((request) => _json({'latestReplyAt': latestIso})),
         anonymousToken: 'token-2',
+        store: _memoryStore(),
       );
 
       final result = await checker.check(markSeen: true);
@@ -118,10 +113,11 @@ void main() {
       expect(await checker.readLastSeenReplyAt(), DateTime.parse(latestIso));
     });
 
-    test('markLatestSeen and clearSeen update local timestamp only', () async {
+    test('markLatestSeen and clearSeen update host store only', () async {
       final checker = FormConciergeReplyChecker(
         client: _client((request) => _json({'latestReplyAt': latestIso})),
         anonymousToken: 'token-3',
+        store: _memoryStore(),
       );
 
       await checker.markLatestSeen();
@@ -135,6 +131,7 @@ void main() {
       final checker = FormConciergeReplyChecker(
         client: _client((request) => _json({'latestReplyAt': null})),
         anonymousToken: 'token-4',
+        store: _memoryStore(),
       );
 
       final result = await checker.check(markSeen: true);
@@ -144,6 +141,19 @@ void main() {
       expect(await checker.readLastSeenReplyAt(), isNull);
     });
   });
+}
+
+FormConciergeReplySeenStore _memoryStore() {
+  final values = <String, String>{};
+  return FormConciergeReplySeenStore(
+    read: (key) async => values[key],
+    write: (key, value) async {
+      values[key] = value;
+    },
+    remove: (key) async {
+      values.remove(key);
+    },
+  );
 }
 
 Client _client(http.Response Function(http.Request request) handler) {

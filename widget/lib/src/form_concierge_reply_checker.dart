@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class FormConciergeReplyCheckResult {
   final DateTime? latestReplyAt;
@@ -22,15 +21,33 @@ class FormConciergeReplyCheckResult {
   }
 }
 
+/// Host-provided persistence for last-seen reply timestamps.
+///
+/// The widget package never writes to disk itself — the host app owns
+/// SharedPreferences, secure storage, or any other backend.
+class FormConciergeReplySeenStore {
+  final Future<String?> Function(String key) read;
+  final Future<void> Function(String key, String value) write;
+  final Future<void> Function(String key) remove;
+
+  const FormConciergeReplySeenStore({
+    required this.read,
+    required this.write,
+    required this.remove,
+  });
+}
+
 class FormConciergeReplyChecker {
   final Client client;
   final String anonymousToken;
   final int? responseId;
   final String storageKey;
+  final FormConciergeReplySeenStore store;
 
   FormConciergeReplyChecker({
     required this.client,
     required this.anonymousToken,
+    required this.store,
     this.responseId,
     String? storageKey,
   }) : storageKey =
@@ -41,6 +58,7 @@ class FormConciergeReplyChecker {
              responseId: responseId,
            );
 
+  /// Suggested key for the host store. The host may use any key scheme.
   static String defaultStorageKey({
     required Uri baseUri,
     required String anonymousToken,
@@ -68,14 +86,12 @@ class FormConciergeReplyChecker {
   }
 
   Future<DateTime?> readLastSeenReplyAt() async {
-    final prefs = await SharedPreferences.getInstance();
-    final value = prefs.getString(storageKey);
+    final value = await store.read(storageKey);
     return value == null ? null : DateTime.tryParse(value);
   }
 
   Future<void> markSeenAt(DateTime date) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(storageKey, date.toUtc().toIso8601String());
+    await store.write(storageKey, date.toUtc().toIso8601String());
   }
 
   Future<void> markLatestSeen() async {
@@ -89,7 +105,6 @@ class FormConciergeReplyChecker {
   }
 
   Future<void> clearSeen() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(storageKey);
+    await store.remove(storageKey);
   }
 }

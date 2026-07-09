@@ -1,5 +1,8 @@
 library form_concierge_survey_widget;
 
 export 'src/form_concierge_reply_checker.dart'
-    show FormConciergeReplyChecker, FormConciergeReplyCheckResult;
+    show
+        FormConciergeReplyChecker,
+        FormConciergeReplyCheckResult,
+        FormConciergeReplySeenStore;
 export 'src/form_concierge_survey.dart' show FormConciergeSurvey;

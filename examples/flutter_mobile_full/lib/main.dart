@@ -422,10 +422,21 @@ class _FlutterMobileFullHomePageState extends State<FlutterMobileFullHomePage> {
     }
     setState(() => _checkingReplies = true);
     try {
+      final prefs = widget.prefs;
       final checker = FormConciergeReplyChecker(
         client: _client,
         anonymousToken: token,
         responseId: _lastResponseId,
+        // Persistence stays in the host app; the widget package has no store.
+        store: FormConciergeReplySeenStore(
+          read: (key) async => prefs.getString(key),
+          write: (key, value) async {
+            await prefs.setString(key, value);
+          },
+          remove: (key) async {
+            await prefs.remove(key);
+          },
+        ),
       );
       final result = await checker.check(markSeen: markSeen);
       if (!mounted) return;
