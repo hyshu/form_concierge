@@ -96,19 +96,22 @@ export async function submitResponse(
   const userAgent = request.headers.get('user-agent');
   const deviceInfo = normalizeDeviceInfo(body.deviceInfo);
   const metadata = normalizeMetadata(body.metadata);
-  const response = await env.DB.prepare(
-    `INSERT INTO survey_responses
-       (survey_id, anonymous_account_id, anonymous_id, submitted_at, ip_address, user_agent,
-        device_id, device_label, device_platform, device_os, device_os_version,
-        device_browser, device_browser_version, device_locale, device_timezone,
-        screen_width, screen_height, device_pixel_ratio, device_info, metadata)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-     RETURNING id, survey_id, anonymous_account_id, anonymous_id, submitted_at, user_agent,
-       device_id, device_label, device_platform, device_os, device_os_version,
-       device_browser, device_browser_version, device_locale, device_timezone,
-       screen_width, screen_height, device_pixel_ratio, device_info, metadata`,
-  )
-    .bind(
+  // Single batch so a failed answer insert cannot leave an orphan response
+  // (D1 batch is atomic). Capture response id once via last_insert_rowid()
+  // for any following answer rows.
+  const statements: D1PreparedStatement[] = [
+    env.DB.prepare(
+      `INSERT INTO survey_responses
+         (survey_id, anonymous_account_id, anonymous_id, submitted_at, ip_address, user_agent,
+          device_id, device_label, device_platform, device_os, device_os_version,
+          device_browser, device_browser_version, device_locale, device_timezone,
+          screen_width, screen_height, device_pixel_ratio, device_info, metadata)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       RETURNING id, survey_id, anonymous_account_id, anonymous_id, submitted_at, user_agent,
+         device_id, device_label, device_platform, device_os, device_os_version,
+         device_browser, device_browser_version, device_locale, device_timezone,
+         screen_width, screen_height, device_pixel_ratio, device_info, metadata`,
+    ).bind(
       surveyId,
       anonymous.id,
       typeof body.anonymousId === 'string' ? body.anonymousId : anonymous.id,
@@ -129,30 +132,46 @@ export async function submitResponse(
       deviceInfo.devicePixelRatio,
       deviceInfo.rawJson,
       metadata,
-    )
-    .first<ResponseRow>();
-
-  if (!response) throw new HttpError(500, 'Failed to save response');
-
-  const inserts = answers.map((answer) =>
-    env.DB.prepare(
-      `INSERT INTO answers
-         (survey_response_id, question_id, text_value, selected_choice_ids)
-       VALUES (?, ?, ?, ?)`,
-    ).bind(
-      response.id,
-      requiredInteger(answer.questionId, 'questionId', { min: 1 }),
-      typeof answer.textValue === 'string' ? answer.textValue : null,
-      Array.isArray(answer.selectedChoiceIds)
-        ? JSON.stringify(answer.selectedChoiceIds.map((choiceId) => requiredInteger(choiceId, 'selectedChoiceIds', { min: 1 })))
-        : null,
     ),
-  );
-  if (inserts.length > 0) await env.DB.batch(inserts);
+  ];
 
-  await env.DB.prepare(
-    `UPDATE anonymous_accounts SET last_seen_at = ? WHERE id = ?`,
-  ).bind(now, anonymous.id).run();
+  if (answers.length > 0) {
+    const answerPayload = answers.map((answer) => ({
+      questionId: requiredInteger(answer.questionId, 'questionId', { min: 1 }),
+      textValue: typeof answer.textValue === 'string' ? answer.textValue : null,
+      selectedChoiceIds: Array.isArray(answer.selectedChoiceIds)
+        ? JSON.stringify(
+            answer.selectedChoiceIds.map((choiceId) =>
+              requiredInteger(choiceId, 'selectedChoiceIds', { min: 1 }),
+            ),
+          )
+        : null,
+    }));
+    // Cross-join freezes last_insert_rowid() (the response) once so multi-row
+    // answer inserts do not pick up each prior answer's rowid.
+    statements.push(
+      env.DB.prepare(
+        `INSERT INTO answers
+           (survey_response_id, question_id, text_value, selected_choice_ids)
+         SELECT r.id,
+                json_extract(j.value, '$.questionId'),
+                json_extract(j.value, '$.textValue'),
+                json_extract(j.value, '$.selectedChoiceIds')
+         FROM (SELECT last_insert_rowid() AS id) AS r
+         CROSS JOIN json_each(?) AS j`,
+      ).bind(JSON.stringify(answerPayload)),
+    );
+  }
+
+  statements.push(
+    env.DB.prepare(
+      `UPDATE anonymous_accounts SET last_seen_at = ? WHERE id = ?`,
+    ).bind(now, anonymous.id),
+  );
+
+  const batchResults = await env.DB.batch(statements);
+  const response = batchResults[0]?.results?.[0] as ResponseRow | undefined;
+  if (!response) throw new HttpError(500, 'Failed to save response');
 
   const notificationTask = sendResponseNotification(env, survey, response).catch((error) => {
     logError('response_notification_failed', error, {
