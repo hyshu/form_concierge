@@ -2,7 +2,14 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { answerRow, questionRow } from '../test/fixtures';
-import { csvCell, formatAnswerForCsv, incrementChoiceCount } from './responses';
+import { csvCell, formatAnswerForCsv, incrementChoiceCount, utcMidnight } from './responses';
+
+test('utcMidnight floors to UTC calendar day start', () => {
+  const afternoon = new Date('2026-07-10T15:30:45.123Z');
+  assert.equal(utcMidnight(afternoon).toISOString(), '2026-07-10T00:00:00.000Z');
+  const alreadyMidnight = new Date('2026-07-10T00:00:00.000Z');
+  assert.equal(utcMidnight(alreadyMidnight).toISOString(), '2026-07-10T00:00:00.000Z');
+});
 
 test('incrementChoiceCount ignores unknown choice ids', () => {
   const counts = { '1': 0 };

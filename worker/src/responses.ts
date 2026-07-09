@@ -85,7 +85,11 @@ export async function aggregatedResults(env: Env, surveyId: number): Promise<Res
 
 export async function responseTrends(env: Env, surveyId: number, url: URL): Promise<Response> {
   const days = integerParam(url.searchParams.get('days'), 'days', 30, { min: 1, max: 365 });
-  const start = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  // UTC midnight buckets so "today" is always present and days are full calendar days.
+  // Previous logic used now-days (partial first day) and only initialized `days`
+  // keys from that offset, which dropped today's key when it had zero responses.
+  const todayUtc = utcMidnight(new Date());
+  const start = new Date(todayUtc.getTime() - (days - 1) * 24 * 60 * 60 * 1000);
   const rows = await env.DB.prepare(
     `SELECT submitted_at FROM survey_responses WHERE survey_id = ? AND submitted_at >= ?`,
   ).bind(surveyId, start.toISOString()).all<{ submitted_at: string }>();
@@ -98,9 +102,16 @@ export async function responseTrends(env: Env, surveyId: number, url: URL): Prom
   }
   for (const row of rows.results) {
     const date = row.submitted_at.slice(0, 10);
-    result[date] = (result[date] ?? 0) + 1;
+    if (Object.hasOwn(result, date)) {
+      result[date] += 1;
+    }
   }
   return json(result);
+}
+
+/** Floor a Date to UTC midnight (00:00:00.000Z). */
+export function utcMidnight(date: Date): Date {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
 }
 
 export async function exportResponses(env: Env, surveyId: number, url: URL): Promise<Response> {
