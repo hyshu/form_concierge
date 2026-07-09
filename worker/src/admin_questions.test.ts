@@ -39,6 +39,21 @@ test('normalizeQuestionValidation keeps integer bounds strict', () => {
   );
 });
 
+test('normalizeQuestionValidation accepts explicit null to clear bounds', () => {
+  assert.deepEqual(
+    normalizeQuestionValidation(
+      { minLength: null, maxLength: null, minSelected: null, maxSelected: null },
+      'textSingle',
+    ),
+    {
+      minLength: null,
+      maxLength: null,
+      minSelected: null,
+      maxSelected: null,
+    },
+  );
+});
+
 test('normalizeVisibilityConditionMode rejects coerced values', () => {
   assert.equal(normalizeVisibilityConditionMode(undefined), 'all');
   assert.equal(normalizeVisibilityConditionMode('any'), 'any');

@@ -1,5 +1,8 @@
 part of form_concierge_client;
 
+/// Sentinel for [Question.copyWith] so null can clear optional constraints.
+const Object _unset = Object();
+
 const formContentLocaleCodes = <String>[
   'en',
   'ja',
@@ -510,21 +513,27 @@ class Question {
     isDeleted: _bool(json['isDeleted']),
   );
 
-  Map<String, dynamic> toJson() => _withoutNulls({
-    'id': id,
-    'surveyId': surveyId,
-    'textTranslations': textTranslations.toJson(),
-    'type': _enumName(type),
-    'orderIndex': orderIndex,
-    'isRequired': isRequired,
-    'placeholderTranslations': placeholderTranslations.toJson(),
-    'minLength': minLength,
-    'maxLength': maxLength,
-    'minSelected': minSelected,
-    'maxSelected': maxSelected,
-    'visibilityConditionMode': _enumName(visibilityConditionMode),
-    'isDeleted': isDeleted,
-  });
+  Map<String, dynamic> toJson() {
+    // Always include constraint fields (including null) so updates can clear
+    // min/max on the server via Object.hasOwn. Other nulls are still stripped.
+    return {
+      ..._withoutNulls({
+        'id': id,
+        'surveyId': surveyId,
+        'textTranslations': textTranslations.toJson(),
+        'type': _enumName(type),
+        'orderIndex': orderIndex,
+        'isRequired': isRequired,
+        'placeholderTranslations': placeholderTranslations.toJson(),
+        'visibilityConditionMode': _enumName(visibilityConditionMode),
+        'isDeleted': isDeleted,
+      }),
+      'minLength': minLength,
+      'maxLength': maxLength,
+      'minSelected': minSelected,
+      'maxSelected': maxSelected,
+    };
+  }
 
   Question copyWith({
     int? id,
@@ -534,10 +543,10 @@ class Question {
     int? orderIndex,
     bool? isRequired,
     LocalizedText? placeholderTranslations,
-    int? minLength,
-    int? maxLength,
-    int? minSelected,
-    int? maxSelected,
+    Object? minLength = _unset,
+    Object? maxLength = _unset,
+    Object? minSelected = _unset,
+    Object? maxSelected = _unset,
     VisibilityConditionMode? visibilityConditionMode,
     bool? isDeleted,
   }) {
@@ -550,10 +559,18 @@ class Question {
       isRequired: isRequired ?? this.isRequired,
       placeholderTranslations:
           placeholderTranslations ?? this.placeholderTranslations,
-      minLength: minLength ?? this.minLength,
-      maxLength: maxLength ?? this.maxLength,
-      minSelected: minSelected ?? this.minSelected,
-      maxSelected: maxSelected ?? this.maxSelected,
+      minLength: identical(minLength, _unset)
+          ? this.minLength
+          : minLength as int?,
+      maxLength: identical(maxLength, _unset)
+          ? this.maxLength
+          : maxLength as int?,
+      minSelected: identical(minSelected, _unset)
+          ? this.minSelected
+          : minSelected as int?,
+      maxSelected: identical(maxSelected, _unset)
+          ? this.maxSelected
+          : maxSelected as int?,
       visibilityConditionMode:
           visibilityConditionMode ?? this.visibilityConditionMode,
       isDeleted: isDeleted ?? this.isDeleted,

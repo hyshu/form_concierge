@@ -109,12 +109,14 @@ export async function updateQuestion(request: Request, env: Env, questionId: num
       throw new HttpError(400, 'Cannot change question type after responses exist');
     }
   }
+  // Object.hasOwn: explicit null clears the constraint; omitted keys keep existing.
+  // (?? would treat null as "keep", so empty Max length fields could never clear.)
   const validation = normalizeQuestionValidation(
     {
-      minLength: body.minLength ?? existing.min_length,
-      maxLength: body.maxLength ?? existing.max_length,
-      minSelected: body.minSelected ?? existing.min_selected,
-      maxSelected: body.maxSelected ?? existing.max_selected,
+      minLength: Object.hasOwn(body, 'minLength') ? body.minLength : existing.min_length,
+      maxLength: Object.hasOwn(body, 'maxLength') ? body.maxLength : existing.max_length,
+      minSelected: Object.hasOwn(body, 'minSelected') ? body.minSelected : existing.min_selected,
+      maxSelected: Object.hasOwn(body, 'maxSelected') ? body.maxSelected : existing.max_selected,
     },
     type,
   );
