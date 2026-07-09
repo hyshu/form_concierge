@@ -143,12 +143,10 @@ public struct FormConciergeSurveyView: View {
     isLoading = true
     defer { isLoading = false }
     do {
+      // Restore provided token only. Create anonymously on submit so notFound /
+      // abandoned page views do not insert unused anonymous_accounts rows.
       if let anonymousToken {
         await client.setAnonymousToken(anonymousToken)
-      }
-      if !(await client.hasAnonymousToken()) {
-        let session = try await client.createAnonymousAccount()
-        onAnonymousSession?(session)
       }
       let loadedProject = try await client.project(slug: projectSlug)
       guard let loadedSurvey = selectedSurvey(from: loadedProject) else {
@@ -193,6 +191,10 @@ public struct FormConciergeSurveyView: View {
     defer { isSubmitting = false }
 
     do {
+      if !(await client.hasAnonymousToken()) {
+        let session = try await client.createAnonymousAccount()
+        onAnonymousSession?(session)
+      }
       let payload = visibleQuestions.compactMap { question -> Answer? in
         guard let value = answers[question.id] else { return nil }
         switch value {
