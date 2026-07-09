@@ -293,6 +293,11 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
 
   void _submit() {
     if (_formKey.currentState?.validate() ?? false) {
+      // Only send constraints for fields visible for the selected type.
+      // Otherwise switching multipleChoice → singleChoice would keep stale
+      // minSelected/maxSelected and make the published form unanswerable.
+      final usesText = _type.usesTextAnswer;
+      final usesMultiSelect = _type == QuestionType.multipleChoice;
       widget.onSave(
         textTranslations: localizedTextFromControllers(
           _textControllers,
@@ -300,16 +305,20 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
         ),
         type: _type,
         isRequired: _isRequired,
-        placeholderTranslations: _type.usesTextAnswer
+        placeholderTranslations: usesText
             ? localizedTextFromControllers(
                 _placeholderControllers,
                 locales: widget.locales,
               )
             : LocalizedText.filled('', locales: widget.locales),
-        minLength: _parseInt(_minLengthController.text),
-        maxLength: _parseInt(_maxLengthController.text),
-        minSelected: _parseInt(_minSelectedController.text),
-        maxSelected: _parseInt(_maxSelectedController.text),
+        minLength: usesText ? _parseInt(_minLengthController.text) : null,
+        maxLength: usesText ? _parseInt(_maxLengthController.text) : null,
+        minSelected: usesMultiSelect
+            ? _parseInt(_minSelectedController.text)
+            : null,
+        maxSelected: usesMultiSelect
+            ? _parseInt(_maxSelectedController.text)
+            : null,
         visibilityConditionMode: _visibilityConditionMode,
       );
       Navigator.pop(context);

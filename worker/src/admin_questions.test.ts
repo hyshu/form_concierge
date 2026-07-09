@@ -54,6 +54,26 @@ test('normalizeQuestionValidation accepts explicit null to clear bounds', () => 
   );
 });
 
+test('normalizeQuestionValidation rejects unanswerable singleChoice bounds', () => {
+  assertBadRequest(
+    () => normalizeQuestionValidation({ minSelected: 2 }, 'singleChoice'),
+    'singleChoice minSelected cannot be greater than 1',
+  );
+  assertBadRequest(
+    () => normalizeQuestionValidation({ maxSelected: 3 }, 'singleChoice'),
+    'singleChoice maxSelected cannot be greater than 1',
+  );
+  assert.deepEqual(
+    normalizeQuestionValidation({ minSelected: 1, maxSelected: 1 }, 'singleChoice'),
+    {
+      minLength: null,
+      maxLength: null,
+      minSelected: 1,
+      maxSelected: 1,
+    },
+  );
+});
+
 test('normalizeVisibilityConditionMode rejects coerced values', () => {
   assert.equal(normalizeVisibilityConditionMode(undefined), 'all');
   assert.equal(normalizeVisibilityConditionMode('any'), 'any');

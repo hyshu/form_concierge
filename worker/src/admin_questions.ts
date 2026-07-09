@@ -176,8 +176,15 @@ export function normalizeQuestionValidation(
   if (minSelected != null && maxSelected != null && minSelected > maxSelected) {
     throw new HttpError(400, 'minSelected cannot be greater than maxSelected');
   }
-  if (type === 'singleChoice' && maxSelected != null && maxSelected > 1) {
-    throw new HttpError(400, 'singleChoice maxSelected cannot be greater than 1');
+  if (type === 'singleChoice') {
+    // singleChoice can select at most one option; min/max > 1 makes the form
+    // unanswerable (every submit fails validation).
+    if (minSelected != null && minSelected > 1) {
+      throw new HttpError(400, 'singleChoice minSelected cannot be greater than 1');
+    }
+    if (maxSelected != null && maxSelected > 1) {
+      throw new HttpError(400, 'singleChoice maxSelected cannot be greater than 1');
+    }
   }
   return {
     minLength: isTextQuestionTypeName(type) ? minLength : null,
