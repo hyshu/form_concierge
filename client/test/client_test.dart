@@ -100,7 +100,7 @@ void main() {
     );
   });
 
-  test('rawRequest rejects non-JSON API error bodies', () async {
+  test('rawRequest maps non-JSON API error bodies to ApiException', () async {
     final client = Client(
       'https://api.example.com',
       httpClient: MockClient((_) async => http.Response('not available', 503)),
@@ -109,24 +109,43 @@ void main() {
 
     await expectLater(
       client.rawRequest('GET', '/exports'),
-      throwsA(isA<FormatException>()),
-    );
-  });
-
-  test('request rejects API error objects without error strings', () async {
-    final client = Client(
-      'https://api.example.com',
-      httpClient: MockClient(
-        (_) async => http.Response('{"message":"No"}', 400),
+      throwsA(
+        isA<ApiException>()
+            .having((error) => error.statusCode, 'statusCode', 503)
+            .having(
+              (error) => error.message,
+              'message',
+              'Request failed with status 503',
+            ),
       ),
     );
-    addTearDown(client.close);
-
-    await expectLater(
-      client.request('GET', '/config'),
-      throwsA(isA<FormatException>()),
-    );
   });
+
+  test(
+    'request maps API error objects without error strings to ApiException',
+    () async {
+      final client = Client(
+        'https://api.example.com',
+        httpClient: MockClient(
+          (_) async => http.Response('{"message":"No"}', 400),
+        ),
+      );
+      addTearDown(client.close);
+
+      await expectLater(
+        client.request('GET', '/config'),
+        throwsA(
+          isA<ApiException>()
+              .having((error) => error.statusCode, 'statusCode', 400)
+              .having(
+                (error) => error.message,
+                'message',
+                'Request failed with status 400',
+              ),
+        ),
+      );
+    },
+  );
 
   test('model decoding rejects coerced API scalar types', () {
     expect(
