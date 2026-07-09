@@ -1,10 +1,11 @@
 import type { Env, NotificationSettingsRow } from './types';
-import { boolToInt, json, logWarn, nowIso, readJson, requireEmail, requiredBoolean, requiredRow } from './utils';
+import { boolToInt, HttpError, json, logWarn, nowIso, readJson, requireEmail, requiredBoolean, requiredRow } from './utils';
 import { notificationToJson } from './serializers';
 import { getIntegrationSettingsRow, isSmtpConfigured, requireSmtpSettings, type RequiredSmtpSettings } from './admin_settings';
 import type { EmailMessage } from './smtp';
 import { DEFAULT_FORM_CONTENT_LOCALE, localizedTextFor } from './localization';
 import type { ProjectRow, ResponseRow, SurveyRow } from './types';
+import { mustSurvey } from './admin_records';
 
 export async function notificationSettings(
   request: Request,
@@ -20,6 +21,7 @@ export async function notificationSettings(
     return json(row ? notificationToJson(row) : null);
   }
   if (method === 'PUT') {
+    await mustSurvey(env.DB, surveyId);
     const body = await readJson(request);
     const row = await env.DB.prepare(
       `INSERT INTO notification_settings
@@ -44,16 +46,17 @@ export async function notificationSettings(
       `UPDATE notification_settings SET enabled = ?, updated_at = ?
        WHERE survey_id = ? RETURNING *`,
     ).bind(boolToInt(requiredBoolean(body.enabled, 'enabled')), nowIso(), surveyId).first<NotificationSettingsRow>();
-    return json(notificationToJson(requiredRow(row, 'NotificationSettings')));
+    if (!row) throw new HttpError(404, 'Notification settings not found');
+    return json(notificationToJson(row));
   }
   if (method === 'POST' && parts[5] === 'test') {
     const settings = requireSmtpSettings(await getIntegrationSettingsRow(env));
     const row = await env.DB.prepare(
       `SELECT * FROM notification_settings WHERE survey_id = ?`,
     ).bind(surveyId).first<NotificationSettingsRow>();
-    const notification = requiredRow(row, 'NotificationSettings');
+    if (!row) throw new HttpError(404, 'Notification settings not found');
     await sendEmailMessage(settings, {
-      to: notification.recipient_email,
+      to: row.recipient_email,
       subject: 'Form Concierge test notification',
       text: [
         'This is a test notification from Form Concierge.',
@@ -62,7 +65,7 @@ export async function notificationSettings(
         `Sent at: ${nowIso()}`,
       ].join('\n'),
     });
-    return json(notificationToJson(notification));
+    return json(notificationToJson(row));
   }
   if (method === 'DELETE') {
     await env.DB.prepare(`DELETE FROM notification_settings WHERE survey_id = ?`)
