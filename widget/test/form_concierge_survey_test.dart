@@ -44,11 +44,13 @@ void main() {
 
     expect(find.text('Customer feedback'), findsOneWidget);
     expect(find.text('Tell us what you think'), findsOneWidget);
-    expect(anonymousSession?.token, 'anon-token');
+    // Anonymous account is created lazily on submit, not on load.
+    expect(anonymousSession, isNull);
 
     await tester.tap(find.text('Submit'));
     await tester.pumpAndSettle();
 
+    expect(anonymousSession?.token, 'anon-token');
     expect(submittedResponse?.id, 99);
     expect(find.text('Thank you!'), findsOneWidget);
     expect(

@@ -53,6 +53,7 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
   @override
   void initState() {
     super.initState();
+    _restoreAnonymousToken();
     _loadSurvey();
   }
 
@@ -87,7 +88,8 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
         questions,
       );
 
-      await _ensureAnonymousSession();
+      // Anonymous accounts are created lazily on submit to avoid DB rows for
+      // every page view (and when the host never wires onAnonymousSession).
 
       if (!mounted) return;
       setState(() {
@@ -108,7 +110,12 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
       setState(() {
         _state = _state.copyWith(
           viewState: SurveyViewState.error,
-          errorMessage: e.toString(),
+          errorMessage: e is ApiException
+              ? e.message
+              : FormContentMessages.text(
+                  defaultFormContentLocale,
+                  'errorOccurred',
+                ),
         );
       });
     }
@@ -164,7 +171,10 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
 
     if (errors.isNotEmpty) {
       setState(() {
-        _state = _state.copyWith(validationErrors: errors);
+        _state = _state.copyWith(
+          validationErrors: errors,
+          errorMessage: null,
+        );
       });
       return;
     }
@@ -173,7 +183,10 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
     final deviceInfo = _deviceInfoForContext(context);
 
     setState(() {
-      _state = _state.copyWith(viewState: SurveyViewState.submitting);
+      _state = _state.copyWith(
+        viewState: SurveyViewState.submitting,
+        errorMessage: null,
+      );
     });
 
     try {
@@ -186,13 +199,28 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
       );
       final answers = buildAnswers(_state.answers, visibleQuestions);
 
-      final response = await widget.client.survey.submitResponse(
-        surveyId: _state.survey!.id!,
-        answers: answers,
-        anonymousId: widget.anonymousId,
-        deviceInfo: deviceInfo,
-        metadata: widget.metadata,
-      );
+      late final SurveyResponse response;
+      try {
+        response = await widget.client.survey.submitResponse(
+          surveyId: _state.survey!.id!,
+          answers: answers,
+          anonymousId: widget.anonymousId,
+          deviceInfo: deviceInfo,
+          metadata: widget.metadata,
+        );
+      } on ApiException catch (e) {
+        // Stale token (e.g. after DB rebuild) → recreate once, same as web.
+        if (e.statusCode != 401) rethrow;
+        widget.client.anonymous.clear();
+        await _ensureAnonymousSession();
+        response = await widget.client.survey.submitResponse(
+          surveyId: _state.survey!.id!,
+          answers: answers,
+          anonymousId: widget.anonymousId,
+          deviceInfo: deviceInfo,
+          metadata: widget.metadata,
+        );
+      }
 
       if (!mounted) return;
       setState(() {
@@ -201,30 +229,31 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
 
       widget.onSubmitted?.call();
       widget.onResponseSubmitted?.call(response);
-    } on Exception catch (e) {
+    } on Exception catch (_) {
       if (!mounted) return;
       setState(() {
         _state = _state.copyWith(
           viewState: SurveyViewState.ready,
-          errorMessage: e.toString(),
+          errorMessage: FormContentMessages.text(_locale, 'submitFailed'),
         );
       });
     }
   }
 
-  Future<void> _ensureAnonymousSession() async {
+  void _restoreAnonymousToken() {
     if (!widget.client.anonymous.isAuthenticated &&
         widget.anonymousToken != null) {
       widget.client.anonymous.useToken(widget.anonymousToken!);
-      return;
     }
+  }
 
-    if (!widget.client.anonymous.isAuthenticated) {
-      final session = await widget.client.anonymous.createAccount(
-        displayName: widget.anonymousId,
-      );
-      widget.onAnonymousSession?.call(session);
-    }
+  Future<void> _ensureAnonymousSession() async {
+    _restoreAnonymousToken();
+    if (widget.client.anonymous.isAuthenticated) return;
+
+    // Do not pass anonymousId as displayName — they are different concepts.
+    final session = await widget.client.anonymous.createAccount();
+    widget.onAnonymousSession?.call(session);
   }
 
   DeviceInfo _deviceInfoForContext(BuildContext context) {
