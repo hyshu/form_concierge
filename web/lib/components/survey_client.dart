@@ -70,10 +70,16 @@ class SurveyClientState extends State<SurveyClient> {
         domain: component.domain,
       );
       if (payload != null) {
-        _hydratePayload(payload);
-        if (_viewState == SurveyViewState.loading) {
-          _viewState = SurveyViewState.ready;
-          _ensureAnonymousAccount();
+        try {
+          _hydratePayload(payload);
+          if (_viewState == SurveyViewState.loading) {
+            _viewState = SurveyViewState.ready;
+          }
+          // Restore saved token only — create on submit (lazy).
+          _restoreAnonymousToken();
+        } on FormatException {
+          // Bad SSR payload must not white-screen; fall back to live API load.
+          _loadSurvey();
         }
         return;
       }
@@ -82,20 +88,24 @@ class SurveyClientState extends State<SurveyClient> {
       return;
     }
 
-    _hydrateSurvey(
-      Project.fromJson(component.projectJson!),
-      Survey.fromJson(surveyJson),
-      component.questionsJson.map((j) => Question.fromJson(j)).toList(),
-      component.visibilityRulesJson
-          .map((j) => QuestionVisibilityRule.fromJson(j))
-          .toList(),
-      component.choicesByQuestionJson.map(
-        (k, v) =>
-            MapEntry(int.parse(k), v.map((j) => Choice.fromJson(j)).toList()),
-      ),
-    );
-    _viewState = SurveyViewState.ready;
-    _ensureAnonymousAccount();
+    try {
+      _hydrateSurvey(
+        Project.fromJson(component.projectJson!),
+        Survey.fromJson(surveyJson),
+        component.questionsJson.map((j) => Question.fromJson(j)).toList(),
+        component.visibilityRulesJson
+            .map((j) => QuestionVisibilityRule.fromJson(j))
+            .toList(),
+        component.choicesByQuestionJson.map(
+          (k, v) =>
+              MapEntry(int.parse(k), v.map((j) => Choice.fromJson(j)).toList()),
+        ),
+      );
+      _viewState = SurveyViewState.ready;
+      _restoreAnonymousToken();
+    } on FormatException {
+      _loadSurvey();
+    }
   }
 
   void _hydratePayload(Map<String, dynamic> payload) {
@@ -190,7 +200,8 @@ class SurveyClientState extends State<SurveyClient> {
         );
         _viewState = SurveyViewState.ready;
       });
-      await _ensureAnonymousAccount();
+      // Restore only; create anonymously on submit to avoid orphan accounts.
+      _restoreAnonymousToken();
     } on Exception catch (error) {
       setState(() {
         _viewState = SurveyViewState.error;
@@ -251,15 +262,20 @@ class SurveyClientState extends State<SurveyClient> {
         'form_concierge.anonymous_token.${component.serverUrl}.${project.slug}.${survey.id}';
   }
 
+  void _restoreAnonymousToken() {
+    final storageKey = _anonymousTokenStorageKey;
+    if (storageKey == null) return;
+    if (_client.anonymous.isAuthenticated) return;
+    final savedToken = readAnonymousToken(storageKey);
+    if (savedToken != null && savedToken.isNotEmpty) {
+      _client.anonymous.useToken(savedToken);
+    }
+  }
+
   Future<bool> _ensureAnonymousAccount() async {
     final storageKey = _anonymousTokenStorageKey;
     if (storageKey == null) return false;
-    if (!_client.anonymous.isAuthenticated) {
-      final savedToken = readAnonymousToken(storageKey);
-      if (savedToken != null && savedToken.isNotEmpty) {
-        _client.anonymous.useToken(savedToken);
-      }
-    }
+    _restoreAnonymousToken();
     if (_client.anonymous.isAuthenticated) return true;
     try {
       final session = await _client.anonymous.createAccount();
