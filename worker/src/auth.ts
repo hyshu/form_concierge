@@ -1,22 +1,39 @@
 import type { AdminContext, AdminRow, AnonymousAccountRow, AnonymousContext, Env } from './types';
-import { HttpError, bearerToken, countRows, json, nowIso, readJson, requireString } from './utils';
+import { HttpError, bearerToken, countRows, json, nowIso, readJson, requireEmail, requireString } from './utils';
 import { hashPassword, randomToken, sha256Hex, verifyPassword } from './crypto';
 import { adminContextToJson, adminRowToContext, anonymousAccountToJson } from './serializers';
 
+const MIN_PASSWORD_LENGTH = 8;
+const BOOTSTRAP_SCOPES = JSON.stringify([
+  'admin',
+  'survey:read',
+  'survey:write',
+  'response:read',
+  'response:write',
+  'user:manage',
+]);
+
 export async function bootstrapAdmin(request: Request, env: Env): Promise<Response> {
-  const count = await countRows(env.DB, 'SELECT COUNT(*) AS count FROM admins');
-  if (count > 0) throw new HttpError(409, 'Admin already exists');
   const body = await readJson(request);
-  const email = requireString(body.email, 'email').toLowerCase();
+  // Same validation as createUser — bootstrap must not allow weak credentials.
+  const email = requireEmail(body.email, 'email');
   const password = requireString(body.password, 'password');
+  if (password.length < MIN_PASSWORD_LENGTH) {
+    throw new HttpError(400, `password must be at least ${MIN_PASSWORD_LENGTH} characters`);
+  }
   const passwordHash = await hashPassword(password);
   const id = crypto.randomUUID();
-  await env.DB.prepare(
+  // Atomic "first admin only": INSERT...WHERE NOT EXISTS closes the COUNT→INSERT
+  // TOCTOU window that could create two bootstrap admins under concurrency.
+  const row = await env.DB.prepare(
     `INSERT INTO admins (id, email, password_hash, scope_names)
-     VALUES (?, ?, ?, ?)`,
-  ).bind(id, email, passwordHash, JSON.stringify(['admin', 'survey:read', 'survey:write', 'response:read', 'response:write', 'user:manage'])).run();
-  const user = await getAdminById(env.DB, id);
-  return json(await createAdminSession(env.DB, user!));
+     SELECT ?, ?, ?, ?
+     WHERE NOT EXISTS (SELECT 1 FROM admins LIMIT 1)
+     RETURNING id, email, scope_names, created_at`,
+  ).bind(id, email, passwordHash, BOOTSTRAP_SCOPES).first<AdminRow>();
+  if (!row) throw new HttpError(409, 'Admin already exists');
+  const user = adminRowToContext(row);
+  return json(await createAdminSession(env.DB, user));
 }
 
 export async function loginAdmin(request: Request, env: Env): Promise<Response> {
