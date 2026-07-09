@@ -145,6 +145,42 @@ export function optionalString(value: unknown, field: string): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
+/** Reject empty / invalid emails and SMTP header/command injection characters. */
+export function requireEmail(value: unknown, field: string): string {
+  const email = requireString(value, field).toLowerCase();
+  if (!isValidEmail(email)) {
+    throw new HttpError(400, `${field} must be a valid email address`);
+  }
+  return email;
+}
+
+export function optionalEmail(value: unknown, field: string): string | null {
+  const email = optionalString(value, field);
+  if (email == null) return null;
+  const normalized = email.toLowerCase();
+  if (!isValidEmail(normalized)) {
+    throw new HttpError(400, `${field} must be a valid email address`);
+  }
+  return normalized;
+}
+
+function isValidEmail(email: string): boolean {
+  // No whitespace/CRLF/angle brackets (SMTP command & header injection).
+  if (/[\s<>]/.test(email)) return false;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+/** Optional ISO-8601 datetime; invalid values are 400 (not silently "always open"). */
+export function optionalIsoDateTime(value: unknown, field: string): string | null {
+  const text = optionalString(value, field);
+  if (text == null) return null;
+  const ms = Date.parse(text);
+  if (Number.isNaN(ms)) {
+    throw new HttpError(400, `${field} must be a valid ISO 8601 date`);
+  }
+  return new Date(ms).toISOString();
+}
+
 export function optionalBoolean(value: unknown, field: string): boolean | null {
   if (value == null) return null;
   if (typeof value !== 'boolean') throw new HttpError(400, `${field} must be a boolean`);

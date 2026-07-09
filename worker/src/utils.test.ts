@@ -10,10 +10,13 @@ import {
   logWarn,
   normalizeQuestionType,
   optionalBoolean,
+  optionalEmail,
   optionalInteger,
   optionalIntegerParam,
+  optionalIsoDateTime,
   optionalString,
   readJson,
+  requireEmail,
   requireObject,
   requireNumberList,
   requiredBoolean,
@@ -159,6 +162,19 @@ test('optionalString rejects coerced values', () => {
   assert.equal(optionalString(' 2026-01-01 ', 'startsAt'), '2026-01-01');
   assertBadRequest(() => optionalString(7, 'startsAt'), 'startsAt must be a string');
   assertBadRequest(() => optionalString(false, 'value'), 'value must be a string');
+});
+
+test('requireEmail rejects SMTP injection and invalid forms', () => {
+  assert.equal(requireEmail('User@Example.com', 'email'), 'user@example.com');
+  assertBadRequest(() => requireEmail('not-an-email', 'email'), 'email must be a valid email address');
+  assertBadRequest(
+    () => requireEmail('evil@x.com>\r\nBCC:other@x.com', 'email'),
+    'email must be a valid email address',
+  );
+  assert.equal(optionalEmail(null, 'email'), null);
+  assert.equal(optionalIsoDateTime(null, 'startsAt'), null);
+  assert.equal(optionalIsoDateTime('2026-07-10T12:00:00.000Z', 'startsAt'), '2026-07-10T12:00:00.000Z');
+  assertBadRequest(() => optionalIsoDateTime('not-a-date', 'startsAt'), 'startsAt must be a valid ISO 8601 date');
 });
 
 test('integerParam applies defaults and inclusive bounds', () => {

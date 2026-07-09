@@ -1,5 +1,5 @@
 import type { Env, NotificationSettingsRow } from './types';
-import { boolToInt, json, logWarn, nowIso, readJson, requireString, requiredBoolean, requiredRow } from './utils';
+import { boolToInt, json, logWarn, nowIso, readJson, requireEmail, requiredBoolean, requiredRow } from './utils';
 import { notificationToJson } from './serializers';
 import { getIntegrationSettingsRow, isSmtpConfigured, requireSmtpSettings, type RequiredSmtpSettings } from './admin_settings';
 import type { EmailMessage } from './smtp';
@@ -33,7 +33,7 @@ export async function notificationSettings(
     ).bind(
       surveyId,
       boolToInt(requiredBoolean(body.enabled, 'enabled')),
-      requireString(body.recipientEmail, 'recipientEmail'),
+      requireEmail(body.recipientEmail, 'recipientEmail'),
       nowIso(),
     ).first<NotificationSettingsRow>();
     return json(notificationToJson(requiredRow(row, 'NotificationSettings')));

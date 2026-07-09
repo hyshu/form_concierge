@@ -248,12 +248,18 @@ function optionalPort(value: unknown): number | null {
 }
 
 function optionalEmail(value: unknown, field: string): string | null {
+  // optionalSettingsString keeps case; shared helper lowercases + validates injection chars.
   const email = optionalSettingsString(value, field);
   if (email == null) return null;
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  return requireValidSmtpEmail(email, field);
+}
+
+function requireValidSmtpEmail(email: string, field: string): string {
+  const normalized = email.toLowerCase();
+  if (/[\s<>]/.test(normalized) || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) {
     throw new HttpError(400, `${field} must be a valid email address`);
   }
-  return email;
+  return normalized;
 }
 
 function requireSecureMode(value: unknown): SmtpSecureMode {
