@@ -184,24 +184,25 @@ async function loadExportData(env: Env, surveyId: number, url: URL): Promise<Exp
      WHERE q.survey_id = ?
      ORDER BY q.order_index, c.order_index`,
   ).bind(surveyId).all<ChoiceRow>();
-  const responses = await selectExportResponses(env, surveyId, url);
+  const dateFilter = exportDateFilter(url);
+  const responses = await selectExportResponses(env, surveyId, dateFilter);
   const responseIds = responses.map((response) => response.id);
   const answers = responseIds.length === 0
     ? []
     : (await env.DB.prepare(
         `SELECT a.* FROM answers a
          JOIN survey_responses r ON r.id = a.survey_response_id
-         WHERE r.survey_id = ?
+         WHERE r.survey_id = ?${dateFilter.sql}
          ORDER BY r.submitted_at DESC, a.id`,
-      ).bind(surveyId).all<AnswerRow>()).results;
+      ).bind(surveyId, ...dateFilter.binds).all<AnswerRow>()).results;
   const replies = responseIds.length === 0
     ? []
     : (await env.DB.prepare(
         `SELECT ar.* FROM admin_replies ar
          JOIN survey_responses r ON r.id = ar.survey_response_id
-         WHERE r.survey_id = ?
+         WHERE r.survey_id = ?${dateFilter.sql}
          ORDER BY ar.created_at`,
-      ).bind(surveyId).all<ReplyRow>()).results;
+      ).bind(surveyId, ...dateFilter.binds).all<ReplyRow>()).results;
 
   return {
     survey,
@@ -214,28 +215,41 @@ async function loadExportData(env: Env, surveyId: number, url: URL): Promise<Exp
   };
 }
 
-async function selectExportResponses(env: Env, surveyId: number, url: URL): Promise<ResponseRow[]> {
+type ExportDateFilter = { sql: string; binds: unknown[] };
+
+function exportDateFilter(url: URL): ExportDateFilter {
   const from = url.searchParams.get('from');
   const to = url.searchParams.get('to');
-  const conditions = ['survey_id = ?'];
-  const binds: unknown[] = [surveyId];
+  const conditions: string[] = [];
+  const binds: unknown[] = [];
   if (from) {
-    conditions.push('submitted_at >= ?');
-    binds.push(parseDateParam(from, 'from'));
+    conditions.push('r.submitted_at >= ?');
+    binds.push(parseDateParam(from, 'from', 'start'));
   }
   if (to) {
-    conditions.push('submitted_at <= ?');
-    binds.push(parseDateParam(to, 'to'));
+    conditions.push('r.submitted_at <= ?');
+    binds.push(parseDateParam(to, 'to', 'end'));
   }
+  return {
+    sql: conditions.length > 0 ? ` AND ${conditions.join(' AND ')}` : '',
+    binds,
+  };
+}
+
+async function selectExportResponses(
+  env: Env,
+  surveyId: number,
+  dateFilter: ExportDateFilter,
+): Promise<ResponseRow[]> {
   const rows = await env.DB.prepare(
-    `SELECT id, survey_id, anonymous_account_id, anonymous_id, submitted_at, user_agent,
-       device_id, device_label, device_platform, device_os, device_os_version,
-       device_browser, device_browser_version, device_locale, device_timezone,
-       screen_width, screen_height, device_pixel_ratio, device_info, metadata
-     FROM survey_responses
-     WHERE ${conditions.join(' AND ')}
-     ORDER BY submitted_at DESC`,
-  ).bind(...binds).all<ResponseRow>();
+    `SELECT r.id, r.survey_id, r.anonymous_account_id, r.anonymous_id, r.submitted_at, r.user_agent,
+       r.device_id, r.device_label, r.device_platform, r.device_os, r.device_os_version,
+       r.device_browser, r.device_browser_version, r.device_locale, r.device_timezone,
+       r.screen_width, r.screen_height, r.device_pixel_ratio, r.device_info, r.metadata
+     FROM survey_responses r
+     WHERE r.survey_id = ?${dateFilter.sql}
+     ORDER BY r.submitted_at DESC`,
+  ).bind(surveyId, ...dateFilter.binds).all<ResponseRow>();
   return rows.results;
 }
 
@@ -340,24 +354,20 @@ export function formatAnswerForCsv(
   if (!answer) return '';
   if (!isChoiceQuestionType(question.type)) return answer.text_value ?? '';
   return parseChoiceIds(answer.selected_choice_ids)
-    .map((choiceId) => requireChoiceText(choiceTextById, choiceId))
+    .map((choiceId) => choiceTextForCsv(choiceTextById, choiceId))
     .join('; ');
 }
 
 export function incrementChoiceCount(counts: Record<string, number>, choiceId: number): void {
   const key = String(choiceId);
-  if (!Object.hasOwn(counts, key)) {
-    throw new HttpError(500, `Unknown choice id ${choiceId}`);
-  }
+  // Skip orphaned choice ids (deleted after answers were stored) so aggregates
+  // and exports never 500 on historical data.
+  if (!Object.hasOwn(counts, key)) return;
   counts[key] += 1;
 }
 
-function requireChoiceText(choiceTextById: Map<number, string>, choiceId: number): string {
-  const text = choiceTextById.get(choiceId);
-  if (text == null) {
-    throw new HttpError(500, `Unknown choice id ${choiceId}`);
-  }
-  return text;
+function choiceTextForCsv(choiceTextById: Map<number, string>, choiceId: number): string {
+  return choiceTextById.get(choiceId) ?? `[deleted choice ${choiceId}]`;
 }
 
 function questionColumnName(question: QuestionRow): string {
@@ -365,9 +375,13 @@ function questionColumnName(question: QuestionRow): string {
   return `${prefix}: ${localizedTextFor(question.text_translations, DEFAULT_FORM_CONTENT_LOCALE)}`;
 }
 
-function csvCell(value: unknown): string {
+/** Escape CSV formula injection (=, +, -, @, tab, CR) and quote special cells. */
+export function csvCell(value: unknown): string {
   if (value == null) return '';
-  const text = String(value);
+  let text = String(value);
+  if (/^[=+\-@\t\r]/.test(text)) {
+    text = `'${text}`;
+  }
   if (!/[",\n\r]/.test(text)) return text;
   return `"${text.replaceAll('"', '""')}"`;
 }
@@ -385,8 +399,15 @@ function safeFilename(value: string): string {
   return value.replace(/[^a-z0-9-]+/gi, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || 'survey';
 }
 
-function parseDateParam(value: string, field: string): string {
-  const date = new Date(value);
+function parseDateParam(value: string, field: string, bound: 'start' | 'end' = 'start'): string {
+  // Date-only values (YYYY-MM-DD) normalize to start/end of that UTC day so
+  // `to=2026-07-10` includes responses submitted on that day.
+  const normalized = /^\d{4}-\d{2}-\d{2}$/.test(value)
+    ? bound === 'end'
+      ? `${value}T23:59:59.999Z`
+      : `${value}T00:00:00.000Z`
+    : value;
+  const date = new Date(normalized);
   if (Number.isNaN(date.getTime())) throw new HttpError(400, `${field} must be a valid date`);
   return date.toISOString();
 }

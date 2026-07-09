@@ -17,7 +17,7 @@ import {
   requiredRow,
   updateOrder,
 } from './utils';
-import { choiceToJson, questionToJson } from './serializers';
+import { choiceToJson, parseChoiceIds, questionToJson } from './serializers';
 import { mustChoice, mustProject, mustQuestion, mustSurvey, projectSupportedLocales } from './admin_records';
 import { defaultLocalizedText, requireLocalizedText } from './localization';
 
@@ -99,6 +99,16 @@ export async function updateQuestion(request: Request, env: Env, questionId: num
   const locales = await surveySupportedLocales(env.DB, existing.survey_id);
   const body = await readJson(request);
   const type = normalizeQuestionType(body.type ?? existing.type);
+  if (type !== existing.type) {
+    const answerCount = await countRows(
+      env.DB,
+      `SELECT COUNT(*) AS count FROM answers WHERE question_id = ?`,
+      questionId,
+    );
+    if (answerCount > 0) {
+      throw new HttpError(400, 'Cannot change question type after responses exist');
+    }
+  }
   const validation = normalizeQuestionValidation(
     {
       minLength: body.minLength ?? existing.min_length,
@@ -186,13 +196,21 @@ export async function deleteQuestion(env: Env, questionId: number): Promise<Resp
     `SELECT COUNT(*) AS count FROM answers WHERE question_id = ?`,
     questionId,
   );
+  // Soft-delete does not cascade FK rules; drop visibility rules that reference
+  // this question so public forms do not hide targets forever.
+  const deleteVisibilityRules = env.DB.prepare(
+    `DELETE FROM question_visibility_rules
+     WHERE target_question_id = ? OR source_question_id = ?`,
+  ).bind(questionId, questionId);
   if (answerCount > 0) {
-    await env.DB.prepare(`UPDATE questions SET is_deleted = 1 WHERE id = ?`)
-      .bind(questionId)
-      .run();
+    await env.DB.batch([
+      deleteVisibilityRules,
+      env.DB.prepare(`UPDATE questions SET is_deleted = 1 WHERE id = ?`).bind(questionId),
+    ]);
     return json({ hardDeleted: false });
   }
   await env.DB.batch([
+    deleteVisibilityRules,
     env.DB.prepare(`DELETE FROM choices WHERE question_id = ?`).bind(questionId),
     env.DB.prepare(`DELETE FROM questions WHERE id = ?`).bind(questionId),
   ]);
@@ -271,7 +289,19 @@ async function surveySupportedLocales(db: D1Database, surveyId: number): Promise
 }
 
 export async function deleteChoice(env: Env, choiceId: number): Promise<Response> {
-  await mustChoice(env.DB, choiceId);
+  const choice = await mustChoice(env.DB, choiceId);
+  const answers = await env.DB.prepare(
+    `SELECT selected_choice_ids FROM answers
+     WHERE question_id = ? AND selected_choice_ids IS NOT NULL`,
+  ).bind(choice.question_id).all<{ selected_choice_ids: string }>();
+  for (const answer of answers.results) {
+    if (parseChoiceIds(answer.selected_choice_ids).includes(choiceId)) {
+      throw new HttpError(
+        400,
+        'Cannot delete a choice that has been selected in responses',
+      );
+    }
+  }
   await env.DB.prepare(`DELETE FROM choices WHERE id = ?`).bind(choiceId).run();
   return json({ ok: true });
 }
