@@ -3,8 +3,10 @@ import {
   HttpError,
   boolToInt,
   countRows,
+  integerParam,
   isChoiceQuestionType,
   isTextQuestionType,
+  isUniqueConstraintError,
   json,
   normalizeQuestionType,
   nowIso,
@@ -27,10 +29,14 @@ import {
   requireLocalizedText,
 } from './localization';
 
-export async function listSurveys(env: Env, projectId?: number): Promise<Response> {
+export async function listSurveys(env: Env, projectId: number | undefined, url: URL): Promise<Response> {
+  const limit = integerParam(url.searchParams.get('limit'), 'limit', 100, { min: 1, max: 500 });
+  const offset = integerParam(url.searchParams.get('offset'), 'offset', 0, { min: 0 });
   const statement = projectId == null
-    ? env.DB.prepare(`SELECT * FROM surveys ORDER BY updated_at DESC`)
-    : env.DB.prepare(`SELECT * FROM surveys WHERE project_id = ? ORDER BY updated_at DESC`).bind(projectId);
+    ? env.DB.prepare(`SELECT * FROM surveys ORDER BY updated_at DESC LIMIT ? OFFSET ?`).bind(limit, offset)
+    : env.DB.prepare(
+        `SELECT * FROM surveys WHERE project_id = ? ORDER BY updated_at DESC LIMIT ? OFFSET ?`,
+      ).bind(projectId, limit, offset);
   const rows = await statement.all<SurveyRow>();
   return json(rows.results.map(surveyToJson));
 }
@@ -39,7 +45,8 @@ export async function getAdminSurvey(env: Env, surveyId: number): Promise<Respon
   const row = await env.DB.prepare(`SELECT * FROM surveys WHERE id = ?`)
     .bind(surveyId)
     .first<SurveyRow>();
-  return json(row ? surveyToJson(row) : null);
+  if (!row) throw new HttpError(404, 'Survey not found');
+  return json(surveyToJson(row));
 }
 
 export async function createSurvey(request: Request, env: Env, admin: AdminContext): Promise<Response> {
@@ -57,29 +64,53 @@ async function insertSurvey(
   const projectId = requireProjectId(body.projectId);
   const resolvedProject = project ?? await mustProject(db, projectId);
   const content = parseSurveyContent(body, resolvedProject);
-  const slug = await resolveSurveySlug(db, body.slug, resolvedProject, content);
+  const explicitSlug = body.slug != null && body.slug !== '';
+  let slug = await resolveSurveySlug(db, body.slug, resolvedProject, content);
+  const baseAutoSlug = explicitSlug
+    ? null
+    : (slugFromSurveyTitle(content, resolvedProject.default_locale) ?? 'survey');
   const now = nowIso();
-  const row = await db.prepare(
-    `INSERT INTO surveys
-       (project_id, slug, title_translations, description_translations, status, web_enabled, created_by_admin_id,
-        created_at, updated_at, starts_at, ends_at)
-     VALUES (?, ?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?)
-     RETURNING *`,
-  )
-    .bind(
-      projectId,
-      slug,
-      JSON.stringify(content.titleTranslations),
-      JSON.stringify(content.descriptionTranslations),
-      Object.hasOwn(body, 'webEnabled') ? boolToInt(requiredBoolean(body.webEnabled, 'webEnabled')) : 1,
-      admin.id,
-      now,
-      now,
-      optionalIsoDateTime(body.startsAt, 'startsAt'),
-      optionalIsoDateTime(body.endsAt, 'endsAt'),
-    )
-    .first<SurveyRow>();
-  return requiredRow(row, 'Survey');
+  const webEnabled = Object.hasOwn(body, 'webEnabled')
+    ? boolToInt(requiredBoolean(body.webEnabled, 'webEnabled'))
+    : 1;
+  const startsAt = optionalIsoDateTime(body.startsAt, 'startsAt');
+  const endsAt = optionalIsoDateTime(body.endsAt, 'endsAt');
+  const titleJson = JSON.stringify(content.titleTranslations);
+  const descriptionJson = JSON.stringify(content.descriptionTranslations);
+
+  // Auto-slug path: retry INSERT on UNIQUE races instead of failing with 500.
+  for (let attempt = 0; attempt < 8; attempt++) {
+    try {
+      const row = await db.prepare(
+        `INSERT INTO surveys
+           (project_id, slug, title_translations, description_translations, status, web_enabled, created_by_admin_id,
+            created_at, updated_at, starts_at, ends_at)
+         VALUES (?, ?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?)
+         RETURNING *`,
+      )
+        .bind(
+          projectId,
+          slug,
+          titleJson,
+          descriptionJson,
+          webEnabled,
+          admin.id,
+          now,
+          now,
+          startsAt,
+          endsAt,
+        )
+        .first<SurveyRow>();
+      return requiredRow(row, 'Survey');
+    } catch (error) {
+      if (!isUniqueConstraintError(error)) throw error;
+      if (explicitSlug || baseAutoSlug == null) {
+        throw new HttpError(400, 'A survey with this slug already exists');
+      }
+      slug = await nextSurveySlugCandidate(db, projectId, baseAutoSlug, slug);
+    }
+  }
+  throw new HttpError(400, 'Unable to generate a unique survey slug');
 }
 
 export async function createSurveyWithQuestions(
@@ -288,8 +319,34 @@ async function uniqueSurveySlug(
   projectId: number,
   base: string,
 ): Promise<string> {
+  // Prefer SELECT for the common path; insert still retries on UNIQUE races.
   for (let index = 0; index < 100; index++) {
     const slug = index === 0 ? base : `${base}-${index + 1}`;
+    const row = await db.prepare(
+      `SELECT id FROM surveys WHERE project_id = ? AND slug = ?`,
+    ).bind(projectId, slug).first<{ id: number }>();
+    if (!row) return slug;
+  }
+  throw new HttpError(400, 'Unable to generate a unique survey slug');
+}
+
+/** Allocate the next free auto-slug after a UNIQUE race on the current candidate. */
+export async function nextSurveySlugCandidate(
+  db: D1Database,
+  projectId: number,
+  base: string,
+  failedSlug: string,
+): Promise<string> {
+  const prefix = `${base}-`;
+  let start = 1;
+  if (failedSlug === base) start = 2;
+  else if (failedSlug.startsWith(prefix)) {
+    const n = Number(failedSlug.slice(prefix.length));
+    if (Number.isFinite(n) && n >= 1) start = n + 1;
+  }
+  for (let index = start; index < start + 100; index++) {
+    const slug = index === 1 ? base : `${base}-${index}`;
+    if (slug === failedSlug) continue;
     const row = await db.prepare(
       `SELECT id FROM surveys WHERE project_id = ? AND slug = ?`,
     ).bind(projectId, slug).first<{ id: number }>();

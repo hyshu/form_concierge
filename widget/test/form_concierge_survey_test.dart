@@ -141,7 +141,13 @@ void main() {
   testWidgets('shows localized not-found error when survey is unavailable', (
     tester,
   ) async {
-    final client = _client((request) => _json(null));
+    final client = _client(
+      (request) => http.Response(
+        jsonEncode({'error': 'Project not found'}),
+        404,
+        headers: {'content-type': 'application/json'},
+      ),
+    );
 
     await tester.pumpWidget(
       MaterialApp(

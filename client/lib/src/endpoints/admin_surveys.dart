@@ -43,12 +43,17 @@ class ProjectAdminEndpoint {
   }
 
   Future<ProjectWithSurveys?> getById(int projectId) async {
-    final json = await _client.request(
-      'GET',
-      '/api/admin/projects/$projectId',
-      authenticated: true,
-    );
-    return json == null ? null : ProjectWithSurveys.fromJson(json);
+    try {
+      final json = await _client.request(
+        'GET',
+        '/api/admin/projects/$projectId',
+        authenticated: true,
+      );
+      return ProjectWithSurveys.fromJson(json);
+    } on ApiException catch (e) {
+      if (e.statusCode == 404) return null;
+      rethrow;
+    }
   }
 }
 
@@ -112,12 +117,17 @@ class SurveyAdminEndpoint {
   }
 
   Future<Survey?> getById(int surveyId) async {
-    final json = await _client.request(
-      'GET',
-      '/api/admin/surveys/$surveyId',
-      authenticated: true,
-    );
-    return json == null ? null : Survey.fromJson(json);
+    try {
+      final json = await _client.request(
+        'GET',
+        '/api/admin/surveys/$surveyId',
+        authenticated: true,
+      );
+      return Survey.fromJson(json);
+    } on ApiException catch (e) {
+      if (e.statusCode == 404) return null;
+      rethrow;
+    }
   }
 
   Future<List<QuestionVisibilityRule>> getVisibilityRules(int surveyId) async {
@@ -209,12 +219,17 @@ class QuestionAdminEndpoint {
   }
 
   Future<Question?> getById(int questionId) async {
-    final json = await _client.request(
-      'GET',
-      '/api/admin/questions/$questionId',
-      authenticated: true,
-    );
-    return json == null ? null : Question.fromJson(json);
+    try {
+      final json = await _client.request(
+        'GET',
+        '/api/admin/questions/$questionId',
+        authenticated: true,
+      );
+      return Question.fromJson(json);
+    } on ApiException catch (e) {
+      if (e.statusCode == 404) return null;
+      rethrow;
+    }
   }
 
   Future<List<Choice>> getChoicesForQuestion(int questionId) async {
@@ -275,12 +290,17 @@ class ChoiceAdminEndpoint {
   }
 
   Future<Choice?> getById(int choiceId) async {
-    final json = await _client.request(
-      'GET',
-      '/api/admin/choices/$choiceId',
-      authenticated: true,
-    );
-    return json == null ? null : Choice.fromJson(json);
+    try {
+      final json = await _client.request(
+        'GET',
+        '/api/admin/choices/$choiceId',
+        authenticated: true,
+      );
+      return Choice.fromJson(json);
+    } on ApiException catch (e) {
+      if (e.statusCode == 404) return null;
+      rethrow;
+    }
   }
 }
 

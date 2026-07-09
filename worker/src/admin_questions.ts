@@ -269,7 +269,8 @@ export async function getQuestion(env: Env, questionId: number): Promise<Respons
   const row = await env.DB.prepare(`SELECT * FROM questions WHERE id = ?`)
     .bind(questionId)
     .first<QuestionRow>();
-  return json(row ? questionToJson(row) : null);
+  if (!row) throw new HttpError(404, 'Question not found');
+  return json(questionToJson(row));
 }
 
 export async function createChoice(request: Request, env: Env): Promise<Response> {
@@ -357,7 +358,8 @@ export async function getChoice(env: Env, choiceId: number): Promise<Response> {
   const row = await env.DB.prepare(`SELECT * FROM choices WHERE id = ?`)
     .bind(choiceId)
     .first<ChoiceRow>();
-  return json(row ? choiceToJson(row) : null);
+  if (!row) throw new HttpError(404, 'Choice not found');
+  return json(choiceToJson(row));
 }
 
 async function compactQuestionOrder(db: D1Database, surveyId: number): Promise<void> {

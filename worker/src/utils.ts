@@ -10,7 +10,17 @@ export const jsonHeaders = {
   'access-control-allow-origin': '*',
   'access-control-allow-methods': 'GET,POST,PUT,DELETE,OPTIONS',
   'access-control-allow-headers': 'content-type,authorization',
+  // Cache preflight so browsers do not OPTIONS on every cross-origin call.
+  'access-control-max-age': '86400',
 };
+
+/** True only for UNIQUE violations (not generic FK "constraint" failures). */
+export function isUniqueConstraintError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /unique constraint failed|SQLITE_CONSTRAINT_UNIQUE|constraint failed:.*unique/i.test(
+    message,
+  );
+}
 
 export async function readJson(
   request: Request,

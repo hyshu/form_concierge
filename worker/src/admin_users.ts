@@ -1,5 +1,5 @@
 import type { AdminContext, AdminRow, Env } from './types';
-import { HttpError, countRows, json, nowIso, readJson, requireEmail, requireString } from './utils';
+import { HttpError, countRows, isUniqueConstraintError, json, nowIso, readJson, requireEmail, requireString } from './utils';
 import { hashPassword } from './crypto';
 import { adminContextToJson, adminUserToJson } from './serializers';
 import { getAdminById } from './auth';
@@ -41,11 +41,6 @@ export async function createUser(request: Request, env: Env): Promise<Response> 
   }
   const user = await getAdminById(env.DB, id);
   return json(adminContextToJson(user!), 201);
-}
-
-function isUniqueConstraintError(error: unknown): boolean {
-  const message = error instanceof Error ? error.message : String(error);
-  return /unique|constraint/i.test(message);
 }
 
 export async function updateUserRole(request: Request, env: Env, userId: string): Promise<Response> {

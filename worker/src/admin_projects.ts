@@ -1,6 +1,7 @@
 import type { AdminContext, Env, ProjectRow, SurveyRow } from './types';
 import {
   HttpError,
+  integerParam,
   json,
   nowIso,
   optionalCustomDomain,
@@ -16,18 +17,24 @@ import {
   requireSupportedLocales,
 } from './localization';
 
-export async function listProjects(env: Env): Promise<Response> {
+export async function listProjects(env: Env, url: URL): Promise<Response> {
+  const limit = integerParam(url.searchParams.get('limit'), 'limit', 100, { min: 1, max: 500 });
+  const offset = integerParam(url.searchParams.get('offset'), 'offset', 0, { min: 0 });
   const projects = await env.DB.prepare(
-    `SELECT * FROM projects ORDER BY updated_at DESC`,
-  ).all<ProjectRow>();
-  const surveys = await env.DB.prepare(
-    `SELECT * FROM surveys ORDER BY updated_at DESC`,
-  ).all<SurveyRow>();
+    `SELECT * FROM projects ORDER BY updated_at DESC LIMIT ? OFFSET ?`,
+  ).bind(limit, offset).all<ProjectRow>();
+  const projectIds = projects.results.map((project) => project.id);
   const surveysByProject = new Map<number, SurveyRow[]>();
-  for (const survey of surveys.results) {
-    const current = surveysByProject.get(survey.project_id) ?? [];
-    current.push(survey);
-    surveysByProject.set(survey.project_id, current);
+  if (projectIds.length > 0) {
+    const placeholders = projectIds.map(() => '?').join(', ');
+    const surveys = await env.DB.prepare(
+      `SELECT * FROM surveys WHERE project_id IN (${placeholders}) ORDER BY updated_at DESC`,
+    ).bind(...projectIds).all<SurveyRow>();
+    for (const survey of surveys.results) {
+      const current = surveysByProject.get(survey.project_id) ?? [];
+      current.push(survey);
+      surveysByProject.set(survey.project_id, current);
+    }
   }
 
   return json(projects.results.map((project) => ({
@@ -40,7 +47,7 @@ export async function getAdminProject(env: Env, projectId: number): Promise<Resp
   const project = await env.DB.prepare(`SELECT * FROM projects WHERE id = ?`)
     .bind(projectId)
     .first<ProjectRow>();
-  if (!project) return json(null);
+  if (!project) throw new HttpError(404, 'Project not found');
   const surveys = await env.DB.prepare(
     `SELECT * FROM surveys WHERE project_id = ? ORDER BY updated_at DESC`,
   ).bind(projectId).all<SurveyRow>();
