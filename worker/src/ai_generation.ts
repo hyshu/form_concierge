@@ -3,10 +3,13 @@ import type { AiProvider } from './admin_settings';
 import { apiKeyForProvider, getIntegrationSettingsRow, normalizeAiProvider } from './admin_settings';
 import { HttpError, isChoiceQuestionType, isTextQuestionType, json, normalizeQuestionType, readJson, requireString } from './utils';
 
-const GEMINI_MODEL = 'gemini-3.5-flash';
-const OPENAI_MODEL = 'gpt-5.5';
-const CLAUDE_MODEL = 'claude-sonnet-4-6';
-const CEREBRAS_MODEL = 'gpt-oss-120b';
+const DEFAULT_MODELS: Record<AiProvider, string> = {
+  gemini: 'gemini-3.5-flash',
+  openai: 'gpt-5.5',
+  claude: 'claude-sonnet-4-6',
+  cerebras: 'gpt-oss-120b',
+};
+const MAX_PROMPT_LENGTH = 4_000;
 const LOCALES = ['en', 'ja', 'zh-Hans', 'zh-Hant', 'ko', 'de'] as const;
 
 export async function generateSurveyQuestions(request: Request, env: Env): Promise<Response> {
@@ -18,42 +21,60 @@ export async function generateSurveyQuestions(request: Request, env: Env): Promi
 
   const body = await readJson(request);
   const prompt = requireString(body.prompt, 'prompt');
+  if (prompt.length > MAX_PROMPT_LENGTH) {
+    throw new HttpError(400, `prompt must be ${MAX_PROMPT_LENGTH} characters or fewer`);
+  }
 
-  const text = await generateQuestionsJson({ provider, apiKey, prompt });
+  const model = resolveModelId(env, provider);
+  const text = await generateQuestionsJson({ provider, apiKey, prompt, model });
   const decoded = parseGeneratedQuestions(text, provider);
   return json(decoded.map((question) => normalizeGeneratedQuestion(question, provider)));
+}
+
+/** Prefer env override (AI_*_MODEL) so deprecations do not require a code deploy. */
+function resolveModelId(env: Env, provider: AiProvider): string {
+  const envKey = {
+    gemini: 'AI_GEMINI_MODEL',
+    openai: 'AI_OPENAI_MODEL',
+    claude: 'AI_CLAUDE_MODEL',
+    cerebras: 'AI_CEREBRAS_MODEL',
+  }[provider];
+  const override = (env as unknown as Record<string, unknown>)[envKey];
+  if (typeof override === 'string' && override.trim().length > 0) return override.trim();
+  return DEFAULT_MODELS[provider];
 }
 
 async function generateQuestionsJson(input: {
   provider: AiProvider;
   apiKey: string;
   prompt: string;
+  model: string;
 }): Promise<string> {
   switch (input.provider) {
     case 'gemini':
-      return generateWithGemini(input.apiKey, input.prompt);
+      return generateWithGemini(input.apiKey, input.prompt, input.model);
     case 'openai':
       return generateWithOpenAiCompatible({
         apiKey: input.apiKey,
-        model: OPENAI_MODEL,
+        model: input.model,
         endpoint: 'https://api.openai.com/v1/chat/completions',
         provider: input.provider,
       }, input.prompt);
     case 'claude':
-      return generateWithClaude(input.apiKey, input.prompt);
+      return generateWithClaude(input.apiKey, input.prompt, input.model);
     case 'cerebras':
       return generateWithOpenAiCompatible({
         apiKey: input.apiKey,
-        model: CEREBRAS_MODEL,
+        model: input.model,
         endpoint: 'https://api.cerebras.ai/v1/chat/completions',
         provider: input.provider,
       }, input.prompt);
   }
 }
 
-async function generateWithGemini(apiKey: string, prompt: string): Promise<string> {
+async function generateWithGemini(apiKey: string, prompt: string, model: string): Promise<string> {
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
     {
       method: 'POST',
       headers: {
@@ -113,7 +134,7 @@ async function generateWithOpenAiCompatible(
   return extractOpenAiCompatibleText(payload, config.provider);
 }
 
-async function generateWithClaude(apiKey: string, prompt: string): Promise<string> {
+async function generateWithClaude(apiKey: string, prompt: string, model: string): Promise<string> {
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -123,7 +144,7 @@ async function generateWithClaude(apiKey: string, prompt: string): Promise<strin
       'content-type': 'application/json',
     },
     body: JSON.stringify({
-      model: CLAUDE_MODEL,
+      model,
       max_tokens: 4096,
       system: systemInstruction(),
       messages: [
