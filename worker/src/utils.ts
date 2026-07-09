@@ -145,6 +145,20 @@ export function optionalString(value: unknown, field: string): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
+/** Optional string with a maximum length (after trim). Empty → null. */
+export function optionalLimitedString(
+  value: unknown,
+  field: string,
+  maxLength: number,
+): string | null {
+  const text = optionalString(value, field);
+  if (text == null) return null;
+  if (text.length > maxLength) {
+    throw new HttpError(400, `${field} must be ${maxLength} characters or fewer`);
+  }
+  return text;
+}
+
 /** Reject empty / invalid emails and SMTP header/command injection characters. */
 export function requireEmail(value: unknown, field: string): string {
   const email = requireString(value, field).toLowerCase();

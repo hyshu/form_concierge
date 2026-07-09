@@ -1,9 +1,17 @@
 import type { AdminContext, AdminRow, AnonymousAccountRow, AnonymousContext, Env } from './types';
-import { HttpError, bearerToken, countRows, json, nowIso, readJson, requireEmail, requireString } from './utils';
+import { HttpError, bearerToken, json, nowIso, optionalLimitedString, readJson, requireEmail, requireString } from './utils';
 import { hashPassword, randomToken, sha256Hex, verifyPassword } from './crypto';
 import { adminContextToJson, adminRowToContext, anonymousAccountToJson } from './serializers';
+import { clientIp, consumeRateLimit } from './rate_limit';
 
 const MIN_PASSWORD_LENGTH = 8;
+const DISPLAY_NAME_MAX_LENGTH = 160;
+/** Skip last_seen_at writes unless older than this (reply polling is high-frequency). */
+const LAST_SEEN_THROTTLE_MS = 5 * 60 * 1000;
+const LOGIN_RATE_LIMIT = 20;
+const LOGIN_RATE_WINDOW_MS = 15 * 60 * 1000;
+const ANON_CREATE_RATE_LIMIT = 30;
+const ANON_CREATE_RATE_WINDOW_MS = 60 * 60 * 1000;
 const BOOTSTRAP_SCOPES = JSON.stringify([
   'admin',
   'survey:read',
@@ -40,6 +48,12 @@ export async function loginAdmin(request: Request, env: Env): Promise<Response> 
   const body = await readJson(request);
   const email = requireString(body.email, 'email').toLowerCase();
   const password = requireString(body.password, 'password');
+  consumeRateLimit(
+    `login:${clientIp(request)}:${email}`,
+    LOGIN_RATE_LIMIT,
+    LOGIN_RATE_WINDOW_MS,
+    'Too many login attempts. Try again later.',
+  );
   const row = await env.DB.prepare(
     `SELECT id, email, password_hash, scope_names, created_at
      FROM admins WHERE email = ?`,
@@ -58,11 +72,14 @@ export async function loginAdmin(request: Request, env: Env): Promise<Response> 
 }
 
 export async function createAnonymousAccount(request: Request, env: Env): Promise<Response> {
+  consumeRateLimit(
+    `anon-create:${clientIp(request)}`,
+    ANON_CREATE_RATE_LIMIT,
+    ANON_CREATE_RATE_WINDOW_MS,
+    'Too many anonymous accounts created. Try again later.',
+  );
   const body = await readJson(request, true);
-  const displayName =
-    typeof body.displayName === 'string' && body.displayName.trim().length > 0
-      ? body.displayName.trim()
-      : null;
+  const displayName = optionalLimitedString(body.displayName, 'displayName', DISPLAY_NAME_MAX_LENGTH);
   const token = randomToken();
   const tokenHash = await sha256Hex(token);
   const id = crypto.randomUUID();
@@ -116,14 +133,19 @@ export async function requireAnonymous(request: Request, env: Env): Promise<Anon
   ).bind(tokenHash).first<AnonymousAccountRow>();
   if (!row) throw new HttpError(401, 'Anonymous account required');
   const now = nowIso();
-  await env.DB.prepare(
-    `UPDATE anonymous_accounts SET last_seen_at = ? WHERE id = ?`,
-  ).bind(now, row.id).run();
+  const lastSeenMs = Date.parse(row.last_seen_at);
+  const shouldTouch =
+    !Number.isFinite(lastSeenMs) || Date.now() - lastSeenMs >= LAST_SEEN_THROTTLE_MS;
+  if (shouldTouch) {
+    await env.DB.prepare(
+      `UPDATE anonymous_accounts SET last_seen_at = ? WHERE id = ?`,
+    ).bind(now, row.id).run();
+  }
   return {
     id: row.id,
     displayName: row.display_name,
     createdAt: row.created_at,
-    lastSeenAt: now,
+    lastSeenAt: shouldTouch ? now : row.last_seen_at,
   };
 }
 

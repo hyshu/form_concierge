@@ -1,5 +1,5 @@
 import type { AnonymousContext, AnswerInput, AnswerRow, ChoiceRow, Env, ProjectRow, QuestionRow, ResponseRow, SurveyRow, VisibilityRuleRow } from './types';
-import { HttpError, isChoiceQuestionType, isTextQuestionType, json, logError, nowIso, optionalCustomDomain, readJson, requireAnswerInput, requiredInteger } from './utils';
+import { HttpError, isChoiceQuestionType, isTextQuestionType, json, logError, nowIso, optionalCustomDomain, optionalLimitedString, readJson, requireAnswerInput, requiredInteger } from './utils';
 import { normalizeDeviceInfo, normalizeMetadata } from './metadata';
 import { choiceToJson, parseChoiceIds, projectToJson, questionToJson, responseToJson, surveyToJson } from './serializers';
 import { getVisibilityRules, visibleQuestionIds } from './visibility_rules';
@@ -114,7 +114,7 @@ export async function submitResponse(
     ).bind(
       surveyId,
       anonymous.id,
-      typeof body.anonymousId === 'string' ? body.anonymousId : anonymous.id,
+      optionalLimitedString(body.anonymousId, 'anonymousId', 128) ?? anonymous.id,
       now,
       request.headers.get('cf-connecting-ip'),
       userAgent,
@@ -163,11 +163,8 @@ export async function submitResponse(
     );
   }
 
-  statements.push(
-    env.DB.prepare(
-      `UPDATE anonymous_accounts SET last_seen_at = ? WHERE id = ?`,
-    ).bind(now, anonymous.id),
-  );
+  // last_seen_at is already touched (throttled) in requireAnonymous — avoid a
+  // second write on every submit.
 
   const batchResults = await env.DB.batch(statements);
   const response = batchResults[0]?.results?.[0] as ResponseRow | undefined;
