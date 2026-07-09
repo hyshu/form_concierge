@@ -92,6 +92,35 @@ export async function getVisibilityRules(db: D1Database, surveyId: number): Prom
   return rows.results;
 }
 
+/**
+ * Ensure every visibility rule still has source.order_index < target.order_index.
+ * Call before/after reorder or orderIndex updates; otherwise evaluation always
+ * sees an invisible source and hides the target forever.
+ */
+export async function assertVisibilityOrderInvariant(
+  db: D1Database,
+  surveyId: number,
+  orderIndexById?: ReadonlyMap<number, number>,
+): Promise<void> {
+  let orderMap = orderIndexById;
+  if (!orderMap) {
+    const questions = await getCurrentQuestions(db, surveyId);
+    orderMap = new Map(questions.map((question) => [question.id, question.order_index]));
+  }
+  const rules = await getVisibilityRules(db, surveyId);
+  for (const rule of rules) {
+    const sourceOrder = orderMap.get(rule.source_question_id);
+    const targetOrder = orderMap.get(rule.target_question_id);
+    if (sourceOrder == null || targetOrder == null) continue;
+    if (sourceOrder >= targetOrder) {
+      throw new HttpError(
+        400,
+        'Question order would break a visibility rule: source must stay before target',
+      );
+    }
+  }
+}
+
 export function visibleQuestionIds(
   questions: QuestionRow[],
   rules: VisibilityRuleRow[],

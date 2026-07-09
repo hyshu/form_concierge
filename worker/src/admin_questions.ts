@@ -20,6 +20,7 @@ import {
 import { choiceToJson, parseChoiceIds, questionToJson } from './serializers';
 import { mustChoice, mustProject, mustQuestion, mustSurvey, projectSupportedLocales } from './admin_records';
 import { defaultLocalizedText, requireLocalizedText } from './localization';
+import { assertVisibilityOrderInvariant } from './visibility_rules';
 
 type InsertQuestionInput = {
   surveyId: number;
@@ -120,6 +121,19 @@ export async function updateQuestion(request: Request, env: Env, questionId: num
     },
     type,
   );
+  const orderIndex = optionalInteger(body.orderIndex, 'orderIndex', { min: 0 }) ?? existing.order_index;
+  if (orderIndex !== existing.order_index) {
+    const siblings = await env.DB.prepare(
+      `SELECT id, order_index FROM questions WHERE survey_id = ? AND is_deleted = 0`,
+    ).bind(existing.survey_id).all<{ id: number; order_index: number }>();
+    const proposed = new Map(
+      siblings.results.map((row) => [
+        row.id,
+        row.id === questionId ? orderIndex : row.order_index,
+      ]),
+    );
+    await assertVisibilityOrderInvariant(env.DB, existing.survey_id, proposed);
+  }
   const row = await env.DB.prepare(
     `UPDATE questions
      SET text_translations = ?, type = ?, order_index = ?, is_required = ?, placeholder_translations = ?,
@@ -130,7 +144,7 @@ export async function updateQuestion(request: Request, env: Env, questionId: num
   ).bind(
     JSON.stringify(requireLocalizedText(body.textTranslations, 'textTranslations', locales)),
     type,
-    optionalInteger(body.orderIndex, 'orderIndex', { min: 0 }) ?? existing.order_index,
+    orderIndex,
     boolToInt(optionalBoolean(body.isRequired, 'isRequired') ?? (existing.is_required === 1)),
     JSON.stringify(requireLocalizedText(
       body.placeholderTranslations,
@@ -234,6 +248,12 @@ export async function reorderQuestions(request: Request, env: Env, surveyId: num
     `SELECT * FROM questions WHERE survey_id = ? AND is_deleted = 0 ORDER BY order_index`,
   ).bind(surveyId).all<QuestionRow>();
   assertExactIds(rows.results.map((row) => row.id), questionIds, 'questionIds');
+  // Reject reorder that would put a visibility source after its target.
+  await assertVisibilityOrderInvariant(
+    env.DB,
+    surveyId,
+    new Map(questionIds.map((id, index) => [id, index])),
+  );
   await updateOrder(env.DB, 'questions', questionIds);
   return getAdminQuestions(env, surveyId);
 }
