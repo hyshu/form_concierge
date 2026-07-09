@@ -1,5 +1,5 @@
 import type { AdminContext, Env, ReplyRow } from './types';
-import { bootstrapAdmin, createAnonymousAccount, loginAdmin, requireAdmin, requireAnonymous } from './auth';
+import { bootstrapAdmin, createAnonymousAccount, loginAdmin, logoutAdmin, requireAdmin, requireAnonymous } from './auth';
 import { createUser, deleteUser, listUsers, updateUserRole } from './admin_users';
 import {
   createSurvey,
@@ -158,6 +158,9 @@ async function route(request: Request, env: Env, ctx: ExecutionContext): Promise
     if (parts[2] !== 'id') {
       return json({ error: 'Not found' }, 404);
     }
+    if (!parts[3]) {
+      return json({ error: 'Not found' }, 404);
+    }
     if (parts[2] === 'id' && parts[3] && parts[4] === 'questions') {
       return getPublicQuestions(env, requiredIntegerParam(parts[3], 'surveyId', { min: 1 }));
     }
@@ -189,6 +192,10 @@ async function route(request: Request, env: Env, ctx: ExecutionContext): Promise
   }
 
   if (parts[0] === 'api' && parts[1] === 'admin') {
+    // Logout only needs a valid session token; do not require fine-grained scopes.
+    if (parts[2] === 'auth' && parts[3] === 'session' && method === 'DELETE') {
+      return logoutAdmin(request, env);
+    }
     const admin = await requireAdmin(request, env);
     return routeAdmin(request, env, admin, parts, url);
   }

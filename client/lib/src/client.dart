@@ -29,9 +29,6 @@ class Client {
             : serverUrl,
       ),
       _httpClient = httpClient ?? http.Client() {
-    auth = ClientAuth(
-      storageKey: 'form_concierge.admin_auth.${baseUri.toString()}',
-    );
     survey = SurveyEndpoint(this);
     projectAdmin = ProjectAdminEndpoint(this);
     surveyAdmin = SurveyAdminEndpoint(this);
@@ -45,6 +42,10 @@ class Client {
     aiAdmin = AiAdminEndpoint(this);
     emailIdp = EmailIdpEndpoint(this);
     anonymous = AnonymousEndpoint(this);
+    auth = ClientAuth(
+      storageKey: 'form_concierge.admin_auth.${baseUri.toString()}',
+      revokeSession: () => emailIdp.logout(),
+    );
   }
 
   Future<dynamic> request(
@@ -66,7 +67,20 @@ class Client {
     );
 
     final text = response.body;
-    final decoded = text.isEmpty ? null : jsonDecode(text);
+    Object? decoded;
+    if (text.isNotEmpty) {
+      try {
+        decoded = jsonDecode(text);
+      } on Object {
+        if (response.statusCode < 200 || response.statusCode >= 300) {
+          throw ApiException(
+            response.statusCode,
+            'Request failed with status ${response.statusCode}',
+          );
+        }
+        rethrow;
+      }
+    }
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw _apiException(response.statusCode, decoded);
@@ -180,13 +194,11 @@ String? _filenameFromContentDisposition(String? header) {
 
 ApiException _apiException(int statusCode, Object? decoded) {
   if (decoded is! Map<String, dynamic>) {
-    throw FormatException(
-      'Expected API error object, got ${decoded.runtimeType}',
-    );
+    return ApiException(statusCode, 'Request failed with status $statusCode');
   }
   final error = decoded['error'];
   if (error is! String || error.trim().isEmpty) {
-    throw const FormatException('Expected API error string');
+    return ApiException(statusCode, 'Request failed with status $statusCode');
   }
   final details = decoded['details'];
   final message = error.trim();
@@ -194,16 +206,28 @@ ApiException _apiException(int statusCode, Object? decoded) {
 }
 
 ApiException _rawApiException(http.Response response) {
-  final decoded = jsonDecode(response.body);
-  return _apiException(response.statusCode, decoded);
+  try {
+    final decoded = jsonDecode(response.body);
+    return _apiException(response.statusCode, decoded);
+  } on Object {
+    return ApiException(
+      response.statusCode,
+      'Request failed with status ${response.statusCode}',
+    );
+  }
 }
 
 class ClientAuth {
   final String _storageKey;
+  final Future<void> Function()? _revokeSession;
   String? token;
   AuthUserInfo? signedInUser;
 
-  ClientAuth({required String storageKey}) : _storageKey = storageKey;
+  ClientAuth({
+    required String storageKey,
+    Future<void> Function()? revokeSession,
+  }) : _storageKey = storageKey,
+       _revokeSession = revokeSession;
 
   bool get isAuthenticated => token != null;
 
@@ -233,6 +257,14 @@ class ClientAuth {
   }
 
   Future<void> signOutDevice() async {
+    // Best-effort server-side session revoke before clearing local state.
+    if (token != null && _revokeSession != null) {
+      try {
+        await _revokeSession();
+      } on Object {
+        // Local logout must succeed even if the network call fails.
+      }
+    }
     token = null;
     signedInUser = null;
     await auth_storage.clearAuthSession(_storageKey);

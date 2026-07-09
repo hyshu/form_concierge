@@ -152,12 +152,14 @@ class AuthStateManager {
   }
 
   String _parseAuthError(Exception e) {
-    final message = e.toString();
-    if (message.contains('invalidCredentials')) {
-      return 'Invalid email or password';
-    }
-    if (message.contains('tooManyAttempts')) {
-      return 'Too many login attempts. Please try again later.';
+    if (e is ApiException) {
+      if (e.statusCode == 401) {
+        return 'Invalid email or password';
+      }
+      if (e.statusCode == 429) {
+        return 'Too many login attempts. Please try again later.';
+      }
+      if (e.message.isNotEmpty) return e.message;
     }
     return 'Login failed. Please try again.';
   }

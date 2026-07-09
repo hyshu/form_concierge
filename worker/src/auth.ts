@@ -64,16 +64,28 @@ export async function requireAdmin(request: Request, env: Env): Promise<AdminCon
   const token = bearerToken(request);
   if (!token) throw new HttpError(401, 'Admin authentication required');
   const tokenHash = await sha256Hex(token);
+  const now = nowIso();
   const row = await env.DB.prepare(
     `SELECT a.id, a.email, a.scope_names, a.created_at
      FROM admin_sessions s
      JOIN admins a ON a.id = s.admin_id
      WHERE s.token_hash = ? AND s.expires_at > ?`,
-  ).bind(tokenHash, nowIso()).first<AdminRow>();
+  ).bind(tokenHash, now).first<AdminRow>();
   if (!row) throw new HttpError(401, 'Admin authentication required');
-  const admin = adminRowToContext(row);
-  if (!admin.scopeNames.includes('admin')) throw new HttpError(403, 'Admin scope required');
-  return admin;
+  // Scope checks are done per-route via requireScope (editor/viewer lack "admin").
+  return adminRowToContext(row);
+}
+
+export async function logoutAdmin(request: Request, env: Env): Promise<Response> {
+  const token = bearerToken(request);
+  if (!token) throw new HttpError(401, 'Admin authentication required');
+  const tokenHash = await sha256Hex(token);
+  const now = nowIso();
+  await env.DB.batch([
+    env.DB.prepare(`DELETE FROM admin_sessions WHERE token_hash = ?`).bind(tokenHash),
+    env.DB.prepare(`DELETE FROM admin_sessions WHERE expires_at <= ?`).bind(now),
+  ]);
+  return json({ ok: true });
 }
 
 export async function requireAnonymous(request: Request, env: Env): Promise<AnonymousContext> {
@@ -86,24 +98,33 @@ export async function requireAnonymous(request: Request, env: Env): Promise<Anon
      WHERE token_hash = ?`,
   ).bind(tokenHash).first<AnonymousAccountRow>();
   if (!row) throw new HttpError(401, 'Anonymous account required');
+  const now = nowIso();
+  await env.DB.prepare(
+    `UPDATE anonymous_accounts SET last_seen_at = ? WHERE id = ?`,
+  ).bind(now, row.id).run();
   return {
     id: row.id,
     displayName: row.display_name,
     createdAt: row.created_at,
-    lastSeenAt: row.last_seen_at,
+    lastSeenAt: now,
   };
 }
 
 async function createAdminSession(db: D1Database, user: AdminContext) {
   const token = randomToken();
-  await db.prepare(
-    `INSERT INTO admin_sessions (token_hash, admin_id, expires_at)
-     VALUES (?, ?, ?)`,
-  ).bind(
-    await sha256Hex(token),
-    user.id,
-    new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-  ).run();
+  const now = nowIso();
+  // Opportunistically prune expired sessions so the table does not grow unbounded.
+  await db.batch([
+    db.prepare(`DELETE FROM admin_sessions WHERE expires_at <= ?`).bind(now),
+    db.prepare(
+      `INSERT INTO admin_sessions (token_hash, admin_id, expires_at)
+       VALUES (?, ?, ?)`,
+    ).bind(
+      await sha256Hex(token),
+      user.id,
+      new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    ),
+  ]);
   return { token, user: adminContextToJson(user) };
 }
 

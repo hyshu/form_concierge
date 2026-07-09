@@ -16,6 +16,20 @@ class EmailIdpEndpoint {
     return AuthSuccess.fromJson(json);
   }
 
+  /// Invalidate the current admin session on the server (best-effort).
+  Future<void> logout() async {
+    try {
+      await _client.request(
+        'DELETE',
+        '/api/admin/auth/session',
+        authenticated: true,
+      );
+    } on ApiException catch (e) {
+      // Already expired / missing session is fine for local sign-out.
+      if (e.statusCode != 401) rethrow;
+    }
+  }
+
   Future<UuidValue> startPasswordReset({required String email}) async {
     throw const ApiException(501, 'Password reset is not configured');
   }
