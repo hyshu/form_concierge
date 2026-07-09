@@ -433,13 +433,17 @@ private struct QuestionView: View {
         .pickerStyle(.inline)
       case .multipleChoice:
         ForEach(choices) { choice in
+          let selected = multipleValue.contains(choice.id)
+          let atMax =
+            question.maxSelected.map { multipleValue.count >= $0 } ?? false
           Toggle(
             choice.text(for: locale),
             isOn: Binding(
-              get: { multipleValue.contains(choice.id) },
+              get: { selected },
               set: { enabled in
                 var next = multipleValue
                 if enabled {
+                  if atMax && !selected { return }
                   next.insert(choice.id)
                 } else {
                   next.remove(choice.id)
@@ -448,6 +452,8 @@ private struct QuestionView: View {
               }
             )
           )
+          // Match Flutter: disable unselected options once maxSelected is reached.
+          .disabled(atMax && !selected)
         }
       }
     }

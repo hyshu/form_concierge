@@ -48,6 +48,8 @@ class Client {
     );
   }
 
+  static const Duration requestTimeout = Duration(seconds: 30);
+
   Future<dynamic> request(
     String method,
     String path, {
@@ -142,18 +144,31 @@ class Client {
       request.body = jsonEncode(body);
     }
 
-    return _httpClient.send(request).then(http.Response.fromStream);
+    return _httpClient
+        .send(request)
+        .timeout(requestTimeout)
+        .then(http.Response.fromStream);
   }
 
   Uri _uriFor(String path, Map<String, String>? query) {
+    final encodedPath = _encodePath(path);
     return baseUri.replace(
-      path: '${baseUri.path}${path.startsWith('/') ? path : '/$path'}',
+      path: '${baseUri.path}${encodedPath.startsWith('/') ? encodedPath : '/$encodedPath'}',
       queryParameters: query == null
           ? null
           : Map.fromEntries(
               query.entries.where((entry) => entry.value.isNotEmpty),
             ),
     );
+  }
+
+  /// Encode each path segment so slugs with spaces/unicode stay valid.
+  static String _encodePath(String path) {
+    final normalized = path.startsWith('/') ? path : '/$path';
+    return normalized
+        .split('/')
+        .map((segment) => segment.isEmpty ? segment : Uri.encodeComponent(segment))
+        .join('/');
   }
 
   Map<String, String> _headers({

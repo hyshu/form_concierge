@@ -63,9 +63,12 @@ public actor FormConciergeClient {
   }
 
   public func project(slug: String) async throws -> PublicProject {
-    let project: PublicProject? = try await request("GET", "/api/projects/\(slug)")
-    guard let project else { throw FormConciergeError.notFound }
-    return project
+    let encoded = slug.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? slug
+    do {
+      return try await request("GET", "/api/projects/\(encoded)")
+    } catch FormConciergeError.api(let status, _) where status == 404 {
+      throw FormConciergeError.notFound
+    }
   }
 
   public func project(domain: String) async throws -> PublicProject {
