@@ -63,6 +63,7 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
 
       final survey = _selectSurvey(project);
       if (project == null || survey == null) {
+        if (!mounted) return;
         setState(() {
           _state = _state.copyWith(
             viewState: SurveyViewState.error,
@@ -87,6 +88,7 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
 
       await _ensureAnonymousSession();
 
+      if (!mounted) return;
       setState(() {
         _selectedLocale = normalizeFormContentLocale(
           widget.locale ?? project.project.defaultLocale,
@@ -101,6 +103,7 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
         );
       });
     } on Exception catch (e) {
+      if (!mounted) return;
       setState(() {
         _state = _state.copyWith(
           viewState: SurveyViewState.error,
@@ -165,6 +168,9 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
       return;
     }
 
+    // Capture device info before any await so we do not use a stale context.
+    final deviceInfo = _deviceInfoForContext(context);
+
     setState(() {
       _state = _state.copyWith(viewState: SurveyViewState.submitting);
     });
@@ -183,10 +189,11 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
         surveyId: _state.survey!.id!,
         answers: answers,
         anonymousId: widget.anonymousId,
-        deviceInfo: _deviceInfoForContext(context),
+        deviceInfo: deviceInfo,
         metadata: widget.metadata,
       );
 
+      if (!mounted) return;
       setState(() {
         _state = _state.copyWith(viewState: SurveyViewState.completed);
       });
@@ -194,6 +201,7 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
       widget.onSubmitted?.call();
       widget.onResponseSubmitted?.call(response);
     } on Exception catch (e) {
+      if (!mounted) return;
       setState(() {
         _state = _state.copyWith(
           viewState: SurveyViewState.ready,
@@ -227,12 +235,23 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
       platform: kIsWeb ? 'web' : 'flutter',
       os: platform,
       locale: locale,
-      timezone: DateTime.now().timeZoneName,
+      timezone: _timezoneOffsetLabel(),
       screenWidth: media?.size.width.round(),
       screenHeight: media?.size.height.round(),
       devicePixelRatio: media?.devicePixelRatio,
     );
     return automatic.merge(widget.deviceInfo);
+  }
+
+  /// Prefer a stable UTC offset label over ambiguous abbreviations like "JST".
+  static String _timezoneOffsetLabel() {
+    final offset = DateTime.now().timeZoneOffset;
+    final totalMinutes = offset.inMinutes;
+    final sign = totalMinutes >= 0 ? '+' : '-';
+    final abs = totalMinutes.abs();
+    final hours = (abs ~/ 60).toString().padLeft(2, '0');
+    final minutes = (abs % 60).toString().padLeft(2, '0');
+    return 'UTC$sign$hours:$minutes';
   }
 
   @override

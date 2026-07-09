@@ -95,8 +95,10 @@ class SurveyContent extends StatelessWidget {
             final error = validationErrors[question.id];
 
             return Padding(
+              key: ValueKey(question.id),
               padding: const EdgeInsets.only(bottom: 24),
               child: QuestionWidget(
+                key: ValueKey('question-${question.id}'),
                 question: question,
                 choices: choices,
                 value: answers[question.id],
