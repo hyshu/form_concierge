@@ -5,6 +5,9 @@ import { HttpError } from './utils';
 
 type SocketLike = ReturnType<typeof connect>;
 
+/** Per I/O step timeout so test-send endpoints cannot hang the admin UI. */
+const SMTP_IO_TIMEOUT_MS = 15_000;
+
 export type EmailMessage = {
   to: string;
   subject: string;
@@ -64,7 +67,7 @@ class SmtpConnection {
   }
 
   async open(): Promise<void> {
-    await this.socket.opened;
+    await withTimeout(this.socket.opened, 'SMTP connection timed out');
   }
 
   async command(command: string, expectedCodes: readonly number[]): Promise<string> {
@@ -73,7 +76,10 @@ class SmtpConnection {
   }
 
   async write(value: string): Promise<void> {
-    await this.writer.write(this.encoder.encode(value));
+    await withTimeout(
+      this.writer.write(this.encoder.encode(value)),
+      'SMTP write timed out',
+    );
   }
 
   async readReply(expectedCodes: readonly number[]): Promise<string> {
@@ -119,7 +125,7 @@ class SmtpConnection {
 
   private async readLine(): Promise<string> {
     while (!this.buffer.includes('\n')) {
-      const result = await this.reader.read();
+      const result = await withTimeout(this.reader.read(), 'SMTP read timed out');
       if (result.done) throw new HttpError(502, 'SMTP connection closed unexpectedly');
       this.buffer += this.decoder.decode(result.value, { stream: true });
     }
@@ -128,6 +134,20 @@ class SmtpConnection {
     this.buffer = this.buffer.slice(index + 1);
     return line;
   }
+}
+
+function withTimeout<T>(promise: Promise<T>, message: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  return Promise.race([
+    promise.finally(() => {
+      if (timer != null) clearTimeout(timer);
+    }),
+    new Promise<T>((_, reject) => {
+      timer = setTimeout(() => {
+        reject(new HttpError(504, message));
+      }, SMTP_IO_TIMEOUT_MS);
+    }),
+  ]);
 }
 
 function formatMessage(settings: RequiredSmtpSettings, message: EmailMessage): string {
