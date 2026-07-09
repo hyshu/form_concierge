@@ -1,9 +1,11 @@
 import type { AdminContext, AdminRow, Env } from './types';
-import { HttpError, countRows, json, nowIso, readJson, requireString } from './utils';
+import { HttpError, countRows, json, nowIso, readJson, requireEmail, requireString } from './utils';
 import { hashPassword } from './crypto';
 import { adminContextToJson, adminUserToJson } from './serializers';
 import { getAdminById } from './auth';
 import { scopesForRole } from './permissions';
+
+const MIN_PASSWORD_LENGTH = 8;
 
 export async function listUsers(env: Env): Promise<Response> {
   const rows = await env.DB.prepare(
@@ -16,17 +18,34 @@ export async function createUser(request: Request, env: Env): Promise<Response> 
   const body = await readJson(request);
   const id = crypto.randomUUID();
   const role = requireString(body.role, 'role');
-  await env.DB.prepare(
-    `INSERT INTO admins (id, email, password_hash, scope_names)
-     VALUES (?, ?, ?, ?)`,
-  ).bind(
-    id,
-    requireString(body.email, 'email').toLowerCase(),
-    await hashPassword(requireString(body.password, 'password')),
-    JSON.stringify(scopesForRole(role)),
-  ).run();
+  const email = requireEmail(body.email, 'email');
+  const password = requireString(body.password, 'password');
+  if (password.length < MIN_PASSWORD_LENGTH) {
+    throw new HttpError(400, `password must be at least ${MIN_PASSWORD_LENGTH} characters`);
+  }
+  try {
+    await env.DB.prepare(
+      `INSERT INTO admins (id, email, password_hash, scope_names)
+       VALUES (?, ?, ?, ?)`,
+    ).bind(
+      id,
+      email,
+      await hashPassword(password),
+      JSON.stringify(scopesForRole(role)),
+    ).run();
+  } catch (error) {
+    if (isUniqueConstraintError(error)) {
+      throw new HttpError(409, 'A user with this email already exists');
+    }
+    throw error;
+  }
   const user = await getAdminById(env.DB, id);
   return json(adminContextToJson(user!), 201);
+}
+
+function isUniqueConstraintError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /unique|constraint/i.test(message);
 }
 
 export async function updateUserRole(request: Request, env: Env, userId: string): Promise<Response> {
