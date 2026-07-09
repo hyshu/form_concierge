@@ -9,7 +9,7 @@ import {
   normalizeQuestionType,
   nowIso,
   optionalBoolean,
-  optionalString,
+  optionalIsoDateTime,
   readJson,
   requireObject,
   requireSlug,
@@ -75,8 +75,8 @@ async function insertSurvey(
       admin.id,
       now,
       now,
-      optionalString(body.startsAt, 'startsAt'),
-      optionalString(body.endsAt, 'endsAt'),
+      optionalIsoDateTime(body.startsAt, 'startsAt'),
+      optionalIsoDateTime(body.endsAt, 'endsAt'),
     )
     .first<SurveyRow>();
   return requiredRow(row, 'Survey');
@@ -125,8 +125,12 @@ export async function updateSurvey(request: Request, env: Env, surveyId: number)
     JSON.stringify(content.titleTranslations),
     JSON.stringify(content.descriptionTranslations),
     Object.hasOwn(body, 'webEnabled') ? boolToInt(requiredBoolean(body.webEnabled, 'webEnabled')) : existing.web_enabled,
-    optionalString(body.startsAt ?? existing.starts_at, 'startsAt'),
-    optionalString(body.endsAt ?? existing.ends_at, 'endsAt'),
+    Object.hasOwn(body, 'startsAt')
+      ? optionalIsoDateTime(body.startsAt, 'startsAt')
+      : existing.starts_at,
+    Object.hasOwn(body, 'endsAt')
+      ? optionalIsoDateTime(body.endsAt, 'endsAt')
+      : existing.ends_at,
     nowIso(),
     surveyId,
   ).first<SurveyRow>();
