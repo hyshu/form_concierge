@@ -66,7 +66,8 @@ async function generateWithGemini(apiKey: string, prompt: string): Promise<strin
   const payload = await response.json().catch(() => null);
   if (!response.ok) {
     const message = providerErrorMessage(payload) ?? 'Gemini request failed';
-    throw new HttpError(response.status, message, payload);
+    // Do not forward upstream payload details to clients.
+    throw new HttpError(response.status >= 500 ? 502 : 400, message);
   }
 
   return extractGeminiText(payload);
@@ -107,7 +108,7 @@ async function generateWithOpenAiCompatible(
   const payload = await response.json().catch(() => null);
   if (!response.ok) {
     const message = providerErrorMessage(payload) ?? `${providerLabel(config.provider)} request failed`;
-    throw new HttpError(response.status, message, payload);
+    throw new HttpError(response.status >= 500 ? 502 : 400, message);
   }
   return extractOpenAiCompatibleText(payload, config.provider);
 }
@@ -140,7 +141,7 @@ async function generateWithClaude(apiKey: string, prompt: string): Promise<strin
   const payload = await response.json().catch(() => null);
   if (!response.ok) {
     const message = providerErrorMessage(payload) ?? 'Claude request failed';
-    throw new HttpError(response.status, message, payload);
+    throw new HttpError(response.status >= 500 ? 502 : 400, message);
   }
   return extractClaudeText(payload);
 }
@@ -162,12 +163,8 @@ function geminiRequestBody(prompt: string) {
     ],
     generationConfig: {
       temperature: 0.4,
-      responseFormat: {
-        text: {
-          mimeType: 'application/json',
-          schema: questionListSchema(),
-        },
-      },
+      responseMimeType: 'application/json',
+      responseSchema: questionListSchema(),
     },
   };
 }
