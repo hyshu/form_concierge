@@ -95,12 +95,18 @@ export async function createSurveyWithQuestions(
   const questions = parseQuestionInputs(body.questions, projectSupportedLocales(project));
   const created = await insertSurvey(env.DB, survey, admin, project);
 
-  for (let i = 0; i < questions.length; i++) {
-    await insertQuestion(env.DB, {
-      ...questions[i],
-      surveyId: created.id,
-      orderIndex: i,
-    });
+  try {
+    for (let i = 0; i < questions.length; i++) {
+      await insertQuestion(env.DB, {
+        ...questions[i],
+        surveyId: created.id,
+        orderIndex: i,
+      });
+    }
+  } catch (error) {
+    // Cascade deletes questions/choices so a mid-loop failure leaves no half survey.
+    await env.DB.prepare(`DELETE FROM surveys WHERE id = ?`).bind(created.id).run();
+    throw error;
   }
   return json(surveyToJson(created), 201);
 }
