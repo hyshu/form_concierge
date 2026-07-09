@@ -4,11 +4,13 @@ import 'package:form_concierge_client/form_concierge_client.dart';
 class SurveyCompleted extends StatelessWidget {
   final Survey survey;
   final String locale;
+  final VoidCallback? onDone;
 
   const SurveyCompleted({
     super.key,
     required this.survey,
     required this.locale,
+    this.onDone,
   });
 
   @override
@@ -41,6 +43,13 @@ class SurveyCompleted extends StatelessWidget {
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyLarge,
             ),
+            if (onDone != null) ...[
+              const SizedBox(height: 32),
+              FilledButton(
+                onPressed: onDone,
+                child: Text(FormContentMessages.text(locale, 'done')),
+              ),
+            ],
           ],
         ),
       ),

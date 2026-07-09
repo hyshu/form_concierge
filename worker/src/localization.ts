@@ -77,7 +77,16 @@ export function parseLocalizedText(value: string): LocalizedText {
 }
 
 export function localizedTextFor(value: string, locale = DEFAULT_FORM_CONTENT_LOCALE): string {
-  const text = parseLocalizedText(value)[locale];
-  if (text == null) throw new HttpError(500, `Missing localized text for locale: ${locale}`);
+  const map = parseLocalizedText(value);
+  // Prefer the requested locale, then the global default, then any available
+  // translation. Projects may publish with a single locale (e.g. ja-only) while
+  // callers still pass DEFAULT_FORM_CONTENT_LOCALE (en) for error messages.
+  const text =
+    map[locale] ??
+    map[DEFAULT_FORM_CONTENT_LOCALE] ??
+    Object.values(map).find((item): item is string => typeof item === 'string');
+  if (text == null) {
+    throw new HttpError(500, `Missing localized text for locale: ${locale}`);
+  }
   return text;
 }

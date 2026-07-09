@@ -14,6 +14,8 @@ class FormConciergeSurvey extends StatefulWidget {
   final String? surveySlug;
   final int? surveyId;
   final VoidCallback? onSubmitted;
+  /// Called when the user taps the completion-screen "Done" button.
+  final VoidCallback? onDone;
   final ValueChanged<SurveyResponse>? onResponseSubmitted;
   final ValueChanged<AnonymousSession>? onAnonymousSession;
   final String? anonymousId;
@@ -29,6 +31,7 @@ class FormConciergeSurvey extends StatefulWidget {
     this.surveySlug,
     this.surveyId,
     this.onSubmitted,
+    this.onDone,
     this.onResponseSubmitted,
     this.onAnonymousSession,
     this.anonymousId,
@@ -274,6 +277,7 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
       SurveyViewState.completed => SurveyCompleted(
         survey: _state.survey!,
         locale: locale,
+        onDone: widget.onDone,
       ),
     };
   }

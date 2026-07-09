@@ -12,6 +12,8 @@ public struct FormConciergeSurveyView: View {
   private let onAnonymousSession: ((AnonymousSession) -> Void)?
   private let onResponseSubmitted: ((SurveyResponse) -> Void)?
   private let onSubmitted: (() -> Void)?
+  /// Called when the user taps the completion-screen "Done" button.
+  private let onDone: (() -> Void)?
 
   @State private var project: Project?
   @State private var survey: Survey?
@@ -35,7 +37,8 @@ public struct FormConciergeSurveyView: View {
     metadata: [String: FormConciergeMetadataValue]? = nil,
     onAnonymousSession: ((AnonymousSession) -> Void)? = nil,
     onResponseSubmitted: ((SurveyResponse) -> Void)? = nil,
-    onSubmitted: (() -> Void)? = nil
+    onSubmitted: (() -> Void)? = nil,
+    onDone: (() -> Void)? = nil
   ) {
     self.client = client
     self.projectSlug = projectSlug
@@ -48,6 +51,7 @@ public struct FormConciergeSurveyView: View {
     self.onAnonymousSession = onAnonymousSession
     self.onResponseSubmitted = onResponseSubmitted
     self.onSubmitted = onSubmitted
+    self.onDone = onDone
   }
 
   public var body: some View {
@@ -55,7 +59,7 @@ public struct FormConciergeSurveyView: View {
       if isLoading {
         ProgressView(FormContentMessages.text(activeLocale, "loadingSurvey"))
       } else if completed, let survey {
-        VStack(spacing: 12) {
+        VStack(spacing: 16) {
           Image(systemName: "checkmark.circle.fill")
             .font(.system(size: 48))
             .foregroundStyle(.green)
@@ -67,7 +71,13 @@ public struct FormConciergeSurveyView: View {
           )
           .multilineTextAlignment(.center)
           .foregroundStyle(.secondary)
+          if let onDone {
+            Button(FormContentMessages.text(activeLocale, "done"), action: onDone)
+              .buttonStyle(.borderedProminent)
+              .padding(.top, 8)
+          }
         }
+        .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
       } else if let survey {
         ScrollView {
