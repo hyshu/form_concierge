@@ -1,0 +1,5 @@
+# Copy to .dev.vars for local secrets (gitignored by Wrangler convention).
+# Override production-only values here — never put "remote": true in wrangler.jsonc.
+#
+# PUBLIC_BASE_URL=http://localhost:8787
+# PUBLIC_FORM_ASSET_BASE_URL=http://localhost:8081

@@ -20,6 +20,7 @@ build/
 # Node / Cloudflare
 node_modules/
 .wrangler/
+**/.dev.vars
 
 # SwiftPM
 .build/
