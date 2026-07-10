@@ -27,9 +27,7 @@ class Answer {
     questionId: _int(json['questionId']),
     textValue: _optionalString(json['textValue']),
     selectedChoiceIds: _intList(json['selectedChoiceIds']),
-    fileKeys: json['fileKeys'] == null
-        ? null
-        : _stringList(json['fileKeys']),
+    fileKeys: json['fileKeys'] == null ? null : _stringList(json['fileKeys']),
   );
 
   Map<String, dynamic> toJson() => _withoutNulls({

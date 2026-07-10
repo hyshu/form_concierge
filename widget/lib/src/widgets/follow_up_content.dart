@@ -48,9 +48,9 @@ class FollowUpContent extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           FormContentMessages.text(locale, 'followUpSubtitle'),
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: colorScheme.onSurfaceVariant,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
         ),
         const SizedBox(height: 24),
         ...followUp.items.map((item) {
@@ -71,10 +71,7 @@ class FollowUpContent extends StatelessWidget {
           );
         }),
         if (errorMessage != null) ...[
-          Text(
-            errorMessage!,
-            style: TextStyle(color: colorScheme.error),
-          ),
+          Text(errorMessage!, style: TextStyle(color: colorScheme.error)),
           const SizedBox(height: 12),
         ],
         FilledButton(

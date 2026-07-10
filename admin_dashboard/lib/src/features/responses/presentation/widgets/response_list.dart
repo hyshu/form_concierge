@@ -477,7 +477,10 @@ class _AnswersBody extends StatelessWidget {
             ),
           ),
           for (final item in followUp!.items)
-            _FollowUpAnswerRow(key: ValueKey('follow-up-${item.id}'), item: item),
+            _FollowUpAnswerRow(
+              key: ValueKey('follow-up-${item.id}'),
+              item: item,
+            ),
         ],
       ],
     );

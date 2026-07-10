@@ -200,8 +200,7 @@ class Client {
         .then(http.Response.fromStream);
   }
 
-  Uri uriFor(String path, [Map<String, String>? query]) =>
-      _uriFor(path, query);
+  Uri uriFor(String path, [Map<String, String>? query]) => _uriFor(path, query);
 
   Uri _uriFor(String path, Map<String, String>? query) {
     final encodedPath = _encodePath(path);

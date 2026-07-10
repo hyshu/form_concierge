@@ -99,20 +99,21 @@ class QuestionWidget extends StatelessWidget {
         value: value as String?,
         onChanged: onChanged,
       ),
-      QuestionType.imageUpload => client == null
-          ? Text(
-              'Image upload requires a Client',
-              style: TextStyle(color: ThemeData.light().colorScheme.error),
-            )
-          : ImageUploadQuestion(
-              client: client!,
-              maxFiles: question.maxSelected ?? 3,
-              fileKeys: (value as List<String>?) ?? const [],
-              locale: locale,
-              ensureAuthenticated: ensureAuthenticated,
-              processImage: processImage,
-              onChanged: onChanged,
-            ),
+      QuestionType.imageUpload =>
+        client == null
+            ? Text(
+                'Image upload requires a Client',
+                style: TextStyle(color: ThemeData.light().colorScheme.error),
+              )
+            : ImageUploadQuestion(
+                client: client!,
+                maxFiles: question.maxSelected ?? 3,
+                fileKeys: (value as List<String>?) ?? const [],
+                locale: locale,
+                ensureAuthenticated: ensureAuthenticated,
+                processImage: processImage,
+                onChanged: onChanged,
+              ),
     };
   }
 }

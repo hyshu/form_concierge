@@ -71,7 +71,9 @@ class _ImageUploadQuestionState extends State<ImageUploadQuestion> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final canAdd =
-        widget.enabled && !_uploading && widget.fileKeys.length < widget.maxFiles;
+        widget.enabled &&
+        !_uploading &&
+        widget.fileKeys.length < widget.maxFiles;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -101,9 +103,9 @@ class _ImageUploadQuestionState extends State<ImageUploadQuestion> {
             widget.locale,
             'maxPhotosReached',
           ).replaceAll('{count}', '${widget.maxFiles}'),
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: colorScheme.onSurfaceVariant,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
         ),
         const SizedBox(height: 8),
         OutlinedButton.icon(
@@ -148,10 +150,9 @@ class _ImageUploadQuestionState extends State<ImageUploadQuestion> {
       }
 
       final remaining = widget.maxFiles - widget.fileKeys.length;
-      final picked =
-          await (widget.pickImages ?? defaultPickSurveyImages)(
-            maxImages: remaining,
-          );
+      final picked = await (widget.pickImages ?? defaultPickSurveyImages)(
+        maxImages: remaining,
+      );
       if (picked.isEmpty) {
         if (mounted) setState(() => _uploading = false);
         return;

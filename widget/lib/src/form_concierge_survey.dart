@@ -329,10 +329,11 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
       final value = _state.followUpAnswers[item.id];
       if (!item.required) continue;
       final missing = switch (item.type) {
-        QuestionType.textSingle || QuestionType.textMultiLine =>
-          value is! String || value.trim().isEmpty,
+        QuestionType.textSingle ||
+        QuestionType.textMultiLine => value is! String || value.trim().isEmpty,
         QuestionType.singleChoice => value is! String || value.isEmpty,
-        QuestionType.multipleChoice || QuestionType.imageUpload => switch (value) {
+        QuestionType.multipleChoice ||
+        QuestionType.imageUpload => switch (value) {
           final List list => list.isEmpty,
           _ => true,
         },
