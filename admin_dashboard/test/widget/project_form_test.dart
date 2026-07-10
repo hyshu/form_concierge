@@ -30,8 +30,12 @@ void main() {
 
       await tester.tap(find.text('Select languages'));
       await tester.pumpAndSettle();
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('project-locale-ja')),
+      );
       await tester.tap(find.byKey(const ValueKey('project-locale-ja')));
       await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Apply'));
       await tester.tap(find.text('Apply'));
       await tester.pumpAndSettle();
 

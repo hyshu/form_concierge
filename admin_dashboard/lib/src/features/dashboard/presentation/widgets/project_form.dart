@@ -306,29 +306,35 @@ class _LocaleSelectionDialogState extends State<_LocaleSelectionDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final maxListHeight = MediaQuery.sizeOf(context).height * 0.5;
     return HuxDialog(
       title: context.tr('Localized languages'),
       size: HuxDialogSize.medium,
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          for (final locale in formContentLocaleCodes)
-            Material(
-              type: MaterialType.transparency,
-              child: CheckboxListTile(
-                key: ValueKey('project-locale-$locale'),
-                value: _selected.contains(locale),
-                onChanged: _canToggle(locale)
-                    ? (value) => _toggle(locale, value ?? false)
-                    : null,
-                title: Text(formContentLocaleLabels[locale]!),
-                dense: true,
-                contentPadding: EdgeInsets.zero,
-                controlAffinity: ListTileControlAffinity.leading,
-                activeColor: HuxTokens.primary(context),
-              ),
-            ),
-        ],
+      content: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: maxListHeight),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final locale in formContentLocaleCodes)
+                Material(
+                  type: MaterialType.transparency,
+                  child: CheckboxListTile(
+                    key: ValueKey('project-locale-$locale'),
+                    value: _selected.contains(locale),
+                    onChanged: _canToggle(locale)
+                        ? (value) => _toggle(locale, value ?? false)
+                        : null,
+                    title: Text(formContentLocaleLabels[locale]!),
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    activeColor: HuxTokens.primary(context),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
       actions: [
         HuxButton(
