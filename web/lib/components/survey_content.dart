@@ -52,12 +52,9 @@ class SurveyContent extends StatelessComponent {
                     Component.text(survey.titleFor(locale)),
                   ]),
                   if (survey.descriptionFor(locale).isNotEmpty)
-                    p(
-                        classes:
-                            'mt-2 text-sm text-slate-600 leading-relaxed',
-                        [
-                          Component.text(survey.descriptionFor(locale)),
-                        ]),
+                    p(classes: 'mt-2 text-sm text-slate-600 leading-relaxed', [
+                      Component.text(survey.descriptionFor(locale)),
+                    ]),
                 ]),
                 if (project.supportedLocales.length > 1)
                   select(

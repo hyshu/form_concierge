@@ -504,9 +504,7 @@ class _AnswerRow extends StatelessWidget {
       for (final choice in choices)
         if (choice.id != null) choice.id!: choice.text,
     };
-    return selected
-        .map((id) => labelsById[id] ?? '[#$id]')
-        .join(', ');
+    return selected.map((id) => labelsById[id] ?? '[#$id]').join(', ');
   }
 }
 
