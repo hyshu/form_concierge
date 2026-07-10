@@ -384,5 +384,10 @@ function localeLabel(locale: string): string {
     'zh-Hant': '繁體中文',
     ko: '한국어',
     de: 'Deutsch',
+    es: 'Español',
+    fr: 'Français',
+    it: 'Italiano',
+    th: 'ไทย',
+    tr: 'Türkçe',
   } as Record<string, string>)[locale] ?? locale;
 }

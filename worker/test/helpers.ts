@@ -3,7 +3,19 @@ import assert from 'node:assert/strict';
 import { HttpError } from '../src/utils';
 
 const adminApiBaseUrl = 'https://example.com/api/admin';
-const localizedTextLocales = ['en', 'ja', 'zh-Hans', 'zh-Hant', 'ko', 'de'] as const;
+const localizedTextLocales = [
+  'en',
+  'ja',
+  'zh-Hans',
+  'zh-Hant',
+  'ko',
+  'de',
+  'es',
+  'fr',
+  'it',
+  'th',
+  'tr',
+] as const;
 
 export function assertHttpError(action: () => unknown, status: number, message: string): void {
   assert.throws(action, (error: unknown) =>

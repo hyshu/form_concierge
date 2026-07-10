@@ -1,6 +1,18 @@
 import { HttpError, requireObject, requireString } from './utils';
 
-export const FORM_CONTENT_LOCALES = ['en', 'ja', 'zh-Hans', 'zh-Hant', 'ko', 'de'] as const;
+export const FORM_CONTENT_LOCALES = [
+  'en',
+  'ja',
+  'zh-Hans',
+  'zh-Hant',
+  'ko',
+  'de',
+  'es',
+  'fr',
+  'it',
+  'th',
+  'tr',
+] as const;
 export const DEFAULT_FORM_CONTENT_LOCALE = 'en';
 
 export type LocalizedText = Record<string, string>;

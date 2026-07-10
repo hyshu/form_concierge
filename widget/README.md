@@ -41,7 +41,7 @@ FormConciergeSurvey(
 )
 ```
 
-Pass `locale` to render survey content and widget messages in that language. Locale tags are normalized, so `ja`, `ja_JP`, and `ja-JP` render Japanese. Region tags such as `en_US`, `ko_KR`, `de_DE`, `zh_CN`, and `zh_TW` are also normalized to the supported survey locales.
+Pass `locale` to render survey content and widget messages in that language. Locale tags are normalized, so `ja`, `ja_JP`, and `ja-JP` render Japanese. Region tags such as `en_US`, `ko_KR`, `de_DE`, `es_ES`, `fr_FR`, `it_IT`, `th_TH`, `tr_TR`, `zh_CN`, and `zh_TW` are also normalized to the supported survey locales (`en`, `ja`, `zh-Hans`, `zh-Hant`, `ko`, `de`, `es`, `fr`, `it`, `th`, `tr`).
 
 Pass `deviceInfo` from your app when you need stable device IDs, app versions, OS versions, model names, or any values collected outside this package. Use `metadata` for app/user/session context such as authenticated `uid`, display name, tenant, plan, or feature flags. The widget also adds basic screen, locale, timezone, and Flutter platform values when available.
 

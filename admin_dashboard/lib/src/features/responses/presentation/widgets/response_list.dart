@@ -139,7 +139,7 @@ class _ResponseTile extends StatelessWidget {
     final deviceInfo = response.deviceInfo;
     final deviceSummary = deviceInfo?.summary;
     final deviceDetails = deviceInfo?.detailSummary;
-    final userAgent = deviceInfo?.userAgent;
+    final userAgent = _displayableUserAgent(deviceInfo?.userAgent);
     final metadataSummary = _metadataSummary(response.metadata);
 
     return HuxCard(
@@ -207,12 +207,12 @@ class _ResponseTile extends StatelessWidget {
                     color: HuxTokens.textSecondary(context),
                   ),
                 ],
-                if (userAgent != null && userAgent.isNotEmpty) ...[
+                if (userAgent != null) ...[
                   const SizedBox(height: 4),
                   Tooltip(
                     message: userAgent,
                     child: _InfoRow(
-                      icon: LucideIcons.languages,
+                      icon: LucideIcons.globe,
                       text: userAgent,
                       color: HuxTokens.textSecondary(context),
                     ),
@@ -249,6 +249,22 @@ class _ResponseTile extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  /// HTTP client library defaults are not useful in the response list.
+  /// e.g. Dart's `http` package sends `Dart/3.x (dart:io)`.
+  String? _displayableUserAgent(String? userAgent) {
+    final value = userAgent?.trim();
+    if (value == null || value.isEmpty) return null;
+    if (_isLibraryUserAgent(value)) return null;
+    return value;
+  }
+
+  bool _isLibraryUserAgent(String userAgent) {
+    return RegExp(
+      r'^(Dart|okhttp|Go-http-client|python-requests|curl|Wget|PostmanRuntime|node-fetch|undici)(/|\s|$)',
+      caseSensitive: false,
+    ).hasMatch(userAgent);
   }
 
   String? _metadataSummary(Map<String, dynamic>? metadata) {

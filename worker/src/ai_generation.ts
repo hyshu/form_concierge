@@ -10,7 +10,19 @@ const DEFAULT_MODELS: Record<AiProvider, string> = {
   cerebras: 'gpt-oss-120b',
 };
 const MAX_PROMPT_LENGTH = 4_000;
-const LOCALES = ['en', 'ja', 'zh-Hans', 'zh-Hant', 'ko', 'de'] as const;
+const LOCALES = [
+  'en',
+  'ja',
+  'zh-Hans',
+  'zh-Hant',
+  'ko',
+  'de',
+  'es',
+  'fr',
+  'it',
+  'th',
+  'tr',
+] as const;
 
 export async function generateSurveyQuestions(request: Request, env: Env): Promise<Response> {
   const settings = await getIntegrationSettingsRow(env);

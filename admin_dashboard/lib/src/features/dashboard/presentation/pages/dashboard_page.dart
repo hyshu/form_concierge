@@ -68,6 +68,7 @@ class DashboardPage extends RearchConsumer {
           context,
           surveyManager,
           canWrite,
+          client.baseUri,
           isSavingProject,
           setSavingProject,
         ),
@@ -79,6 +80,7 @@ class DashboardPage extends RearchConsumer {
     BuildContext context,
     SurveyListManager manager,
     bool canWrite,
+    Uri apiBaseUri,
     bool isSavingProject,
     void Function(bool) setSavingProject,
   ) {
@@ -146,6 +148,7 @@ class DashboardPage extends RearchConsumer {
                 item: item,
                 canWrite: canWrite,
                 manager: manager,
+                apiBaseUri: apiBaseUri,
                 onEditProject: () =>
                     context.go('/admin/projects/${item.project.id}'),
                 onCreateSurvey: () => context.go(

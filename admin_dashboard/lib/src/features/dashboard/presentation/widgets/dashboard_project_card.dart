@@ -3,6 +3,9 @@ import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:hux/hux.dart';
 
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/utils/open_url.dart';
+import '../../../../core/utils/public_survey_url.dart';
+import '../../../../core/widgets/hux_icon_action_button.dart';
 import '../../../../core/widgets/hux_states.dart';
 import '../capsules/survey_list_capsule.dart';
 import 'survey_action_buttons.dart';
@@ -14,6 +17,7 @@ class DashboardProjectCard extends StatelessWidget {
     required this.item,
     required this.canWrite,
     required this.manager,
+    required this.apiBaseUri,
     required this.onEditProject,
     required this.onCreateSurvey,
     required this.onOpenSurvey,
@@ -24,6 +28,7 @@ class DashboardProjectCard extends StatelessWidget {
   final ProjectWithSurveys item;
   final bool canWrite;
   final SurveyListManager manager;
+  final Uri apiBaseUri;
   final VoidCallback onEditProject;
   final VoidCallback onCreateSurvey;
   final void Function(Survey survey) onOpenSurvey;
@@ -114,8 +119,10 @@ class DashboardProjectCard extends StatelessWidget {
               children: [
                 for (final survey in item.surveys)
                   _DashboardSurveyRow(
+                    project: project,
                     survey: survey,
                     locale: project.defaultLocale,
+                    apiBaseUri: apiBaseUri,
                     onTap: () => onOpenSurvey(survey),
                     onViewResponses: () => onViewResponses(survey),
                     onPublish: canWrite && survey.status == SurveyStatus.draft
@@ -143,8 +150,10 @@ class DashboardProjectCard extends StatelessWidget {
 
 class _DashboardSurveyRow extends StatelessWidget {
   const _DashboardSurveyRow({
+    required this.project,
     required this.survey,
     required this.locale,
+    required this.apiBaseUri,
     required this.onTap,
     required this.onViewResponses,
     this.onPublish,
@@ -154,8 +163,10 @@ class _DashboardSurveyRow extends StatelessWidget {
     this.onDelete,
   });
 
+  final Project project;
   final Survey survey;
   final String locale;
+  final Uri apiBaseUri;
   final VoidCallback onTap;
   final VoidCallback onViewResponses;
   final VoidCallback? onPublish;
@@ -167,6 +178,16 @@ class _DashboardSurveyRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final description = survey.descriptionFor(locale).trim();
+    final canOpenPublicForm =
+        survey.webEnabled && survey.status == SurveyStatus.published;
+    final publicUrl = canOpenPublicForm
+        ? publicSurveyUrl(
+            apiBaseUri: apiBaseUri,
+            project: project,
+            survey: survey,
+          )
+        : null;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
@@ -233,6 +254,14 @@ class _DashboardSurveyRow extends StatelessWidget {
                           color: HuxTokens.textSecondary(context),
                         ),
                       ),
+                      if (publicUrl != null) ...[
+                        const SizedBox(width: 4),
+                        HuxIconActionButton(
+                          icon: LucideIcons.externalLink,
+                          onPressed: () => openUrl(publicUrl),
+                          tooltip: context.tr('Open public form'),
+                        ),
+                      ],
                     ],
                   ),
                 ],

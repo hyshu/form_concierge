@@ -10,6 +10,11 @@ final class FormConciergeSwiftUITests: XCTestCase {
     XCTAssertEqual(normalizeFormContentLocale("zh_TW"), "zh-Hant")
     XCTAssertEqual(normalizeFormContentLocale("ko_KR"), "ko")
     XCTAssertEqual(normalizeFormContentLocale("de_DE"), "de")
+    XCTAssertEqual(normalizeFormContentLocale("es_ES"), "es")
+    XCTAssertEqual(normalizeFormContentLocale("fr_FR"), "fr")
+    XCTAssertEqual(normalizeFormContentLocale("it_IT"), "it")
+    XCTAssertEqual(normalizeFormContentLocale("th_TH"), "th")
+    XCTAssertEqual(normalizeFormContentLocale("tr_TR"), "tr")
   }
 
   func testVisibilityRuleValueAccessorsRejectCoercion() {

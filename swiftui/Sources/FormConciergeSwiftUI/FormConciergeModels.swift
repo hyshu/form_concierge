@@ -28,7 +28,9 @@ public enum VisibilityOperator: String, Codable, Sendable {
   case isNotAnswered
 }
 
-public let formContentLocaleCodes = ["en", "ja", "zh-Hans", "zh-Hant", "ko", "de"]
+public let formContentLocaleCodes = [
+  "en", "ja", "zh-Hans", "zh-Hant", "ko", "de", "es", "fr", "it", "th", "tr",
+]
 public let defaultFormContentLocale = "en"
 
 public let formContentLocaleLabels = [
@@ -38,6 +40,11 @@ public let formContentLocaleLabels = [
   "zh-Hant": "繁體中文",
   "ko": "한국어",
   "de": "Deutsch",
+  "es": "Español",
+  "fr": "Français",
+  "it": "Italiano",
+  "th": "ไทย",
+  "tr": "Türkçe",
 ]
 
 public func normalizeFormContentLocale(_ locale: String) -> String {

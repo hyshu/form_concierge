@@ -202,6 +202,11 @@ LocalizedText _defaultChoiceTranslations(
     'zh-Hant': '選項 $number',
     'ko': '선택지 $number',
     'de': 'Auswahl $number',
+    'es': 'Opción $number',
+    'fr': 'Choix $number',
+    'it': 'Scelta $number',
+    'th': 'ตัวเลือก $number',
+    'tr': 'Seçenek $number',
   };
   return LocalizedText({
     for (final locale in orderedFormContentLocales(locales))

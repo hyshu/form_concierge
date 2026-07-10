@@ -31,7 +31,21 @@ void main() {
           const Locale('es', 'ES'),
           AppLocalizations.supportedLocales,
         ),
-        const Locale('en'),
+        const Locale('es'),
+      );
+      expect(
+        AppLocalizations.localeResolutionCallback(
+          const Locale('fr', 'FR'),
+          AppLocalizations.supportedLocales,
+        ),
+        const Locale('fr'),
+      );
+      expect(
+        AppLocalizations.localeResolutionCallback(
+          const Locale('th', 'TH'),
+          AppLocalizations.supportedLocales,
+        ),
+        const Locale('th'),
       );
     });
 
