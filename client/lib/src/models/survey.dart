@@ -51,6 +51,36 @@ String normalizeFormContentLocale(String locale) {
   return normalized;
 }
 
+/// Picks the first [preferredLocales] entry that is in [supportedLocales]
+/// (after [normalizeFormContentLocale]), otherwise [defaultLocale].
+String resolveFormContentLocale({
+  required Iterable<String> preferredLocales,
+  required List<String> supportedLocales,
+  String defaultLocale = defaultFormContentLocale,
+}) {
+  final orderedSupported = <String>[];
+  for (final locale in supportedLocales) {
+    final normalized = normalizeFormContentLocale(locale);
+    if (!orderedSupported.contains(normalized)) {
+      orderedSupported.add(normalized);
+    }
+  }
+  if (orderedSupported.isEmpty) {
+    return normalizeFormContentLocale(defaultLocale);
+  }
+
+  final normalizedDefault = normalizeFormContentLocale(defaultLocale);
+  final fallback = orderedSupported.contains(normalizedDefault)
+      ? normalizedDefault
+      : orderedSupported.first;
+
+  for (final preferred in preferredLocales) {
+    final candidate = normalizeFormContentLocale(preferred);
+    if (orderedSupported.contains(candidate)) return candidate;
+  }
+  return fallback;
+}
+
 class LocalizedText {
   final Map<String, String> values;
 

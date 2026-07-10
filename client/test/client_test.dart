@@ -282,6 +282,33 @@ void main() {
 
     expect(visible.map((question) => question.id), [1]);
   });
+
+  test('resolveFormContentLocale prefers browser-like tags when supported', () {
+    expect(
+      resolveFormContentLocale(
+        preferredLocales: const ['ja-JP', 'en-US'],
+        supportedLocales: const ['en', 'ja'],
+        defaultLocale: 'en',
+      ),
+      'ja',
+    );
+    expect(
+      resolveFormContentLocale(
+        preferredLocales: const ['fr-FR'],
+        supportedLocales: const ['en', 'ja'],
+        defaultLocale: 'ja',
+      ),
+      'ja',
+    );
+    expect(
+      resolveFormContentLocale(
+        preferredLocales: const ['zh-TW', 'en'],
+        supportedLocales: const ['en', 'zh-Hant'],
+        defaultLocale: 'en',
+      ),
+      'zh-Hant',
+    );
+  });
 }
 
 Map<String, dynamic> _surveyJson() => {

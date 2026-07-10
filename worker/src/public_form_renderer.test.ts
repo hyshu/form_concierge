@@ -41,6 +41,27 @@ test('renderPublicForm falls back when preferred locale text is missing', async 
   assert.match(await response.text(), /Survey/);
 });
 
+test('renderPublicForm picks Accept-Language when supported', async () => {
+  const response = await renderPublicForm(
+    htmlRequest('https://example.com/acme', {
+      'accept-language': 'en-US,en;q=0.9,ja;q=0.8',
+    }),
+    envWithPublicRows({
+      survey: surveyRow({
+        title_translations: '{"en":"Customer feedback","ja":"お客様の声"}',
+        description_translations: '{"en":"","ja":""}',
+      }),
+    }),
+  );
+
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /lang="en"/);
+  assert.match(html, /<h1 class="text-2xl font-semibold text-slate-900">Customer feedback<\/h1>/);
+  assert.match(html, /<option value="en" selected>English<\/option>/);
+  assert.match(html, />\s*Submit\s*</);
+});
+
 test('renderPublicForm rejects surveys with no localized text at all', async () => {
   await assertHttpErrorAsync(
     () => renderPublicForm(
@@ -69,10 +90,11 @@ test('renderPublicForm returns 404 for project root when multiple surveys are av
   assert.match(await response.text(), /Page not found/);
 });
 
-function htmlRequest(url: string): Request {
+function htmlRequest(url: string, extraHeaders: Record<string, string> = {}): Request {
   return new Request(url, {
     headers: {
       accept: 'text/html',
+      ...extraHeaders,
     },
   });
 }

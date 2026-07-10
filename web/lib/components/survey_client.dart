@@ -5,6 +5,7 @@ import 'package:jaspr/dom.dart';
 import '../state/survey_state.dart';
 import '../utils/anonymous_storage.dart';
 import '../utils/device_info.dart';
+import '../utils/preferred_locales.dart';
 import '../utils/ssr_payload.dart';
 import '../utils/validation.dart';
 import 'survey_loading.dart';
@@ -114,7 +115,7 @@ class SurveyClientState extends State<SurveyClient> {
     );
     if (payload['survey'] == null) {
       _project = project;
-      _locale = project.defaultLocale;
+      _locale = _resolveLocale(project);
       _viewState = SurveyViewState.notFound;
       return;
     }
@@ -254,12 +255,20 @@ class SurveyClientState extends State<SurveyClient> {
   ) {
     _project = project;
     _survey = survey;
-    _locale = project.defaultLocale;
+    _locale = _resolveLocale(project);
     _questions = questions;
     _visibilityRules = visibilityRules;
     _choicesByQuestion = choicesByQuestion;
     _anonymousTokenStorageKey =
         'form_concierge.anonymous_token.${component.serverUrl}.${project.slug}.${survey.id}';
+  }
+
+  String _resolveLocale(Project project) {
+    return resolveFormContentLocale(
+      preferredLocales: browserPreferredLocales(),
+      supportedLocales: project.supportedLocales,
+      defaultLocale: project.defaultLocale,
+    );
   }
 
   void _restoreAnonymousToken() {

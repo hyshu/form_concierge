@@ -1,7 +1,11 @@
 import type { ChoiceRow, Env, ProjectRow, QuestionRow, SurveyRow } from './types';
 import { choiceToJson, projectToJson, questionToJson, surveyToJson, visibilityRuleToJson } from './serializers';
 import { HttpError, optionalCustomDomain } from './utils';
-import { DEFAULT_FORM_CONTENT_LOCALE } from './localization';
+import {
+  DEFAULT_FORM_CONTENT_LOCALE,
+  preferredLocalesFromAcceptLanguage,
+  resolveFormContentLocale,
+} from './localization';
 import { getVisibilityRules } from './visibility_rules';
 
 type PublicFormData = {
@@ -39,7 +43,12 @@ export async function renderPublicForm(request: Request, env: Env): Promise<Resp
     return html(request, renderNotFoundHtml(env, url), 404);
   }
 
-  return html(request, renderSurveyHtml(env, url, data));
+  const locale = resolveFormContentLocale(
+    preferredLocalesFromAcceptLanguage(request.headers.get('accept-language')),
+    data.project.supportedLocales,
+    data.project.defaultLocale,
+  );
+  return html(request, renderSurveyHtml(env, url, data, locale));
 }
 
 async function loadProjectBySlug(
@@ -148,8 +157,12 @@ async function loadChoicesByQuestion(
   return choicesByQuestion;
 }
 
-function renderSurveyHtml(env: Env, url: URL, data: PublicFormData): string {
-  const locale = data.project.defaultLocale;
+function renderSurveyHtml(
+  env: Env,
+  url: URL,
+  data: PublicFormData,
+  locale: string,
+): string {
   const title = textFor(data.survey.titleTranslations, locale);
   const description = textFor(data.survey.descriptionTranslations, locale);
   const assetBaseUrl = publicFormAssetBaseUrl(env);
