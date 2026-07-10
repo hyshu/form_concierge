@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 
+import 'questions/image_upload_question.dart';
 import 'questions/question_widget.dart';
 
 class SurveyContent extends StatefulWidget {
@@ -19,6 +20,7 @@ class SurveyContent extends StatefulWidget {
   final ValueChanged<String> onLocaleChanged;
   final VoidCallback onSubmit;
   final Future<void> Function()? ensureAuthenticated;
+  final ProcessSurveyImage? processImage;
   final Widget? footer;
 
   const SurveyContent({
@@ -38,6 +40,7 @@ class SurveyContent extends StatefulWidget {
     required this.onLocaleChanged,
     required this.onSubmit,
     this.ensureAuthenticated,
+    this.processImage,
     this.footer,
   });
 
@@ -166,6 +169,7 @@ class _SurveyContentState extends State<SurveyContent> {
                 locale: widget.locale,
                 client: widget.client,
                 ensureAuthenticated: widget.ensureAuthenticated,
+                processImage: widget.processImage,
                 onChanged: (value) =>
                     widget.onAnswerChanged(question.id!, value),
               ),

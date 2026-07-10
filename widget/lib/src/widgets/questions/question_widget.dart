@@ -16,6 +16,7 @@ class QuestionWidget extends StatelessWidget {
   final ValueChanged<AnswerValue> onChanged;
   final Client? client;
   final Future<void> Function()? ensureAuthenticated;
+  final ProcessSurveyImage? processImage;
 
   const QuestionWidget({
     super.key,
@@ -27,6 +28,7 @@ class QuestionWidget extends StatelessWidget {
     required this.onChanged,
     this.client,
     this.ensureAuthenticated,
+    this.processImage,
   });
 
   @override
@@ -108,6 +110,7 @@ class QuestionWidget extends StatelessWidget {
               fileKeys: (value as List<String>?) ?? const [],
               locale: locale,
               ensureAuthenticated: ensureAuthenticated,
+              processImage: processImage,
               onChanged: onChanged,
             ),
     };

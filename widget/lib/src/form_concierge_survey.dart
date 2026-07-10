@@ -8,6 +8,10 @@ import 'widgets/survey_error.dart';
 import 'widgets/survey_completed.dart';
 import 'widgets/survey_content.dart';
 import 'widgets/follow_up_content.dart';
+import 'widgets/questions/image_upload_question.dart';
+
+export 'widgets/questions/image_upload_question.dart'
+    show PickedSurveyImage, ProcessSurveyImage;
 
 class FormConciergeSurvey extends StatefulWidget {
   final Client client;
@@ -31,6 +35,12 @@ class FormConciergeSurvey extends StatefulWidget {
   /// supports multiple locales. The host-provided [locale] is still used.
   final bool showLocalePicker;
 
+  /// Optional host-side image transform before upload (resize/compress/edit).
+  ///
+  /// Called for each picked image. Return the image to upload, or `null` to
+  /// skip that image. When omitted, the original pick is uploaded as-is.
+  final ProcessSurveyImage? processImage;
+
   /// Shown below the submit button when the survey form is ready.
   final Widget? footer;
 
@@ -50,6 +60,7 @@ class FormConciergeSurvey extends StatefulWidget {
     this.metadata,
     this.locale,
     this.showLocalePicker = false,
+    this.processImage,
     this.footer,
   });
 
@@ -503,6 +514,7 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
         },
         onSubmit: _submit,
         ensureAuthenticated: _ensureAnonymousSession,
+        processImage: widget.processImage,
         footer: widget.footer,
       ),
       SurveyViewState.followUp ||
@@ -518,6 +530,7 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
         onAnswerChanged: _updateFollowUpAnswer,
         onSubmit: _submitFollowUp,
         ensureAuthenticated: _ensureAnonymousSession,
+        processImage: widget.processImage,
       ),
       SurveyViewState.completed => SurveyCompleted(
         survey: _state.survey!,

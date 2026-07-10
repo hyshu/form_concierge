@@ -16,6 +16,7 @@ class FollowUpContent extends StatelessWidget {
   final void Function(String itemId, dynamic value) onAnswerChanged;
   final VoidCallback onSubmit;
   final Future<void> Function()? ensureAuthenticated;
+  final ProcessSurveyImage? processImage;
 
   const FollowUpContent({
     super.key,
@@ -30,6 +31,7 @@ class FollowUpContent extends StatelessWidget {
     required this.onAnswerChanged,
     required this.onSubmit,
     this.ensureAuthenticated,
+    this.processImage,
   });
 
   @override
@@ -63,6 +65,7 @@ class FollowUpContent extends StatelessWidget {
               locale: locale,
               enabled: !isSubmitting,
               ensureAuthenticated: ensureAuthenticated,
+              processImage: processImage,
               onChanged: (value) => onAnswerChanged(item.id, value),
             ),
           );
@@ -95,6 +98,7 @@ class _FollowUpItemField extends StatefulWidget {
   final String locale;
   final bool enabled;
   final Future<void> Function()? ensureAuthenticated;
+  final ProcessSurveyImage? processImage;
   final ValueChanged<dynamic> onChanged;
 
   const _FollowUpItemField({
@@ -105,6 +109,7 @@ class _FollowUpItemField extends StatefulWidget {
     required this.locale,
     this.enabled = true,
     this.ensureAuthenticated,
+    this.processImage,
     required this.onChanged,
   });
 
@@ -253,6 +258,7 @@ class _FollowUpItemFieldState extends State<_FollowUpItemField> {
         locale: widget.locale,
         enabled: widget.enabled,
         ensureAuthenticated: widget.ensureAuthenticated,
+        processImage: widget.processImage,
         onChanged: widget.onChanged,
       ),
     };

@@ -4,6 +4,28 @@ import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:image_picker/image_picker.dart';
 
+/// Image bytes chosen for upload (or returned from host-side processing).
+class PickedSurveyImage {
+  final List<int> bytes;
+  final String contentType;
+
+  const PickedSurveyImage({required this.bytes, required this.contentType});
+
+  PickedSurveyImage copyWith({List<int>? bytes, String? contentType}) {
+    return PickedSurveyImage(
+      bytes: bytes ?? this.bytes,
+      contentType: contentType ?? this.contentType,
+    );
+  }
+}
+
+/// Host transform applied after pick and before upload.
+///
+/// Return a (possibly compressed/resized) image to upload, or `null` to skip
+/// that image without failing the whole batch.
+typedef ProcessSurveyImage =
+    Future<PickedSurveyImage?> Function(PickedSurveyImage image);
+
 /// Local image selection + upload for [QuestionType.imageUpload].
 class ImageUploadQuestion extends StatefulWidget {
   final Client client;
@@ -15,6 +37,9 @@ class ImageUploadQuestion extends StatefulWidget {
 
   /// Ensures an anonymous session exists before upload (main-form answers).
   final Future<void> Function()? ensureAuthenticated;
+
+  /// Optional host-side resize/compress/edit step before upload.
+  final ProcessSurveyImage? processImage;
 
   /// Optional override for tests / host apps.
   final Future<List<PickedSurveyImage>> Function({required int maxImages})?
@@ -29,6 +54,7 @@ class ImageUploadQuestion extends StatefulWidget {
     required this.onChanged,
     this.enabled = true,
     this.ensureAuthenticated,
+    this.processImage,
     this.pickImages,
   });
 
@@ -132,14 +158,17 @@ class _ImageUploadQuestionState extends State<ImageUploadQuestion> {
       }
 
       final keys = List<String>.from(widget.fileKeys);
+      final process = widget.processImage;
       for (final image in picked) {
         if (keys.length >= widget.maxFiles) break;
+        final prepared = process == null ? image : await process(image);
+        if (prepared == null || prepared.bytes.isEmpty) continue;
         final uploaded = await widget.client.survey.uploadMedia(
-          bytes: image.bytes,
-          contentType: image.contentType,
+          bytes: prepared.bytes,
+          contentType: prepared.contentType,
         );
         keys.add(uploaded.key);
-        _previews[uploaded.key] = Uint8List.fromList(image.bytes);
+        _previews[uploaded.key] = Uint8List.fromList(prepared.bytes);
       }
       widget.onChanged(keys);
       if (mounted) setState(() => _uploading = false);
@@ -154,13 +183,6 @@ class _ImageUploadQuestionState extends State<ImageUploadQuestion> {
       });
     }
   }
-}
-
-class PickedSurveyImage {
-  final List<int> bytes;
-  final String contentType;
-
-  const PickedSurveyImage({required this.bytes, required this.contentType});
 }
 
 Future<List<PickedSurveyImage>> defaultPickSurveyImages({

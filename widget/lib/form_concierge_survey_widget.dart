@@ -5,4 +5,5 @@ export 'src/form_concierge_reply_checker.dart'
         FormConciergeReplyChecker,
         FormConciergeReplyCheckResult,
         FormConciergeReplySeenStore;
-export 'src/form_concierge_survey.dart' show FormConciergeSurvey;
+export 'src/form_concierge_survey.dart'
+    show FormConciergeSurvey, PickedSurveyImage, ProcessSurveyImage;

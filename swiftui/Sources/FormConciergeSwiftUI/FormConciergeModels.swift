@@ -253,6 +253,24 @@ public struct MediaUpload: Codable, Sendable {
   public let size: Int
 }
 
+/// Image payload for host-side processing before upload.
+public struct SurveyImagePayload: Sendable {
+  public let data: Data
+  public let contentType: String
+
+  public init(data: Data, contentType: String) {
+    self.data = data
+    self.contentType = contentType
+  }
+}
+
+/// Host transform applied after pick and before upload.
+///
+/// Return the (possibly compressed/resized) image to upload, or `nil` to skip
+/// that image without failing the whole batch.
+public typealias ProcessSurveyImage =
+  (SurveyImagePayload) async throws -> SurveyImagePayload?
+
 public struct SurveyResponse: Codable, Identifiable, Sendable {
   public let id: Int
   public let surveyId: Int

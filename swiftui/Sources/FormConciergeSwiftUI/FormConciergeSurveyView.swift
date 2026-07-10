@@ -22,6 +22,11 @@ public struct FormConciergeSurveyView: View {
   private let onSubmitted: (() -> Void)?
   /// Called when the user taps the completion-screen "Done" button.
   private let onDone: (() -> Void)?
+  /// Optional host-side image transform before upload (resize/compress/edit).
+  ///
+  /// Called for each picked image. Return the image to upload, or `nil` to skip
+  /// that image. When omitted, HEIC/unknown formats are converted to JPEG.
+  private let processImage: ProcessSurveyImage?
 
   @State private var project: Project?
   @State private var survey: Survey?
@@ -46,7 +51,8 @@ public struct FormConciergeSurveyView: View {
     onAnonymousSession: ((AnonymousSession) -> Void)? = nil,
     onResponseSubmitted: ((SurveyResponse) -> Void)? = nil,
     onSubmitted: (() -> Void)? = nil,
-    onDone: (() -> Void)? = nil
+    onDone: (() -> Void)? = nil,
+    processImage: ProcessSurveyImage? = nil
   ) {
     self.client = client
     self.projectSlug = projectSlug
@@ -60,6 +66,7 @@ public struct FormConciergeSurveyView: View {
     self.onResponseSubmitted = onResponseSubmitted
     self.onSubmitted = onSubmitted
     self.onDone = onDone
+    self.processImage = processImage
   }
 
   public var body: some View {
@@ -108,6 +115,7 @@ public struct FormConciergeSurveyView: View {
                 value: answers[question.id],
                 locale: activeLocale,
                 ensureAuthenticated: ensureAuthenticated,
+                processImage: processImage,
                 onChange: { updateAnswer(questionId: question.id, value: $0) }
               )
             }
@@ -437,6 +445,7 @@ private struct QuestionView: View {
   let value: SurveyAnswerValue?
   let locale: String
   let ensureAuthenticated: () async throws -> Void
+  let processImage: ProcessSurveyImage?
   let onChange: (SurveyAnswerValue) -> Void
 
   var body: some View {
@@ -493,6 +502,7 @@ private struct QuestionView: View {
           fileKeys: imageKeys,
           locale: locale,
           ensureAuthenticated: ensureAuthenticated,
+          processImage: processImage,
           onChange: { onChange(.images($0)) }
         )
       }
@@ -540,6 +550,7 @@ private struct ImageUploadQuestionView: View {
   let fileKeys: [String]
   let locale: String
   let ensureAuthenticated: () async throws -> Void
+  let processImage: ProcessSurveyImage?
   let onChange: ([String]) -> Void
 
   @State private var pickerItems: [PhotosPickerItem] = []
@@ -652,18 +663,30 @@ private struct ImageUploadQuestionView: View {
         guard let data = try await item.loadTransferable(type: Data.self), !data.isEmpty
         else { continue }
         let contentType = contentType(for: item) ?? "image/jpeg"
-        let payload = try jpegDataIfNeeded(data, contentType: contentType)
+        let prepared = try await prepareForUpload(
+          SurveyImagePayload(data: data, contentType: contentType)
+        )
+        guard let prepared, !prepared.data.isEmpty else { continue }
         let uploaded = try await client.uploadMedia(
-          data: payload.data,
-          contentType: payload.contentType
+          data: prepared.data,
+          contentType: prepared.contentType
         )
         keys.append(uploaded.key)
-        previews[uploaded.key] = payload.data
+        previews[uploaded.key] = prepared.data
       }
       onChange(keys)
     } catch {
       localError = FormContentMessages.text(locale, "photoUploadFailed")
     }
+  }
+
+  /// Host process hook when provided; otherwise convert unsupported types to JPEG.
+  private func prepareForUpload(_ image: SurveyImagePayload) async throws -> SurveyImagePayload? {
+    if let processImage {
+      return try await processImage(image)
+    }
+    let fallback = try jpegDataIfNeeded(image.data, contentType: image.contentType)
+    return SurveyImagePayload(data: fallback.data, contentType: fallback.contentType)
   }
 
   private func contentType(for item: PhotosPickerItem) -> String? {
