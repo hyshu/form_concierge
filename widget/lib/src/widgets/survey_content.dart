@@ -30,7 +30,7 @@ class SurveyContent extends StatefulWidget {
     this.errorMessage,
     required this.locale,
     required this.isSubmitting,
-    this.showLocalePicker = true,
+    this.showLocalePicker = false,
     required this.onAnswerChanged,
     required this.onLocaleChanged,
     required this.onSubmit,

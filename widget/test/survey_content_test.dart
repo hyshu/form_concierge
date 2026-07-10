@@ -13,6 +13,7 @@ void main() {
       await tester.pumpWidget(
         _subject(
           locale: selectedLocale,
+          showLocalePicker: true,
           onLocaleChanged: (locale) => selectedLocale = locale,
         ),
       );
@@ -150,6 +151,7 @@ Widget _subject({
   ValidationErrors validationErrors = const {},
   String? errorMessage,
   bool isSubmitting = false,
+  bool showLocalePicker = false,
   void Function(int questionId, AnswerValue value)? onAnswerChanged,
   ValueChanged<String>? onLocaleChanged,
   VoidCallback? onSubmit,
@@ -167,6 +169,7 @@ Widget _subject({
         errorMessage: errorMessage,
         locale: locale,
         isSubmitting: isSubmitting,
+        showLocalePicker: showLocalePicker,
         onAnswerChanged: onAnswerChanged ?? (_, _) {},
         onLocaleChanged: onLocaleChanged ?? (_) {},
         onSubmit: onSubmit ?? () {},

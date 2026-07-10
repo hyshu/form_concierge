@@ -48,7 +48,7 @@ class FormConciergeSurvey extends StatefulWidget {
     this.deviceInfo,
     this.metadata,
     this.locale,
-    this.showLocalePicker = true,
+    this.showLocalePicker = false,
     this.footer,
   });
 
