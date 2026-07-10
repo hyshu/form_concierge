@@ -9,8 +9,9 @@ import {
   emptyD1Result,
   localizedText,
 } from '../test/helpers';
-import { generateSurveyQuestions } from './ai_generation';
+import { generateSurveyQuestions, toProviderSchema } from './ai_generation';
 import type { Env } from './types';
+import assert from 'node:assert/strict';
 
 test('generateSurveyQuestions rejects coercible integer fields from providers', async () => {
   await withOpenAiQuestion({ minLength: '3' }, async () => {
@@ -151,3 +152,71 @@ function d1WithSettings(): D1Database {
 async function assertProviderError(action: () => Promise<unknown>, message: string): Promise<void> {
   await assertHttpErrorAsync(action, 502, message);
 }
+
+test('toProviderSchema strips Gemini-unsupported fields and keeps OpenAI/Cerebras strict rules', () => {
+  const source = {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      ja: { type: 'string' },
+      ko: { type: 'string' },
+      nested: {
+        type: 'object',
+        properties: {
+          minLength: { type: ['integer', 'null'] },
+        },
+        required: ['minLength'],
+        additionalProperties: false,
+      },
+    },
+    // Intentionally incomplete vs properties — strict transform should fill this in.
+    required: ['ja'],
+  };
+
+  const gemini = toProviderSchema('gemini', source) as Record<string, unknown>;
+  assert.equal(Object.hasOwn(gemini, 'additionalProperties'), false);
+  const geminiNested = (gemini.properties as Record<string, Record<string, unknown>>).nested;
+  assert.equal(Object.hasOwn(geminiNested, 'additionalProperties'), false);
+  assert.deepEqual(geminiNested.properties, {
+    minLength: { type: 'integer', nullable: true },
+  });
+
+  for (const provider of ['openai', 'cerebras', 'claude'] as const) {
+    const strict = toProviderSchema(provider, source) as Record<string, unknown>;
+    assert.equal(strict.additionalProperties, false);
+    assert.deepEqual(strict.required, ['ja', 'ko', 'nested']);
+    const nested = (strict.properties as Record<string, Record<string, unknown>>).nested;
+    assert.equal(nested.additionalProperties, false);
+    assert.deepEqual(nested.required, ['minLength']);
+    // Union types are left alone for strict JSON Schema providers.
+    assert.deepEqual(
+      (nested.properties as Record<string, unknown>).minLength,
+      { type: ['integer', 'null'] },
+    );
+  }
+});
+
+test('translateLocalizedText rejects missing API key and invalid locales', async () => {
+  const { translateLocalizedText } = await import('./ai_generation');
+  const env = {
+    DB: {
+      prepare: () => ({
+        first: async () => null,
+        bind: () => ({ first: async () => null }),
+      }),
+    },
+  } as unknown as Env;
+
+  await assertHttpErrorAsync(
+    () => translateLocalizedText(
+      adminPostRequest('/api/admin/ai/translate-localized-text', {
+        sourceLocale: 'en',
+        sourceText: 'Hello',
+        targetLocales: ['ja'],
+      }),
+      env,
+    ),
+    400,
+    'AI generation provider is not configured',
+  );
+});

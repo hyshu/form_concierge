@@ -12,26 +12,54 @@ void main() {
     ) async {
       await tester.pumpWidget(_subject(locales: const ['en']));
 
-      expect(find.text('Name (English)'), findsOneWidget);
+      expect(find.text('Name'), findsOneWidget);
       expect(find.text('Other languages'), findsNothing);
       expect(find.text('Name (日本語)'), findsNothing);
-      expect(find.byType(ExpansionTile), findsNothing);
     });
 
-    testWidgets('shows two locales inline without expansion tile', (
+    testWidgets('shows primary locale and collapses secondary languages', (
       tester,
     ) async {
       await tester.pumpWidget(_subject(locales: const ['en', 'ja']));
 
-      expect(find.text('Name (English)'), findsOneWidget);
+      expect(find.text('Name'), findsOneWidget);
+      expect(find.text('Other languages'), findsOneWidget);
+      // Secondary fields stay mounted for validation but start collapsed.
       expect(find.text('Name (日本語)'), findsOneWidget);
-      expect(find.text('Other languages'), findsNothing);
-      expect(find.byType(ExpansionTile), findsNothing);
+
+      await tester.tap(find.text('Other languages'));
+      await tester.pumpAndSettle();
+      expect(find.text('Name (日本語)'), findsOneWidget);
+    });
+
+    testWidgets('validates collapsed required secondary locales', (
+      tester,
+    ) async {
+      final formKey = GlobalKey<FormState>();
+      await tester.pumpWidget(
+        _subject(
+          locales: const ['en', 'ja'],
+          formKey: formKey,
+          requiredMessage: 'Name is required',
+        ),
+      );
+
+      // Fill only the primary language.
+      await tester.enterText(find.byType(TextFormField).first, 'Primary');
+      await tester.pump();
+
+      expect(formKey.currentState!.validate(), isFalse);
+      await tester.pump();
+      expect(find.text('Name is required'), findsWidgets);
     });
   });
 }
 
-Widget _subject({required List<String> locales}) {
+Widget _subject({
+  required List<String> locales,
+  GlobalKey<FormState>? formKey,
+  String? requiredMessage,
+}) {
   final controllers = {
     for (final locale in formContentLocaleCodes)
       locale: TextEditingController(),
@@ -41,11 +69,15 @@ Widget _subject({required List<String> locales}) {
     home: Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(24),
-        child: LocalizedTextFieldGroup(
-          controllers: controllers,
-          primaryLocale: 'en',
-          locales: locales,
-          labelText: 'Name',
+        child: Form(
+          key: formKey,
+          child: LocalizedTextFieldGroup(
+            controllers: controllers,
+            primaryLocale: 'en',
+            locales: locales,
+            labelText: 'Name',
+            requiredMessage: requiredMessage,
+          ),
         ),
       ),
     ),

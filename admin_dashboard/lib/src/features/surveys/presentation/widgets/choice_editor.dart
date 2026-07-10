@@ -5,6 +5,7 @@ import 'package:hux/hux.dart';
 import '../../../../core/localization/app_localizations.dart';
 import 'localized_choice_dialog.dart';
 import 'localized_choice_tile.dart';
+import 'survey_form.dart';
 
 /// Widget for editing question choices.
 class ChoiceEditor extends StatelessWidget {
@@ -12,6 +13,8 @@ class ChoiceEditor extends StatelessWidget {
   final String primaryLocale;
   final Iterable<String> locales;
   final bool enabled;
+  final bool aiTranslateEnabled;
+  final SurveyLocalizedTranslate? onTranslate;
   final void Function(LocalizedText textTranslations) onAdd;
   final void Function(Choice choice, LocalizedText textTranslations) onUpdate;
   final void Function(Choice choice) onDelete;
@@ -22,6 +25,8 @@ class ChoiceEditor extends StatelessWidget {
     this.primaryLocale = defaultFormContentLocale,
     this.locales = formContentLocaleCodes,
     required this.enabled,
+    this.aiTranslateEnabled = false,
+    this.onTranslate,
     required this.onAdd,
     required this.onUpdate,
     required this.onDelete,
@@ -38,6 +43,8 @@ class ChoiceEditor extends StatelessWidget {
             primaryLocale: primaryLocale,
             locales: locales,
             enabled: enabled,
+            aiTranslateEnabled: aiTranslateEnabled,
+            onTranslate: onTranslate,
             onUpdate: (textTranslations) => onUpdate(choice, textTranslations),
             onDelete: () => onDelete(choice),
             leading: Icon(
@@ -73,6 +80,8 @@ class ChoiceEditor extends StatelessWidget {
       title: context.tr('Add Choice'),
       primaryLocale: primaryLocale,
       locales: locales,
+      aiTranslateEnabled: aiTranslateEnabled,
+      onTranslate: onTranslate,
       onSubmit: onAdd,
     );
   }

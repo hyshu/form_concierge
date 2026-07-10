@@ -6,12 +6,15 @@ import '../../../../core/extensions/question_type_presentation.dart';
 import '../../../../core/localization/app_localizations.dart';
 import 'localized_text_field_group.dart';
 import 'localized_text_helpers.dart';
+import 'survey_form.dart';
 
 /// Dialog for creating/editing a question.
 class QuestionFormDialog extends StatefulWidget {
   final Question? existingQuestion;
   final String primaryLocale;
   final Iterable<String> locales;
+  final bool aiTranslateEnabled;
+  final SurveyLocalizedTranslate? onTranslate;
   final void Function({
     required LocalizedText textTranslations,
     required QuestionType type,
@@ -30,6 +33,8 @@ class QuestionFormDialog extends StatefulWidget {
     this.existingQuestion,
     this.primaryLocale = defaultFormContentLocale,
     this.locales = formContentLocaleCodes,
+    this.aiTranslateEnabled = false,
+    this.onTranslate,
     required this.onSave,
   });
 
@@ -38,6 +43,8 @@ class QuestionFormDialog extends StatefulWidget {
     Question? existingQuestion,
     String primaryLocale = defaultFormContentLocale,
     Iterable<String> locales = formContentLocaleCodes,
+    bool aiTranslateEnabled = false,
+    SurveyLocalizedTranslate? onTranslate,
     required void Function({
       required LocalizedText textTranslations,
       required QuestionType type,
@@ -57,6 +64,8 @@ class QuestionFormDialog extends StatefulWidget {
         existingQuestion: existingQuestion,
         primaryLocale: primaryLocale,
         locales: locales,
+        aiTranslateEnabled: aiTranslateEnabled,
+        onTranslate: onTranslate,
         onSave: onSave,
       ),
     );
@@ -133,8 +142,6 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _SectionTitle(text: context.tr('Localized question text')),
-                const SizedBox(height: 8),
                 LocalizedTextFieldGroup(
                   controllers: _textControllers,
                   primaryLocale: widget.primaryLocale,
@@ -143,6 +150,8 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
                   hintText: context.tr('Enter your question'),
                   maxLines: 2,
                   requiredMessage: context.tr('Question text is required'),
+                  aiTranslateEnabled: widget.aiTranslateEnabled,
+                  onTranslate: _boundTranslate('question'),
                 ),
                 const SizedBox(height: 16),
                 _SectionTitle(text: context.tr('Question Type')),
@@ -169,14 +178,14 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
                 ),
                 const SizedBox(height: 16),
                 if (_type.usesTextAnswer) ...[
-                  _SectionTitle(text: context.tr('Localized placeholders')),
-                  const SizedBox(height: 8),
                   LocalizedTextFieldGroup(
                     controllers: _placeholderControllers,
                     primaryLocale: widget.primaryLocale,
                     locales: widget.locales,
                     labelText: context.tr('Placeholder (optional)'),
                     hintText: context.tr('Placeholder text for the input'),
+                    aiTranslateEnabled: widget.aiTranslateEnabled,
+                    onTranslate: _boundTranslate('placeholder'),
                   ),
                   const SizedBox(height: 16),
                   Row(
@@ -289,6 +298,23 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
         ),
       ],
     );
+  }
+
+  LocalizedTextTranslate? _boundTranslate(String fieldKind) {
+    final onTranslate = widget.onTranslate;
+    if (onTranslate == null) return null;
+    return ({
+      required String sourceLocale,
+      required String sourceText,
+      required List<String> targetLocales,
+    }) {
+      return onTranslate(
+        sourceLocale: sourceLocale,
+        sourceText: sourceText,
+        targetLocales: targetLocales,
+        fieldKind: fieldKind,
+      );
+    };
   }
 
   void _submit() {

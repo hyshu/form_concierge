@@ -5,6 +5,7 @@ import 'package:hux/hux.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/hux_icon_action_button.dart';
 import 'localized_choice_dialog.dart';
+import 'survey_form.dart';
 
 class LocalizedChoiceTile extends StatelessWidget {
   const LocalizedChoiceTile({
@@ -15,6 +16,8 @@ class LocalizedChoiceTile extends StatelessWidget {
     required this.enabled,
     required this.onUpdate,
     required this.onDelete,
+    this.aiTranslateEnabled = false,
+    this.onTranslate,
     this.leading,
   });
 
@@ -22,6 +25,8 @@ class LocalizedChoiceTile extends StatelessWidget {
   final String primaryLocale;
   final Iterable<String> locales;
   final bool enabled;
+  final bool aiTranslateEnabled;
+  final SurveyLocalizedTranslate? onTranslate;
   final void Function(LocalizedText textTranslations) onUpdate;
   final VoidCallback onDelete;
   final Widget? leading;
@@ -65,6 +70,8 @@ class LocalizedChoiceTile extends StatelessWidget {
       primaryLocale: primaryLocale,
       locales: locales,
       initialText: textTranslations,
+      aiTranslateEnabled: aiTranslateEnabled,
+      onTranslate: onTranslate,
       onSubmit: onUpdate,
     );
   }

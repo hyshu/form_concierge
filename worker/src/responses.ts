@@ -40,6 +40,11 @@ export async function responseAnswers(env: Env, responseId: number, url: URL): P
   return json(rows.results.map(answerToJson));
 }
 
+type AnswerWithResponseMeta = AnswerRow & {
+  submitted_at: string;
+  anonymous_id: string | null;
+};
+
 export async function aggregatedResults(env: Env, surveyId: number): Promise<Response> {
   const totalResponses = await countRows(
     env.DB,
@@ -59,6 +64,13 @@ export async function aggregatedResults(env: Env, surveyId: number): Promise<Res
 
   const questionResults = questions.results.map((question) => {
     const answers = answersByQuestion.get(question.id) ?? [];
+    const individualAnswers = answers.map((answer) => ({
+      responseId: answer.survey_response_id,
+      submittedAt: answer.submitted_at,
+      anonymousId: answer.anonymous_id,
+      textValue: answer.text_value,
+      selectedChoiceIds: parseChoiceIds(answer.selected_choice_ids),
+    }));
     if (isChoiceQuestionType(question.type)) {
       const choices = choicesByQuestion.get(question.id) ?? [];
       const counts: Record<string, number> = {};
@@ -74,6 +86,7 @@ export async function aggregatedResults(env: Env, surveyId: number): Promise<Res
         questionType: question.type,
         choiceCounts: counts,
         textResponses: null,
+        individualAnswers,
       };
     }
     return {
@@ -84,17 +97,25 @@ export async function aggregatedResults(env: Env, surveyId: number): Promise<Res
       textResponses: answers
         .map((answer) => answer.text_value)
         .filter((value): value is string => Boolean(value)),
+      individualAnswers,
     };
   });
   return json({ surveyId, totalResponses, questionResults });
 }
 
-async function loadAnswersForQuestions(db: D1Database, questionIds: number[]): Promise<AnswerRow[]> {
+async function loadAnswersForQuestions(
+  db: D1Database,
+  questionIds: number[],
+): Promise<AnswerWithResponseMeta[]> {
   if (questionIds.length === 0) return [];
   const placeholders = questionIds.map(() => '?').join(', ');
   const rows = await db.prepare(
-    `SELECT * FROM answers WHERE question_id IN (${placeholders})`,
-  ).bind(...questionIds).all<AnswerRow>();
+    `SELECT a.*, r.submitted_at, r.anonymous_id
+     FROM answers a
+     JOIN survey_responses r ON r.id = a.survey_response_id
+     WHERE a.question_id IN (${placeholders})
+     ORDER BY r.submitted_at DESC, a.id`,
+  ).bind(...questionIds).all<AnswerWithResponseMeta>();
   return rows.results;
 }
 

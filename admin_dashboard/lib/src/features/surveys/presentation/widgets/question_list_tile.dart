@@ -6,6 +6,7 @@ import '../../../../core/extensions/question_type_presentation.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/hux_icon_action_button.dart';
 import 'choice_editor.dart';
+import 'survey_form.dart';
 
 /// List tile for displaying a question with its choices.
 class QuestionListTile extends StatelessWidget {
@@ -16,6 +17,8 @@ class QuestionListTile extends StatelessWidget {
   final List<QuestionVisibilityRule> visibilityRules;
   final Widget visibilityRuleEditor;
   final bool enabled;
+  final bool aiTranslateEnabled;
+  final SurveyLocalizedTranslate? onTranslate;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
   final void Function(LocalizedText textTranslations) onAddChoice;
@@ -32,6 +35,8 @@ class QuestionListTile extends StatelessWidget {
     required this.visibilityRules,
     required this.visibilityRuleEditor,
     required this.enabled,
+    this.aiTranslateEnabled = false,
+    this.onTranslate,
     required this.onEdit,
     required this.onDelete,
     required this.onAddChoice,
@@ -135,6 +140,8 @@ class QuestionListTile extends StatelessWidget {
                 primaryLocale: primaryLocale,
                 locales: locales,
                 enabled: enabled,
+                aiTranslateEnabled: aiTranslateEnabled,
+                onTranslate: onTranslate,
                 onAdd: onAddChoice,
                 onUpdate: onUpdateChoice,
                 onDelete: onDeleteChoice,

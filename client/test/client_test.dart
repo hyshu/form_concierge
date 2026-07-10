@@ -217,6 +217,7 @@ void main() {
       'choiceCounts': {'10': 2},
     });
     expect(result.choiceCounts, {10: 2});
+    expect(result.individualAnswers, isEmpty);
 
     expect(
       () => QuestionResult.fromJson({
@@ -237,6 +238,29 @@ void main() {
       }),
       throwsA(isA<FormatException>()),
     );
+  });
+
+  test('question result parses individual answers under aggregates', () {
+    final result = QuestionResult.fromJson({
+      'questionId': 1,
+      'questionText': 'Plan',
+      'questionType': 'singleChoice',
+      'choiceCounts': {'10': 1},
+      'individualAnswers': [
+        {
+          'responseId': 5,
+          'submittedAt': '2026-07-10T12:00:00.000Z',
+          'anonymousId': 'anon-1',
+          'textValue': null,
+          'selectedChoiceIds': [10],
+        },
+      ],
+    });
+
+    expect(result.individualAnswers, hasLength(1));
+    expect(result.individualAnswers.single.responseId, 5);
+    expect(result.individualAnswers.single.anonymousId, 'anon-1');
+    expect(result.individualAnswers.single.selectedChoiceIds, [10]);
   });
 
   test('text visibility rules reject coerced expected values', () {

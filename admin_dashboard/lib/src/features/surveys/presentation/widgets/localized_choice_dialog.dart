@@ -5,6 +5,7 @@ import 'package:hux/hux.dart';
 import '../../../../core/localization/app_localizations.dart';
 import 'localized_text_field_group.dart';
 import 'localized_text_helpers.dart';
+import 'survey_form.dart';
 
 Future<void> showLocalizedChoiceDialog(
   BuildContext context, {
@@ -13,6 +14,8 @@ Future<void> showLocalizedChoiceDialog(
   required Iterable<String> locales,
   required void Function(LocalizedText textTranslations) onSubmit,
   LocalizedText? initialText,
+  bool aiTranslateEnabled = false,
+  SurveyLocalizedTranslate? onTranslate,
 }) {
   final formKey = GlobalKey<FormState>();
   final controllers = createLocalizedTextControllers(initialText);
@@ -34,6 +37,19 @@ Future<void> showLocalizedChoiceDialog(
               labelText: context.tr('Choice text'),
               requiredMessage: context.tr('Choice text is required'),
               autofocus: initialText == null,
+              aiTranslateEnabled: aiTranslateEnabled,
+              onTranslate: onTranslate == null
+                  ? null
+                  : ({
+                      required sourceLocale,
+                      required sourceText,
+                      required targetLocales,
+                    }) => onTranslate(
+                      sourceLocale: sourceLocale,
+                      sourceText: sourceText,
+                      targetLocales: targetLocales,
+                      fieldKind: 'choice',
+                    ),
             ),
           ),
         ),

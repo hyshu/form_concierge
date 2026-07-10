@@ -32,7 +32,7 @@ import {
   updateQuestion,
 } from './admin_questions';
 import { notificationSettings } from './notification_settings';
-import { generateSurveyQuestions } from './ai_generation';
+import { generateSurveyQuestions, translateLocalizedText } from './ai_generation';
 import { getAdminIntegrationSettings, isAiGenerationConfigured, isEmailConfiguredResponse, updateAdminIntegrationSettings } from './admin_settings';
 import { getPublicChoices, getPublicProject, getPublicProjectByDomain, getPublicQuestions, submitResponse } from './public_surveys';
 import { listAdminVisibilityRules, listPublicVisibilityRules, replaceAdminVisibilityRules } from './visibility_rules';
@@ -357,6 +357,11 @@ async function routeAdmin(
   if (parts[2] === 'ai' && parts[3] === 'survey-questions') {
     requireScope(admin, 'survey:write');
     return generateSurveyQuestions(request, env);
+  }
+
+  if (parts[2] === 'ai' && parts[3] === 'translate-localized-text') {
+    requireScope(admin, 'survey:write');
+    return translateLocalizedText(request, env);
   }
 
   return json({ error: 'Not found' }, 404);

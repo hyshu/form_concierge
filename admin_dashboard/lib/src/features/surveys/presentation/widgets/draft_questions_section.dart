@@ -11,6 +11,7 @@ import 'ai_question_preview_dialog.dart';
 import 'draft_question_editor.dart';
 import 'localized_text_helpers.dart';
 import 'question_form_dialog.dart';
+import 'survey_form.dart';
 
 class DraftQuestionsSection extends StatelessWidget {
   const DraftQuestionsSection({
@@ -18,6 +19,8 @@ class DraftQuestionsSection extends StatelessWidget {
     required this.formManager,
     required this.formState,
     required this.aiGenerationEnabled,
+    this.aiTranslateEnabled = false,
+    this.onTranslate,
     required this.primaryLocale,
     required this.locales,
   });
@@ -25,6 +28,8 @@ class DraftQuestionsSection extends StatelessWidget {
   final SurveyFormManager formManager;
   final SurveyFormState formState;
   final bool aiGenerationEnabled;
+  final bool aiTranslateEnabled;
+  final SurveyLocalizedTranslate? onTranslate;
   final String primaryLocale;
   final Iterable<String> locales;
 
@@ -78,6 +83,8 @@ class DraftQuestionsSection extends StatelessWidget {
                 primaryLocale: primaryLocale,
                 locales: locales,
                 enabled: !formState.isSaving,
+                aiTranslateEnabled: aiTranslateEnabled,
+                onTranslate: onTranslate,
                 onEdit: (question) => _showEditDialog(context, question),
                 onDelete: (question) =>
                     formManager.deleteDraftQuestion(question.tempId),
@@ -116,6 +123,8 @@ class DraftQuestionsSection extends StatelessWidget {
       context,
       primaryLocale: primaryLocale,
       locales: locales,
+      aiTranslateEnabled: aiTranslateEnabled,
+      onTranslate: onTranslate,
       onSave:
           ({
             required LocalizedText textTranslations,
@@ -163,6 +172,8 @@ class DraftQuestionsSection extends StatelessWidget {
       existingQuestion: tempQuestion,
       primaryLocale: primaryLocale,
       locales: locales,
+      aiTranslateEnabled: aiTranslateEnabled,
+      onTranslate: onTranslate,
       onSave:
           ({
             required LocalizedText textTranslations,

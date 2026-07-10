@@ -7,6 +7,7 @@ import '../../../../core/widgets/confirm_delete_dialog.dart';
 import '../../../../core/widgets/hux_states.dart';
 import 'question_form_dialog.dart';
 import 'question_list_tile.dart';
+import 'survey_form.dart';
 import 'visibility_rule_editor.dart';
 
 /// Widget displaying the list of questions for a survey.
@@ -19,6 +20,8 @@ class QuestionList extends StatelessWidget {
   final Iterable<String> locales;
   final bool isLoading;
   final bool enabled;
+  final bool aiTranslateEnabled;
+  final SurveyLocalizedTranslate? onTranslate;
   final void Function({
     required LocalizedText textTranslations,
     required QuestionType type,
@@ -67,6 +70,8 @@ class QuestionList extends StatelessWidget {
     this.locales = formContentLocaleCodes,
     required this.isLoading,
     required this.enabled,
+    this.aiTranslateEnabled = false,
+    this.onTranslate,
     required this.onAddQuestion,
     required this.onEditQuestion,
     required this.onDeleteQuestion,
@@ -171,6 +176,8 @@ class QuestionList extends StatelessWidget {
                                   ),
                             ),
                             enabled: enabled,
+                            aiTranslateEnabled: aiTranslateEnabled,
+                            onTranslate: onTranslate,
                             onEdit: () => _showEditDialog(context, question),
                             onDelete: () => _confirmDelete(context, question),
                             onAddChoice: (text) =>
@@ -202,6 +209,8 @@ class QuestionList extends StatelessWidget {
       context,
       primaryLocale: primaryLocale,
       locales: locales,
+      aiTranslateEnabled: aiTranslateEnabled,
+      onTranslate: onTranslate,
       onSave:
           ({
             required LocalizedText textTranslations,
@@ -235,6 +244,8 @@ class QuestionList extends StatelessWidget {
       existingQuestion: question,
       primaryLocale: primaryLocale,
       locales: locales,
+      aiTranslateEnabled: aiTranslateEnabled,
+      onTranslate: onTranslate,
       onSave:
           ({
             required LocalizedText textTranslations,

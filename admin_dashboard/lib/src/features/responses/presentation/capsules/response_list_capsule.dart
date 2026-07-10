@@ -15,6 +15,11 @@ class ResponseListState {
   final String? error;
   final int currentPage;
   final int pageSize;
+  final List<Question> questions;
+  final Map<int, List<Choice>> choicesByQuestion;
+  final Map<int, List<Answer>> answersByResponseId;
+  final Set<int> loadingAnswerIds;
+  final Map<int, String> answerErrorsByResponseId;
 
   const ResponseListState({
     this.responses = const [],
@@ -24,6 +29,11 @@ class ResponseListState {
     this.error,
     this.currentPage = 0,
     this.pageSize = kDefaultPageSize,
+    this.questions = const [],
+    this.choicesByQuestion = const {},
+    this.answersByResponseId = const {},
+    this.loadingAnswerIds = const {},
+    this.answerErrorsByResponseId = const {},
   });
 
   factory ResponseListState.initial() => const ResponseListState();
@@ -36,6 +46,11 @@ class ResponseListState {
     String? error,
     int? currentPage,
     int? pageSize,
+    List<Question>? questions,
+    Map<int, List<Choice>>? choicesByQuestion,
+    Map<int, List<Answer>>? answersByResponseId,
+    Set<int>? loadingAnswerIds,
+    Map<int, String>? answerErrorsByResponseId,
   }) => ResponseListState(
     responses: responses ?? this.responses,
     totalCount: totalCount ?? this.totalCount,
@@ -44,6 +59,12 @@ class ResponseListState {
     error: error,
     currentPage: currentPage ?? this.currentPage,
     pageSize: pageSize ?? this.pageSize,
+    questions: questions ?? this.questions,
+    choicesByQuestion: choicesByQuestion ?? this.choicesByQuestion,
+    answersByResponseId: answersByResponseId ?? this.answersByResponseId,
+    loadingAnswerIds: loadingAnswerIds ?? this.loadingAnswerIds,
+    answerErrorsByResponseId:
+        answerErrorsByResponseId ?? this.answerErrorsByResponseId,
   );
 
   int get totalPages => (totalCount / pageSize).ceil();
@@ -96,6 +117,13 @@ class ResponseListManager {
         offset: page * state.pageSize,
       );
       final count = await _client.responseAnalytics.getResponseCount(surveyId);
+      // Question labels are needed when expanding individual answer content.
+      final questions = state.questions.isEmpty
+          ? await _client.questionAdmin.getForSurvey(surveyId)
+          : state.questions;
+      final choicesByQuestion = state.choicesByQuestion.isEmpty
+          ? await _client.questionAdmin.getChoicesByQuestion(questions)
+          : state.choicesByQuestion;
 
       _setState(
         surveyId,
@@ -104,6 +132,8 @@ class ResponseListManager {
           totalCount: count,
           isLoading: false,
           currentPage: page,
+          questions: questions,
+          choicesByQuestion: choicesByQuestion,
         ),
       );
     } on Exception catch (e) {
@@ -112,6 +142,57 @@ class ResponseListManager {
         getState(surveyId).copyWith(
           isLoading: false,
           error: 'Failed to load responses: $e',
+        ),
+      );
+    }
+  }
+
+  /// Lazy-load answers for one response when its ExpansionTile is opened.
+  Future<void> loadAnswersForResponse(int surveyId, int responseId) async {
+    final state = getState(surveyId);
+    if (state.answersByResponseId.containsKey(responseId) ||
+        state.loadingAnswerIds.contains(responseId)) {
+      return;
+    }
+
+    final loading = {...state.loadingAnswerIds, responseId};
+    final errors = Map<int, String>.from(state.answerErrorsByResponseId)
+      ..remove(responseId);
+    _setState(
+      surveyId,
+      state.copyWith(
+        loadingAnswerIds: loading,
+        answerErrorsByResponseId: errors,
+      ),
+    );
+
+    try {
+      final answers = await _client.responseAnalytics.getAnswersForResponse(
+        responseId,
+      );
+      final current = getState(surveyId);
+      final nextAnswers = Map<int, List<Answer>>.from(
+        current.answersByResponseId,
+      )..[responseId] = answers;
+      final nextLoading = {...current.loadingAnswerIds}..remove(responseId);
+      _setState(
+        surveyId,
+        current.copyWith(
+          answersByResponseId: nextAnswers,
+          loadingAnswerIds: nextLoading,
+        ),
+      );
+    } on Exception catch (e) {
+      final current = getState(surveyId);
+      final nextLoading = {...current.loadingAnswerIds}..remove(responseId);
+      final nextErrors = Map<int, String>.from(
+        current.answerErrorsByResponseId,
+      )..[responseId] = 'Failed to load answers: $e';
+      _setState(
+        surveyId,
+        current.copyWith(
+          loadingAnswerIds: nextLoading,
+          answerErrorsByResponseId: nextErrors,
         ),
       );
     }

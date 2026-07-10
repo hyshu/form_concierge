@@ -62,12 +62,39 @@ class SurveyResponse {
   });
 }
 
+/// One respondent's answer for a question, used under aggregated results.
+class IndividualAnswer {
+  final int responseId;
+  final DateTime submittedAt;
+  final String? anonymousId;
+  final String? textValue;
+  final List<int>? selectedChoiceIds;
+
+  const IndividualAnswer({
+    required this.responseId,
+    required this.submittedAt,
+    this.anonymousId,
+    this.textValue,
+    this.selectedChoiceIds,
+  });
+
+  factory IndividualAnswer.fromJson(Map<String, dynamic> json) =>
+      IndividualAnswer(
+        responseId: _int(json['responseId']),
+        submittedAt: _date(json['submittedAt']),
+        anonymousId: _optionalString(json['anonymousId']),
+        textValue: _optionalString(json['textValue']),
+        selectedChoiceIds: _intList(json['selectedChoiceIds']),
+      );
+}
+
 class QuestionResult {
   final int questionId;
   final String questionText;
   final QuestionType questionType;
   final Map<int, int>? choiceCounts;
   final List<String>? textResponses;
+  final List<IndividualAnswer> individualAnswers;
 
   const QuestionResult({
     required this.questionId,
@@ -75,6 +102,7 @@ class QuestionResult {
     required this.questionType,
     this.choiceCounts,
     this.textResponses,
+    this.individualAnswers = const [],
   });
 
   factory QuestionResult.fromJson(Map<String, dynamic> json) => QuestionResult(
@@ -87,6 +115,9 @@ class QuestionResult {
     textResponses: json['textResponses'] == null
         ? null
         : _stringList(json['textResponses']),
+    individualAnswers: json['individualAnswers'] == null
+        ? const []
+        : _objectList(json['individualAnswers'], IndividualAnswer.fromJson),
   );
 }
 

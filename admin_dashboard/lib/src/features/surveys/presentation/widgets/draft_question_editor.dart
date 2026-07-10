@@ -8,6 +8,7 @@ import '../../../../core/widgets/hux_icon_action_button.dart';
 import '../models/draft_question.dart';
 import 'localized_choice_dialog.dart';
 import 'localized_choice_tile.dart';
+import 'survey_form.dart';
 
 /// Widget for editing draft questions and their choices.
 class DraftQuestionEditor extends StatelessWidget {
@@ -15,6 +16,8 @@ class DraftQuestionEditor extends StatelessWidget {
   final String primaryLocale;
   final Iterable<String> locales;
   final bool enabled;
+  final bool aiTranslateEnabled;
+  final SurveyLocalizedTranslate? onTranslate;
   final void Function(DraftQuestion question) onEdit;
   final void Function(DraftQuestion question) onDelete;
   final void Function(int oldIndex, int newIndex) onReorder;
@@ -35,6 +38,8 @@ class DraftQuestionEditor extends StatelessWidget {
     this.primaryLocale = defaultFormContentLocale,
     this.locales = formContentLocaleCodes,
     required this.enabled,
+    this.aiTranslateEnabled = false,
+    this.onTranslate,
     required this.onEdit,
     required this.onDelete,
     required this.onReorder,
@@ -64,6 +69,8 @@ class DraftQuestionEditor extends StatelessWidget {
           primaryLocale: primaryLocale,
           locales: locales,
           enabled: enabled,
+          aiTranslateEnabled: aiTranslateEnabled,
+          onTranslate: onTranslate,
           onEdit: () => onEdit(question),
           onDelete: () => onDelete(question),
           onAddChoice: (text) => onAddChoice(question, text),
@@ -82,6 +89,8 @@ class _DraftQuestionTile extends StatefulWidget {
   final String primaryLocale;
   final Iterable<String> locales;
   final bool enabled;
+  final bool aiTranslateEnabled;
+  final SurveyLocalizedTranslate? onTranslate;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
   final void Function(LocalizedText textTranslations) onAddChoice;
@@ -96,6 +105,8 @@ class _DraftQuestionTile extends StatefulWidget {
     required this.primaryLocale,
     required this.locales,
     required this.enabled,
+    this.aiTranslateEnabled = false,
+    this.onTranslate,
     required this.onEdit,
     required this.onDelete,
     required this.onAddChoice,
@@ -199,6 +210,8 @@ class _DraftQuestionTileState extends State<_DraftQuestionTile> {
               primaryLocale: widget.primaryLocale,
               locales: widget.locales,
               enabled: widget.enabled,
+              aiTranslateEnabled: widget.aiTranslateEnabled,
+              onTranslate: widget.onTranslate,
               onAdd: widget.onAddChoice,
               onUpdate: widget.onUpdateChoice,
               onDelete: widget.onDeleteChoice,
@@ -214,6 +227,8 @@ class _ChoicesSection extends StatelessWidget {
   final String primaryLocale;
   final Iterable<String> locales;
   final bool enabled;
+  final bool aiTranslateEnabled;
+  final SurveyLocalizedTranslate? onTranslate;
   final void Function(LocalizedText textTranslations) onAdd;
   final void Function(DraftChoice choice, LocalizedText textTranslations)
   onUpdate;
@@ -224,6 +239,8 @@ class _ChoicesSection extends StatelessWidget {
     required this.primaryLocale,
     required this.locales,
     required this.enabled,
+    this.aiTranslateEnabled = false,
+    this.onTranslate,
     required this.onAdd,
     required this.onUpdate,
     required this.onDelete,
@@ -248,6 +265,8 @@ class _ChoicesSection extends StatelessWidget {
               primaryLocale: primaryLocale,
               locales: locales,
               enabled: enabled,
+              aiTranslateEnabled: aiTranslateEnabled,
+              onTranslate: onTranslate,
               onUpdate: (textTranslations) =>
                   onUpdate(choice, textTranslations),
               onDelete: () => onDelete(choice),
@@ -268,6 +287,8 @@ class _ChoicesSection extends StatelessWidget {
                 title: context.tr('Add Choice'),
                 primaryLocale: primaryLocale,
                 locales: locales,
+                aiTranslateEnabled: aiTranslateEnabled,
+                onTranslate: onTranslate,
                 onSubmit: onAdd,
               ),
               variant: HuxButtonVariant.outline,

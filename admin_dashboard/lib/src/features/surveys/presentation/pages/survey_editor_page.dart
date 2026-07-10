@@ -49,6 +49,7 @@ class SurveyEditorPage extends RearchConsumer {
 
     // Load survey and questions on first build (only for existing surveys)
     if (use.isFirstBuild()) {
+      publicConfig.loadConfig();
       if (isNewSurvey && projectId != null) {
         formManager.loadProject(projectId!);
       } else if (!isNewSurvey) {
@@ -186,6 +187,8 @@ class SurveyEditorPage extends RearchConsumer {
                 isNewSurvey,
                 activeDefaultLocale,
                 activeLocales,
+                aiGenerationEnabled,
+                client,
               ),
               const SizedBox(height: 32),
               if (isNewSurvey) ...[
@@ -193,6 +196,10 @@ class SurveyEditorPage extends RearchConsumer {
                   formManager: formManager,
                   formState: formState,
                   aiGenerationEnabled: aiGenerationEnabled,
+                  aiTranslateEnabled: aiGenerationEnabled,
+                  onTranslate: aiGenerationEnabled
+                      ? _translateWithClient(client)
+                      : null,
                   primaryLocale: activeDefaultLocale,
                   locales: activeLocales,
                 ),
@@ -218,6 +225,10 @@ class SurveyEditorPage extends RearchConsumer {
                   locales: activeLocales,
                   isLoading: questionState.isLoading,
                   enabled: canEdit,
+                  aiTranslateEnabled: aiGenerationEnabled && canEdit,
+                  onTranslate: aiGenerationEnabled && canEdit
+                      ? _translateWithClient(client)
+                      : null,
                   onAddQuestion:
                       ({
                         required LocalizedText textTranslations,
@@ -335,6 +346,8 @@ class SurveyEditorPage extends RearchConsumer {
     bool isNewSurvey,
     String primaryLocale,
     Iterable<String> locales,
+    bool aiTranslateEnabled,
+    Client client,
   ) {
     return SurveyForm(
       key: surveyFormKey,
@@ -345,6 +358,8 @@ class SurveyEditorPage extends RearchConsumer {
       primaryLocale: primaryLocale,
       locales: locales,
       showSubmitButton: !isNewSurvey,
+      aiTranslateEnabled: aiTranslateEnabled,
+      onTranslate: aiTranslateEnabled ? _translateWithClient(client) : null,
       onSave:
           ({
             required String slug,
@@ -375,6 +390,26 @@ class SurveyEditorPage extends RearchConsumer {
             }
           },
     );
+  }
+
+  SurveyLocalizedTranslate _translateWithClient(Client client) {
+    return ({
+      required String sourceLocale,
+      required String sourceText,
+      required List<String> targetLocales,
+      required String fieldKind,
+    }) async {
+      try {
+        return await client.aiAdmin.translateLocalizedText(
+          sourceLocale: sourceLocale,
+          sourceText: sourceText,
+          targetLocales: targetLocales,
+          fieldKind: fieldKind,
+        );
+      } catch (error) {
+        throw Exception('Failed to translate: $error');
+      }
+    };
   }
 
   /// Returns true if the survey can be published.

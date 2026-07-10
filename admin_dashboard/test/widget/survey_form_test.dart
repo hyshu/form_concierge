@@ -220,15 +220,17 @@ void main() {
       expect(find.text('Create Survey'), findsOneWidget);
     });
 
-    testWidgets('shows required secondary language fields', (
+    testWidgets('shows primary title and description with other languages', (
       tester,
     ) async {
       await tester.pumpWidget(buildSubject());
 
       expect(find.text('Localized titles'), findsNothing);
-      expect(find.text('Title (English)'), findsOneWidget);
+      expect(find.text('Localized descriptions'), findsNothing);
+      expect(find.text('Title'), findsOneWidget);
+      expect(find.text('Description'), findsOneWidget);
+      expect(find.text('Other languages'), findsWidgets);
       expect(find.text('Title (日本語)'), findsOneWidget);
-      expect(find.text('Other languages'), findsOneWidget);
     });
   });
 

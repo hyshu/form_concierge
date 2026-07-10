@@ -319,4 +319,32 @@ class AiAdminEndpoint {
     );
     return _objectList(json, QuestionWithChoices.fromJson);
   }
+
+  /// Translate [sourceText] from [sourceLocale] into each of [targetLocales].
+  Future<Map<String, String>> translateLocalizedText({
+    required String sourceLocale,
+    required String sourceText,
+    required List<String> targetLocales,
+    String? fieldKind,
+  }) async {
+    final json = await _client.request(
+      'POST',
+      '/api/admin/ai/translate-localized-text',
+      body: {
+        'sourceLocale': sourceLocale,
+        'sourceText': sourceText,
+        'targetLocales': targetLocales,
+        if (fieldKind != null) 'fieldKind': fieldKind,
+      },
+      authenticated: true,
+    );
+    final map = _requiredMap(json);
+    final translations = map['translations'];
+    if (translations is! Map) {
+      throw const ApiException(502, 'Invalid translations response');
+    }
+    return translations.map(
+      (key, value) => MapEntry(key.toString(), value?.toString() ?? ''),
+    );
+  }
 }

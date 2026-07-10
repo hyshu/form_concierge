@@ -16,9 +16,15 @@ class ResponseList extends StatelessWidget {
   final bool isLoading;
   final bool canManageResponses;
   final String? error;
+  final List<Question> questions;
+  final Map<int, List<Choice>> choicesByQuestion;
+  final Map<int, List<Answer>> answersByResponseId;
+  final Set<int> loadingAnswerIds;
+  final Map<int, String> answerErrorsByResponseId;
   final void Function(int page) onPageChange;
   final void Function(SurveyResponse response) onDelete;
   final void Function(SurveyResponse response) onReply;
+  final void Function(int responseId) onExpandAnswers;
 
   const ResponseList({
     super.key,
@@ -29,9 +35,15 @@ class ResponseList extends StatelessWidget {
     required this.isLoading,
     required this.canManageResponses,
     this.error,
+    this.questions = const [],
+    this.choicesByQuestion = const {},
+    this.answersByResponseId = const {},
+    this.loadingAnswerIds = const {},
+    this.answerErrorsByResponseId = const {},
     required this.onPageChange,
     required this.onDelete,
     required this.onReply,
+    required this.onExpandAnswers,
   });
 
   @override
@@ -66,12 +78,27 @@ class ResponseList extends StatelessWidget {
             padding: const EdgeInsets.only(top: 16, bottom: 16),
             itemBuilder: (context, index) {
               final response = responses[index];
+              final responseId = response.id;
               return _ResponseTile(
+                key: ValueKey(responseId ?? 'response-$index'),
                 response: response,
                 index: currentPage * kDefaultPageSize + index + 1,
                 canManageResponses: canManageResponses,
+                questions: questions,
+                choicesByQuestion: choicesByQuestion,
+                answers: responseId == null
+                    ? null
+                    : answersByResponseId[responseId],
+                isLoadingAnswers:
+                    responseId != null && loadingAnswerIds.contains(responseId),
+                answersError: responseId == null
+                    ? null
+                    : answerErrorsByResponseId[responseId],
                 onDelete: () => onDelete(response),
                 onReply: () => onReply(response),
+                onExpand: responseId == null
+                    ? null
+                    : () => onExpandAnswers(responseId),
               );
             },
           ),
@@ -123,19 +150,33 @@ class _ResponseTile extends StatelessWidget {
   final SurveyResponse response;
   final int index;
   final bool canManageResponses;
+  final List<Question> questions;
+  final Map<int, List<Choice>> choicesByQuestion;
+  final List<Answer>? answers;
+  final bool isLoadingAnswers;
+  final String? answersError;
   final VoidCallback onDelete;
   final VoidCallback onReply;
+  final VoidCallback? onExpand;
 
   const _ResponseTile({
+    super.key,
     required this.response,
     required this.index,
     required this.canManageResponses,
+    required this.questions,
+    required this.choicesByQuestion,
+    required this.answers,
+    required this.isLoadingAnswers,
+    required this.answersError,
     required this.onDelete,
     required this.onReply,
+    required this.onExpand,
   });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final deviceInfo = response.deviceInfo;
     final deviceSummary = deviceInfo?.summary;
     final deviceDetails = deviceInfo?.detailSummary;
@@ -145,88 +186,118 @@ class _ResponseTile extends StatelessWidget {
     return HuxCard(
       margin: const EdgeInsets.only(bottom: 8),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: HuxTokens.surfaceSecondary(context),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              '#$index',
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: HuxTokens.textSecondary(context),
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  response.submittedAt.toIsoDateTimeString(),
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Icon(
-                      response.userId != null
-                          ? LucideIcons.user
-                          : LucideIcons.userRound,
-                      size: 16,
-                      color: HuxTokens.iconSecondary(context),
+            child: Theme(
+              data: theme.copyWith(
+                dividerColor: theme.colorScheme.surface.withValues(alpha: 0),
+              ),
+              child: ExpansionTile(
+                tilePadding: EdgeInsets.zero,
+                childrenPadding: const EdgeInsets.only(top: 4, bottom: 8),
+                onExpansionChanged: (expanded) {
+                  if (expanded) onExpand?.call();
+                },
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: HuxTokens.surfaceSecondary(context),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    '#$index',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: HuxTokens.textSecondary(context),
                     ),
-                    const SizedBox(width: 4),
+                  ),
+                ),
+                title: Text(
+                  response.submittedAt.toIsoDateTimeString(),
+                  style: theme.textTheme.titleSmall,
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(
+                          response.userId != null
+                              ? LucideIcons.user
+                              : LucideIcons.userRound,
+                          size: 16,
+                          color: HuxTokens.iconSecondary(context),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          response.userId != null
+                              ? context.tr('User #{id}', {
+                                  'id': response.userId,
+                                })
+                              : context.tr('Anonymous'),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: HuxTokens.textSecondary(context),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (deviceSummary != null) ...[
+                      const SizedBox(height: 4),
+                      _InfoRow(
+                        icon: LucideIcons.monitorSmartphone,
+                        text: deviceSummary,
+                        color: HuxTokens.textSecondary(context),
+                      ),
+                    ],
+                    if (deviceDetails != null) ...[
+                      const SizedBox(height: 4),
+                      _InfoRow(
+                        icon: LucideIcons.info,
+                        text: deviceDetails,
+                        color: HuxTokens.textSecondary(context),
+                      ),
+                    ],
+                    if (userAgent != null) ...[
+                      const SizedBox(height: 4),
+                      Tooltip(
+                        message: userAgent,
+                        child: _InfoRow(
+                          icon: LucideIcons.globe,
+                          text: userAgent,
+                          color: HuxTokens.textSecondary(context),
+                        ),
+                      ),
+                    ],
+                    if (metadataSummary != null) ...[
+                      const SizedBox(height: 4),
+                      _InfoRow(
+                        icon: LucideIcons.tags,
+                        text: metadataSummary,
+                        color: HuxTokens.textSecondary(context),
+                      ),
+                    ],
+                    const SizedBox(height: 4),
                     Text(
-                      response.userId != null
-                          ? context.tr('User #{id}', {'id': response.userId})
-                          : context.tr('Anonymous'),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      context.tr('View answers'),
+                      style: theme.textTheme.labelSmall?.copyWith(
                         color: HuxTokens.textSecondary(context),
                       ),
                     ),
                   ],
                 ),
-                if (deviceSummary != null) ...[
-                  const SizedBox(height: 4),
-                  _InfoRow(
-                    icon: LucideIcons.monitorSmartphone,
-                    text: deviceSummary,
-                    color: HuxTokens.textSecondary(context),
+                children: [
+                  _AnswersBody(
+                    questions: questions,
+                    choicesByQuestion: choicesByQuestion,
+                    answers: answers,
+                    isLoading: isLoadingAnswers,
+                    error: answersError,
                   ),
                 ],
-                if (deviceDetails != null) ...[
-                  const SizedBox(height: 4),
-                  _InfoRow(
-                    icon: LucideIcons.info,
-                    text: deviceDetails,
-                    color: HuxTokens.textSecondary(context),
-                  ),
-                ],
-                if (userAgent != null) ...[
-                  const SizedBox(height: 4),
-                  Tooltip(
-                    message: userAgent,
-                    child: _InfoRow(
-                      icon: LucideIcons.globe,
-                      text: userAgent,
-                      color: HuxTokens.textSecondary(context),
-                    ),
-                  ),
-                ],
-                if (metadataSummary != null) ...[
-                  const SizedBox(height: 4),
-                  _InfoRow(
-                    icon: LucideIcons.tags,
-                    text: metadataSummary,
-                    color: HuxTokens.textSecondary(context),
-                  ),
-                ],
-              ],
+              ),
             ),
           ),
           if (canManageResponses)
@@ -282,6 +353,160 @@ class _ResponseTile extends StatelessWidget {
       return '${entry.key}: $display';
     });
     return values.join(' / ');
+  }
+}
+
+class _AnswersBody extends StatelessWidget {
+  final List<Question> questions;
+  final Map<int, List<Choice>> choicesByQuestion;
+  final List<Answer>? answers;
+  final bool isLoading;
+  final String? error;
+
+  const _AnswersBody({
+    required this.questions,
+    required this.choicesByQuestion,
+    required this.answers,
+    required this.isLoading,
+    required this.error,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (isLoading) {
+      return Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: HuxTokens.primary(context),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(context.tr('Loading...')),
+          ],
+        ),
+      );
+    }
+
+    if (error != null) {
+      return Padding(
+        padding: const EdgeInsets.all(12),
+        child: Text(
+          context.trMessage(error!),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).colorScheme.error,
+          ),
+        ),
+      );
+    }
+
+    if (answers == null) {
+      return const SizedBox.shrink();
+    }
+
+    if (answers!.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(12),
+        child: Text(
+          context.tr('No answers for this response'),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: HuxTokens.textSecondary(context),
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+      );
+    }
+
+    final questionById = {
+      for (final question in questions)
+        if (question.id != null) question.id!: question,
+    };
+    final sortedAnswers = List<Answer>.from(answers!)
+      ..sort((a, b) {
+        final aOrder = questionById[a.questionId]?.orderIndex ?? a.questionId;
+        final bOrder = questionById[b.questionId]?.orderIndex ?? b.questionId;
+        return aOrder.compareTo(bOrder);
+      });
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final answer in sortedAnswers)
+          _AnswerRow(
+            key: ValueKey('answer-${answer.id ?? answer.questionId}'),
+            question: questionById[answer.questionId],
+            answer: answer,
+            choices: choicesByQuestion[answer.questionId] ?? const [],
+          ),
+      ],
+    );
+  }
+}
+
+class _AnswerRow extends StatelessWidget {
+  final Question? question;
+  final Answer answer;
+  final List<Choice> choices;
+
+  const _AnswerRow({
+    super.key,
+    required this.question,
+    required this.answer,
+    required this.choices,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final questionLabel = question?.text ?? 'Q${answer.questionId}';
+    final value = _formatAnswerValue(answer, choices);
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: HuxTokens.surfaceSecondary(context),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: HuxTokens.borderSecondary(context)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            questionLabel,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: HuxTokens.textSecondary(context),
+            ),
+          ),
+          const SizedBox(height: 4),
+          SelectableText(
+            value,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatAnswerValue(Answer answer, List<Choice> choices) {
+    final text = answer.textValue?.trim();
+    if (text != null && text.isNotEmpty) return text;
+
+    final selected = answer.selectedChoiceIds ?? const <int>[];
+    if (selected.isEmpty) return '—';
+
+    final labelsById = {
+      for (final choice in choices)
+        if (choice.id != null) choice.id!: choice.text,
+    };
+    return selected
+        .map((id) => labelsById[id] ?? '[#$id]')
+        .join(', ');
   }
 }
 

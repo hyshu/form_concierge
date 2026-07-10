@@ -8,6 +8,15 @@ import '../capsules/survey_form_capsule.dart';
 import 'localized_text_field_group.dart';
 import 'localized_text_helpers.dart';
 
+/// Translate helper that includes a field kind for better LLM context.
+typedef SurveyLocalizedTranslate =
+    Future<Map<String, String>> Function({
+      required String sourceLocale,
+      required String sourceText,
+      required List<String> targetLocales,
+      required String fieldKind,
+    });
+
 /// Form widget for creating/editing survey basic info (title, slug, etc.).
 class SurveyForm extends StatefulWidget {
   final SurveyFormControllers controllers;
@@ -17,6 +26,8 @@ class SurveyForm extends StatefulWidget {
   final String primaryLocale;
   final Iterable<String> locales;
   final bool showSubmitButton;
+  final bool aiTranslateEnabled;
+  final SurveyLocalizedTranslate? onTranslate;
   final Future<void> Function({
     required String slug,
     required LocalizedText titleTranslations,
@@ -33,6 +44,8 @@ class SurveyForm extends StatefulWidget {
     required this.primaryLocale,
     this.locales = formContentLocaleCodes,
     this.showSubmitButton = true,
+    this.aiTranslateEnabled = false,
+    this.onTranslate,
     required this.onSave,
   });
 
@@ -97,6 +110,19 @@ class SurveyFormWidgetState extends State<SurveyForm> {
               enabled: !widget.isSaving,
               requiredMessage: context.tr('Title is required'),
               textInputAction: TextInputAction.next,
+              aiTranslateEnabled: widget.aiTranslateEnabled,
+              onTranslate: widget.onTranslate == null
+                  ? null
+                  : ({
+                      required sourceLocale,
+                      required sourceText,
+                      required targetLocales,
+                    }) => widget.onTranslate!(
+                      sourceLocale: sourceLocale,
+                      sourceText: sourceText,
+                      targetLocales: targetLocales,
+                      fieldKind: 'title',
+                    ),
             ),
             const SizedBox(height: 16),
             HuxInput(
@@ -108,19 +134,27 @@ class SurveyFormWidgetState extends State<SurveyForm> {
               validator: (value) => validateSlug(context, value),
             ),
             const SizedBox(height: 16),
-            Text(
-              context.tr('Localized descriptions'),
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            const SizedBox(height: 8),
             LocalizedTextFieldGroup(
               controllers: widget.controllers.descriptionTranslations,
               primaryLocale: widget.primaryLocale,
               locales: widget.locales,
-              labelText: context.tr('Description (optional)'),
+              labelText: context.tr('Description'),
               hintText: context.tr('Brief description of the survey'),
               enabled: !widget.isSaving,
               maxLines: 2,
+              aiTranslateEnabled: widget.aiTranslateEnabled,
+              onTranslate: widget.onTranslate == null
+                  ? null
+                  : ({
+                      required sourceLocale,
+                      required sourceText,
+                      required targetLocales,
+                    }) => widget.onTranslate!(
+                      sourceLocale: sourceLocale,
+                      sourceText: sourceText,
+                      targetLocales: targetLocales,
+                      fieldKind: 'description',
+                    ),
             ),
             if (widget.error != null) ...[
               const SizedBox(height: 16),
