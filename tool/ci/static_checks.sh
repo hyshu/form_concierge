@@ -45,6 +45,11 @@ fi
   flutter pub get
 )
 
+dart run tool/generate_localizations.dart
+git diff --exit-code -- \
+  admin_dashboard/lib/src/core/localization/admin_messages.g.dart \
+  client/lib/src/models/survey_messages.g.dart
+
 dart format --set-exit-if-changed \
   admin_dashboard/lib \
   admin_dashboard/test \

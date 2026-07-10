@@ -18,6 +18,7 @@ part 'src/models/device_info.dart';
 part 'src/models/responses.dart';
 part 'src/models/settings.dart';
 part 'src/models/survey.dart';
+part 'src/models/survey_messages.g.dart';
 part 'src/client.dart';
 part 'src/endpoints/admin_surveys.dart';
 part 'src/endpoints/anonymous.dart';
