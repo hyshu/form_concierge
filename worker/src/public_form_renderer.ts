@@ -166,9 +166,13 @@ function renderSurveyHtml(env: Env, url: URL, data: PublicFormData): string {
     body: `
       <main id="form-concierge-ssr-root" class="survey-wrapper">
         <section class="max-w-xl mx-auto bg-white rounded-xl shadow-md border border-slate-200 p-6">
-          <h1 class="text-2xl font-semibold text-slate-900">${escapeHtml(title)}</h1>
-          ${description ? `<p class="mt-4 text-slate-600 leading-relaxed">${escapeHtml(description)}</p>` : ''}
-          ${renderLocaleList(data.project.supportedLocales)}
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0 flex-1">
+              <h1 class="text-2xl font-semibold text-slate-900">${escapeHtml(title)}</h1>
+              ${description ? `<p class="mt-2 text-slate-600 leading-relaxed">${escapeHtml(description)}</p>` : ''}
+            </div>
+            ${renderLocaleList(data.project.supportedLocales, locale)}
+          </div>
         </section>
         <section class="max-w-xl mx-auto mt-6 space-y-4">
           ${data.questions.map((question) => renderQuestion(question, data.choicesByQuestion, locale)).join('')}
@@ -252,12 +256,17 @@ ${input.body}
 </html>`;
 }
 
-function renderLocaleList(locales: string[]): string {
+function renderLocaleList(locales: string[], selectedLocale: string): string {
   if (locales.length <= 1) return '';
   return `
-    <div class="mt-4 flex gap-2">
-      ${locales.map((locale) => `<span class="px-4 py-2 bg-indigo-50 text-slate-700 rounded-full text-sm">${escapeHtml(localeLabel(locale))}</span>`).join('')}
-    </div>
+    <select name="locale" class="shrink-0 px-3 py-1.5 border border-slate-200 rounded-lg text-sm bg-white text-slate-700" disabled>
+      ${locales
+        .map(
+          (locale) =>
+            `<option value="${escapeAttribute(locale)}"${locale === selectedLocale ? ' selected' : ''}>${escapeHtml(localeLabel(locale))}</option>`,
+        )
+        .join('')}
+    </select>
   `;
 }
 

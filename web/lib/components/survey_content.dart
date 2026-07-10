@@ -46,23 +46,44 @@ class SurveyContent extends StatelessComponent {
             div(classes: 'h-2', []),
             // Content
             div(classes: 'p-6', [
-              h1(classes: 'text-xl font-semibold text-slate-900', [
-                Component.text(survey.titleFor(locale)),
+              div(classes: 'flex items-start justify-between gap-3', [
+                div(classes: 'min-w-0 flex-1', [
+                  h1(classes: 'text-xl font-semibold text-slate-900', [
+                    Component.text(survey.titleFor(locale)),
+                  ]),
+                  if (survey.descriptionFor(locale).isNotEmpty)
+                    p(
+                        classes:
+                            'mt-2 text-sm text-slate-600 leading-relaxed',
+                        [
+                          Component.text(survey.descriptionFor(locale)),
+                        ]),
+                ]),
+                if (project.supportedLocales.length > 1)
+                  select(
+                    [
+                      for (final localeOption in project.supportedLocales)
+                        option(
+                          [
+                            Component.text(
+                              formContentLocaleLabels[localeOption] ??
+                                  localeOption,
+                            ),
+                          ],
+                          value: localeOption,
+                          selected: localeOption == locale,
+                        ),
+                    ],
+                    name: 'locale',
+                    value: locale,
+                    classes:
+                        'shrink-0 px-3 py-1.5 border border-slate-200 rounded-lg text-sm bg-white text-slate-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 focus:outline-none',
+                    onChange: (values) {
+                      if (values.isEmpty) return;
+                      onLocaleChanged(values.first);
+                    },
+                  ),
               ]),
-              if (survey.descriptionFor(locale).isNotEmpty)
-                p(classes: 'mt-2 text-sm text-slate-600 leading-relaxed', [
-                  Component.text(survey.descriptionFor(locale)),
-                ]),
-              if (project.supportedLocales.length > 1)
-                div(classes: 'mt-4 flex flex-wrap gap-2', [
-                  for (final option in project.supportedLocales)
-                    button(
-                      [Component.text(formContentLocaleLabels[option]!)],
-                      classes:
-                          'px-3 py-1.5 rounded-lg border text-xs font-medium ${option == locale ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-200 text-slate-600 hover:border-slate-300'}',
-                      onClick: () => onLocaleChanged(option),
-                    ),
-                ]),
             ]),
           ]),
 
