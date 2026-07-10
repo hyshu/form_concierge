@@ -41,9 +41,7 @@ class QuestionListState {
 /// Capsule using keyed state pattern for per-survey question lists.
 KeyedStateAccessors<int, QuestionListState> questionListStateCapsule(
   CapsuleHandle use,
-) {
-  return createKeyedState(use, QuestionListState.initial);
-}
+) => createKeyedState(use, QuestionListState.initial);
 
 /// Capsule that provides the question list manager.
 QuestionListManager questionListManagerCapsule(CapsuleHandle use) {
@@ -65,10 +63,9 @@ class QuestionListManager {
 
   QuestionListManager({
     required this.getState,
-    required void Function(int surveyId, QuestionListState state) setState,
-    required Client client,
-  }) : _setState = setState,
-       _client = client;
+    required this._setState,
+    required this._client,
+  });
 
   /// Load all questions for a survey.
   Future<void> loadQuestions(int surveyId) async {
@@ -118,97 +115,85 @@ class QuestionListManager {
     int? maxSelected,
     VisibilityConditionMode visibilityConditionMode =
         VisibilityConditionMode.all,
-  }) async {
-    return _runAndReload(
-      surveyId,
-      () {
-        final question = Question(
-          surveyId: surveyId,
-          textTranslations: textTranslations,
-          type: type,
-          orderIndex: getState(surveyId).questions.length,
-          isRequired: isRequired,
-          placeholderTranslations: placeholderTranslations,
-          minLength: minLength,
-          maxLength: maxLength,
-          minSelected: minSelected,
-          maxSelected: maxSelected,
-          visibilityConditionMode: visibilityConditionMode,
-        );
-        return _client.questionAdmin.create(question);
-      },
-      'Failed to create question',
-    );
-  }
+  }) => _runAndReload(
+    surveyId,
+    () {
+      final question = Question(
+        surveyId: surveyId,
+        textTranslations: textTranslations,
+        type: type,
+        orderIndex: getState(surveyId).questions.length,
+        isRequired: isRequired,
+        placeholderTranslations: placeholderTranslations,
+        minLength: minLength,
+        maxLength: maxLength,
+        minSelected: minSelected,
+        maxSelected: maxSelected,
+        visibilityConditionMode: visibilityConditionMode,
+      );
+      return _client.questionAdmin.create(question);
+    },
+    'Failed to create question',
+  );
 
   /// Update an existing question.
-  Future<Question?> updateQuestion(Question question) async {
-    return _runAndReload(
-      question.surveyId,
-      () => _client.questionAdmin.update(question),
-      'Failed to update question',
-    );
-  }
+  Future<Question?> updateQuestion(Question question) => _runAndReload(
+    question.surveyId,
+    () => _client.questionAdmin.update(question),
+    'Failed to update question',
+  );
 
   /// Delete a question.
-  Future<bool> deleteQuestion(int surveyId, int questionId) async {
-    return _runBoolAndReload(
-      surveyId,
-      () => _client.questionAdmin.delete(questionId),
-      'Failed to delete question',
-    );
-  }
+  Future<bool> deleteQuestion(int surveyId, int questionId) =>
+      _runBoolAndReload(
+        surveyId,
+        () => _client.questionAdmin.delete(questionId),
+        'Failed to delete question',
+      );
 
   /// Reorder questions.
-  Future<bool> reorderQuestions(int surveyId, List<int> questionIds) async {
-    return _runBoolAndReload(
-      surveyId,
-      () => _client.questionAdmin.reorder(surveyId, questionIds),
-      'Failed to reorder questions',
-    );
-  }
+  Future<bool> reorderQuestions(int surveyId, List<int> questionIds) =>
+      _runBoolAndReload(
+        surveyId,
+        () => _client.questionAdmin.reorder(surveyId, questionIds),
+        'Failed to reorder questions',
+      );
 
   /// Create a new choice for a question.
   Future<Choice?> createChoice({
     required int questionId,
     required int surveyId,
     required LocalizedText textTranslations,
-  }) async {
-    return _runAndReload(
-      surveyId,
-      () {
-        final choice = Choice(
-          questionId: questionId,
-          textTranslations: textTranslations,
-          orderIndex:
-              getState(surveyId).choicesByQuestion[questionId]?.length ?? 0,
-        );
-        return _client.choiceAdmin.create(choice);
-      },
-      'Failed to create choice',
-    );
-  }
+  }) => _runAndReload(
+    surveyId,
+    () {
+      final choice = Choice(
+        questionId: questionId,
+        textTranslations: textTranslations,
+        orderIndex:
+            getState(surveyId).choicesByQuestion[questionId]?.length ?? 0,
+      );
+      return _client.choiceAdmin.create(choice);
+    },
+    'Failed to create choice',
+  );
 
   /// Update a choice.
   Future<Choice?> updateChoice(
     Choice choice,
     int surveyId,
-  ) async {
-    return _runAndReload(
-      surveyId,
-      () => _client.choiceAdmin.update(choice),
-      'Failed to update choice',
-    );
-  }
+  ) => _runAndReload(
+    surveyId,
+    () => _client.choiceAdmin.update(choice),
+    'Failed to update choice',
+  );
 
   /// Delete a choice.
-  Future<bool> deleteChoice(int choiceId, int surveyId) async {
-    return _runBoolAndReload(
-      surveyId,
-      () => _client.choiceAdmin.delete(choiceId),
-      'Failed to delete choice',
-    );
-  }
+  Future<bool> deleteChoice(int choiceId, int surveyId) => _runBoolAndReload(
+    surveyId,
+    () => _client.choiceAdmin.delete(choiceId),
+    'Failed to delete choice',
+  );
 
   Future<bool> saveVisibilityRules({
     required int surveyId,
@@ -241,34 +226,28 @@ class QuestionListManager {
     int surveyId,
     Future<T> Function() action,
     String errorMessage,
-  ) async {
-    return runAndReload(
-      action: action,
-      reload: () => loadQuestions(surveyId),
-      setError: (error) => _setError(surveyId, error),
-      errorMessage: errorMessage,
-    );
-  }
+  ) => runAndReload(
+    action: action,
+    reload: () => loadQuestions(surveyId),
+    setError: (error) => _setError(surveyId, error),
+    errorMessage: errorMessage,
+  );
 
   Future<bool> _runBoolAndReload(
     int surveyId,
     Future<void> Function() action,
     String errorMessage,
-  ) async {
-    return runVoidAndReload(
-      action: action,
-      reload: () => loadQuestions(surveyId),
-      setError: (error) => _setError(surveyId, error),
-      errorMessage: errorMessage,
-    );
-  }
+  ) => runVoidAndReload(
+    action: action,
+    reload: () => loadQuestions(surveyId),
+    setError: (error) => _setError(surveyId, error),
+    errorMessage: errorMessage,
+  );
 
   /// Clear error for a survey.
-  void clearError(int surveyId) {
-    _setState(surveyId, getState(surveyId).copyWith(error: null));
-  }
+  void clearError(int surveyId) =>
+      _setState(surveyId, getState(surveyId).copyWith(error: null));
 
-  void _setError(int surveyId, String error) {
-    _setState(surveyId, getState(surveyId).copyWith(error: error));
-  }
+  void _setError(int surveyId, String error) =>
+      _setState(surveyId, getState(surveyId).copyWith(error: error));
 }

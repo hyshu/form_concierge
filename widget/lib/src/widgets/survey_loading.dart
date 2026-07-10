@@ -4,7 +4,5 @@ class SurveyLoading extends StatelessWidget {
   const SurveyLoading({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return const Center(child: CircularProgressIndicator());
-  }
+  Widget build(context) => const Center(child: CircularProgressIndicator());
 }

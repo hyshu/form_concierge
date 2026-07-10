@@ -9,7 +9,7 @@ class App extends StatelessComponent {
   final String serverUrl;
 
   @override
-  Component build(BuildContext context) {
+  Component build(context) {
     final parts = _pathParts(currentPathname());
     final isApiHost = Uri.parse(serverUrl).host == currentHostname();
     final projectSlug = isApiHost && parts.isNotEmpty ? parts.first : null;

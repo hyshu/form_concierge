@@ -17,17 +17,15 @@ class HuxPageBody extends StatelessWidget {
   final EdgeInsetsGeometry padding;
 
   @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: padding,
-      child: Center(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: maxWidth),
-          child: child,
-        ),
+  Widget build(context) => SingleChildScrollView(
+    padding: padding,
+    child: Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: maxWidth),
+        child: child,
       ),
-    );
-  }
+    ),
+  );
 }
 
 class HuxEmptyState extends StatelessWidget {
@@ -45,39 +43,37 @@ class HuxEmptyState extends StatelessWidget {
   final Widget? action;
 
   @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: HuxCard(
-        size: HuxCardSize.large,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 48, color: HuxTokens.iconSecondary(context)),
-            const SizedBox(height: 16),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+  Widget build(context) => Center(
+    child: HuxCard(
+      size: HuxCardSize.large,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 48, color: HuxTokens.iconSecondary(context)),
+          const SizedBox(height: 16),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w700,
             ),
-            if (message.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style: TextStyle(color: HuxTokens.textSecondary(context)),
-              ),
-            ],
-            if (action != null) ...[
-              const SizedBox(height: 20),
-              action!,
-            ],
+          ),
+          if (message.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: HuxTokens.textSecondary(context)),
+            ),
           ],
-        ),
+          if (action != null) ...[
+            const SizedBox(height: 20),
+            action!,
+          ],
+        ],
       ),
-    );
-  }
+    ),
+  );
 }
 
 class HuxLoadingState extends StatelessWidget {
@@ -95,47 +91,45 @@ class HuxLoadingState extends StatelessWidget {
   final EdgeInsetsGeometry padding;
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: padding,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final compactWidth = maxWidth < 280 ? maxWidth : 280.0;
-          final width = constraints.maxWidth.isFinite
-              ? constraints.maxWidth.clamp(0.0, compactWidth).toDouble()
-              : compactWidth;
+  Widget build(context) => Padding(
+    padding: padding,
+    child: LayoutBuilder(
+      builder: (context, constraints) {
+        final compactWidth = maxWidth < 280 ? maxWidth : 280.0;
+        final width = constraints.maxWidth.isFinite
+            ? constraints.maxWidth.clamp(0.0, compactWidth).toDouble()
+            : compactWidth;
 
-          return Align(
-            alignment: Alignment.topCenter,
-            child: SizedBox(
-              width: width,
-              child: HuxCard(
-                child: SizedBox(
-                  width: double.infinity,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      HuxLoading(size: size),
-                      if (message != null && message!.isNotEmpty) ...[
-                        const SizedBox(height: 16),
-                        Text(
-                          message!,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: HuxTokens.textSecondary(context),
-                          ),
+        return Align(
+          alignment: Alignment.topCenter,
+          child: SizedBox(
+            width: width,
+            child: HuxCard(
+              child: SizedBox(
+                width: double.infinity,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    HuxLoading(size: size),
+                    if (message != null && message!.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      Text(
+                        message!,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: HuxTokens.textSecondary(context),
                         ),
-                      ],
+                      ),
                     ],
-                  ),
+                  ],
                 ),
               ),
             ),
-          );
-        },
-      ),
-    );
-  }
+          ),
+        );
+      },
+    ),
+  );
 }
 
 class HuxErrorState extends StatelessWidget {
@@ -149,36 +143,34 @@ class HuxErrorState extends StatelessWidget {
   final VoidCallback? onRetry;
 
   @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: HuxCard(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              LucideIcons.circleAlert,
-              size: 40,
-              color: HuxTokens.textDestructive(context),
+  Widget build(context) => Center(
+    child: HuxCard(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            LucideIcons.circleAlert,
+            size: 40,
+            color: HuxTokens.textDestructive(context),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: HuxTokens.textDestructive(context)),
+          ),
+          if (onRetry != null) ...[
+            const SizedBox(height: 16),
+            HuxButton(
+              onPressed: onRetry,
+              variant: HuxButtonVariant.secondary,
+              child: Text(context.tr('Retry')),
             ),
-            const SizedBox(height: 12),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: TextStyle(color: HuxTokens.textDestructive(context)),
-            ),
-            if (onRetry != null) ...[
-              const SizedBox(height: 16),
-              HuxButton(
-                onPressed: onRetry,
-                variant: HuxButtonVariant.secondary,
-                child: Text(context.tr('Retry')),
-              ),
-            ],
           ],
-        ),
+        ],
       ),
-    );
-  }
+    ),
+  );
 }
 
 class HuxMessageCard extends StatelessWidget {
@@ -196,7 +188,7 @@ class HuxMessageCard extends StatelessWidget {
   final VoidCallback? onClose;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     final color = destructive
         ? HuxTokens.textDestructive(context)
         : HuxTokens.textSuccess(context);
@@ -239,31 +231,29 @@ class HuxFeedbackMessages extends StatelessWidget {
   final double spacing;
 
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (error != null) ...[
-          HuxMessageCard(
-            icon: LucideIcons.circleAlert,
-            message: context.trMessage(error!),
-            destructive: true,
-            onClose: onClose,
-          ),
-          SizedBox(height: spacing),
-        ],
-        if (successMessage != null) ...[
-          HuxMessageCard(
-            icon: LucideIcons.circleCheck,
-            message: context.trMessage(successMessage!),
-            onClose: onClose,
-          ),
-          SizedBox(height: spacing),
-        ],
+  Widget build(context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      if (error != null) ...[
+        HuxMessageCard(
+          icon: LucideIcons.circleAlert,
+          message: context.trMessage(error!),
+          destructive: true,
+          onClose: onClose,
+        ),
+        SizedBox(height: spacing),
       ],
-    );
-  }
+      if (successMessage != null) ...[
+        HuxMessageCard(
+          icon: LucideIcons.circleCheck,
+          message: context.trMessage(successMessage!),
+          onClose: onClose,
+        ),
+        SizedBox(height: spacing),
+      ],
+    ],
+  );
 }
 
 class HuxMetadataItem extends StatelessWidget {
@@ -277,7 +267,7 @@ class HuxMetadataItem extends StatelessWidget {
   final String text;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     final color = HuxTokens.textSecondary(context);
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -304,19 +294,17 @@ class HuxLabeledControl extends StatelessWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-            color: HuxTokens.textSecondary(context),
-          ),
+  Widget build(context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        label,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+          color: HuxTokens.textSecondary(context),
         ),
-        const SizedBox(height: 6),
-        SizedBox(width: double.infinity, child: child),
-      ],
-    );
-  }
+      ),
+      const SizedBox(height: 6),
+      SizedBox(width: double.infinity, child: child),
+    ],
+  );
 }

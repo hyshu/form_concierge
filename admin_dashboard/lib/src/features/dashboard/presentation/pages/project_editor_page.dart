@@ -20,7 +20,7 @@ class ProjectEditorPage extends RearchConsumer {
   const ProjectEditorPage({super.key, this.projectId});
 
   @override
-  Widget build(BuildContext context, WidgetHandle use) {
+  Widget build(context, use) {
     final manager = use(surveyListCapsule);
     final authManager = use(authStateCapsule);
     final client = use(clientCapsule);

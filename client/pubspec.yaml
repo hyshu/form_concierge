@@ -2,7 +2,7 @@ name: form_concierge_client
 description: REST client for Form Concierge Workers API.
 
 environment:
-  sdk: '^3.8.0'
+  sdk: ^3.12.0
 
 dependencies:
   http: ^1.2.2

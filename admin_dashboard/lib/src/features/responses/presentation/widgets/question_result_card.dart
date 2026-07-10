@@ -24,39 +24,37 @@ class QuestionResultCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    return HuxCard(
-      margin: const EdgeInsets.only(bottom: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                result.questionType.icon,
-                size: 20,
-                color: HuxTokens.primary(context),
+  Widget build(context) => HuxCard(
+    margin: const EdgeInsets.only(bottom: 16),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(
+              result.questionType.icon,
+              size: 20,
+              color: HuxTokens.primary(context),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                result.questionText,
+                style: Theme.of(context).textTheme.titleMedium,
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  result.questionText,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          if (result.choiceCounts != null)
-            _buildChoicesSection(context)
-          else if (result.questionType == QuestionType.imageUpload)
-            _buildImageResponses(context)
-          else if (result.textResponses != null)
-            _buildTextResponses(context),
-        ],
-      ),
-    );
-  }
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        if (result.choiceCounts != null)
+          _buildChoicesSection(context)
+        else if (result.questionType == QuestionType.imageUpload)
+          _buildImageResponses(context)
+        else if (result.textResponses != null)
+          _buildTextResponses(context),
+      ],
+    ),
+  );
 
   Widget _buildImageResponses(BuildContext context) {
     final withImages = result.individualAnswers
@@ -345,7 +343,7 @@ class _ChoiceIndividualExpansion extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     final theme = Theme.of(context);
     return Theme(
       data: theme.copyWith(
@@ -382,7 +380,7 @@ class _TextIndividualExpansion extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     final theme = Theme.of(context);
     final preview = answer.textValue ?? '';
     final shortPreview = preview.length > 80
@@ -434,7 +432,7 @@ class _IndividualAnswerTile extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     return ListTile(
       dense: true,
       contentPadding: const EdgeInsets.symmetric(horizontal: 8),

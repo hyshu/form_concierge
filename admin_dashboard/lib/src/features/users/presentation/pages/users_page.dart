@@ -19,15 +19,13 @@ class UsersPage extends RearchConsumer {
   const UsersPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetHandle use) {
+  Widget build(context, use) {
     final manager = use(userListCapsule);
     final authManager = use(authStateCapsule);
     final client = use(clientCapsule);
 
     // Load users on first build
-    if (use.isFirstBuild()) {
-      manager.loadUsers();
-    }
+    if (use.isFirstBuild()) manager.loadUsers();
 
     // Get current user ID
     final currentUserId = client.auth.signedInUser?.id;

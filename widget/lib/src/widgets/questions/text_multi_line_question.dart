@@ -36,18 +36,16 @@ class _TextMultiLineQuestionState extends State<TextMultiLineQuestion> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return TextField(
-      controller: _controller,
-      decoration: InputDecoration(
-        hintText: widget.placeholder,
-        border: const OutlineInputBorder(),
-        counterText: widget.maxLength != null ? null : '',
-      ),
-      maxLength: widget.maxLength,
-      maxLines: 5,
-      minLines: 3,
-      onChanged: widget.onChanged,
-    );
-  }
+  Widget build(context) => TextField(
+    controller: _controller,
+    decoration: InputDecoration(
+      hintText: widget.placeholder,
+      border: const OutlineInputBorder(),
+      counterText: widget.maxLength != null ? null : '',
+    ),
+    maxLength: widget.maxLength,
+    maxLines: 5,
+    minLines: 3,
+    onChanged: widget.onChanged,
+  );
 }

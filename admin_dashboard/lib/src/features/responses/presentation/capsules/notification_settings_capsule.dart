@@ -53,9 +53,8 @@ class NotificationSettingsState {
 
 /// Capsule using keyed state pattern for per-survey notification settings.
 KeyedStateAccessors<int, NotificationSettingsState>
-notificationSettingsStateCapsule(CapsuleHandle use) {
-  return createKeyedState(use, NotificationSettingsState.initial);
-}
+notificationSettingsStateCapsule(CapsuleHandle use) =>
+    createKeyedState(use, NotificationSettingsState.initial);
 
 /// Capsule that provides the notification settings manager.
 NotificationSettingsManager notificationSettingsManagerCapsule(
@@ -79,11 +78,9 @@ class NotificationSettingsManager {
 
   NotificationSettingsManager({
     required this.getState,
-    required void Function(int surveyId, NotificationSettingsState state)
-    setState,
-    required Client client,
-  }) : _setState = setState,
-       _client = client;
+    required this._setState,
+    required this._client,
+  });
 
   /// Load notification settings for a survey.
   Future<void> loadSettings(int surveyId) async {
@@ -238,10 +235,8 @@ class NotificationSettingsManager {
   }
 
   /// Clear messages for a survey.
-  void clearMessages(int surveyId) {
-    _setState(
-      surveyId,
-      getState(surveyId).copyWith(clearError: true, clearSuccessMessage: true),
-    );
-  }
+  void clearMessages(int surveyId) => _setState(
+    surveyId,
+    getState(surveyId).copyWith(clearError: true, clearSuccessMessage: true),
+  );
 }

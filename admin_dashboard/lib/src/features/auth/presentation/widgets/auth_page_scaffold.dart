@@ -11,7 +11,7 @@ class AuthPageScaffold extends StatelessWidget {
   final bool scrollable;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     final content = ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 400),
       child: Padding(

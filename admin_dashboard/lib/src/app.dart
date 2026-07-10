@@ -12,7 +12,7 @@ class App extends RearchConsumer {
   const App({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetHandle use) {
+  Widget build(context, use) {
     final router = use(appRouterCapsule);
     final authManager = use(authStateCapsule);
 

@@ -4,6 +4,5 @@ Map<int, String> validateAnswers(
   AnswerValues answers,
   List<Question> questions,
   String locale,
-) {
-  return validateSurveyAnswers(answers, questions, locale);
-}
+) =>
+    validateSurveyAnswers(answers, questions, locale);

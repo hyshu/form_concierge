@@ -73,9 +73,7 @@ class ResponseListState {
 /// Capsule using keyed state pattern for per-survey response lists.
 KeyedStateAccessors<int, ResponseListState> responseListStateCapsule(
   CapsuleHandle use,
-) {
-  return createKeyedState(use, ResponseListState.initial);
-}
+) => createKeyedState(use, ResponseListState.initial);
 
 /// Capsule that provides the response list manager.
 ResponseListManager responseListManagerCapsule(CapsuleHandle use) {
@@ -97,10 +95,9 @@ class ResponseListManager {
 
   ResponseListManager({
     required this.getState,
-    required void Function(int surveyId, ResponseListState state) setState,
-    required Client client,
-  }) : _setState = setState,
-       _client = client;
+    required this._setState,
+    required this._client,
+  });
 
   /// Load responses for a survey with pagination.
   Future<void> loadResponses(int surveyId, {int page = 0}) async {
@@ -212,13 +209,11 @@ class ResponseListManager {
     int surveyId,
     int responseId,
     String body,
-  ) async {
-    return _runAndReloadCurrentPage(
-      surveyId,
-      () => _client.responseAnalytics.createReply(responseId, body),
-      'Failed to send reply',
-    );
-  }
+  ) => _runAndReloadCurrentPage(
+    surveyId,
+    () => _client.responseAnalytics.createReply(responseId, body),
+    'Failed to send reply',
+  );
 
   Future<ResponseExportFile?> exportResponses(
     int surveyId,
@@ -265,11 +260,9 @@ class ResponseListManager {
   }
 
   /// Clear error for a survey.
-  void clearError(int surveyId) {
-    _setState(surveyId, getState(surveyId).copyWith(error: null));
-  }
+  void clearError(int surveyId) =>
+      _setState(surveyId, getState(surveyId).copyWith(error: null));
 
-  void _setError(int surveyId, String error) {
-    _setState(surveyId, getState(surveyId).copyWith(error: error));
-  }
+  void _setError(int surveyId, String error) =>
+      _setState(surveyId, getState(surveyId).copyWith(error: error));
 }

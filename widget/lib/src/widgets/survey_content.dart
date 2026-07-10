@@ -80,9 +80,8 @@ class _SurveyContentState extends State<SurveyContent> {
     super.dispose();
   }
 
-  GlobalKey _keyForQuestion(int questionId) {
-    return _questionKeys.putIfAbsent(questionId, GlobalKey.new);
-  }
+  GlobalKey _keyForQuestion(int questionId) =>
+      _questionKeys.putIfAbsent(questionId, GlobalKey.new);
 
   void _scrollToFirstValidationError() {
     for (final question in widget.questions) {
@@ -108,7 +107,7 @@ class _SurveyContentState extends State<SurveyContent> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return SingleChildScrollView(

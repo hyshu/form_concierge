@@ -23,7 +23,7 @@ class AdminMediaGallery extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     if (fileKeys.isEmpty) {
       return Text(
         '—',
@@ -95,7 +95,7 @@ class _AdminMediaThumbnailState extends State<AdminMediaThumbnail> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     final colorScheme = Theme.of(context).colorScheme;
     return FutureBuilder<Uint8List>(
       future: _bytesFuture,
@@ -149,35 +149,34 @@ class _AdminMediaThumbnailState extends State<AdminMediaThumbnail> {
     );
   }
 
-  void _showFullPreview(BuildContext context, Uint8List bytes) {
-    showDialog<void>(
-      context: context,
-      builder: (context) {
-        return Dialog(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 720, maxHeight: 720),
-            child: Stack(
-              children: [
-                InteractiveViewer(
-                  child: Image.memory(bytes, fit: BoxFit.contain),
-                ),
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: IconButton.filledTonal(
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: Icon(
-                      Icons.close,
-                      semanticLabel: context.tr('Close'),
-                    ),
-                    tooltip: context.tr('Close'),
+  void _showFullPreview(BuildContext context, Uint8List bytes) =>
+      showDialog<void>(
+        context: context,
+        builder: (context) {
+          return Dialog(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 720, maxHeight: 720),
+              child: Stack(
+                children: [
+                  InteractiveViewer(
+                    child: Image.memory(bytes, fit: BoxFit.contain),
                   ),
-                ),
-              ],
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: IconButton.filledTonal(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: Icon(
+                        Icons.close,
+                        semanticLabel: context.tr('Close'),
+                      ),
+                      tooltip: context.tr('Close'),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        );
-      },
-    );
-  }
+          );
+        },
+      );
 }

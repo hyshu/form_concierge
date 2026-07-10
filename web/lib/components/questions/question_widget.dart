@@ -31,7 +31,7 @@ class QuestionWidget extends StatelessComponent {
   final Future<void> Function() ensureAuthenticated;
 
   @override
-  Component build(BuildContext context) {
+  Component build(context) {
     final hasError = error != null;
     return div(
         classes:
@@ -58,42 +58,40 @@ class QuestionWidget extends StatelessComponent {
         ]);
   }
 
-  Component _buildQuestionInput() {
-    return switch (question.type) {
-      QuestionType.singleChoice => SingleChoiceQuestion(
-          question: question,
-          choices: choices,
-          value: value as int?,
-          locale: locale,
-          onChanged: onChanged,
-        ),
-      QuestionType.multipleChoice => MultipleChoiceQuestion(
-          question: question,
-          choices: choices,
-          value: (value as List<dynamic>?)?.cast<int>() ?? [],
-          locale: locale,
-          onChanged: onChanged,
-        ),
-      QuestionType.textSingle => TextSingleQuestion(
-          question: question,
-          value: value as String?,
-          locale: locale,
-          onChanged: onChanged,
-        ),
-      QuestionType.textMultiLine => TextMultiLineQuestion(
-          question: question,
-          value: value as String?,
-          locale: locale,
-          onChanged: onChanged,
-        ),
-      QuestionType.imageUpload => ImageUploadQuestion(
-          client: client,
-          question: question,
-          value: (value as List<String>?) ?? const [],
-          locale: locale,
-          onChanged: onChanged,
-          ensureAuthenticated: ensureAuthenticated,
-        ),
-    };
-  }
+  Component _buildQuestionInput() => switch (question.type) {
+        QuestionType.singleChoice => SingleChoiceQuestion(
+            question: question,
+            choices: choices,
+            value: value as int?,
+            locale: locale,
+            onChanged: onChanged,
+          ),
+        QuestionType.multipleChoice => MultipleChoiceQuestion(
+            question: question,
+            choices: choices,
+            value: (value as List<dynamic>?)?.cast<int>() ?? [],
+            locale: locale,
+            onChanged: onChanged,
+          ),
+        QuestionType.textSingle => TextSingleQuestion(
+            question: question,
+            value: value as String?,
+            locale: locale,
+            onChanged: onChanged,
+          ),
+        QuestionType.textMultiLine => TextMultiLineQuestion(
+            question: question,
+            value: value as String?,
+            locale: locale,
+            onChanged: onChanged,
+          ),
+        QuestionType.imageUpload => ImageUploadQuestion(
+            client: client,
+            question: question,
+            value: (value as List<String>?) ?? const [],
+            locale: locale,
+            onChanged: onChanged,
+            ensureAuthenticated: ensureAuthenticated,
+          ),
+      };
 }

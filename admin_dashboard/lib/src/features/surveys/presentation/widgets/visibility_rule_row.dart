@@ -29,7 +29,7 @@ class VisibilityRuleRow extends StatelessWidget {
   final VoidCallback onDelete;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     final source = sourceQuestions.firstWhere(
       (question) => question.id == rule.sourceQuestionId,
       orElse: () => sourceQuestions.first,
@@ -190,7 +190,7 @@ class _VisibilityRuleValueFieldState extends State<_VisibilityRuleValueField> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     if (widget.source.type.usesChoices) {
       final choiceIds = widget.choices
           .map((choice) => choice.id)
@@ -243,18 +243,15 @@ List<VisibilityOperator> _operatorsFor(Question source) {
   ];
 }
 
-bool _operatorNeedsValue(VisibilityOperator operator) {
-  return operator != VisibilityOperator.isAnswered &&
-      operator != VisibilityOperator.isNotAnswered;
-}
+bool _operatorNeedsValue(VisibilityOperator operator) =>
+    operator != VisibilityOperator.isAnswered &&
+    operator != VisibilityOperator.isNotAnswered;
 
-String _operatorLabel(VisibilityOperator operator) {
-  return switch (operator) {
-    VisibilityOperator.equals => 'equals',
-    VisibilityOperator.notEquals => 'does not equal',
-    VisibilityOperator.contains => 'contains',
-    VisibilityOperator.notContains => 'does not contain',
-    VisibilityOperator.isAnswered => 'is answered',
-    VisibilityOperator.isNotAnswered => 'is not answered',
-  };
-}
+String _operatorLabel(VisibilityOperator operator) => switch (operator) {
+  VisibilityOperator.equals => 'equals',
+  VisibilityOperator.notEquals => 'does not equal',
+  VisibilityOperator.contains => 'contains',
+  VisibilityOperator.notContains => 'does not contain',
+  VisibilityOperator.isAnswered => 'is answered',
+  VisibilityOperator.isNotAnswered => 'is not answered',
+};

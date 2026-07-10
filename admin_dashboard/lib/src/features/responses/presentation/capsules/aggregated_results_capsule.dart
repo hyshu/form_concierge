@@ -36,9 +36,7 @@ class AggregatedResultsState {
 /// Capsule using keyed state pattern for per-survey aggregated results.
 KeyedStateAccessors<int, AggregatedResultsState> aggregatedResultsStateCapsule(
   CapsuleHandle use,
-) {
-  return createKeyedState(use, AggregatedResultsState.initial);
-}
+) => createKeyedState(use, AggregatedResultsState.initial);
 
 /// Capsule that provides the aggregated results manager.
 AggregatedResultsManager aggregatedResultsManagerCapsule(CapsuleHandle use) {
@@ -60,10 +58,9 @@ class AggregatedResultsManager {
 
   AggregatedResultsManager({
     required this.getState,
-    required void Function(int surveyId, AggregatedResultsState state) setState,
-    required Client client,
-  }) : _setState = setState,
-       _client = client;
+    required this._setState,
+    required this._client,
+  });
 
   /// Load aggregated results for a survey.
   Future<void> loadResults(int surveyId) async {
@@ -108,7 +105,6 @@ class AggregatedResultsManager {
   }
 
   /// Clear error for a survey.
-  void clearError(int surveyId) {
-    _setState(surveyId, getState(surveyId).copyWith(error: null));
-  }
+  void clearError(int surveyId) =>
+      _setState(surveyId, getState(surveyId).copyWith(error: null));
 }

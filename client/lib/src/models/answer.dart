@@ -46,16 +46,14 @@ class Answer {
     String? textValue,
     List<int>? selectedChoiceIds,
     List<String>? fileKeys,
-  }) {
-    return Answer(
-      id: id ?? this.id,
-      surveyResponseId: surveyResponseId ?? this.surveyResponseId,
-      questionId: questionId ?? this.questionId,
-      textValue: textValue ?? this.textValue,
-      selectedChoiceIds: selectedChoiceIds ?? this.selectedChoiceIds,
-      fileKeys: fileKeys ?? this.fileKeys,
-    );
-  }
+  }) => Answer(
+    id: id ?? this.id,
+    surveyResponseId: surveyResponseId ?? this.surveyResponseId,
+    questionId: questionId ?? this.questionId,
+    textValue: textValue ?? this.textValue,
+    selectedChoiceIds: selectedChoiceIds ?? this.selectedChoiceIds,
+    fileKeys: fileKeys ?? this.fileKeys,
+  );
 }
 
 class AnswerChange {
@@ -369,11 +367,9 @@ bool _matchesValueOperator(
   };
 }
 
-bool _answerHasValue(AnswerValue answer) {
-  return switch (answer) {
-    String value => value.trim().isNotEmpty,
-    int _ => true,
-    List value => value.isNotEmpty,
-    _ => false,
-  };
-}
+bool _answerHasValue(AnswerValue answer) => switch (answer) {
+  String value => value.trim().isNotEmpty,
+  int _ => true,
+  List value => value.isNotEmpty,
+  _ => false,
+};

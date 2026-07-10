@@ -37,26 +37,24 @@ class ConfirmDeleteDialog extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return HuxDialog(
-      title: title,
-      variant: HuxDialogVariant.destructive,
-      size: HuxDialogSize.small,
-      showCloseButton: false,
-      content: Text(content),
-      actions: [
-        HuxButton(
-          onPressed: () => Navigator.pop(context, false),
-          variant: HuxButtonVariant.secondary,
-          child: Text(context.tr(cancelLabel)),
-        ),
-        HuxButton(
-          onPressed: () => Navigator.pop(context, true),
-          variant: HuxButtonVariant.primary,
-          primaryColor: HuxTokens.textDestructive(context),
-          child: Text(context.tr(confirmLabel)),
-        ),
-      ],
-    );
-  }
+  Widget build(context) => HuxDialog(
+    title: title,
+    variant: HuxDialogVariant.destructive,
+    size: HuxDialogSize.small,
+    showCloseButton: false,
+    content: Text(content),
+    actions: [
+      HuxButton(
+        onPressed: () => Navigator.pop(context, false),
+        variant: HuxButtonVariant.secondary,
+        child: Text(context.tr(cancelLabel)),
+      ),
+      HuxButton(
+        onPressed: () => Navigator.pop(context, true),
+        variant: HuxButtonVariant.primary,
+        primaryColor: HuxTokens.textDestructive(context),
+        child: Text(context.tr(confirmLabel)),
+      ),
+    ],
+  );
 }

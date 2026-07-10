@@ -12,7 +12,7 @@ class VerifyResetCodePage extends RearchConsumer {
   const VerifyResetCodePage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetHandle use) {
+  Widget build(context, use) {
     final resetManager = use(passwordResetCapsule);
     final controllers = use(passwordResetControllersCapsule);
 

@@ -36,7 +36,7 @@ class _ImageUploadQuestionState extends State<ImageUploadQuestion> {
   int get _maxFiles => component.question.maxSelected ?? 3;
 
   @override
-  Component build(BuildContext context) {
+  Component build(context) {
     final keys = component.value;
     final canAdd = !_uploading && keys.length < _maxFiles;
 

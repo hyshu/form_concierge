@@ -108,117 +108,115 @@ class SurveyFormWidgetState extends State<SurveyForm> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return HuxCard(
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            LocalizedTextFieldGroup(
-              controllers: widget.controllers.titleTranslations,
-              primaryLocale: widget.primaryLocale,
-              locales: widget.locales,
-              labelText: context.tr('Title'),
-              hintText: context.tr('Enter survey title'),
-              enabled: !widget.isSaving,
-              requiredMessage: context.tr('Title is required'),
-              textInputAction: TextInputAction.next,
-              aiTranslateEnabled: widget.aiTranslateEnabled,
-              onTranslate: widget.onTranslate == null
-                  ? null
-                  : ({
-                      required sourceLocale,
-                      required sourceText,
-                      required targetLocales,
-                    }) => widget.onTranslate!(
-                      sourceLocale: sourceLocale,
-                      sourceText: sourceText,
-                      targetLocales: targetLocales,
-                      fieldKind: 'title',
-                    ),
-            ),
-            const SizedBox(height: 16),
-            HuxInput(
-              controller: widget.controllers.slug,
-              label: context.tr('URL Slug'),
-              hint: 'customer-feedback',
-              enabled: !widget.isSaving,
-              textInputAction: TextInputAction.next,
-              validator: (value) => validateSlug(context, value),
-            ),
-            const SizedBox(height: 16),
-            LocalizedTextFieldGroup(
-              controllers: widget.controllers.descriptionTranslations,
-              primaryLocale: widget.primaryLocale,
-              locales: widget.locales,
-              labelText: context.tr('Description'),
-              hintText: context.tr('Brief description of the survey'),
-              enabled: !widget.isSaving,
-              maxLines: 2,
-              aiTranslateEnabled: widget.aiTranslateEnabled,
-              onTranslate: widget.onTranslate == null
-                  ? null
-                  : ({
-                      required sourceLocale,
-                      required sourceText,
-                      required targetLocales,
-                    }) => widget.onTranslate!(
-                      sourceLocale: sourceLocale,
-                      sourceText: sourceText,
-                      targetLocales: targetLocales,
-                      fieldKind: 'description',
-                    ),
-            ),
-            if (widget.aiGenerationEnabled) ...[
-              const SizedBox(height: 16),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(context.tr('Flutter follow-up interview')),
-                subtitle: Text(
-                  context.tr(
-                    'After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.',
+  Widget build(context) => HuxCard(
+    child: Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          LocalizedTextFieldGroup(
+            controllers: widget.controllers.titleTranslations,
+            primaryLocale: widget.primaryLocale,
+            locales: widget.locales,
+            labelText: context.tr('Title'),
+            hintText: context.tr('Enter survey title'),
+            enabled: !widget.isSaving,
+            requiredMessage: context.tr('Title is required'),
+            textInputAction: TextInputAction.next,
+            aiTranslateEnabled: widget.aiTranslateEnabled,
+            onTranslate: widget.onTranslate == null
+                ? null
+                : ({
+                    required sourceLocale,
+                    required sourceText,
+                    required targetLocales,
+                  }) => widget.onTranslate!(
+                    sourceLocale: sourceLocale,
+                    sourceText: sourceText,
+                    targetLocales: targetLocales,
+                    fieldKind: 'title',
                   ),
-                ),
-                value: _followUpEnabled,
-                onChanged: widget.isSaving
-                    ? null
-                    : (value) {
-                        setState(() => _followUpEnabled = value);
-                        widget.onFollowUpEnabledChanged?.call(value);
-                      },
-              ),
-            ],
-            if (widget.error != null) ...[
-              const SizedBox(height: 16),
-              Text(
-                context.trMessage(widget.error!),
-                style: TextStyle(color: HuxTokens.textDestructive(context)),
-              ),
-            ],
-            if (widget.showSubmitButton) ...[
-              const SizedBox(height: 24),
-              HuxButton(
-                onPressed: widget.isSaving ? null : () => submit(),
-                isLoading: widget.isSaving,
-                width: HuxButtonWidth.expand,
-                icon: widget.existingSurvey != null
-                    ? LucideIcons.save
-                    : LucideIcons.plus,
-                child: Text(
-                  context.tr(
-                    widget.existingSurvey != null
-                        ? 'Save Changes'
-                        : 'Create Survey',
+          ),
+          const SizedBox(height: 16),
+          HuxInput(
+            controller: widget.controllers.slug,
+            label: context.tr('URL Slug'),
+            hint: 'customer-feedback',
+            enabled: !widget.isSaving,
+            textInputAction: TextInputAction.next,
+            validator: (value) => validateSlug(context, value),
+          ),
+          const SizedBox(height: 16),
+          LocalizedTextFieldGroup(
+            controllers: widget.controllers.descriptionTranslations,
+            primaryLocale: widget.primaryLocale,
+            locales: widget.locales,
+            labelText: context.tr('Description'),
+            hintText: context.tr('Brief description of the survey'),
+            enabled: !widget.isSaving,
+            maxLines: 2,
+            aiTranslateEnabled: widget.aiTranslateEnabled,
+            onTranslate: widget.onTranslate == null
+                ? null
+                : ({
+                    required sourceLocale,
+                    required sourceText,
+                    required targetLocales,
+                  }) => widget.onTranslate!(
+                    sourceLocale: sourceLocale,
+                    sourceText: sourceText,
+                    targetLocales: targetLocales,
+                    fieldKind: 'description',
                   ),
+          ),
+          if (widget.aiGenerationEnabled) ...[
+            const SizedBox(height: 16),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(context.tr('Flutter follow-up interview')),
+              subtitle: Text(
+                context.tr(
+                  'After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.',
                 ),
               ),
-            ],
+              value: _followUpEnabled,
+              onChanged: widget.isSaving
+                  ? null
+                  : (value) {
+                      setState(() => _followUpEnabled = value);
+                      widget.onFollowUpEnabledChanged?.call(value);
+                    },
+            ),
           ],
-        ),
+          if (widget.error != null) ...[
+            const SizedBox(height: 16),
+            Text(
+              context.trMessage(widget.error!),
+              style: TextStyle(color: HuxTokens.textDestructive(context)),
+            ),
+          ],
+          if (widget.showSubmitButton) ...[
+            const SizedBox(height: 24),
+            HuxButton(
+              onPressed: widget.isSaving ? null : () => submit(),
+              isLoading: widget.isSaving,
+              width: HuxButtonWidth.expand,
+              icon: widget.existingSurvey != null
+                  ? LucideIcons.save
+                  : LucideIcons.plus,
+              child: Text(
+                context.tr(
+                  widget.existingSurvey != null
+                      ? 'Save Changes'
+                      : 'Create Survey',
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
-    );
-  }
+    ),
+  );
 
   Future<bool> submit() async {
     _fillSlugFromTitleIfEmpty();

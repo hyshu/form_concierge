@@ -40,6 +40,5 @@ String? readConfiguredApiUrl() {
   return content == null || content.isEmpty ? null : content;
 }
 
-void removeSsrRoot() {
-  web.document.getElementById('form-concierge-ssr-root')?.remove();
-}
+void removeSsrRoot() =>
+    web.document.getElementById('form-concierge-ssr-root')?.remove();

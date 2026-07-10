@@ -11,9 +11,7 @@ KeyedStateAccessors<K, S> createKeyedState<K, S>(
 ) {
   final (getStateMap, setStateMap) = use.data<Map<K, S>>({});
 
-  S getState(K key) {
-    return getStateMap()[key] ?? createInitialState();
-  }
+  S getState(K key) => getStateMap()[key] ?? createInitialState();
 
   void setState(K key, S state) {
     final stateMap = getStateMap();

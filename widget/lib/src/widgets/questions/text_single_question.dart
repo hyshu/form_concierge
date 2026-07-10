@@ -36,16 +36,14 @@ class _TextSingleQuestionState extends State<TextSingleQuestion> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return TextField(
-      controller: _controller,
-      decoration: InputDecoration(
-        hintText: widget.placeholder,
-        border: const OutlineInputBorder(),
-        counterText: widget.maxLength != null ? null : '',
-      ),
-      maxLength: widget.maxLength,
-      onChanged: widget.onChanged,
-    );
-  }
+  Widget build(context) => TextField(
+    controller: _controller,
+    decoration: InputDecoration(
+      hintText: widget.placeholder,
+      border: const OutlineInputBorder(),
+      counterText: widget.maxLength != null ? null : '',
+    ),
+    maxLength: widget.maxLength,
+    onChanged: widget.onChanged,
+  );
 }

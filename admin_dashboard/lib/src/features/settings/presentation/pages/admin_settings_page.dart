@@ -15,7 +15,7 @@ class AdminSettingsPage extends RearchConsumer {
   const AdminSettingsPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetHandle use) {
+  Widget build(context, use) {
     final manager = use(adminSettingsManagerCapsule);
     final client = use(clientCapsule);
     final isAdmin = client.auth.signedInUser?.role == AdminRole.admin;

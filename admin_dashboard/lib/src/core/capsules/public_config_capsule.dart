@@ -22,14 +22,12 @@ class PublicConfigState {
     bool? isLoading,
     bool? hasLoaded,
     String? error,
-  }) {
-    return PublicConfigState(
-      config: config ?? this.config,
-      isLoading: isLoading ?? this.isLoading,
-      hasLoaded: hasLoaded ?? this.hasLoaded,
-      error: error,
-    );
-  }
+  }) => PublicConfigState(
+    config: config ?? this.config,
+    isLoading: isLoading ?? this.isLoading,
+    hasLoaded: hasLoaded ?? this.hasLoaded,
+    error: error,
+  );
 
   /// Whether password reset feature is available.
   bool get passwordResetEnabled => config?.passwordResetEnabled ?? false;
@@ -58,10 +56,9 @@ class PublicConfigManager {
 
   PublicConfigManager({
     required this.state,
-    required void Function(PublicConfigState) setState,
-    required Client client,
-  }) : _setState = setState,
-       _client = client;
+    required this._setState,
+    required this._client,
+  });
 
   /// Load public configuration from server.
   Future<void> loadConfig() async {

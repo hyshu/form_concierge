@@ -25,7 +25,7 @@ class SurveyEditorPage extends RearchConsumer {
   const SurveyEditorPage({super.key, this.surveyId, this.projectId});
 
   @override
-  Widget build(BuildContext context, WidgetHandle use) {
+  Widget build(context, use) {
     final formManager = use(surveyFormManagerCapsule);
     final questionManager = use(questionListManagerCapsule);
     final surveyListManager = use(surveyListCapsule);
@@ -348,74 +348,71 @@ class SurveyEditorPage extends RearchConsumer {
     Iterable<String> locales,
     bool aiTranslateEnabled,
     Client client,
-  ) {
-    return SurveyForm(
-      key: surveyFormKey,
-      controllers: controllers,
-      existingSurvey: survey,
-      isSaving: formState.isSaving,
-      error: formState.error,
-      primaryLocale: primaryLocale,
-      locales: locales,
-      showSubmitButton: !isNewSurvey,
-      aiTranslateEnabled: aiTranslateEnabled,
-      aiGenerationEnabled: aiTranslateEnabled,
-      followUpEnabled: survey?.followUpEnabled ?? false,
-      onTranslate: aiTranslateEnabled ? _translateWithClient(client) : null,
-      onSave:
-          ({
-            required String slug,
-            required LocalizedText titleTranslations,
-            required LocalizedText descriptionTranslations,
-            required bool followUpEnabled,
-          }) async {
-            if (isNewSurvey) {
-              final created = await formManager.createSurveyWithQuestions(
-                projectId: projectId!,
-                slug: slug,
-                titleTranslations: titleTranslations,
-                descriptionTranslations: descriptionTranslations,
-                followUpEnabled: followUpEnabled,
-              );
-              if (created != null && context.mounted) {
-                await surveyListManager.loadSurveys();
-                if (context.mounted) {
-                  context.go('/admin');
-                }
+  ) => SurveyForm(
+    key: surveyFormKey,
+    controllers: controllers,
+    existingSurvey: survey,
+    isSaving: formState.isSaving,
+    error: formState.error,
+    primaryLocale: primaryLocale,
+    locales: locales,
+    showSubmitButton: !isNewSurvey,
+    aiTranslateEnabled: aiTranslateEnabled,
+    aiGenerationEnabled: aiTranslateEnabled,
+    followUpEnabled: survey?.followUpEnabled ?? false,
+    onTranslate: aiTranslateEnabled ? _translateWithClient(client) : null,
+    onSave:
+        ({
+          required String slug,
+          required LocalizedText titleTranslations,
+          required LocalizedText descriptionTranslations,
+          required bool followUpEnabled,
+        }) async {
+          if (isNewSurvey) {
+            final created = await formManager.createSurveyWithQuestions(
+              projectId: projectId!,
+              slug: slug,
+              titleTranslations: titleTranslations,
+              descriptionTranslations: descriptionTranslations,
+              followUpEnabled: followUpEnabled,
+            );
+            if (created != null && context.mounted) {
+              await surveyListManager.loadSurveys();
+              if (context.mounted) {
+                context.go('/admin');
               }
-            } else {
-              final updated = survey!.copyWith(
-                slug: slug,
-                titleTranslations: titleTranslations,
-                descriptionTranslations: descriptionTranslations,
-                followUpEnabled: followUpEnabled,
-                updatedAt: DateTime.now(),
-              );
-              await formManager.updateSurvey(updated);
             }
-          },
-    );
-  }
+          } else {
+            final updated = survey!.copyWith(
+              slug: slug,
+              titleTranslations: titleTranslations,
+              descriptionTranslations: descriptionTranslations,
+              followUpEnabled: followUpEnabled,
+              updatedAt: DateTime.now(),
+            );
+            await formManager.updateSurvey(updated);
+          }
+        },
+  );
 
-  SurveyLocalizedTranslate _translateWithClient(Client client) {
-    return ({
-      required String sourceLocale,
-      required String sourceText,
-      required List<String> targetLocales,
-      required String fieldKind,
-    }) async {
-      try {
-        return await client.aiAdmin.translateLocalizedText(
-          sourceLocale: sourceLocale,
-          sourceText: sourceText,
-          targetLocales: targetLocales,
-          fieldKind: fieldKind,
-        );
-      } catch (error) {
-        throw Exception('Failed to translate: $error');
-      }
-    };
-  }
+  SurveyLocalizedTranslate _translateWithClient(Client client) =>
+      ({
+        required String sourceLocale,
+        required String sourceText,
+        required List<String> targetLocales,
+        required String fieldKind,
+      }) async {
+        try {
+          return await client.aiAdmin.translateLocalizedText(
+            sourceLocale: sourceLocale,
+            sourceText: sourceText,
+            targetLocales: targetLocales,
+            fieldKind: fieldKind,
+          );
+        } catch (error) {
+          throw Exception('Failed to translate: $error');
+        }
+      };
 
   /// Returns true if the survey can be published.
   bool _canPublish(QuestionListState state) {

@@ -36,7 +36,7 @@ class DashboardProjectCard extends StatelessWidget {
   final void Function(Survey survey) onDeleteSurvey;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     final project = item.project;
     return HuxCard(
       margin: const EdgeInsets.only(bottom: 16),
@@ -176,7 +176,7 @@ class _DashboardSurveyRow extends StatelessWidget {
   final VoidCallback? onDelete;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     final description = survey.descriptionFor(locale).trim();
     final canOpenPublicForm =
         survey.webEnabled && survey.status == SurveyStatus.published;

@@ -33,56 +33,52 @@ class ChoiceEditor extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ...choices.map(
-          (choice) => LocalizedChoiceTile(
-            textTranslations: choice.textTranslations,
-            primaryLocale: primaryLocale,
-            locales: locales,
-            enabled: enabled,
-            aiTranslateEnabled: aiTranslateEnabled,
-            onTranslate: onTranslate,
-            onUpdate: (textTranslations) => onUpdate(choice, textTranslations),
-            onDelete: () => onDelete(choice),
-            leading: Icon(
-              LucideIcons.gripVertical,
-              size: 18,
-              color: HuxTokens.iconSecondary(context),
-            ),
+  Widget build(context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      ...choices.map(
+        (choice) => LocalizedChoiceTile(
+          textTranslations: choice.textTranslations,
+          primaryLocale: primaryLocale,
+          locales: locales,
+          enabled: enabled,
+          aiTranslateEnabled: aiTranslateEnabled,
+          onTranslate: onTranslate,
+          onUpdate: (textTranslations) => onUpdate(choice, textTranslations),
+          onDelete: () => onDelete(choice),
+          leading: Icon(
+            LucideIcons.gripVertical,
+            size: 18,
+            color: HuxTokens.iconSecondary(context),
           ),
         ),
+      ),
+      const SizedBox(height: 8),
+      HuxButton(
+        onPressed: enabled ? () => _showAddDialog(context) : null,
+        variant: HuxButtonVariant.outline,
+        icon: LucideIcons.plus,
+        child: Text(context.tr('Add Choice')),
+      ),
+      if (choices.isEmpty) ...[
         const SizedBox(height: 8),
-        HuxButton(
-          onPressed: enabled ? () => _showAddDialog(context) : null,
-          variant: HuxButtonVariant.outline,
-          icon: LucideIcons.plus,
-          child: Text(context.tr('Add Choice')),
-        ),
-        if (choices.isEmpty) ...[
-          const SizedBox(height: 8),
-          Text(
-            context.tr('Add at least one choice for choice questions'),
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: HuxTokens.textSecondary(context),
-            ),
+        Text(
+          context.tr('Add at least one choice for choice questions'),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: HuxTokens.textSecondary(context),
           ),
-        ],
+        ),
       ],
-    );
-  }
+    ],
+  );
 
-  void _showAddDialog(BuildContext context) {
-    showLocalizedChoiceDialog(
-      context,
-      title: context.tr('Add Choice'),
-      primaryLocale: primaryLocale,
-      locales: locales,
-      aiTranslateEnabled: aiTranslateEnabled,
-      onTranslate: onTranslate,
-      onSubmit: onAdd,
-    );
-  }
+  void _showAddDialog(BuildContext context) => showLocalizedChoiceDialog(
+    context,
+    title: context.tr('Add Choice'),
+    primaryLocale: primaryLocale,
+    locales: locales,
+    aiTranslateEnabled: aiTranslateEnabled,
+    onTranslate: onTranslate,
+    onSubmit: onAdd,
+  );
 }

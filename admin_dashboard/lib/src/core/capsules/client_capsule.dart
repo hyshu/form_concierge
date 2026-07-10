@@ -3,6 +3,4 @@ import 'package:rearch/rearch.dart';
 
 import '../../../main.dart';
 
-Client clientCapsule(CapsuleHandle use) {
-  return client;
-}
+Client clientCapsule(CapsuleHandle use) => client;

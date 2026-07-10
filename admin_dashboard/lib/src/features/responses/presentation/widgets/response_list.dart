@@ -50,7 +50,7 @@ class ResponseList extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     if (isLoading && responses.isEmpty) {
       return HuxLoadingState(
         message: context.tr('Loading...'),
@@ -181,7 +181,7 @@ class _ResponseTile extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     final theme = Theme.of(context);
     final deviceInfo = response.deviceInfo;
     final deviceSummary = deviceInfo?.summary;
@@ -384,7 +384,7 @@ class _AnswersBody extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     if (isLoading) {
       return Padding(
         padding: const EdgeInsets.all(12),
@@ -509,7 +509,7 @@ class _FollowUpAnswerRow extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     final answer = item.answer;
     final isImage =
         item.type == QuestionType.imageUpload &&
@@ -577,7 +577,7 @@ class _AnswerRow extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     final questionLabel = question?.text ?? 'Q${answer.questionId}';
     final fileKeys = answer.fileKeys;
     final isImage =
@@ -644,22 +644,20 @@ class _InfoRow extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: color),
-        const SizedBox(width: 4),
-        Flexible(
-          child: Text(
-            text,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: color,
-            ),
+  Widget build(context) => Row(
+    children: [
+      Icon(icon, size: 16, color: color),
+      const SizedBox(width: 4),
+      Flexible(
+        child: Text(
+          text,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: color,
           ),
         ),
-      ],
-    );
-  }
+      ),
+    ],
+  );
 }

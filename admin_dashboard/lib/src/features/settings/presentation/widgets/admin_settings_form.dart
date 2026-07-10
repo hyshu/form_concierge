@@ -115,57 +115,45 @@ class _AdminSettingsFormState extends State<AdminSettingsForm> {
     if (!_hasChanges) setState(() => _hasChanges = true);
   }
 
-  void _setClearGeminiKey(bool value) {
-    _setClearSecret(
-      value: value,
-      updateFlag: (next) => _clearGeminiKey = next,
-      controller: _geminiKeyController,
-    );
-  }
+  void _setClearGeminiKey(bool value) => _setClearSecret(
+    value: value,
+    updateFlag: (next) => _clearGeminiKey = next,
+    controller: _geminiKeyController,
+  );
 
-  void _setClearOpenaiKey(bool value) {
-    _setClearSecret(
-      value: value,
-      updateFlag: (next) => _clearOpenaiKey = next,
-      controller: _openaiKeyController,
-    );
-  }
+  void _setClearOpenaiKey(bool value) => _setClearSecret(
+    value: value,
+    updateFlag: (next) => _clearOpenaiKey = next,
+    controller: _openaiKeyController,
+  );
 
-  void _setClearClaudeKey(bool value) {
-    _setClearSecret(
-      value: value,
-      updateFlag: (next) => _clearClaudeKey = next,
-      controller: _claudeKeyController,
-    );
-  }
+  void _setClearClaudeKey(bool value) => _setClearSecret(
+    value: value,
+    updateFlag: (next) => _clearClaudeKey = next,
+    controller: _claudeKeyController,
+  );
 
-  void _setClearCerebrasKey(bool value) {
-    _setClearSecret(
-      value: value,
-      updateFlag: (next) => _clearCerebrasKey = next,
-      controller: _cerebrasKeyController,
-    );
-  }
+  void _setClearCerebrasKey(bool value) => _setClearSecret(
+    value: value,
+    updateFlag: (next) => _clearCerebrasKey = next,
+    controller: _cerebrasKeyController,
+  );
 
-  void _setClearSmtpPassword(bool value) {
-    _setClearSecret(
-      value: value,
-      updateFlag: (next) => _clearSmtpPassword = next,
-      controller: _smtpPasswordController,
-    );
-  }
+  void _setClearSmtpPassword(bool value) => _setClearSecret(
+    value: value,
+    updateFlag: (next) => _clearSmtpPassword = next,
+    controller: _smtpPasswordController,
+  );
 
   void _setClearSecret({
     required bool value,
     required ValueChanged<bool> updateFlag,
     required TextEditingController controller,
-  }) {
-    setState(() {
-      updateFlag(value);
-      _hasChanges = true;
-      if (value) controller.clear();
-    });
-  }
+  }) => setState(() {
+    updateFlag(value);
+    _hasChanges = true;
+    if (value) controller.clear();
+  });
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
@@ -205,7 +193,7 @@ class _AdminSettingsFormState extends State<AdminSettingsForm> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     final settings = widget.settings;
     return Form(
       key: _formKey,

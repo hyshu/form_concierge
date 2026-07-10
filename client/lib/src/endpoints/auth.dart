@@ -30,21 +30,16 @@ class EmailIdpEndpoint {
     }
   }
 
-  Future<UuidValue> startPasswordReset({required String email}) async {
-    throw const ApiException(501, 'Password reset is not configured');
-  }
+  Future<UuidValue> startPasswordReset({required String email}) async =>
+      throw const ApiException(501, 'Password reset is not configured');
 
   Future<String> verifyPasswordResetCode({
     required UuidValue passwordResetRequestId,
     required String verificationCode,
-  }) async {
-    throw const ApiException(501, 'Password reset is not configured');
-  }
+  }) async => throw const ApiException(501, 'Password reset is not configured');
 
   Future<void> finishPasswordReset({
     required String finishPasswordResetToken,
     required String newPassword,
-  }) async {
-    throw const ApiException(501, 'Password reset is not configured');
-  }
+  }) async => throw const ApiException(501, 'Password reset is not configured');
 }

@@ -21,7 +21,7 @@ class DashboardPage extends RearchConsumer {
   const DashboardPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetHandle use) {
+  Widget build(context, use) {
     final surveyManager = use(surveyListCapsule);
     final authManager = use(authStateCapsule);
     final client = use(clientCapsule);

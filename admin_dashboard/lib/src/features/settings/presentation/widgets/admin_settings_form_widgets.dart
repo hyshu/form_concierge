@@ -16,29 +16,27 @@ class AdminSettingsSectionHeader extends StatelessWidget {
   final bool configured;
 
   @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, color: HuxTokens.primary(context)),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            title,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
+  Widget build(context) => Row(
+    children: [
+      Icon(icon, color: HuxTokens.primary(context)),
+      const SizedBox(width: 10),
+      Expanded(
+        child: Text(
+          title,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
           ),
         ),
-        HuxBadge(
-          label: context.tr(configured ? 'Configured' : 'Not configured'),
-          variant: configured
-              ? HuxBadgeVariant.success
-              : HuxBadgeVariant.secondary,
-          size: HuxBadgeSize.small,
-        ),
-      ],
-    );
-  }
+      ),
+      HuxBadge(
+        label: context.tr(configured ? 'Configured' : 'Not configured'),
+        variant: configured
+            ? HuxBadgeVariant.success
+            : HuxBadgeVariant.secondary,
+        size: HuxBadgeSize.small,
+      ),
+    ],
+  );
 }
 
 class AdminSettingsSwitchRow extends StatelessWidget {
@@ -54,14 +52,12 @@ class AdminSettingsSwitchRow extends StatelessWidget {
   final ValueChanged<bool> onChanged;
 
   @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(child: Text(label)),
-        HuxSwitch(value: value, onChanged: onChanged),
-      ],
-    );
-  }
+  Widget build(context) => Row(
+    children: [
+      Expanded(child: Text(label)),
+      HuxSwitch(value: value, onChanged: onChanged),
+    ],
+  );
 }
 
 class AdminSettingsResponsiveFields extends StatelessWidget {
@@ -73,29 +69,27 @@ class AdminSettingsResponsiveFields extends StatelessWidget {
   final List<Widget> children;
 
   @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth < 620) {
-          return Column(
-            children: [
-              for (var index = 0; index < children.length; index++) ...[
-                children[index],
-                if (index != children.length - 1) const SizedBox(height: 16),
-              ],
-            ],
-          );
-        }
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+  Widget build(context) => LayoutBuilder(
+    builder: (context, constraints) {
+      if (constraints.maxWidth < 620) {
+        return Column(
           children: [
             for (var index = 0; index < children.length; index++) ...[
-              Expanded(child: children[index]),
-              if (index != children.length - 1) const SizedBox(width: 16),
+              children[index],
+              if (index != children.length - 1) const SizedBox(height: 16),
             ],
           ],
         );
-      },
-    );
-  }
+      }
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (var index = 0; index < children.length; index++) ...[
+            Expanded(child: children[index]),
+            if (index != children.length - 1) const SizedBox(width: 16),
+          ],
+        ],
+      );
+    },
+  );
 }

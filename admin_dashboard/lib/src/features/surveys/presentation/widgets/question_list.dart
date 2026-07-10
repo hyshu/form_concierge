@@ -82,197 +82,192 @@ class QuestionList extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
+  Widget build(context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(
+        children: [
+          Text(
+            context.tr('Questions'),
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const Spacer(),
+          if (isLoading) const HuxLoading(size: HuxLoadingSize.small),
+        ],
+      ),
+      const SizedBox(height: 16),
+      if (isLoading && questions.isEmpty)
+        HuxLoadingState(
+          message: context.tr('Loading...'),
+          size: HuxLoadingSize.medium,
+          padding: EdgeInsets.zero,
+        )
+      else if (questions.isEmpty)
+        HuxEmptyState(
+          icon: LucideIcons.circleHelp,
+          title: context.tr('No questions yet'),
+          message: context.tr('Add questions to your survey'),
+          action: HuxButton(
+            onPressed: enabled ? () => _showAddDialog(context) : null,
+            icon: LucideIcons.plus,
+            child: Text(context.tr('Add Question')),
+          ),
+        )
+      else
+        Column(
           children: [
-            Text(
-              context.tr('Questions'),
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const Spacer(),
-            if (isLoading) const HuxLoading(size: HuxLoadingSize.small),
-          ],
-        ),
-        const SizedBox(height: 16),
-        if (isLoading && questions.isEmpty)
-          HuxLoadingState(
-            message: context.tr('Loading...'),
-            size: HuxLoadingSize.medium,
-            padding: EdgeInsets.zero,
-          )
-        else if (questions.isEmpty)
-          HuxEmptyState(
-            icon: LucideIcons.circleHelp,
-            title: context.tr('No questions yet'),
-            message: context.tr('Add questions to your survey'),
-            action: HuxButton(
+            ...questions.asMap().entries.map((entry) {
+              final index = entry.key;
+              final question = entry.value;
+              final questionRules = visibilityRules
+                  .where((rule) => rule.targetQuestionId == question.id)
+                  .toList();
+              return Column(
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: HuxTokens.primary(
+                            context,
+                          ).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          '${index + 1}',
+                          style: TextStyle(
+                            color: HuxTokens.primary(context),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: QuestionListTile(
+                          question: question,
+                          choices: choicesByQuestion[question.id] ?? [],
+                          primaryLocale: primaryLocale,
+                          locales: locales,
+                          visibilityRules: questionRules,
+                          visibilityRuleEditor: VisibilityRuleEditor(
+                            surveyId: surveyId,
+                            targetQuestion: question,
+                            primaryLocale: primaryLocale,
+                            sourceQuestions: questions
+                                .where(
+                                  (candidate) =>
+                                      candidate.orderIndex <
+                                      question.orderIndex,
+                                )
+                                .toList(),
+                            choicesByQuestion: choicesByQuestion,
+                            rules: questionRules,
+                            enabled: enabled,
+                            onSave: ({required mode, required rules}) =>
+                                onSaveVisibility(
+                                  question: question,
+                                  mode: mode,
+                                  rules: rules,
+                                ),
+                          ),
+                          enabled: enabled,
+                          aiTranslateEnabled: aiTranslateEnabled,
+                          onTranslate: onTranslate,
+                          onEdit: () => _showEditDialog(context, question),
+                          onDelete: () => _confirmDelete(context, question),
+                          onAddChoice: (text) =>
+                              onAddChoice(question.id!, text),
+                          onUpdateChoice: onUpdateChoice,
+                          onDeleteChoice: onDeleteChoice,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              );
+            }),
+            const SizedBox(height: 16),
+            HuxButton(
               onPressed: enabled ? () => _showAddDialog(context) : null,
+              variant: HuxButtonVariant.outline,
               icon: LucideIcons.plus,
               child: Text(context.tr('Add Question')),
             ),
-          )
-        else
-          Column(
-            children: [
-              ...questions.asMap().entries.map((entry) {
-                final index = entry.key;
-                final question = entry.value;
-                final questionRules = visibilityRules
-                    .where((rule) => rule.targetQuestionId == question.id)
-                    .toList();
-                return Column(
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: HuxTokens.primary(
-                              context,
-                            ).withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            '${index + 1}',
-                            style: TextStyle(
-                              color: HuxTokens.primary(context),
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: QuestionListTile(
-                            question: question,
-                            choices: choicesByQuestion[question.id] ?? [],
-                            primaryLocale: primaryLocale,
-                            locales: locales,
-                            visibilityRules: questionRules,
-                            visibilityRuleEditor: VisibilityRuleEditor(
-                              surveyId: surveyId,
-                              targetQuestion: question,
-                              primaryLocale: primaryLocale,
-                              sourceQuestions: questions
-                                  .where(
-                                    (candidate) =>
-                                        candidate.orderIndex <
-                                        question.orderIndex,
-                                  )
-                                  .toList(),
-                              choicesByQuestion: choicesByQuestion,
-                              rules: questionRules,
-                              enabled: enabled,
-                              onSave: ({required mode, required rules}) =>
-                                  onSaveVisibility(
-                                    question: question,
-                                    mode: mode,
-                                    rules: rules,
-                                  ),
-                            ),
-                            enabled: enabled,
-                            aiTranslateEnabled: aiTranslateEnabled,
-                            onTranslate: onTranslate,
-                            onEdit: () => _showEditDialog(context, question),
-                            onDelete: () => _confirmDelete(context, question),
-                            onAddChoice: (text) =>
-                                onAddChoice(question.id!, text),
-                            onUpdateChoice: onUpdateChoice,
-                            onDeleteChoice: onDeleteChoice,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                );
-              }),
-              const SizedBox(height: 16),
-              HuxButton(
-                onPressed: enabled ? () => _showAddDialog(context) : null,
-                variant: HuxButtonVariant.outline,
-                icon: LucideIcons.plus,
-                child: Text(context.tr('Add Question')),
-              ),
-            ],
-          ),
-      ],
-    );
-  }
+          ],
+        ),
+    ],
+  );
 
-  void _showAddDialog(BuildContext context) {
-    QuestionFormDialog.show(
-      context,
-      primaryLocale: primaryLocale,
-      locales: locales,
-      aiTranslateEnabled: aiTranslateEnabled,
-      onTranslate: onTranslate,
-      onSave:
-          ({
-            required LocalizedText textTranslations,
-            required QuestionType type,
-            required bool isRequired,
-            required LocalizedText placeholderTranslations,
-            int? minLength,
-            int? maxLength,
-            int? minSelected,
-            int? maxSelected,
-            required VisibilityConditionMode visibilityConditionMode,
-          }) {
-            onAddQuestion(
-              textTranslations: textTranslations,
-              type: type,
-              isRequired: isRequired,
-              placeholderTranslations: placeholderTranslations,
-              minLength: minLength,
-              maxLength: maxLength,
-              minSelected: minSelected,
-              maxSelected: maxSelected,
-              visibilityConditionMode: visibilityConditionMode,
-            );
-          },
-    );
-  }
+  void _showAddDialog(BuildContext context) => QuestionFormDialog.show(
+    context,
+    primaryLocale: primaryLocale,
+    locales: locales,
+    aiTranslateEnabled: aiTranslateEnabled,
+    onTranslate: onTranslate,
+    onSave:
+        ({
+          required LocalizedText textTranslations,
+          required QuestionType type,
+          required bool isRequired,
+          required LocalizedText placeholderTranslations,
+          int? minLength,
+          int? maxLength,
+          int? minSelected,
+          int? maxSelected,
+          required VisibilityConditionMode visibilityConditionMode,
+        }) {
+          onAddQuestion(
+            textTranslations: textTranslations,
+            type: type,
+            isRequired: isRequired,
+            placeholderTranslations: placeholderTranslations,
+            minLength: minLength,
+            maxLength: maxLength,
+            minSelected: minSelected,
+            maxSelected: maxSelected,
+            visibilityConditionMode: visibilityConditionMode,
+          );
+        },
+  );
 
-  void _showEditDialog(BuildContext context, Question question) {
-    QuestionFormDialog.show(
-      context,
-      existingQuestion: question,
-      primaryLocale: primaryLocale,
-      locales: locales,
-      aiTranslateEnabled: aiTranslateEnabled,
-      onTranslate: onTranslate,
-      onSave:
-          ({
-            required LocalizedText textTranslations,
-            required QuestionType type,
-            required bool isRequired,
-            required LocalizedText placeholderTranslations,
-            int? minLength,
-            int? maxLength,
-            int? minSelected,
-            int? maxSelected,
-            required VisibilityConditionMode visibilityConditionMode,
-          }) {
-            onEditQuestion(
-              question,
-              textTranslations: textTranslations,
-              type: type,
-              isRequired: isRequired,
-              placeholderTranslations: placeholderTranslations,
-              minLength: minLength,
-              maxLength: maxLength,
-              minSelected: minSelected,
-              maxSelected: maxSelected,
-              visibilityConditionMode: visibilityConditionMode,
-            );
-          },
-    );
-  }
+  void _showEditDialog(BuildContext context, Question question) =>
+      QuestionFormDialog.show(
+        context,
+        existingQuestion: question,
+        primaryLocale: primaryLocale,
+        locales: locales,
+        aiTranslateEnabled: aiTranslateEnabled,
+        onTranslate: onTranslate,
+        onSave:
+            ({
+              required LocalizedText textTranslations,
+              required QuestionType type,
+              required bool isRequired,
+              required LocalizedText placeholderTranslations,
+              int? minLength,
+              int? maxLength,
+              int? minSelected,
+              int? maxSelected,
+              required VisibilityConditionMode visibilityConditionMode,
+            }) {
+              onEditQuestion(
+                question,
+                textTranslations: textTranslations,
+                type: type,
+                isRequired: isRequired,
+                placeholderTranslations: placeholderTranslations,
+                minLength: minLength,
+                maxLength: maxLength,
+                minSelected: minSelected,
+                maxSelected: maxSelected,
+                visibilityConditionMode: visibilityConditionMode,
+              );
+            },
+      );
 
   Future<void> _confirmDelete(BuildContext context, Question question) async {
     final confirmed = await ConfirmDeleteDialog.show(
@@ -283,8 +278,6 @@ class QuestionList extends StatelessWidget {
       }),
     );
 
-    if (confirmed) {
-      onDeleteQuestion(question);
-    }
+    if (confirmed) onDeleteQuestion(question);
   }
 }

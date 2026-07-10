@@ -24,10 +24,9 @@ class AuthStateManager {
 
   AuthStateManager({
     required this.state,
-    required void Function(AuthState) setState,
-    required Client client,
-  }) : _setState = setState,
-       _client = client;
+    required this._setState,
+    required this._client,
+  });
 
   /// Attempt to login with email and password.
   Future<void> login(String email, String password) async {

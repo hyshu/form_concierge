@@ -26,17 +26,15 @@ class AdminSettingsState {
     bool clearError = false,
     String? successMessage,
     bool clearSuccessMessage = false,
-  }) {
-    return AdminSettingsState(
-      settings: settings ?? this.settings,
-      isLoading: isLoading ?? this.isLoading,
-      isSaving: isSaving ?? this.isSaving,
-      error: clearError ? null : (error ?? this.error),
-      successMessage: clearSuccessMessage
-          ? null
-          : (successMessage ?? this.successMessage),
-    );
-  }
+  }) => AdminSettingsState(
+    settings: settings ?? this.settings,
+    isLoading: isLoading ?? this.isLoading,
+    isSaving: isSaving ?? this.isSaving,
+    error: clearError ? null : (error ?? this.error),
+    successMessage: clearSuccessMessage
+        ? null
+        : (successMessage ?? this.successMessage),
+  );
 }
 
 AdminSettingsManager adminSettingsManagerCapsule(CapsuleHandle use) {
@@ -57,10 +55,9 @@ class AdminSettingsManager {
 
   const AdminSettingsManager({
     required this.state,
-    required void Function(AdminSettingsState state) setState,
-    required Client client,
-  }) : _setState = setState,
-       _client = client;
+    required this._setState,
+    required this._client,
+  });
 
   Future<void> loadSettings() async {
     _setState(state.copyWith(isLoading: true, clearError: true));
@@ -112,7 +109,6 @@ class AdminSettingsManager {
     }
   }
 
-  void clearMessages() {
-    _setState(state.copyWith(clearError: true, clearSuccessMessage: true));
-  }
+  void clearMessages() =>
+      _setState(state.copyWith(clearError: true, clearSuccessMessage: true));
 }

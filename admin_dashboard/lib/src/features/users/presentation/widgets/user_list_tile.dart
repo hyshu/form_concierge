@@ -20,52 +20,50 @@ class UserListTile extends StatelessWidget {
   final bool isCurrentUser;
 
   @override
-  Widget build(BuildContext context) {
-    return HuxCard(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final compact = constraints.maxWidth < 680;
-          final details = _UserDetails(
-            user: user,
-            isCurrentUser: isCurrentUser,
-          );
-          final controls = _UserControls(
-            user: user,
-            onRoleChanged: onRoleChanged,
-            onDelete: onDelete,
-          );
+  Widget build(context) => HuxCard(
+    margin: const EdgeInsets.only(bottom: 12),
+    child: LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 680;
+        final details = _UserDetails(
+          user: user,
+          isCurrentUser: isCurrentUser,
+        );
+        final controls = _UserControls(
+          user: user,
+          onRoleChanged: onRoleChanged,
+          onDelete: onDelete,
+        );
 
-          if (compact) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const _UserIcon(),
-                    const SizedBox(width: 12),
-                    Expanded(child: details),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                controls,
-              ],
-            );
-          }
-
-          return Row(
+        if (compact) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const _UserIcon(),
-              const SizedBox(width: 12),
-              Expanded(child: details),
-              const SizedBox(width: 16),
+              Row(
+                children: [
+                  const _UserIcon(),
+                  const SizedBox(width: 12),
+                  Expanded(child: details),
+                ],
+              ),
+              const SizedBox(height: 16),
               controls,
             ],
           );
-        },
-      ),
-    );
-  }
+        }
+
+        return Row(
+          children: [
+            const _UserIcon(),
+            const SizedBox(width: 12),
+            Expanded(child: details),
+            const SizedBox(width: 16),
+            controls,
+          ],
+        );
+      },
+    ),
+  );
 }
 
 class _UserDetails extends StatelessWidget {
@@ -75,37 +73,35 @@ class _UserDetails extends StatelessWidget {
   final bool isCurrentUser;
 
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            Text(
-              user.email ?? context.tr('No email'),
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+  Widget build(context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Text(
+            user.email ?? context.tr('No email'),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
             ),
-            if (isCurrentUser)
-              HuxBadge(
-                label: context.tr('You'),
-                variant: HuxBadgeVariant.primary,
-                size: HuxBadgeSize.small,
-              ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        Text(
-          context.tr(_roleLabel(user.role)),
-          style: TextStyle(color: HuxTokens.textSecondary(context)),
-        ),
-      ],
-    );
-  }
+          ),
+          if (isCurrentUser)
+            HuxBadge(
+              label: context.tr('You'),
+              variant: HuxBadgeVariant.primary,
+              size: HuxBadgeSize.small,
+            ),
+        ],
+      ),
+      const SizedBox(height: 6),
+      Text(
+        context.tr(_roleLabel(user.role)),
+        style: TextStyle(color: HuxTokens.textSecondary(context)),
+      ),
+    ],
+  );
 }
 
 class _UserControls extends StatelessWidget {
@@ -120,71 +116,65 @@ class _UserControls extends StatelessWidget {
   final VoidCallback onDelete;
 
   @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 12,
-      runSpacing: 8,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        SizedBox(
-          width: 180,
-          child: HuxDropdown<AdminRole>(
-            value: user.role,
-            useItemWidgetAsValue: true,
-            items: [
-              HuxDropdownItem(
-                value: AdminRole.admin,
-                child: Text(context.tr('Admin')),
-              ),
-              HuxDropdownItem(
-                value: AdminRole.editor,
-                child: Text(context.tr('Editor')),
-              ),
-              HuxDropdownItem(
-                value: AdminRole.viewer,
-                child: Text(context.tr('Viewer')),
-              ),
-            ],
-            onChanged: onRoleChanged,
-          ),
+  Widget build(context) => Wrap(
+    spacing: 12,
+    runSpacing: 8,
+    crossAxisAlignment: WrapCrossAlignment.center,
+    children: [
+      SizedBox(
+        width: 180,
+        child: HuxDropdown<AdminRole>(
+          value: user.role,
+          useItemWidgetAsValue: true,
+          items: [
+            HuxDropdownItem(
+              value: AdminRole.admin,
+              child: Text(context.tr('Admin')),
+            ),
+            HuxDropdownItem(
+              value: AdminRole.editor,
+              child: Text(context.tr('Editor')),
+            ),
+            HuxDropdownItem(
+              value: AdminRole.viewer,
+              child: Text(context.tr('Viewer')),
+            ),
+          ],
+          onChanged: onRoleChanged,
         ),
-        HuxIconActionButton(
-          onPressed: onDelete,
-          icon: LucideIcons.trash2,
-          tooltip: context.tr('Delete'),
-          destructive: true,
-        ),
-      ],
-    );
-  }
+      ),
+      HuxIconActionButton(
+        onPressed: onDelete,
+        icon: LucideIcons.trash2,
+        tooltip: context.tr('Delete'),
+        destructive: true,
+      ),
+    ],
+  );
 }
 
 class _UserIcon extends StatelessWidget {
   const _UserIcon();
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 44,
-      height: 44,
-      decoration: BoxDecoration(
-        color: HuxTokens.primary(context).withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: HuxTokens.borderPrimary(context)),
-      ),
-      alignment: Alignment.center,
-      child: Icon(
-        LucideIcons.user,
-        color: HuxTokens.primary(context),
-      ),
-    );
-  }
+  Widget build(context) => Container(
+    width: 44,
+    height: 44,
+    decoration: BoxDecoration(
+      color: HuxTokens.primary(context).withValues(alpha: 0.12),
+      borderRadius: BorderRadius.circular(10),
+      border: Border.all(color: HuxTokens.borderPrimary(context)),
+    ),
+    alignment: Alignment.center,
+    child: Icon(
+      LucideIcons.user,
+      color: HuxTokens.primary(context),
+    ),
+  );
 }
 
-String _roleLabel(AdminRole role) {
-  return switch (role) {
-    AdminRole.admin => 'Admin',
-    AdminRole.editor => 'Editor',
-    AdminRole.viewer => 'Viewer',
-  };
-}
+String _roleLabel(AdminRole role) => switch (role) {
+  AdminRole.admin => 'Admin',
+  AdminRole.editor => 'Editor',
+  AdminRole.viewer => 'Viewer',
+};

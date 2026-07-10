@@ -26,7 +26,7 @@ class HuxAdminShell extends StatelessWidget {
   final bool showSettings;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     final isWide = MediaQuery.of(context).size.width >= 900;
 
     return Scaffold(
@@ -74,7 +74,7 @@ class _StaticSidebar extends StatelessWidget {
   final bool showSettings;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     final items = _navigationItems(
       context,
       showUsers: showUsers,
@@ -145,7 +145,7 @@ class _SidebarNavigationItem extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     final textColor = selected
         ? HuxTokens.primary(context)
         : HuxTokens.textSecondary(context);
@@ -222,27 +222,25 @@ List<_NavigationItem> _navigationItems(
   BuildContext context, {
   required bool showUsers,
   required bool showSettings,
-}) {
-  return [
+}) => [
+  _NavigationItem(
+    id: 'surveys',
+    icon: LucideIcons.layoutDashboard,
+    label: context.tr('Surveys'),
+  ),
+  if (showUsers)
     _NavigationItem(
-      id: 'surveys',
-      icon: LucideIcons.layoutDashboard,
-      label: context.tr('Surveys'),
+      id: 'users',
+      icon: LucideIcons.users,
+      label: context.tr('User Management'),
     ),
-    if (showUsers)
-      _NavigationItem(
-        id: 'users',
-        icon: LucideIcons.users,
-        label: context.tr('User Management'),
-      ),
-    if (showSettings)
-      _NavigationItem(
-        id: 'settings',
-        icon: LucideIcons.settings,
-        label: context.tr('Settings'),
-      ),
-  ];
-}
+  if (showSettings)
+    _NavigationItem(
+      id: 'settings',
+      icon: LucideIcons.settings,
+      label: context.tr('Settings'),
+    ),
+];
 
 void _goToNavigationItem(BuildContext context, String itemId) {
   switch (itemId) {
@@ -278,7 +276,7 @@ class _TopBar extends StatelessWidget {
   final VoidCallback? onBack;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     final items = _navigationItems(
       context,
       showUsers: showUsers,

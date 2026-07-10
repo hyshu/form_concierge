@@ -18,30 +18,28 @@ class AuthCardScaffold extends StatelessWidget {
   final List<Widget> children;
 
   @override
-  Widget build(BuildContext context) {
-    return AuthPageScaffold(
-      child: HuxCard(
-        size: HuxCardSize.large,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Icon(icon, size: 64, color: HuxTokens.primary(context)),
-            const SizedBox(height: 24),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.headlineSmall,
-              textAlign: TextAlign.center,
-            ),
-            if (subtitle != null) ...[
-              const SizedBox(height: 8),
-              subtitle!,
-            ],
-            const SizedBox(height: 32),
-            ...children,
+  Widget build(context) => AuthPageScaffold(
+    child: HuxCard(
+      size: HuxCardSize.large,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Icon(icon, size: 64, color: HuxTokens.primary(context)),
+          const SizedBox(height: 24),
+          Text(
+            title,
+            style: Theme.of(context).textTheme.headlineSmall,
+            textAlign: TextAlign.center,
+          ),
+          if (subtitle != null) ...[
+            const SizedBox(height: 8),
+            subtitle!,
           ],
-        ),
+          const SizedBox(height: 32),
+          ...children,
+        ],
       ),
-    );
-  }
+    ),
+  );
 }

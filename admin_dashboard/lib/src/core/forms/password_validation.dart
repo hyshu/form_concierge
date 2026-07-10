@@ -1,5 +1,4 @@
 const minimumPasswordLength = 8;
 
-bool hasMinimumPasswordLength(String value) {
-  return value.length >= minimumPasswordLength;
-}
+bool hasMinimumPasswordLength(String value) =>
+    value.length >= minimumPasswordLength;

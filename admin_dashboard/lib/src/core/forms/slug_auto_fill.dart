@@ -12,9 +12,7 @@ final _lowercaseLetterPattern = RegExp(r'[a-z]');
 class SlugAutoFill {
   String? _lastAutoSlug;
 
-  void reset() {
-    _lastAutoSlug = null;
-  }
+  void reset() => _lastAutoSlug = null;
 
   void update({
     required TextEditingController slugController,

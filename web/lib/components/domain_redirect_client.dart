@@ -50,20 +50,18 @@ class DomainRedirectClientState extends State<DomainRedirectClient> {
   }
 
   @override
-  Component build(BuildContext context) {
-    return switch (_state) {
-      _DomainRedirectState.loading => const SurveyLoading(),
-      _DomainRedirectState.notFound => const NotFoundPage(),
-      _DomainRedirectState.error => SurveyError(
-          locale: defaultFormContentLocale,
-          message: FormContentMessages.text(
-            defaultFormContentLocale,
-            'errorOccurred',
+  Component build(context) => switch (_state) {
+        _DomainRedirectState.loading => const SurveyLoading(),
+        _DomainRedirectState.notFound => const NotFoundPage(),
+        _DomainRedirectState.error => SurveyError(
+            locale: defaultFormContentLocale,
+            message: FormContentMessages.text(
+              defaultFormContentLocale,
+              'errorOccurred',
+            ),
+            onRetry: _resolveDomain,
           ),
-          onRetry: _resolveDomain,
-        ),
-    };
-  }
+      };
 }
 
 enum _DomainRedirectState {

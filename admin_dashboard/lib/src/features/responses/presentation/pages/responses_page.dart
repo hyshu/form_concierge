@@ -24,7 +24,7 @@ class ResponsesPage extends RearchConsumer {
   const ResponsesPage({super.key, required this.surveyId});
 
   @override
-  Widget build(BuildContext context, WidgetHandle use) {
+  Widget build(context, use) {
     final responseManager = use(responseListManagerCapsule);
     final resultsManager = use(aggregatedResultsManagerCapsule);
     final notificationManager = use(notificationSettingsManagerCapsule);

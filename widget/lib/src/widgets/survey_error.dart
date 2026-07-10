@@ -14,7 +14,7 @@ class SurveyError extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Center(

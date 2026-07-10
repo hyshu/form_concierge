@@ -34,7 +34,7 @@ class DraftQuestionsSection extends StatelessWidget {
   final Iterable<String> locales;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     final draftQuestions = formState.draftQuestions;
 
     if (formState.generatedQuestions != null &&
@@ -232,16 +232,14 @@ class _EmptyDraftQuestions extends StatelessWidget {
   final VoidCallback onAdd;
 
   @override
-  Widget build(BuildContext context) {
-    return HuxEmptyState(
-      icon: LucideIcons.circleHelp,
-      title: context.tr('No questions yet'),
-      message: context.tr('Add questions to your survey'),
-      action: HuxButton(
-        onPressed: isSaving ? null : onAdd,
-        icon: LucideIcons.plus,
-        child: Text(context.tr('Add Question')),
-      ),
-    );
-  }
+  Widget build(context) => HuxEmptyState(
+    icon: LucideIcons.circleHelp,
+    title: context.tr('No questions yet'),
+    message: context.tr('Add questions to your survey'),
+    action: HuxButton(
+      onPressed: isSaving ? null : onAdd,
+      icon: LucideIcons.plus,
+      child: Text(context.tr('Add Question')),
+    ),
+  );
 }

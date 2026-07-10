@@ -97,7 +97,7 @@ class _NotificationSettingsViewState extends State<NotificationSettingsView> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     if (widget.isLoading && widget.settings == null) {
       return HuxLoadingState(
         message: context.tr('Loading...'),

@@ -16,20 +16,20 @@ class SingleChoiceQuestion extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    return RadioGroup<int>(
-      groupValue: selectedChoiceId,
-      onChanged: onChanged,
-      child: Column(
-        children: choices.map((choice) {
-          return RadioListTile<int>(
-            title: Text(choice.textFor(locale)),
-            value: choice.id!,
-            contentPadding: EdgeInsets.zero,
-            visualDensity: VisualDensity.compact,
-          );
-        }).toList(),
-      ),
-    );
-  }
+  Widget build(context) => RadioGroup<int>(
+    groupValue: selectedChoiceId,
+    onChanged: onChanged,
+    child: Column(
+      children: choices
+          .map(
+            (choice) => RadioListTile<int>(
+              title: Text(choice.textFor(locale)),
+              value: choice.id!,
+              contentPadding: EdgeInsets.zero,
+              visualDensity: VisualDensity.compact,
+            ),
+          )
+          .toList(),
+    ),
+  );
 }

@@ -13,19 +13,16 @@ class DraftChoice {
     required this.textTranslations,
   });
 
-  factory DraftChoice.create({required LocalizedText textTranslations}) {
-    return DraftChoice(
-      tempId: _uuid.v4(),
-      textTranslations: textTranslations,
-    );
-  }
+  factory DraftChoice.create({required LocalizedText textTranslations}) =>
+      DraftChoice(
+        tempId: _uuid.v4(),
+        textTranslations: textTranslations,
+      );
 
-  DraftChoice copyWith({LocalizedText? textTranslations}) {
-    return DraftChoice(
-      tempId: tempId,
-      textTranslations: textTranslations ?? this.textTranslations,
-    );
-  }
+  DraftChoice copyWith({LocalizedText? textTranslations}) => DraftChoice(
+    tempId: tempId,
+    textTranslations: textTranslations ?? this.textTranslations,
+  );
 
   String get text => textTranslations.valueFor(defaultFormContentLocale);
 }
@@ -92,22 +89,21 @@ class DraftQuestion {
   }
 
   /// Create from QuestionWithChoices (AI generated).
-  factory DraftQuestion.fromQuestionWithChoices(QuestionWithChoices q) {
-    return DraftQuestion(
-      tempId: _uuid.v4(),
-      textTranslations: q.textTranslations,
-      type: q.type,
-      isRequired: q.isRequired,
-      placeholderTranslations: q.placeholderTranslations,
-      minLength: q.minLength,
-      maxLength: q.maxLength,
-      minSelected: q.minSelected,
-      maxSelected: q.maxSelected,
-      choices: q.choiceTranslations
-          .map((c) => DraftChoice.create(textTranslations: c))
-          .toList(),
-    );
-  }
+  factory DraftQuestion.fromQuestionWithChoices(QuestionWithChoices q) =>
+      DraftQuestion(
+        tempId: _uuid.v4(),
+        textTranslations: q.textTranslations,
+        type: q.type,
+        isRequired: q.isRequired,
+        placeholderTranslations: q.placeholderTranslations,
+        minLength: q.minLength,
+        maxLength: q.maxLength,
+        minSelected: q.minSelected,
+        maxSelected: q.maxSelected,
+        choices: q.choiceTranslations
+            .map((c) => DraftChoice.create(textTranslations: c))
+            .toList(),
+      );
 
   DraftQuestion copyWith({
     LocalizedText? textTranslations,
@@ -119,36 +115,32 @@ class DraftQuestion {
     int? minSelected,
     int? maxSelected,
     List<DraftChoice>? choices,
-  }) {
-    return DraftQuestion(
-      tempId: tempId,
-      textTranslations: textTranslations ?? this.textTranslations,
-      type: type ?? this.type,
-      isRequired: isRequired ?? this.isRequired,
-      placeholderTranslations:
-          placeholderTranslations ?? this.placeholderTranslations,
-      minLength: minLength ?? this.minLength,
-      maxLength: maxLength ?? this.maxLength,
-      minSelected: minSelected ?? this.minSelected,
-      maxSelected: maxSelected ?? this.maxSelected,
-      choices: choices ?? this.choices,
-    );
-  }
+  }) => DraftQuestion(
+    tempId: tempId,
+    textTranslations: textTranslations ?? this.textTranslations,
+    type: type ?? this.type,
+    isRequired: isRequired ?? this.isRequired,
+    placeholderTranslations:
+        placeholderTranslations ?? this.placeholderTranslations,
+    minLength: minLength ?? this.minLength,
+    maxLength: maxLength ?? this.maxLength,
+    minSelected: minSelected ?? this.minSelected,
+    maxSelected: maxSelected ?? this.maxSelected,
+    choices: choices ?? this.choices,
+  );
 
   /// Convert to QuestionWithChoices for server submission.
-  QuestionWithChoices toQuestionWithChoices() {
-    return QuestionWithChoices(
-      textTranslations: textTranslations,
-      type: type,
-      isRequired: isRequired,
-      placeholderTranslations: placeholderTranslations,
-      minLength: minLength,
-      maxLength: maxLength,
-      minSelected: minSelected,
-      maxSelected: maxSelected,
-      choiceTranslations: choices.map((c) => c.textTranslations).toList(),
-    );
-  }
+  QuestionWithChoices toQuestionWithChoices() => QuestionWithChoices(
+    textTranslations: textTranslations,
+    type: type,
+    isRequired: isRequired,
+    placeholderTranslations: placeholderTranslations,
+    minLength: minLength,
+    maxLength: maxLength,
+    minSelected: minSelected,
+    maxSelected: maxSelected,
+    choiceTranslations: choices.map((c) => c.textTranslations).toList(),
+  );
 
   /// Whether this question type uses choices.
   bool get hasChoices => type.usesChoices;

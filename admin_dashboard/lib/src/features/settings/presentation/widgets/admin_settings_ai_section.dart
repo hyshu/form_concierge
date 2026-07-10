@@ -43,7 +43,7 @@ class AdminSettingsAiSection extends StatelessWidget {
   final ValueChanged<bool> onClearCerebrasChanged;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     final key = _selectedProviderKey;
     return HuxCard(
       child: Column(
@@ -167,38 +167,34 @@ class _AiProviderKeyField extends StatelessWidget {
   final ValueChanged<bool> onClearChanged;
 
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        HuxInput(
-          controller: controller,
-          label: label,
-          hint: hasApiKey
-              ? context.tr('Leave blank to keep the saved key')
-              : hint,
-          prefixIcon: const Icon(LucideIcons.keyRound),
-          obscureText: true,
-          enabled: !clearApiKey,
+  Widget build(context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      HuxInput(
+        controller: controller,
+        label: label,
+        hint: hasApiKey
+            ? context.tr('Leave blank to keep the saved key')
+            : hint,
+        prefixIcon: const Icon(LucideIcons.keyRound),
+        obscureText: true,
+        enabled: !clearApiKey,
+      ),
+      if (hasApiKey) ...[
+        const SizedBox(height: 12),
+        AdminSettingsSwitchRow(
+          label: clearLabel,
+          value: clearApiKey,
+          onChanged: onClearChanged,
         ),
-        if (hasApiKey) ...[
-          const SizedBox(height: 12),
-          AdminSettingsSwitchRow(
-            label: clearLabel,
-            value: clearApiKey,
-            onChanged: onClearChanged,
-          ),
-        ],
       ],
-    );
-  }
+    ],
+  );
 }
 
-String _aiProviderLabel(AiProvider provider) {
-  return switch (provider) {
-    AiProvider.gemini => 'Gemini',
-    AiProvider.openai => 'OpenAI',
-    AiProvider.claude => 'Claude',
-    AiProvider.cerebras => 'Cerebras',
-  };
-}
+String _aiProviderLabel(AiProvider provider) => switch (provider) {
+  AiProvider.gemini => 'Gemini',
+  AiProvider.openai => 'OpenAI',
+  AiProvider.claude => 'Claude',
+  AiProvider.cerebras => 'Cerebras',
+};

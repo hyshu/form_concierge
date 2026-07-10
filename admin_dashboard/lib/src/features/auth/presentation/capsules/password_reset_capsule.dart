@@ -32,18 +32,16 @@ class PasswordResetState {
     bool? isLoading,
     String? error,
     String? successMessage,
-  }) {
-    return PasswordResetState(
-      step: step ?? this.step,
-      email: email ?? this.email,
-      passwordResetRequestId:
-          passwordResetRequestId ?? this.passwordResetRequestId,
-      resetToken: resetToken ?? this.resetToken,
-      isLoading: isLoading ?? this.isLoading,
-      error: error,
-      successMessage: successMessage,
-    );
-  }
+  }) => PasswordResetState(
+    step: step ?? this.step,
+    email: email ?? this.email,
+    passwordResetRequestId:
+        passwordResetRequestId ?? this.passwordResetRequestId,
+    resetToken: resetToken ?? this.resetToken,
+    isLoading: isLoading ?? this.isLoading,
+    error: error,
+    successMessage: successMessage,
+  );
 }
 
 /// Steps in the password reset flow.
@@ -61,14 +59,15 @@ PasswordResetControllers passwordResetControllersCapsule(CapsuleHandle use) {
   final passwordController = use.memo(() => TextEditingController());
   final confirmPasswordController = use.memo(() => TextEditingController());
 
-  use.effect(() {
-    return () {
+  use.effect(
+    () => () {
       emailController.dispose();
       codeController.dispose();
       passwordController.dispose();
       confirmPasswordController.dispose();
-    };
-  }, []);
+    },
+    [],
+  );
 
   return PasswordResetControllers(
     email: emailController,
@@ -120,10 +119,9 @@ class PasswordResetManager {
 
   PasswordResetManager({
     required this.state,
-    required void Function(PasswordResetState) setState,
-    required Client client,
-  }) : _setState = setState,
-       _client = client;
+    required this._setState,
+    required this._client,
+  });
 
   /// Start password reset by requesting a verification code.
   Future<void> startPasswordReset(String email) async {
@@ -209,9 +207,7 @@ class PasswordResetManager {
   }
 
   /// Reset the state to start over.
-  void reset() {
-    _setState(const PasswordResetState());
-  }
+  void reset() => _setState(const PasswordResetState());
 
   String _parseError(Exception e) {
     final message = e.toString();

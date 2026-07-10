@@ -90,9 +90,8 @@ class FormConciergeReplyChecker {
     return value == null ? null : DateTime.tryParse(value);
   }
 
-  Future<void> markSeenAt(DateTime date) async {
-    await store.write(storageKey, date.toUtc().toIso8601String());
-  }
+  Future<void> markSeenAt(DateTime date) =>
+      store.write(storageKey, date.toUtc().toIso8601String());
 
   Future<void> markLatestSeen() async {
     client.anonymous.useToken(anonymousToken);
@@ -104,7 +103,5 @@ class FormConciergeReplyChecker {
     }
   }
 
-  Future<void> clearSeen() async {
-    await store.remove(storageKey);
-  }
+  Future<void> clearSeen() => store.remove(storageKey);
 }

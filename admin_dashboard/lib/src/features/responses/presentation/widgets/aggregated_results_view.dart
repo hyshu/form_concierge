@@ -26,7 +26,7 @@ class AggregatedResultsView extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     if (isLoading && results == null) {
       return HuxLoadingState(
         message: context.tr('Loading...'),

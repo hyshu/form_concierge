@@ -16,7 +16,7 @@ class LoginPage extends RearchConsumer {
   const LoginPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetHandle use) {
+  Widget build(context, use) {
     final authManager = use(authStateCapsule);
     final configManager = use(publicConfigCapsule);
     final controllers = use(loginFormControllersCapsule);

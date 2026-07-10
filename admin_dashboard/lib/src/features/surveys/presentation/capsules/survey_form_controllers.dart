@@ -34,13 +34,10 @@ class SurveyFormControllers {
     );
   }
 
-  LocalizedText titleValue() {
-    return localizedTextFromControllers(titleTranslations);
-  }
+  LocalizedText titleValue() => localizedTextFromControllers(titleTranslations);
 
-  LocalizedText descriptionValue() {
-    return localizedTextFromControllers(descriptionTranslations);
-  }
+  LocalizedText descriptionValue() =>
+      localizedTextFromControllers(descriptionTranslations);
 }
 
 /// Capsule for survey form controllers with cleanup.
@@ -53,9 +50,7 @@ SurveyFormControllers surveyFormControllersCapsule(CapsuleHandle use) {
     ),
   );
 
-  use.effect(() {
-    return controllers.dispose;
-  }, []);
+  use.effect(() => controllers.dispose, []);
 
   return controllers;
 }

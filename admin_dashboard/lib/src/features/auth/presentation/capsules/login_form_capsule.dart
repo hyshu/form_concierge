@@ -6,12 +6,13 @@ LoginFormControllers loginFormControllersCapsule(CapsuleHandle use) {
   final emailController = use.memo(() => TextEditingController());
   final passwordController = use.memo(() => TextEditingController());
 
-  use.effect(() {
-    return () {
+  use.effect(
+    () => () {
       emailController.dispose();
       passwordController.dispose();
-    };
-  }, []);
+    },
+    [],
+  );
 
   return LoginFormControllers(
     email: emailController,

@@ -32,47 +32,43 @@ class LocalizedChoiceTile extends StatelessWidget {
   final Widget? leading;
 
   @override
-  Widget build(BuildContext context) {
-    return HuxCard(
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      backgroundColor: HuxTokens.surfaceSecondary(context),
-      onTap: enabled ? () => _showEditDialog(context) : null,
-      child: Row(
-        children: [
-          if (leading != null) ...[
-            leading!,
-            const SizedBox(width: 8),
-          ],
-          Expanded(child: Text(textTranslations.valueFor(primaryLocale))),
-          if (enabled) ...[
-            HuxIconActionButton(
-              tooltip: context.tr('Edit'),
-              onPressed: () => _showEditDialog(context),
-              icon: LucideIcons.pencil,
-            ),
-            HuxIconActionButton(
-              tooltip: context.tr('Delete'),
-              onPressed: onDelete,
-              icon: LucideIcons.trash2,
-              destructive: true,
-            ),
-          ],
+  Widget build(context) => HuxCard(
+    margin: const EdgeInsets.symmetric(vertical: 4),
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    backgroundColor: HuxTokens.surfaceSecondary(context),
+    onTap: enabled ? () => _showEditDialog(context) : null,
+    child: Row(
+      children: [
+        if (leading != null) ...[
+          leading!,
+          const SizedBox(width: 8),
         ],
-      ),
-    );
-  }
+        Expanded(child: Text(textTranslations.valueFor(primaryLocale))),
+        if (enabled) ...[
+          HuxIconActionButton(
+            tooltip: context.tr('Edit'),
+            onPressed: () => _showEditDialog(context),
+            icon: LucideIcons.pencil,
+          ),
+          HuxIconActionButton(
+            tooltip: context.tr('Delete'),
+            onPressed: onDelete,
+            icon: LucideIcons.trash2,
+            destructive: true,
+          ),
+        ],
+      ],
+    ),
+  );
 
-  void _showEditDialog(BuildContext context) {
-    showLocalizedChoiceDialog(
-      context,
-      title: context.tr('Edit Choice'),
-      primaryLocale: primaryLocale,
-      locales: locales,
-      initialText: textTranslations,
-      aiTranslateEnabled: aiTranslateEnabled,
-      onTranslate: onTranslate,
-      onSubmit: onUpdate,
-    );
-  }
+  void _showEditDialog(BuildContext context) => showLocalizedChoiceDialog(
+    context,
+    title: context.tr('Edit Choice'),
+    primaryLocale: primaryLocale,
+    locales: locales,
+    initialText: textTranslations,
+    aiTranslateEnabled: aiTranslateEnabled,
+    onTranslate: onTranslate,
+    onSubmit: onUpdate,
+  );
 }

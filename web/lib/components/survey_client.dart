@@ -263,13 +263,11 @@ class SurveyClientState extends State<SurveyClient> {
         'form_concierge.anonymous_token.${component.serverUrl}.${project.slug}.${survey.id}';
   }
 
-  String _resolveLocale(Project project) {
-    return resolveFormContentLocale(
-      preferredLocales: browserPreferredLocales(),
-      supportedLocales: project.supportedLocales,
-      defaultLocale: project.defaultLocale,
-    );
-  }
+  String _resolveLocale(Project project) => resolveFormContentLocale(
+        preferredLocales: browserPreferredLocales(),
+        supportedLocales: project.supportedLocales,
+        defaultLocale: project.defaultLocale,
+      );
 
   void _restoreAnonymousToken() {
     final storageKey = _anonymousTokenStorageKey;
@@ -389,12 +387,10 @@ class SurveyClientState extends State<SurveyClient> {
     }
   }
 
-  DeviceInfo _deviceInfo() {
-    return buildDeviceInfo();
-  }
+  DeviceInfo _deviceInfo() => buildDeviceInfo();
 
   @override
-  Component build(BuildContext context) {
+  Component build(context) {
     final survey = _survey;
     final project = _project;
     final visibleQuestions = resolveVisibleQuestions(

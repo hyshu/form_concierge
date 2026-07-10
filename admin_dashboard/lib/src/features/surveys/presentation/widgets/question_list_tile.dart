@@ -45,7 +45,7 @@ class QuestionListTile extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     final usesChoices = question.type.usesChoices;
     final validationSummary = _validationSummary(context);
 

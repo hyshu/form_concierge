@@ -32,7 +32,7 @@ class QuestionWidget extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Column(
@@ -70,50 +70,48 @@ class QuestionWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildQuestionInput() {
-    return switch (question.type) {
-      QuestionType.singleChoice => SingleChoiceQuestion(
-        choices: choices,
-        selectedChoiceId: value as int?,
-        locale: locale,
-        onChanged: onChanged,
-      ),
-      QuestionType.multipleChoice => MultipleChoiceQuestion(
-        question: question,
-        choices: choices,
-        selectedChoiceIds: (value as List<int>?) ?? [],
-        locale: locale,
-        onChanged: onChanged,
-      ),
-      QuestionType.textSingle => TextSingleQuestion(
-        placeholder: question.placeholderFor(locale),
-        minLength: question.minLength,
-        maxLength: question.maxLength,
-        value: value as String?,
-        onChanged: onChanged,
-      ),
-      QuestionType.textMultiLine => TextMultiLineQuestion(
-        placeholder: question.placeholderFor(locale),
-        minLength: question.minLength,
-        maxLength: question.maxLength,
-        value: value as String?,
-        onChanged: onChanged,
-      ),
-      QuestionType.imageUpload =>
-        client == null
-            ? Text(
-                'Image upload requires a Client',
-                style: TextStyle(color: ThemeData.light().colorScheme.error),
-              )
-            : ImageUploadQuestion(
-                client: client!,
-                maxFiles: question.maxSelected ?? 3,
-                fileKeys: (value as List<String>?) ?? const [],
-                locale: locale,
-                ensureAuthenticated: ensureAuthenticated,
-                processImage: processImage,
-                onChanged: onChanged,
-              ),
-    };
-  }
+  Widget _buildQuestionInput() => switch (question.type) {
+    QuestionType.singleChoice => SingleChoiceQuestion(
+      choices: choices,
+      selectedChoiceId: value as int?,
+      locale: locale,
+      onChanged: onChanged,
+    ),
+    QuestionType.multipleChoice => MultipleChoiceQuestion(
+      question: question,
+      choices: choices,
+      selectedChoiceIds: (value as List<int>?) ?? [],
+      locale: locale,
+      onChanged: onChanged,
+    ),
+    QuestionType.textSingle => TextSingleQuestion(
+      placeholder: question.placeholderFor(locale),
+      minLength: question.minLength,
+      maxLength: question.maxLength,
+      value: value as String?,
+      onChanged: onChanged,
+    ),
+    QuestionType.textMultiLine => TextMultiLineQuestion(
+      placeholder: question.placeholderFor(locale),
+      minLength: question.minLength,
+      maxLength: question.maxLength,
+      value: value as String?,
+      onChanged: onChanged,
+    ),
+    QuestionType.imageUpload =>
+      client == null
+          ? Text(
+              'Image upload requires a Client',
+              style: TextStyle(color: ThemeData.light().colorScheme.error),
+            )
+          : ImageUploadQuestion(
+              client: client!,
+              maxFiles: question.maxSelected ?? 3,
+              fileKeys: (value as List<String>?) ?? const [],
+              locale: locale,
+              ensureAuthenticated: ensureAuthenticated,
+              processImage: processImage,
+              onChanged: onChanged,
+            ),
+  };
 }

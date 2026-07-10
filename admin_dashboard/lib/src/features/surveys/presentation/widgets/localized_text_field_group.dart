@@ -150,7 +150,7 @@ class _LocalizedTextFieldGroupState extends State<LocalizedTextFieldGroup> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     final primary = _primary;
     final secondaryLocales = _secondaryLocales;
     final showTranslate =
@@ -228,9 +228,7 @@ class _LocalizedTextFieldGroupState extends State<LocalizedTextFieldGroup> {
           )
         : primaryField;
 
-    if (secondaryLocales.isEmpty) {
-      return primaryRow;
-    }
+    if (secondaryLocales.isEmpty) primaryRow;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -289,77 +287,75 @@ class _OtherLanguagesExpansion extends StatefulWidget {
 
 class _OtherLanguagesExpansionState extends State<_OtherLanguagesExpansion> {
   @override
-  Widget build(BuildContext context) {
-    return FormField<void>(
-      validator: (_) => widget.secondaryValidator?.call(),
-      builder: (field) {
-        if (field.hasError && !widget.expanded) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted && !widget.expanded) {
-              widget.onExpandedChanged(true);
-            }
-          });
-        }
+  Widget build(context) => FormField<void>(
+    validator: (_) => widget.secondaryValidator?.call(),
+    builder: (field) {
+      if (field.hasError && !widget.expanded) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && !widget.expanded) {
+            widget.onExpandedChanged(true);
+          }
+        });
+      }
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Material(
-              type: MaterialType.transparency,
-              child: InkWell(
-                onTap: () => widget.onExpandedChanged(!widget.expanded),
-                borderRadius: BorderRadius.circular(8),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          context.tr('Other languages'),
-                          style: Theme.of(context).textTheme.titleSmall,
-                        ),
-                      ),
-                      Icon(
-                        widget.expanded
-                            ? LucideIcons.chevronUp
-                            : LucideIcons.chevronDown,
-                        size: 18,
-                        color: HuxTokens.iconSecondary(context),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            if (field.hasError && field.errorText != null) ...[
-              Text(
-                field.errorText!,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: HuxTokens.textDestructive(context),
-                ),
-              ),
-              const SizedBox(height: 8),
-            ],
-            ClipRect(
-              child: Align(
-                alignment: Alignment.topCenter,
-                heightFactor: widget.expanded ? 1 : 0,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Material(
+            type: MaterialType.transparency,
+            child: InkWell(
+              onTap: () => widget.onExpandedChanged(!widget.expanded),
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
                   children: [
-                    for (var i = 0; i < widget.children.length; i++) ...[
-                      if (i > 0) const SizedBox(height: 12),
-                      widget.children[i],
-                    ],
+                    Expanded(
+                      child: Text(
+                        context.tr('Other languages'),
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                    ),
+                    Icon(
+                      widget.expanded
+                          ? LucideIcons.chevronUp
+                          : LucideIcons.chevronDown,
+                      size: 18,
+                      color: HuxTokens.iconSecondary(context),
+                    ),
                   ],
                 ),
               ),
             ),
+          ),
+          if (field.hasError && field.errorText != null) ...[
+            Text(
+              field.errorText!,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: HuxTokens.textDestructive(context),
+              ),
+            ),
+            const SizedBox(height: 8),
           ],
-        );
-      },
-    );
-  }
+          ClipRect(
+            child: Align(
+              alignment: Alignment.topCenter,
+              heightFactor: widget.expanded ? 1 : 0,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (var i = 0; i < widget.children.length; i++) ...[
+                    if (i > 0) const SizedBox(height: 12),
+                    widget.children[i],
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    },
+  );
 }
 
 class _LocalizedField extends StatelessWidget {
@@ -384,7 +380,7 @@ class _LocalizedField extends StatelessWidget {
   final String? Function(String?)? validator;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     if (maxLines > 1) {
       return HuxTextarea(
         controller: controller,

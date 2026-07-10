@@ -49,10 +49,9 @@ class UserListManager {
 
   UserListManager({
     required this.state,
-    required void Function(UserListState) setState,
-    required Client client,
-  }) : _setState = setState,
-       _client = client;
+    required this._setState,
+    required this._client,
+  });
 
   /// Load all users.
   Future<void> loadUsers() async {
@@ -75,27 +74,24 @@ class UserListManager {
     required String email,
     required String password,
     required AdminRole role,
-  }) async {
-    return runVoidAndReload(
-      action: () => _client.userAdmin.createUser(
-        email: email,
-        password: password,
-        role: role,
-      ),
-      reload: loadUsers,
-      setError: _setError,
-      errorMessage: 'Failed to create user',
-    );
-  }
+  }) => runVoidAndReload(
+    action: () => _client.userAdmin.createUser(
+      email: email,
+      password: password,
+      role: role,
+    ),
+    reload: loadUsers,
+    setError: _setError,
+    errorMessage: 'Failed to create user',
+  );
 
-  Future<bool> updateUserRole(UuidValue userId, AdminRole role) async {
-    return runVoidAndReload(
-      action: () => _client.userAdmin.updateRole(userId, role),
-      reload: loadUsers,
-      setError: _setError,
-      errorMessage: 'Failed to update role',
-    );
-  }
+  Future<bool> updateUserRole(UuidValue userId, AdminRole role) =>
+      runVoidAndReload(
+        action: () => _client.userAdmin.updateRole(userId, role),
+        reload: loadUsers,
+        setError: _setError,
+        errorMessage: 'Failed to update role',
+      );
 
   /// Delete a user by ID.
   /// Returns (success, wasSelfDeletion) tuple.
@@ -114,12 +110,8 @@ class UserListManager {
     }
   }
 
-  void _setError(String error) {
-    _setState(state.copyWith(error: error));
-  }
+  void _setError(String error) => _setState(state.copyWith(error: error));
 
   /// Clear any error message.
-  void clearError() {
-    _setState(state.copyWith(error: null));
-  }
+  void clearError() => _setState(state.copyWith(error: null));
 }

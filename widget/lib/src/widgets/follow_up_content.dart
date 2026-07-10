@@ -35,7 +35,7 @@ class FollowUpContent extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return ListView(
@@ -53,8 +53,8 @@ class FollowUpContent extends StatelessWidget {
           ).textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
         ),
         const SizedBox(height: 24),
-        ...followUp.items.map((item) {
-          return Padding(
+        for (final item in followUp.items)
+          Padding(
             key: ValueKey(item.id),
             padding: const EdgeInsets.only(bottom: 24),
             child: _FollowUpItemField(
@@ -68,8 +68,7 @@ class FollowUpContent extends StatelessWidget {
               processImage: processImage,
               onChanged: (value) => onAnswerChanged(item.id, value),
             ),
-          );
-        }),
+          ),
         if (errorMessage != null) ...[
           Text(errorMessage!, style: TextStyle(color: colorScheme.error)),
           const SizedBox(height: 12),
@@ -150,7 +149,7 @@ class _FollowUpItemFieldState extends State<_FollowUpItemField> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     final colorScheme = Theme.of(context).colorScheme;
     final item = widget.item;
 

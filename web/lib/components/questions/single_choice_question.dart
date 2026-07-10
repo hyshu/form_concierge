@@ -19,28 +19,27 @@ class SingleChoiceQuestion extends StatelessComponent {
   final void Function(AnswerValue value) onChanged;
 
   @override
-  Component build(BuildContext context) {
-    return div(classes: 'space-y-2', [
-      for (final choice in choices)
-        label([
-          input(
-            type: InputType.radio,
-            name: 'question_${question.id}',
-            value: choice.id.toString(),
-            checked: value == choice.id,
-            classes: 'w-4 h-4 text-indigo-600 accent-indigo-600 flex-shrink-0',
-            onChange: (bool? checked) {
-              if (checked == true) {
-                onChanged(choice.id);
-              }
-            },
-          ),
-          span(classes: 'ml-3 text-sm text-slate-700', [
-            Component.text(choice.textFor(locale)),
-          ]),
-        ],
-            classes:
-                'flex items-center px-4 py-3 rounded-lg border ${value == choice.id ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'} cursor-pointer'),
-    ]);
-  }
+  Component build(context) => div(classes: 'space-y-2', [
+        for (final choice in choices)
+          label([
+            input(
+              type: InputType.radio,
+              name: 'question_${question.id}',
+              value: choice.id.toString(),
+              checked: value == choice.id,
+              classes:
+                  'w-4 h-4 text-indigo-600 accent-indigo-600 flex-shrink-0',
+              onChange: (bool? checked) {
+                if (checked == true) {
+                  onChanged(choice.id);
+                }
+              },
+            ),
+            span(classes: 'ml-3 text-sm text-slate-700', [
+              Component.text(choice.textFor(locale)),
+            ]),
+          ],
+              classes:
+                  'flex items-center px-4 py-3 rounded-lg border ${value == choice.id ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'} cursor-pointer'),
+      ]);
 }

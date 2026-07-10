@@ -77,7 +77,7 @@ class _ProjectFormState extends State<ProjectForm> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     return HuxCard(
       child: Form(
         key: _formKey,
@@ -254,7 +254,7 @@ class _LanguageSelector extends StatelessWidget {
   final VoidCallback onPressed;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
@@ -305,7 +305,7 @@ class _LocaleSelectionDialogState extends State<_LocaleSelectionDialog> {
   ).toSet();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     final maxListHeight = MediaQuery.sizeOf(context).height * 0.5;
     return HuxDialog(
       title: context.tr('Localized languages'),
@@ -353,26 +353,21 @@ class _LocaleSelectionDialogState extends State<_LocaleSelectionDialog> {
     );
   }
 
-  bool _canToggle(String locale) {
-    return !_selected.contains(locale) || _selected.length > 1;
-  }
+  bool _canToggle(String locale) =>
+      !_selected.contains(locale) || _selected.length > 1;
 
-  void _toggle(String locale, bool selected) {
-    setState(() {
-      if (selected) {
-        _selected.add(locale);
-      } else if (_selected.length > 1) {
-        _selected.remove(locale);
-      }
-    });
-  }
+  void _toggle(String locale, bool selected) => setState(() {
+    if (selected) {
+      _selected.add(locale);
+    } else if (_selected.length > 1) {
+      _selected.remove(locale);
+    }
+  });
 }
 
-String _localeLabels(Iterable<String> locales) {
-  return orderedFormContentLocales(
-    locales,
-  ).map((locale) => formContentLocaleLabels[locale]!).join(', ');
-}
+String _localeLabels(Iterable<String> locales) => orderedFormContentLocales(
+  locales,
+).map((locale) => formContentLocaleLabels[locale]!).join(', ');
 
 String _formContentLocaleFromAdminLocale(Locale locale) {
   final scriptCode = locale.scriptCode;

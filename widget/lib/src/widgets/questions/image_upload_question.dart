@@ -68,7 +68,7 @@ class _ImageUploadQuestionState extends State<ImageUploadQuestion> {
   final Map<String, Uint8List> _previews = {};
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     final colorScheme = Theme.of(context).colorScheme;
     final canAdd =
         widget.enabled &&
@@ -242,7 +242,7 @@ class _ImageChip extends StatelessWidget {
   const _ImageChip({required this.bytes, this.onRemove});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     final colorScheme = Theme.of(context).colorScheme;
     return Stack(
       clipBehavior: Clip.none,

@@ -453,7 +453,7 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     final locale = _locale;
     final visibleQuestions = resolveVisibleQuestions(
       _state.questions,

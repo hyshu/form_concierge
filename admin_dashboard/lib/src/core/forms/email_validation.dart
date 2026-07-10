@@ -1,5 +1,3 @@
 final _emailPattern = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
 
-bool isValidEmailAddress(String value) {
-  return _emailPattern.hasMatch(value.trim());
-}
+bool isValidEmailAddress(String value) => _emailPattern.hasMatch(value.trim());

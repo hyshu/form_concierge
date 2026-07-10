@@ -12,9 +12,7 @@ export 'survey_form_state.dart';
 /// Capsule using keyed state pattern for per-survey forms.
 KeyedStateAccessors<int?, SurveyFormState> surveyFormStateCapsule(
   CapsuleHandle use,
-) {
-  return createKeyedState(use, SurveyFormState.initial);
-}
+) => createKeyedState(use, SurveyFormState.initial);
 
 /// Capsule that provides the survey form manager.
 SurveyFormManager surveyFormManagerCapsule(CapsuleHandle use) {
@@ -36,10 +34,9 @@ class SurveyFormManager {
 
   SurveyFormManager({
     required this.getState,
-    required void Function(int? surveyId, SurveyFormState state) setState,
-    required Client client,
-  }) : _setState = setState,
-       _client = client;
+    required this._setState,
+    required this._client,
+  });
 
   /// Load a survey by ID.
   Future<void> loadSurvey(int surveyId) async {
@@ -152,9 +149,8 @@ class SurveyFormManager {
   }
 
   /// Clear error for a survey.
-  void clearError(int? surveyId) {
-    _setState(surveyId, getState(surveyId).copyWith(error: null));
-  }
+  void clearError(int? surveyId) =>
+      _setState(surveyId, getState(surveyId).copyWith(error: null));
 
   // Draft Questions Management (for create survey page)
 
@@ -197,30 +193,26 @@ class SurveyFormManager {
     int? maxLength,
     int? minSelected,
     int? maxSelected,
-  }) {
-    _updateDraftQuestion(
-      tempId,
-      (question) => DraftQuestion(
-        tempId: question.tempId,
-        textTranslations: textTranslations,
-        type: type,
-        isRequired: isRequired,
-        placeholderTranslations: placeholderTranslations,
-        minLength: minLength,
-        maxLength: maxLength,
-        minSelected: minSelected,
-        maxSelected: maxSelected,
-        choices: question.choices,
-      ),
-    );
-  }
+  }) => _updateDraftQuestion(
+    tempId,
+    (question) => DraftQuestion(
+      tempId: question.tempId,
+      textTranslations: textTranslations,
+      type: type,
+      isRequired: isRequired,
+      placeholderTranslations: placeholderTranslations,
+      minLength: minLength,
+      maxLength: maxLength,
+      minSelected: minSelected,
+      maxSelected: maxSelected,
+      choices: question.choices,
+    ),
+  );
 
   /// Delete a draft question.
-  void deleteDraftQuestion(String tempId) {
-    _setDraftQuestions(
-      (questions) => questions.where((q) => q.tempId != tempId).toList(),
-    );
-  }
+  void deleteDraftQuestion(String tempId) => _setDraftQuestions(
+    (questions) => questions.where((q) => q.tempId != tempId).toList(),
+  );
 
   /// Reorder draft questions.
   void reorderDraftQuestions(int oldIndex, int newIndex) {
@@ -235,47 +227,42 @@ class SurveyFormManager {
   void addChoiceToDraftQuestion(
     String questionTempId,
     LocalizedText choiceTranslations,
-  ) {
-    _updateDraftQuestion(
-      questionTempId,
-      (question) => question.copyWith(
-        choices: [
-          ...question.choices,
-          DraftChoice.create(textTranslations: choiceTranslations),
-        ],
-      ),
-    );
-  }
+  ) => _updateDraftQuestion(
+    questionTempId,
+    (question) => question.copyWith(
+      choices: [
+        ...question.choices,
+        DraftChoice.create(textTranslations: choiceTranslations),
+      ],
+    ),
+  );
 
   /// Update a choice in a draft question.
   void updateDraftChoice(
     String questionTempId,
     String choiceTempId,
     LocalizedText textTranslations,
-  ) {
-    _updateDraftQuestion(
-      questionTempId,
-      (question) => question.copyWith(
-        choices: question.choices.map((choice) {
-          return choice.tempId == choiceTempId
-              ? choice.copyWith(textTranslations: textTranslations)
-              : choice;
-        }).toList(),
-      ),
-    );
-  }
+  ) => _updateDraftQuestion(
+    questionTempId,
+    (question) => question.copyWith(
+      choices: question.choices.map((choice) {
+        return choice.tempId == choiceTempId
+            ? choice.copyWith(textTranslations: textTranslations)
+            : choice;
+      }).toList(),
+    ),
+  );
 
   /// Delete a choice from a draft question.
-  void deleteDraftChoice(String questionTempId, String choiceTempId) {
-    _updateDraftQuestion(
-      questionTempId,
-      (question) => question.copyWith(
-        choices: question.choices
-            .where((choice) => choice.tempId != choiceTempId)
-            .toList(),
-      ),
-    );
-  }
+  void deleteDraftChoice(String questionTempId, String choiceTempId) =>
+      _updateDraftQuestion(
+        questionTempId,
+        (question) => question.copyWith(
+          choices: question.choices
+              .where((choice) => choice.tempId != choiceTempId)
+              .toList(),
+        ),
+      );
 
   /// Create a new survey with questions.
   Future<Survey?> createSurveyWithQuestions({
@@ -352,13 +339,11 @@ class SurveyFormManager {
   void _updateDraftQuestion(
     String tempId,
     DraftQuestion Function(DraftQuestion question) update,
-  ) {
-    _setDraftQuestions(
-      (questions) => questions.map((question) {
-        return question.tempId == tempId ? update(question) : question;
-      }).toList(),
-    );
-  }
+  ) => _setDraftQuestions(
+    (questions) => questions.map((question) {
+      return question.tempId == tempId ? update(question) : question;
+    }).toList(),
+  );
 
   // AI Generation Methods
 
@@ -416,13 +401,11 @@ class SurveyFormManager {
   }
 
   /// Clear the generated questions preview.
-  void clearGeneratedQuestions() {
-    _setState(
-      null,
-      getState(null).copyWith(
-        clearGeneratedQuestions: true,
-        clearGenerationError: true,
-      ),
-    );
-  }
+  void clearGeneratedQuestions() => _setState(
+    null,
+    getState(null).copyWith(
+      clearGeneratedQuestions: true,
+      clearGenerationError: true,
+    ),
+  );
 }

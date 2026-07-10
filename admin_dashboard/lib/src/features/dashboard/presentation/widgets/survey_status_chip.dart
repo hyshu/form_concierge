@@ -11,7 +11,7 @@ class SurveyStatusChip extends StatelessWidget {
   const SurveyStatusChip({super.key, required this.status});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     final (label, variant) = switch (status) {
       SurveyStatus.draft => ('Draft', HuxBadgeVariant.secondary),
       SurveyStatus.published => ('Published', HuxBadgeVariant.success),

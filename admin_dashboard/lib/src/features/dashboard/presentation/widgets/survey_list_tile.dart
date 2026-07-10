@@ -30,7 +30,7 @@ class SurveyListTile extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(context) {
     final title = survey.titleFor(locale);
     final description = survey.descriptionFor(locale).trim();
     return HuxCard(

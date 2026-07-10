@@ -15,12 +15,10 @@ LocalizedText localizedTextFromControllers(
 
 Map<String, TextEditingController> createLocalizedTextControllers([
   LocalizedText? initialText,
-]) {
-  return {
-    for (final locale in formContentLocaleCodes)
-      locale: TextEditingController(text: initialText?.valueFor(locale) ?? ''),
-  };
-}
+]) => {
+  for (final locale in formContentLocaleCodes)
+    locale: TextEditingController(text: initialText?.valueFor(locale) ?? ''),
+};
 
 void populateLocalizedTextControllers(
   Map<String, TextEditingController> controllers,
