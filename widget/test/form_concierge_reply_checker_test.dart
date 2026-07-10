@@ -100,18 +100,21 @@ void main() {
       expect(await checker.readLastSeenReplyAt(), isNull);
     });
 
-    test('check(markSeen: true) stores latest timestamp via host store', () async {
-      final checker = FormConciergeReplyChecker(
-        client: _client((request) => _json({'latestReplyAt': latestIso})),
-        anonymousToken: 'token-2',
-        store: _memoryStore(),
-      );
+    test(
+      'check(markSeen: true) stores latest timestamp via host store',
+      () async {
+        final checker = FormConciergeReplyChecker(
+          client: _client((request) => _json({'latestReplyAt': latestIso})),
+          anonymousToken: 'token-2',
+          store: _memoryStore(),
+        );
 
-      final result = await checker.check(markSeen: true);
+        final result = await checker.check(markSeen: true);
 
-      expect(result.hasNewReplies, isTrue);
-      expect(await checker.readLastSeenReplyAt(), DateTime.parse(latestIso));
-    });
+        expect(result.hasNewReplies, isTrue);
+        expect(await checker.readLastSeenReplyAt(), DateTime.parse(latestIso));
+      },
+    );
 
     test('markLatestSeen and clearSeen update host store only', () async {
       final checker = FormConciergeReplyChecker(

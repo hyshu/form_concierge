@@ -129,9 +129,7 @@ class _SurveyContentState extends State<SurveyContent> {
                 for (final option in widget.project.supportedLocales)
                   DropdownMenuItem(
                     value: option,
-                    child: Text(
-                      formContentLocaleLabels[option] ?? option,
-                    ),
+                    child: Text(formContentLocaleLabels[option] ?? option),
                   ),
               ],
               onChanged: widget.isSubmitting
@@ -191,9 +189,7 @@ class _SurveyContentState extends State<SurveyContent> {
                           height: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : Text(
-                          FormContentMessages.text(widget.locale, 'submit'),
-                        ),
+                      : Text(FormContentMessages.text(widget.locale, 'submit')),
                 ),
               ],
             ),

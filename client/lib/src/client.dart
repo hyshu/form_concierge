@@ -153,7 +153,8 @@ class Client {
   Uri _uriFor(String path, Map<String, String>? query) {
     final encodedPath = _encodePath(path);
     return baseUri.replace(
-      path: '${baseUri.path}${encodedPath.startsWith('/') ? encodedPath : '/$encodedPath'}',
+      path:
+          '${baseUri.path}${encodedPath.startsWith('/') ? encodedPath : '/$encodedPath'}',
       queryParameters: query == null
           ? null
           : Map.fromEntries(
@@ -167,7 +168,9 @@ class Client {
     final normalized = path.startsWith('/') ? path : '/$path';
     return normalized
         .split('/')
-        .map((segment) => segment.isEmpty ? segment : Uri.encodeComponent(segment))
+        .map(
+          (segment) => segment.isEmpty ? segment : Uri.encodeComponent(segment),
+        )
         .join('/');
   }
 

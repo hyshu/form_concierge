@@ -171,10 +171,7 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
 
     if (errors.isNotEmpty) {
       setState(() {
-        _state = _state.copyWith(
-          validationErrors: errors,
-          errorMessage: null,
-        );
+        _state = _state.copyWith(validationErrors: errors, errorMessage: null);
       });
       return;
     }
