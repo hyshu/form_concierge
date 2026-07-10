@@ -4,17 +4,20 @@ import 'package:hux/hux.dart';
 
 import '../../../../core/extensions/question_type_presentation.dart';
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/widgets/admin_media_gallery.dart';
 
 const int _kMaxTextResponsesPreview = 10;
 
 /// Card displaying results for a single question.
 class QuestionResultCard extends StatelessWidget {
+  final Client client;
   final QuestionResult result;
   final List<Choice> choices;
   final int totalResponses;
 
   const QuestionResultCard({
     super.key,
+    required this.client,
     required this.result,
     required this.choices,
     required this.totalResponses,
@@ -102,18 +105,8 @@ class QuestionResultCard extends StatelessWidget {
                       color: HuxTokens.textSecondary(context),
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    context.tr('{count} image(s)', {'count': keys.length}),
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  const SizedBox(height: 4),
-                  SelectableText(
-                    keys.join('\n'),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: HuxTokens.textSecondary(context),
-                    ),
-                  ),
+                  const SizedBox(height: 8),
+                  AdminMediaGallery(client: client, fileKeys: keys),
                 ],
               ),
             ),

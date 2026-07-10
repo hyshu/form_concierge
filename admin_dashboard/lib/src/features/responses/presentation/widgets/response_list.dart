@@ -4,11 +4,13 @@ import 'package:hux/hux.dart';
 
 import '../../../../core/constants/pagination.dart';
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/widgets/admin_media_gallery.dart';
 import '../../../../core/widgets/hux_icon_action_button.dart';
 import '../../../../core/widgets/hux_states.dart';
 
 /// Widget showing a paginated list of individual responses.
 class ResponseList extends StatelessWidget {
+  final Client client;
   final List<SurveyResponse> responses;
   final int totalCount;
   final int currentPage;
@@ -28,6 +30,7 @@ class ResponseList extends StatelessWidget {
 
   const ResponseList({
     super.key,
+    required this.client,
     required this.responses,
     required this.totalCount,
     required this.currentPage,
@@ -81,6 +84,7 @@ class ResponseList extends StatelessWidget {
               final responseId = response.id;
               return _ResponseTile(
                 key: ValueKey(responseId ?? 'response-$index'),
+                client: client,
                 response: response,
                 index: currentPage * kDefaultPageSize + index + 1,
                 canManageResponses: canManageResponses,
@@ -147,6 +151,7 @@ class ResponseList extends StatelessWidget {
 }
 
 class _ResponseTile extends StatelessWidget {
+  final Client client;
   final SurveyResponse response;
   final int index;
   final bool canManageResponses;
@@ -161,6 +166,7 @@ class _ResponseTile extends StatelessWidget {
 
   const _ResponseTile({
     super.key,
+    required this.client,
     required this.response,
     required this.index,
     required this.canManageResponses,
@@ -290,6 +296,7 @@ class _ResponseTile extends StatelessWidget {
                 ),
                 children: [
                   _AnswersBody(
+                    client: client,
                     questions: questions,
                     choicesByQuestion: choicesByQuestion,
                     answers: answers,
@@ -358,6 +365,7 @@ class _ResponseTile extends StatelessWidget {
 }
 
 class _AnswersBody extends StatelessWidget {
+  final Client client;
   final List<Question> questions;
   final Map<int, List<Choice>> choicesByQuestion;
   final List<Answer>? answers;
@@ -366,6 +374,7 @@ class _AnswersBody extends StatelessWidget {
   final String? error;
 
   const _AnswersBody({
+    required this.client,
     required this.questions,
     required this.choicesByQuestion,
     required this.answers,
@@ -453,6 +462,7 @@ class _AnswersBody extends StatelessWidget {
         for (final answer in sortedAnswers)
           _AnswerRow(
             key: ValueKey('answer-${answer.id ?? answer.questionId}'),
+            client: client,
             question: questionById[answer.questionId],
             answer: answer,
             choices: choicesByQuestion[answer.questionId] ?? const [],
@@ -479,6 +489,7 @@ class _AnswersBody extends StatelessWidget {
           for (final item in followUp!.items)
             _FollowUpAnswerRow(
               key: ValueKey('follow-up-${item.id}'),
+              client: client,
               item: item,
             ),
         ],
@@ -488,12 +499,23 @@ class _AnswersBody extends StatelessWidget {
 }
 
 class _FollowUpAnswerRow extends StatelessWidget {
+  final Client client;
   final FollowUpItem item;
 
-  const _FollowUpAnswerRow({super.key, required this.item});
+  const _FollowUpAnswerRow({
+    super.key,
+    required this.client,
+    required this.item,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final answer = item.answer;
+    final isImage =
+        item.type == QuestionType.imageUpload &&
+        answer != null &&
+        answer.fileKeys.isNotEmpty;
+
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 8),
@@ -512,11 +534,14 @@ class _FollowUpAnswerRow extends StatelessWidget {
               color: HuxTokens.textSecondary(context),
             ),
           ),
-          const SizedBox(height: 4),
-          SelectableText(
-            _formatFollowUpAnswer(item),
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
+          const SizedBox(height: 8),
+          if (isImage)
+            AdminMediaGallery(client: client, fileKeys: answer.fileKeys)
+          else
+            SelectableText(
+              _formatFollowUpAnswer(item),
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
         ],
       ),
     );
@@ -525,10 +550,6 @@ class _FollowUpAnswerRow extends StatelessWidget {
   String _formatFollowUpAnswer(FollowUpItem item) {
     final answer = item.answer;
     if (answer == null) return '—';
-    if (item.type == QuestionType.imageUpload) {
-      if (answer.fileKeys.isEmpty) return '—';
-      return answer.fileKeys.join('\n');
-    }
     final text = answer.textValue?.trim();
     if (text != null && text.isNotEmpty) return text;
     if (answer.selectedChoiceIds.isEmpty) return '—';
@@ -542,12 +563,14 @@ class _FollowUpAnswerRow extends StatelessWidget {
 }
 
 class _AnswerRow extends StatelessWidget {
+  final Client client;
   final Question? question;
   final Answer answer;
   final List<Choice> choices;
 
   const _AnswerRow({
     super.key,
+    required this.client,
     required this.question,
     required this.answer,
     required this.choices,
@@ -556,7 +579,12 @@ class _AnswerRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final questionLabel = question?.text ?? 'Q${answer.questionId}';
-    final value = _formatAnswerValue(answer, choices);
+    final fileKeys = answer.fileKeys;
+    final isImage =
+        (question?.type == QuestionType.imageUpload ||
+            (fileKeys != null && fileKeys.isNotEmpty)) &&
+        fileKeys != null &&
+        fileKeys.isNotEmpty;
 
     return Container(
       width: double.infinity,
@@ -576,22 +604,20 @@ class _AnswerRow extends StatelessWidget {
               color: HuxTokens.textSecondary(context),
             ),
           ),
-          const SizedBox(height: 4),
-          SelectableText(
-            value,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
+          const SizedBox(height: 8),
+          if (isImage)
+            AdminMediaGallery(client: client, fileKeys: fileKeys)
+          else
+            SelectableText(
+              _formatAnswerValue(answer, choices),
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
         ],
       ),
     );
   }
 
   String _formatAnswerValue(Answer answer, List<Choice> choices) {
-    final fileKeys = answer.fileKeys;
-    if (fileKeys != null && fileKeys.isNotEmpty) {
-      return fileKeys.join('\n');
-    }
-
     final text = answer.textValue?.trim();
     if (text != null && text.isNotEmpty) return text;
 

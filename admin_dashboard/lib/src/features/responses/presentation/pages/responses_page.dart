@@ -102,6 +102,7 @@ class ResponsesPage extends RearchConsumer {
                 icon: LucideIcons.chartNoAxesColumn,
                 label: context.tr('Results'),
                 content: AggregatedResultsView(
+                  client: client,
                   results: resultsState.results,
                   choicesByQuestion: resultsState.choicesByQuestion,
                   isLoading: resultsState.isLoading,
@@ -113,6 +114,7 @@ class ResponsesPage extends RearchConsumer {
                 icon: LucideIcons.list,
                 label: context.tr('Individual'),
                 content: ResponseList(
+                  client: client,
                   responses: responseState.responses,
                   totalCount: responseState.totalCount,
                   currentPage: responseState.currentPage,

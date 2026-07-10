@@ -126,6 +126,22 @@ class SurveyEndpoint {
 
   /// Absolute URL to fetch media (requires admin or owner bearer token).
   Uri mediaUrl(String key) => _client.uriFor('/api/media', {'key': key});
+
+  /// Download media bytes. Use [authenticated] for admin sessions.
+  Future<List<int>> getMediaBytes(
+    String key, {
+    bool authenticated = false,
+    String? bearerToken,
+  }) async {
+    final response = await _client.rawRequest(
+      'GET',
+      '/api/media',
+      query: {'key': key},
+      authenticated: authenticated,
+      bearerToken: bearerToken,
+    );
+    return response.bodyBytes;
+  }
 }
 
 class ConfigEndpoint {

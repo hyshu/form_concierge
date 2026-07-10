@@ -8,6 +8,7 @@ import 'question_result_card.dart';
 
 /// View showing aggregated survey results.
 class AggregatedResultsView extends StatelessWidget {
+  final Client client;
   final SurveyResults? results;
   final Map<int, List<Choice>> choicesByQuestion;
   final bool isLoading;
@@ -16,6 +17,7 @@ class AggregatedResultsView extends StatelessWidget {
 
   const AggregatedResultsView({
     super.key,
+    required this.client,
     required this.results,
     required this.choicesByQuestion,
     required this.isLoading,
@@ -100,6 +102,7 @@ class AggregatedResultsView extends StatelessWidget {
           const SizedBox(height: 16),
           ...results!.questionResults.map((questionResult) {
             return QuestionResultCard(
+              client: client,
               result: questionResult,
               choices: choicesByQuestion[questionResult.questionId] ?? [],
               totalResponses: results!.totalResponses,
