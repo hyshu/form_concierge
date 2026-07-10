@@ -26,6 +26,10 @@ class FormConciergeSurvey extends StatefulWidget {
   final Map<String, dynamic>? metadata;
   final String? locale;
 
+  /// When false, the in-form locale dropdown is hidden even if the project
+  /// supports multiple locales. The host-provided [locale] is still used.
+  final bool showLocalePicker;
+
   /// Shown below the submit button when the survey form is ready.
   final Widget? footer;
 
@@ -44,6 +48,7 @@ class FormConciergeSurvey extends StatefulWidget {
     this.deviceInfo,
     this.metadata,
     this.locale,
+    this.showLocalePicker = true,
     this.footer,
   });
 
@@ -313,6 +318,7 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
         errorMessage: _state.errorMessage,
         locale: locale,
         isSubmitting: _state.viewState == SurveyViewState.submitting,
+        showLocalePicker: widget.showLocalePicker,
         onAnswerChanged: _updateAnswer,
         onLocaleChanged: (locale) {
           setState(() {

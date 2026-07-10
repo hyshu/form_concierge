@@ -13,6 +13,7 @@ class SurveyContent extends StatefulWidget {
   final String? errorMessage;
   final String locale;
   final bool isSubmitting;
+  final bool showLocalePicker;
   final void Function(int questionId, AnswerValue value) onAnswerChanged;
   final ValueChanged<String> onLocaleChanged;
   final VoidCallback onSubmit;
@@ -29,6 +30,7 @@ class SurveyContent extends StatefulWidget {
     this.errorMessage,
     required this.locale,
     required this.isSubmitting,
+    this.showLocalePicker = true,
     required this.onAnswerChanged,
     required this.onLocaleChanged,
     required this.onSubmit,
@@ -119,7 +121,8 @@ class _SurveyContentState extends State<SurveyContent> {
               style: Theme.of(context).textTheme.bodyMedium,
             ),
           ],
-          if (widget.project.supportedLocales.length > 1) ...[
+          if (widget.showLocalePicker &&
+              widget.project.supportedLocales.length > 1) ...[
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               initialValue: widget.locale,
