@@ -17,7 +17,8 @@ class FormConciergeSurvey extends StatefulWidget {
 
   /// Called when the user taps the completion-screen "Done" button.
   final VoidCallback? onDone;
-  final ValueChanged<SurveyResponse>? onResponseSubmitted;
+  final void Function(SurveyResponse response, List<Answer> answers)?
+  onResponseSubmitted;
   final ValueChanged<AnonymousSession>? onAnonymousSession;
   final String? anonymousId;
   final String? anonymousToken;
@@ -229,7 +230,7 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
       });
 
       widget.onSubmitted?.call();
-      widget.onResponseSubmitted?.call(response);
+      widget.onResponseSubmitted?.call(response, answers);
     } on Exception catch (_) {
       if (!mounted) return;
       setState(() {

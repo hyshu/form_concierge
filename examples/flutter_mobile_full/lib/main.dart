@@ -533,7 +533,7 @@ class SurveyScreen extends StatelessWidget {
           if (surveyId != null) 'surveyId': surveyId,
         },
         onAnonymousSession: onAnonymousSession,
-        onResponseSubmitted: (response) {
+        onResponseSubmitted: (response, _) {
           Navigator.of(context).pop(response);
         },
       ),

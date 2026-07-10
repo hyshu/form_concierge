@@ -36,7 +36,7 @@ void main() {
           client: client,
           projectSlug: 'customer-feedback',
           onAnonymousSession: (session) => anonymousSession = session,
-          onResponseSubmitted: (response) => submittedResponse = response,
+          onResponseSubmitted: (response, _) => submittedResponse = response,
         ),
       ),
     );
