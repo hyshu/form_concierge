@@ -5,6 +5,7 @@ import 'single_choice_question.dart';
 import 'multiple_choice_question.dart';
 import 'text_single_question.dart';
 import 'text_multi_line_question.dart';
+import 'image_upload_question.dart';
 
 class QuestionWidget extends StatelessWidget {
   final Question question;
@@ -13,6 +14,8 @@ class QuestionWidget extends StatelessWidget {
   final String? error;
   final String locale;
   final ValueChanged<AnswerValue> onChanged;
+  final Client? client;
+  final Future<void> Function()? ensureAuthenticated;
 
   const QuestionWidget({
     super.key,
@@ -22,6 +25,8 @@ class QuestionWidget extends StatelessWidget {
     this.error,
     required this.locale,
     required this.onChanged,
+    this.client,
+    this.ensureAuthenticated,
   });
 
   @override
@@ -92,6 +97,19 @@ class QuestionWidget extends StatelessWidget {
         value: value as String?,
         onChanged: onChanged,
       ),
+      QuestionType.imageUpload => client == null
+          ? Text(
+              'Image upload requires a Client',
+              style: TextStyle(color: ThemeData.light().colorScheme.error),
+            )
+          : ImageUploadQuestion(
+              client: client!,
+              maxFiles: question.maxSelected ?? 3,
+              fileKeys: (value as List<String>?) ?? const [],
+              locale: locale,
+              ensureAuthenticated: ensureAuthenticated,
+              onChanged: onChanged,
+            ),
     };
   }
 }

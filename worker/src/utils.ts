@@ -2,8 +2,24 @@ import type { AnswerInput } from './types';
 
 export const CHOICE_QUESTION_TYPES = new Set(['singleChoice', 'multipleChoice']);
 export const TEXT_QUESTION_TYPES = new Set(['textSingle', 'textMultiLine']);
-export const QUESTION_TYPES = new Set([...CHOICE_QUESTION_TYPES, ...TEXT_QUESTION_TYPES]);
+export const IMAGE_UPLOAD_QUESTION_TYPE = 'imageUpload';
+export const QUESTION_TYPES = new Set([
+  ...CHOICE_QUESTION_TYPES,
+  ...TEXT_QUESTION_TYPES,
+  IMAGE_UPLOAD_QUESTION_TYPE,
+]);
 const JSON_BODY_MAX_BYTES = 1024 * 1024;
+
+/** Max bytes per uploaded image (5 MiB). */
+export const MEDIA_MAX_BYTES = 5 * 1024 * 1024;
+/** Default / hard cap for images per imageUpload answer. */
+export const MEDIA_MAX_FILES = 3;
+export const MEDIA_ALLOWED_CONTENT_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+]);
 
 export const jsonHeaders = {
   'content-type': 'application/json; charset=utf-8',
@@ -338,6 +354,10 @@ export function isChoiceQuestionType(type: string): boolean {
 
 export function isTextQuestionType(type: string): boolean {
   return TEXT_QUESTION_TYPES.has(type);
+}
+
+export function isImageUploadQuestionType(type: string): boolean {
+  return type === IMAGE_UPLOAD_QUESTION_TYPE;
 }
 
 export async function insertChoices(

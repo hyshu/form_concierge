@@ -34,6 +34,7 @@ export type SurveyRow = {
   description_translations: string;
   status: string;
   web_enabled: number;
+  follow_up_enabled: number;
   auth_requirement: string;
   created_by_admin_id: string | null;
   created_at: string;
@@ -87,6 +88,7 @@ export type ResponseRow = {
   device_pixel_ratio: number | null;
   device_info: string | null;
   metadata: string | null;
+  follow_up: string | null;
 };
 
 export type AnswerRow = {
@@ -101,6 +103,7 @@ export type AnswerInput = {
   questionId?: unknown;
   textValue?: unknown;
   selectedChoiceIds?: unknown;
+  fileKeys?: unknown;
 };
 
 export type ReplyRow = {

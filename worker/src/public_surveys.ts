@@ -1,10 +1,29 @@
 import type { AnonymousContext, AnswerInput, AnswerRow, ChoiceRow, Env, ProjectRow, QuestionRow, ResponseRow, SurveyRow, VisibilityRuleRow } from './types';
-import { HttpError, isChoiceQuestionType, isTextQuestionType, json, logError, nowIso, optionalCustomDomain, optionalLimitedString, readJson, requireAnswerInput, requiredInteger } from './utils';
+import {
+  HttpError,
+  MEDIA_MAX_FILES,
+  isChoiceQuestionType,
+  isImageUploadQuestionType,
+  isTextQuestionType,
+  json,
+  logError,
+  nowIso,
+  optionalCustomDomain,
+  optionalLimitedString,
+  readJson,
+  requireAnswerInput,
+  requiredInteger,
+} from './utils';
 import { normalizeDeviceInfo, normalizeMetadata } from './metadata';
 import { choiceToJson, parseChoiceIds, projectToJson, questionToJson, responseToJson, surveyToJson } from './serializers';
 import { getVisibilityRules, visibleQuestionIds } from './visibility_rules';
 import { DEFAULT_FORM_CONTENT_LOCALE, localizedTextFor } from './localization';
 import { sendResponseNotification } from './notification_settings';
+import {
+  assertMediaObjectsExist,
+  assertOwnedMediaKeys,
+  encodeFileKeysForStorage,
+} from './media';
 
 export async function getPublicProject(env: Env, slug: string): Promise<Response> {
   const project = await env.DB.prepare(
@@ -90,7 +109,7 @@ export async function submitResponse(
     `SELECT * FROM questions WHERE survey_id = ? AND is_deleted = 0 ORDER BY order_index`,
   ).bind(surveyId).all<QuestionRow>();
   const visibilityRules = await getVisibilityRules(env.DB, surveyId);
-  await validateAnswers(env, questions.results, visibilityRules, answers);
+  await validateAnswers(env, questions.results, visibilityRules, answers, anonymous.id);
 
   const now = nowIso();
   const userAgent = request.headers.get('user-agent');
@@ -105,12 +124,12 @@ export async function submitResponse(
          (survey_id, anonymous_account_id, anonymous_id, submitted_at, ip_address, user_agent,
           device_id, device_label, device_platform, device_os, device_os_version,
           device_browser, device_browser_version, device_locale, device_timezone,
-          screen_width, screen_height, device_pixel_ratio, device_info, metadata)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          screen_width, screen_height, device_pixel_ratio, device_info, metadata, follow_up)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)
        RETURNING id, survey_id, anonymous_account_id, anonymous_id, submitted_at, user_agent,
          device_id, device_label, device_platform, device_os, device_os_version,
          device_browser, device_browser_version, device_locale, device_timezone,
-         screen_width, screen_height, device_pixel_ratio, device_info, metadata`,
+         screen_width, screen_height, device_pixel_ratio, device_info, metadata, follow_up`,
     ).bind(
       surveyId,
       anonymous.id,
@@ -136,17 +155,26 @@ export async function submitResponse(
   ];
 
   if (answers.length > 0) {
-    const answerPayload = answers.map((answer) => ({
-      questionId: requiredInteger(answer.questionId, 'questionId', { min: 1 }),
-      textValue: typeof answer.textValue === 'string' ? answer.textValue : null,
-      selectedChoiceIds: Array.isArray(answer.selectedChoiceIds)
-        ? JSON.stringify(
-            answer.selectedChoiceIds.map((choiceId) =>
-              requiredInteger(choiceId, 'selectedChoiceIds', { min: 1 }),
-            ),
-          )
-        : null,
-    }));
+    const answerPayload = answers.map((answer) => {
+      const fileKeys = Array.isArray(answer.fileKeys)
+        ? (answer.fileKeys as string[])
+        : null;
+      return {
+        questionId: requiredInteger(answer.questionId, 'questionId', { min: 1 }),
+        textValue: fileKeys
+          ? encodeFileKeysForStorage(fileKeys)
+          : typeof answer.textValue === 'string'
+            ? answer.textValue
+            : null,
+        selectedChoiceIds: Array.isArray(answer.selectedChoiceIds)
+          ? JSON.stringify(
+              answer.selectedChoiceIds.map((choiceId) =>
+                requiredInteger(choiceId, 'selectedChoiceIds', { min: 1 }),
+              ),
+            )
+          : null,
+      };
+    });
     // Cross-join freezes last_insert_rowid() (the response) once so multi-row
     // answer inserts do not pick up each prior answer's rowid.
     statements.push(
@@ -190,6 +218,7 @@ async function validateAnswers(
   questions: QuestionRow[],
   visibilityRules: VisibilityRuleRow[],
   answers: AnswerInput[],
+  anonymousAccountId: string,
 ): Promise<void> {
   const byQuestion = new Map<number, AnswerInput>();
   for (const answer of answers) {
@@ -211,6 +240,8 @@ async function validateAnswers(
     .map((question) => question.id);
   const validChoicesByQuestion = await loadValidChoiceIdsByQuestion(env.DB, choiceQuestionIds);
 
+  const allFileKeys: string[] = [];
+
   for (const question of questions) {
     if (!visibleQuestionIdSet.has(question.id)) continue;
     const questionText = localizedTextFor(question.text_translations, DEFAULT_FORM_CONTENT_LOCALE);
@@ -218,7 +249,12 @@ async function validateAnswers(
     if (!answer) {
       if (question.is_required) throw new HttpError(400, `Question "${questionText}" is required`);
       if (question.min_selected != null && question.min_selected > 0) {
-        throw new HttpError(400, `Question "${questionText}" requires at least ${question.min_selected} choices`);
+        throw new HttpError(
+          400,
+          `Question "${questionText}" requires at least ${question.min_selected} ${
+            isImageUploadQuestionType(question.type) ? 'images' : 'choices'
+          }`,
+        );
       }
       continue;
     }
@@ -234,6 +270,28 @@ async function validateAnswers(
         throw new HttpError(400, `Question "${questionText}" is too long`);
       }
       answer.textValue = value.length === 0 ? null : value;
+      answer.selectedChoiceIds = null;
+      answer.fileKeys = null;
+      continue;
+    }
+
+    if (isImageUploadQuestionType(question.type)) {
+      const fileKeys = normalizeFileKeys(answer.fileKeys);
+      const maxFiles = question.max_selected ?? MEDIA_MAX_FILES;
+      const minFiles = question.min_selected ?? (question.is_required ? 1 : 0);
+      if (question.is_required && fileKeys.length === 0) {
+        throw new HttpError(400, `Question "${questionText}" requires an image`);
+      }
+      if (fileKeys.length < minFiles) {
+        throw new HttpError(400, `Question "${questionText}" requires at least ${minFiles} images`);
+      }
+      if (fileKeys.length > maxFiles) {
+        throw new HttpError(400, `Question "${questionText}" allows at most ${maxFiles} images`);
+      }
+      assertOwnedMediaKeys(fileKeys, anonymousAccountId);
+      allFileKeys.push(...fileKeys);
+      answer.fileKeys = fileKeys;
+      answer.textValue = null;
       answer.selectedChoiceIds = null;
       continue;
     }
@@ -259,7 +317,30 @@ async function validateAnswers(
     }
     answer.textValue = null;
     answer.selectedChoiceIds = selected;
+    answer.fileKeys = null;
   }
+
+  if (allFileKeys.length > 0) {
+    await assertMediaObjectsExist(env, allFileKeys);
+  }
+}
+
+function normalizeFileKeys(value: unknown): string[] {
+  if (value == null) return [];
+  if (!Array.isArray(value)) throw new HttpError(400, 'fileKeys must be an array');
+  if (value.length > MEDIA_MAX_FILES) {
+    throw new HttpError(400, `fileKeys allows at most ${MEDIA_MAX_FILES} items`);
+  }
+  const keys: string[] = [];
+  for (const [index, item] of value.entries()) {
+    if (typeof item !== 'string' || item.trim().length === 0) {
+      throw new HttpError(400, `fileKeys[${index}] must be a non-empty string`);
+    }
+    const key = item.trim();
+    if (keys.includes(key)) throw new HttpError(400, 'fileKeys contains duplicates');
+    keys.push(key);
+  }
+  return keys;
 }
 
 async function loadValidChoiceIdsByQuestion(

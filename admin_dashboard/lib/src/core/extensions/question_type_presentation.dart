@@ -9,6 +9,7 @@ extension QuestionTypePresentation on QuestionType {
       QuestionType.multipleChoice => LucideIcons.squareCheck,
       QuestionType.textSingle => LucideIcons.textCursorInput,
       QuestionType.textMultiLine => LucideIcons.alignLeft,
+      QuestionType.imageUpload => LucideIcons.image,
     };
   }
 
@@ -18,6 +19,7 @@ extension QuestionTypePresentation on QuestionType {
       QuestionType.multipleChoice => 'Multiple Choice',
       QuestionType.textSingle => 'Short Text',
       QuestionType.textMultiLine => 'Long Text',
+      QuestionType.imageUpload => 'Image Upload',
     };
   }
 }

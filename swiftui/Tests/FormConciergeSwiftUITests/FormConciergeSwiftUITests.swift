@@ -191,6 +191,63 @@ final class FormConciergeSwiftUITests: XCTestCase {
     XCTAssertTrue(hasToken)
   }
 
+  func testUploadMediaPostsRawBytesWithAnonymousBearer() async throws {
+    let imageBytes = Data([0xff, 0xd8, 0xff, 0xd9])
+    var paths: [String] = []
+    let client = makeClient { request in
+      paths.append("\(request.httpMethod ?? "") \(request.url?.path ?? "")")
+      if request.url?.path == "/api/anonymous/accounts" {
+        return self.jsonResponse([
+          "account": self.anonymousAccountJson(),
+          "token": "media-token",
+        ])
+      }
+      XCTAssertEqual(request.httpMethod, "POST")
+      XCTAssertEqual(request.url?.path, "/api/media")
+      XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer media-token")
+      XCTAssertEqual(request.value(forHTTPHeaderField: "Content-Type"), "image/jpeg")
+      // URLProtocol may surface body via stream rather than httpBody.
+      XCTAssertEqual(self.requestBodyData(request), imageBytes)
+      return self.jsonResponse([
+        "key": "uploads/anon-1/photo.jpg",
+        "contentType": "image/jpeg",
+        "size": imageBytes.count,
+      ])
+    }
+
+    let uploaded = try await client.uploadMedia(data: imageBytes, contentType: "image/jpeg")
+    XCTAssertEqual(uploaded.key, "uploads/anon-1/photo.jpg")
+    XCTAssertEqual(uploaded.size, imageBytes.count)
+    XCTAssertEqual(
+      paths,
+      [
+        "POST /api/anonymous/accounts",
+        "POST /api/media",
+      ])
+  }
+
+  func testSubmitResponseEncodesImageFileKeys() async throws {
+    let client = makeClient { request in
+      if request.url?.path == "/api/anonymous/accounts" {
+        return self.jsonResponse([
+          "account": self.anonymousAccountJson(),
+          "token": "created-token",
+        ])
+      }
+      let body = try XCTUnwrap(self.jsonBody(request))
+      let answers = try XCTUnwrap(body["answers"] as? [[String: Any]])
+      XCTAssertEqual(answers.first?["questionId"] as? Int, 11)
+      XCTAssertEqual(answers.first?["fileKeys"] as? [String], ["uploads/anon-1/a.jpg"])
+      XCTAssertNil(answers.first?["textValue"] as? String)
+      return self.jsonResponse(self.responseJson())
+    }
+
+    _ = try await client.submitResponse(
+      surveyId: 1,
+      answers: [Answer(questionId: 11, fileKeys: ["uploads/anon-1/a.jpg"])]
+    )
+  }
+
   func testApiErrorsUseServerMessage() async throws {
     let client = makeClient { _ in
       let data = try! JSONSerialization.data(withJSONObject: ["error": "Forbidden"])
@@ -376,25 +433,25 @@ final class FormConciergeSwiftUITests: XCTestCase {
     return (response, data)
   }
 
-  private func jsonBody(_ request: URLRequest) throws -> [String: Any]? {
-    let body: Data?
+  private func requestBodyData(_ request: URLRequest) -> Data? {
     if let httpBody = request.httpBody {
-      body = httpBody
-    } else if let stream = request.httpBodyStream {
-      stream.open()
-      defer { stream.close() }
-      var data = Data()
-      var buffer = [UInt8](repeating: 0, count: 1024)
-      while stream.hasBytesAvailable {
-        let read = stream.read(&buffer, maxLength: buffer.count)
-        if read <= 0 { break }
-        data.append(buffer, count: read)
-      }
-      body = data
-    } else {
-      body = nil
+      return httpBody
     }
-    guard let body else { return nil }
+    guard let stream = request.httpBodyStream else { return nil }
+    stream.open()
+    defer { stream.close() }
+    var data = Data()
+    var buffer = [UInt8](repeating: 0, count: 1024)
+    while stream.hasBytesAvailable {
+      let read = stream.read(&buffer, maxLength: buffer.count)
+      if read <= 0 { break }
+      data.append(buffer, count: read)
+    }
+    return data
+  }
+
+  private func jsonBody(_ request: URLRequest) throws -> [String: Any]? {
+    guard let body = requestBodyData(request) else { return nil }
     return try JSONSerialization.jsonObject(with: body) as? [String: Any]
   }
 

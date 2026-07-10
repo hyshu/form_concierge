@@ -1,4 +1,12 @@
+import PhotosUI
 import SwiftUI
+import UniformTypeIdentifiers
+
+#if canImport(UIKit)
+import UIKit
+#elseif canImport(AppKit)
+import AppKit
+#endif
 
 public struct FormConciergeSurveyView: View {
   private let client: FormConciergeClient
@@ -94,10 +102,12 @@ public struct FormConciergeSurveyView: View {
 
             ForEach(visibleQuestions) { question in
               QuestionView(
+                client: client,
                 question: question,
                 choices: choicesByQuestion[question.id] ?? [],
                 value: answers[question.id],
                 locale: activeLocale,
+                ensureAuthenticated: ensureAuthenticated,
                 onChange: { updateAnswer(questionId: question.id, value: $0) }
               )
             }
@@ -206,6 +216,9 @@ public struct FormConciergeSurveyView: View {
         case .multiple(let choiceIds):
           return choiceIds.isEmpty
             ? nil : Answer(questionId: question.id, selectedChoiceIds: Array(choiceIds))
+        case .images(let fileKeys):
+          return fileKeys.isEmpty
+            ? nil : Answer(questionId: question.id, fileKeys: fileKeys)
         }
       }
       let response = try await client.submitResponse(
@@ -246,19 +259,30 @@ public struct FormConciergeSurveyView: View {
         selectedCount = 1
       case .multiple(let values):
         selectedCount = values.count
+      case .images(let fileKeys):
+        selectedCount = fileKeys.count
       case .text, nil:
         selectedCount = 0
       }
-      if let minSelected = question.minSelected, selectedCount < minSelected {
-        return FormContentMessages.minChoices(
-          activeLocale, question: questionText, count: minSelected)
-      }
-      if let maxSelected = question.maxSelected, selectedCount > maxSelected {
-        return FormContentMessages.maxChoices(
-          activeLocale, question: questionText, count: maxSelected)
+      // min/maxSelected apply to multi-select and image upload counts.
+      if question.type == .multipleChoice || question.type == .imageUpload {
+        if let minSelected = question.minSelected, selectedCount < minSelected {
+          return FormContentMessages.minChoices(
+            activeLocale, question: questionText, count: minSelected)
+        }
+        if let maxSelected = question.maxSelected, selectedCount > maxSelected {
+          return FormContentMessages.maxChoices(
+            activeLocale, question: questionText, count: maxSelected)
+        }
       }
     }
     return nil
+  }
+
+  private func ensureAuthenticated() async throws {
+    if await client.hasAnonymousToken() { return }
+    let session = try await client.createAnonymousAccount()
+    onAnonymousSession?(session)
   }
 
   private var visibleQuestions: [Question] {
@@ -293,6 +317,7 @@ public enum SurveyAnswerValue: Equatable, Sendable {
   case text(String)
   case single(Int)
   case multiple(Set<Int>)
+  case images([String])
 
   var isEmpty: Bool {
     switch self {
@@ -302,6 +327,8 @@ public enum SurveyAnswerValue: Equatable, Sendable {
       false
     case .multiple(let values):
       values.isEmpty
+    case .images(let fileKeys):
+      fileKeys.isEmpty
     }
   }
 }
@@ -387,7 +414,7 @@ private func matchesRule(
       selected = [choiceId]
     case .multiple(let choiceIds):
       selected = choiceIds
-    case .text, nil:
+    case .text, .images, nil:
       selected = []
     }
     switch rule.operator {
@@ -398,14 +425,18 @@ private func matchesRule(
     case .isAnswered, .isNotAnswered:
       return false
     }
+  case .imageUpload:
+    return hasAnswer
   }
 }
 
 private struct QuestionView: View {
+  let client: FormConciergeClient
   let question: Question
   let choices: [Choice]
   let value: SurveyAnswerValue?
   let locale: String
+  let ensureAuthenticated: () async throws -> Void
   let onChange: (SurveyAnswerValue) -> Void
 
   var body: some View {
@@ -455,8 +486,22 @@ private struct QuestionView: View {
           // Match Flutter: disable unselected options once maxSelected is reached.
           .disabled(atMax && !selected)
         }
+      case .imageUpload:
+        ImageUploadQuestionView(
+          client: client,
+          maxFiles: question.maxSelected ?? 3,
+          fileKeys: imageKeys,
+          locale: locale,
+          ensureAuthenticated: ensureAuthenticated,
+          onChange: { onChange(.images($0)) }
+        )
       }
     }
+  }
+
+  private var imageKeys: [String] {
+    if case .images(let keys) = value { return keys }
+    return []
   }
 
   private var textBinding: Binding<String> {
@@ -484,5 +529,185 @@ private struct QuestionView: View {
       return choiceIds
     }
     return []
+  }
+}
+
+// MARK: - Image upload
+
+private struct ImageUploadQuestionView: View {
+  let client: FormConciergeClient
+  let maxFiles: Int
+  let fileKeys: [String]
+  let locale: String
+  let ensureAuthenticated: () async throws -> Void
+  let onChange: ([String]) -> Void
+
+  @State private var pickerItems: [PhotosPickerItem] = []
+  @State private var isUploading = false
+  @State private var localError: String?
+  @State private var previews: [String: Data] = [:]
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 12) {
+      if !fileKeys.isEmpty {
+        ScrollView(.horizontal, showsIndicators: false) {
+          HStack(spacing: 12) {
+            ForEach(fileKeys, id: \.self) { key in
+              ZStack(alignment: .topTrailing) {
+                preview(for: key)
+                  .frame(width: 88, height: 88)
+                  .clipShape(RoundedRectangle(cornerRadius: 8))
+                  .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                      .stroke(.quaternary)
+                  )
+                Button {
+                  remove(key: key)
+                } label: {
+                  Image(systemName: "xmark.circle.fill")
+                    .symbolRenderingMode(.palette)
+                    .foregroundStyle(.white, .black.opacity(0.6))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(FormContentMessages.text(locale, "removePhoto"))
+                .offset(x: 6, y: -6)
+                .disabled(isUploading)
+              }
+            }
+          }
+          .padding(.vertical, 4)
+        }
+      }
+
+      Text(
+        FormContentMessages.text(locale, "maxPhotosReached")
+          .replacingOccurrences(of: "{count}", with: "\(maxFiles)")
+      )
+      .font(.footnote)
+      .foregroundStyle(.secondary)
+
+      PhotosPicker(
+        selection: $pickerItems,
+        maxSelectionCount: max(maxFiles - fileKeys.count, 0),
+        matching: .images,
+        photoLibrary: .shared()
+      ) {
+        Label(
+          FormContentMessages.text(
+            locale,
+            isUploading ? "uploadingPhotos" : "addPhotos"
+          ),
+          systemImage: "photo.badge.plus"
+        )
+      }
+      .disabled(isUploading || fileKeys.count >= maxFiles)
+      .onChange(of: pickerItems) { items in
+        guard !items.isEmpty else { return }
+        Task { await upload(items: items) }
+      }
+
+      if let localError {
+        Text(localError)
+          .font(.footnote)
+          .foregroundStyle(.red)
+      }
+    }
+  }
+
+  @ViewBuilder
+  private func preview(for key: String) -> some View {
+    if let data = previews[key], let image = platformImage(from: data) {
+      image
+        .resizable()
+        .scaledToFill()
+    } else {
+      ZStack {
+        Color.secondary.opacity(0.12)
+        Image(systemName: "photo")
+          .foregroundStyle(.secondary)
+      }
+    }
+  }
+
+  private func remove(key: String) {
+    var next = fileKeys
+    next.removeAll { $0 == key }
+    previews[key] = nil
+    onChange(next)
+  }
+
+  private func upload(items: [PhotosPickerItem]) async {
+    isUploading = true
+    localError = nil
+    defer {
+      isUploading = false
+      pickerItems = []
+    }
+
+    do {
+      try await ensureAuthenticated()
+      var keys = fileKeys
+      for item in items {
+        if keys.count >= maxFiles { break }
+        guard let data = try await item.loadTransferable(type: Data.self), !data.isEmpty
+        else { continue }
+        let contentType = contentType(for: item) ?? "image/jpeg"
+        let payload = try jpegDataIfNeeded(data, contentType: contentType)
+        let uploaded = try await client.uploadMedia(
+          data: payload.data,
+          contentType: payload.contentType
+        )
+        keys.append(uploaded.key)
+        previews[uploaded.key] = payload.data
+      }
+      onChange(keys)
+    } catch {
+      localError = FormContentMessages.text(locale, "photoUploadFailed")
+    }
+  }
+
+  private func contentType(for item: PhotosPickerItem) -> String? {
+    guard let type = item.supportedContentTypes.first else { return nil }
+    if type.conforms(to: .png) { return "image/png" }
+    if type.conforms(to: .gif) { return "image/gif" }
+    if type.conforms(to: .webP) { return "image/webp" }
+    if type.conforms(to: .jpeg) { return "image/jpeg" }
+    return type.preferredMIMEType
+  }
+
+  /// Prefer JPEG for HEIC/unknown formats so the Worker accepts the body.
+  private func jpegDataIfNeeded(_ data: Data, contentType: String) throws -> (
+    data: Data, contentType: String
+  ) {
+    let allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"]
+    if allowed.contains(contentType) {
+      return (data, contentType)
+    }
+#if canImport(UIKit)
+    if let image = UIImage(data: data), let jpeg = image.jpegData(compressionQuality: 0.85) {
+      return (jpeg, "image/jpeg")
+    }
+#elseif canImport(AppKit)
+    if let image = NSImage(data: data),
+       let tiff = image.tiffRepresentation,
+       let rep = NSBitmapImageRep(data: tiff),
+       let jpeg = rep.representation(using: .jpeg, properties: [.compressionFactor: 0.85])
+    {
+      return (jpeg, "image/jpeg")
+    }
+#endif
+    return (data, "image/jpeg")
+  }
+
+  private func platformImage(from data: Data) -> Image? {
+#if canImport(UIKit)
+    guard let uiImage = UIImage(data: data) else { return nil }
+    return Image(uiImage: uiImage)
+#elseif canImport(AppKit)
+    guard let nsImage = NSImage(data: data) else { return nil }
+    return Image(nsImage: nsImage)
+#else
+    return nil
+#endif
   }
 }

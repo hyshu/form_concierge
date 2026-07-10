@@ -1,7 +1,17 @@
 import type { Env } from './types';
 import type { AiProvider } from './admin_settings';
 import { apiKeyForProvider, getIntegrationSettingsRow, normalizeAiProvider } from './admin_settings';
-import { HttpError, isChoiceQuestionType, isTextQuestionType, json, normalizeQuestionType, readJson, requireString } from './utils';
+import {
+  HttpError,
+  MEDIA_MAX_FILES,
+  isChoiceQuestionType,
+  isImageUploadQuestionType,
+  isTextQuestionType,
+  json,
+  normalizeQuestionType,
+  readJson,
+  requireString,
+} from './utils';
 
 const DEFAULT_MODELS: Record<AiProvider, string> = {
   gemini: 'gemini-3.5-flash',
@@ -56,6 +66,215 @@ export async function generateSurveyQuestions(request: Request, env: Env): Promi
   });
   const decoded = parseGeneratedQuestions(text, provider);
   return json(decoded.map((question) => normalizeGeneratedQuestion(question, provider)));
+}
+
+export type FollowUpGeneratedItem = {
+  id: string;
+  type: string;
+  text: string;
+  required: boolean;
+  placeholder: string | null;
+  maxFiles: number | null;
+  choices: { id: string; label: string }[];
+};
+
+export type FollowUpGenerationResult = {
+  needed: boolean;
+  items: FollowUpGeneratedItem[];
+};
+
+/** Generate optional adaptive follow-up questions from main-form answers. */
+export async function generateFollowUpFromAnswers(
+  env: Env,
+  input: {
+    surveyTitle: string;
+    locale: string;
+    answersSummary: string;
+  },
+): Promise<FollowUpGenerationResult> {
+  const { provider, apiKey } = await requireAiProvider(env);
+  const model = resolveModelId(env, provider);
+  const text = await generateStructuredJson({
+    provider,
+    apiKey,
+    model,
+    system: followUpSystemInstruction(input.locale),
+    user: [
+      `Survey title: ${input.surveyTitle}`,
+      `Respondent locale: ${input.locale}`,
+      'Main survey answers:',
+      input.answersSummary,
+    ].join('\n'),
+    schemaName: 'follow_up_interview',
+    schema: followUpSchema(),
+    maxTokens: 2048,
+  });
+  return parseFollowUpGeneration(text, provider);
+}
+
+function followUpSystemInstruction(locale: string): string {
+  return [
+    'You decide whether a short adaptive follow-up interview is useful after a survey.',
+    'Only ask follow-up questions when answers are incomplete, ambiguous, or worth clarifying.',
+    'If answers are already complete and clear, set needed to false and return an empty items array.',
+    'When needed is true, return 1 to 4 concise follow-up questions.',
+    `Write all question text, placeholders, and choice labels in locale "${locale}".`,
+    'Use only these types: singleChoice, multipleChoice, textSingle, textMultiLine, imageUpload.',
+    'For choice questions provide 2 to 6 choices. For text and imageUpload questions use an empty choices array.',
+    'Use imageUpload when a photo, screenshot, or receipt would clarify the response (bugs, damage, UI issues, product condition).',
+    'Do not request images for pure opinion or demographic questions.',
+    'At most one imageUpload item per follow-up. Prefer required=false for imageUpload.',
+    'Do not re-ask the same main survey questions.',
+    'Return JSON only.',
+  ].join('\n');
+}
+
+function followUpSchema() {
+  return {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      needed: { type: 'boolean' },
+      items: {
+        type: 'array',
+        items: {
+          type: 'object',
+          additionalProperties: false,
+          properties: {
+            type: {
+              type: 'string',
+              enum: [
+                'singleChoice',
+                'multipleChoice',
+                'textSingle',
+                'textMultiLine',
+                'imageUpload',
+              ],
+            },
+            text: { type: 'string' },
+            required: { type: 'boolean' },
+            placeholder: { type: ['string', 'null'] },
+            maxFiles: { type: ['integer', 'null'] },
+            choices: {
+              type: 'array',
+              items: {
+                type: 'object',
+                additionalProperties: false,
+                properties: {
+                  label: { type: 'string' },
+                },
+                required: ['label'],
+              },
+            },
+          },
+          required: ['type', 'text', 'required', 'placeholder', 'maxFiles', 'choices'],
+        },
+      },
+    },
+    required: ['needed', 'items'],
+  };
+}
+
+function parseFollowUpGeneration(text: string, provider: AiProvider): FollowUpGenerationResult {
+  let decoded: unknown;
+  try {
+    decoded = JSON.parse(text);
+  } catch {
+    throw new HttpError(502, `${providerLabel(provider)} returned invalid follow-up JSON`);
+  }
+  if (!decoded || typeof decoded !== 'object' || Array.isArray(decoded)) {
+    throw new HttpError(502, `${providerLabel(provider)} returned invalid follow-up JSON`);
+  }
+  const raw = decoded as Record<string, unknown>;
+  if (typeof raw.needed !== 'boolean') {
+    throw new HttpError(502, `${providerLabel(provider)} returned invalid needed flag`);
+  }
+  if (!Array.isArray(raw.items)) {
+    throw new HttpError(502, `${providerLabel(provider)} returned invalid follow-up items`);
+  }
+  if (!raw.needed) {
+    return { needed: false, items: [] };
+  }
+  if (raw.items.length === 0) {
+    return { needed: false, items: [] };
+  }
+  if (raw.items.length > 4) {
+    throw new HttpError(502, `${providerLabel(provider)} returned too many follow-up items`);
+  }
+
+  const items: FollowUpGeneratedItem[] = raw.items.map((item, index) => {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) {
+      throw new HttpError(502, `${providerLabel(provider)} returned an invalid follow-up item`);
+    }
+    const row = item as Record<string, unknown>;
+    const type = normalizeQuestionType(row.type);
+    const textValue = typeof row.text === 'string' ? row.text.trim() : '';
+    if (!textValue) {
+      throw new HttpError(502, `${providerLabel(provider)} returned empty follow-up text`);
+    }
+    if (typeof row.required !== 'boolean') {
+      throw new HttpError(502, `${providerLabel(provider)} returned invalid required flag`);
+    }
+    const placeholder =
+      row.placeholder == null
+        ? null
+        : typeof row.placeholder === 'string'
+          ? row.placeholder.trim() || null
+          : null;
+    if (!Array.isArray(row.choices)) {
+      throw new HttpError(502, `${providerLabel(provider)} returned invalid follow-up choices`);
+    }
+    const choices = row.choices.map((choice, choiceIndex) => {
+      if (!choice || typeof choice !== 'object' || Array.isArray(choice)) {
+        throw new HttpError(502, `${providerLabel(provider)} returned invalid follow-up choice`);
+      }
+      const label = (choice as { label?: unknown }).label;
+      if (typeof label !== 'string' || label.trim().length === 0) {
+        throw new HttpError(502, `${providerLabel(provider)} returned empty follow-up choice label`);
+      }
+      return {
+        id: `c${choiceIndex + 1}`,
+        label: label.trim(),
+      };
+    });
+    if (isChoiceQuestionType(type) && (choices.length < 2 || choices.length > 6)) {
+      throw new HttpError(502, `${providerLabel(provider)} returned invalid choice count`);
+    }
+    if ((isTextQuestionType(type) || isImageUploadQuestionType(type)) && choices.length > 0) {
+      throw new HttpError(502, `${providerLabel(provider)} returned non-choice follow-up with choices`);
+    }
+    let maxFiles: number | null = null;
+    if (isImageUploadQuestionType(type)) {
+      if (row.maxFiles == null) {
+        maxFiles = 1;
+      } else if (
+        typeof row.maxFiles === 'number'
+        && Number.isSafeInteger(row.maxFiles)
+        && row.maxFiles >= 1
+        && row.maxFiles <= MEDIA_MAX_FILES
+      ) {
+        maxFiles = row.maxFiles;
+      } else {
+        throw new HttpError(502, `${providerLabel(provider)} returned invalid maxFiles`);
+      }
+    }
+    return {
+      id: `fu_${index + 1}`,
+      type,
+      text: textValue,
+      required: row.required,
+      placeholder: isTextQuestionType(type) ? placeholder : null,
+      maxFiles,
+      choices: isChoiceQuestionType(type) ? choices : [],
+    };
+  });
+
+  const imageCount = items.filter((item) => isImageUploadQuestionType(item.type)).length;
+  if (imageCount > 1) {
+    throw new HttpError(502, `${providerLabel(provider)} returned multiple imageUpload items`);
+  }
+
+  return { needed: true, items };
 }
 
 export async function translateLocalizedText(request: Request, env: Env): Promise<Response> {
@@ -254,8 +473,11 @@ function systemInstruction(): string {
     'Generate concise survey questions for Form Concierge.',
     'Return only questions that fit the requested survey.',
     'Use every locale in the schema. Keep translations natural and short.',
+    'Use only these types: singleChoice, multipleChoice, textSingle, textMultiLine, imageUpload.',
     'For choice questions, provide two to six choices.',
-    'For text questions, provide an empty choiceTranslations array.',
+    'For text and imageUpload questions, provide an empty choiceTranslations array.',
+    'Use imageUpload when respondents should attach a photo, screenshot, or receipt.',
+    'For imageUpload set minSelected/maxSelected to the allowed image count (1-3); otherwise null.',
     'Return JSON only.',
   ].join('\n');
 }
@@ -384,7 +606,13 @@ function questionSchema() {
       textTranslations: localizedTextSchema,
       type: {
         type: 'string',
-        enum: ['singleChoice', 'multipleChoice', 'textSingle', 'textMultiLine'],
+        enum: [
+          'singleChoice',
+          'multipleChoice',
+          'textSingle',
+          'textMultiLine',
+          'imageUpload',
+        ],
       },
       isRequired: { type: 'boolean' },
       placeholderTranslations: localizedTextSchema,
@@ -569,18 +797,29 @@ function normalizeGeneratedQuestion(value: unknown, provider: AiProvider) {
   if (isChoiceQuestionType(type) && choices.length === 0) {
     throw new HttpError(502, `${providerLabel(provider)} returned a choice question without choices`);
   }
-  if (isTextQuestionType(type) && choices.length > 0) {
-    throw new HttpError(502, `${providerLabel(provider)} returned a text question with choices`);
+  if ((isTextQuestionType(type) || isImageUploadQuestionType(type)) && choices.length > 0) {
+    throw new HttpError(502, `${providerLabel(provider)} returned a non-choice question with choices`);
+  }
+  let minSelected = nullableInteger(input.minSelected, 'minSelected', provider);
+  let maxSelected = nullableInteger(input.maxSelected, 'maxSelected', provider);
+  if (isImageUploadQuestionType(type)) {
+    if (maxSelected == null) maxSelected = 1;
+    if (maxSelected < 1 || maxSelected > MEDIA_MAX_FILES) {
+      throw new HttpError(502, `${providerLabel(provider)} returned invalid image maxSelected`);
+    }
+    if (minSelected != null && (minSelected < 0 || minSelected > maxSelected)) {
+      throw new HttpError(502, `${providerLabel(provider)} returned invalid image minSelected`);
+    }
   }
   return {
     textTranslations: normalizeLocalizedText(input.textTranslations, provider),
     type,
     isRequired: normalizeRequiredBoolean(input.isRequired, 'isRequired', provider),
     placeholderTranslations: normalizeLocalizedText(input.placeholderTranslations, provider),
-    minLength: nullableInteger(input.minLength, 'minLength', provider),
-    maxLength: nullableInteger(input.maxLength, 'maxLength', provider),
-    minSelected: nullableInteger(input.minSelected, 'minSelected', provider),
-    maxSelected: nullableInteger(input.maxSelected, 'maxSelected', provider),
+    minLength: isTextQuestionType(type) ? nullableInteger(input.minLength, 'minLength', provider) : null,
+    maxLength: isTextQuestionType(type) ? nullableInteger(input.maxLength, 'maxLength', provider) : null,
+    minSelected: isChoiceQuestionType(type) || isImageUploadQuestionType(type) ? minSelected : null,
+    maxSelected: isChoiceQuestionType(type) || isImageUploadQuestionType(type) ? maxSelected : null,
     visibilityConditionMode: normalizeVisibilityConditionMode(input.visibilityConditionMode, provider),
     choiceTranslations: choices,
   };

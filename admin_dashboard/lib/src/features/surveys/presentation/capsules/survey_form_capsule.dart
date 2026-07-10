@@ -96,6 +96,7 @@ class SurveyFormManager {
     required String slug,
     required LocalizedText titleTranslations,
     required LocalizedText descriptionTranslations,
+    bool followUpEnabled = false,
   }) async {
     _setState(null, getState(null).copyWith(isSaving: true, error: null));
     try {
@@ -105,6 +106,7 @@ class SurveyFormManager {
           slug: slug,
           titleTranslations: titleTranslations,
           descriptionTranslations: descriptionTranslations,
+          followUpEnabled: followUpEnabled,
         ),
       );
       _setState(null, getState(null).copyWith(isSaving: false));
@@ -281,6 +283,7 @@ class SurveyFormManager {
     required String slug,
     required LocalizedText titleTranslations,
     required LocalizedText descriptionTranslations,
+    bool followUpEnabled = false,
   }) async {
     final state = getState(null);
     _setState(null, state.copyWith(isSaving: true, error: null));
@@ -295,6 +298,7 @@ class SurveyFormManager {
           slug: slug,
           titleTranslations: titleTranslations,
           descriptionTranslations: descriptionTranslations,
+          followUpEnabled: followUpEnabled,
         ),
         questions,
       );
@@ -320,6 +324,7 @@ class SurveyFormManager {
     required String slug,
     required LocalizedText titleTranslations,
     required LocalizedText descriptionTranslations,
+    bool followUpEnabled = false,
   }) {
     final now = DateTime.now();
     return Survey(
@@ -328,6 +333,7 @@ class SurveyFormManager {
       titleTranslations: titleTranslations,
       descriptionTranslations: descriptionTranslations,
       status: SurveyStatus.draft,
+      followUpEnabled: followUpEnabled,
       createdAt: now,
       updatedAt: now,
     );

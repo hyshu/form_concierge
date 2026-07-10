@@ -6,6 +6,7 @@ import 'single_choice_question.dart';
 import 'multiple_choice_question.dart';
 import 'text_single_question.dart';
 import 'text_multi_line_question.dart';
+import 'image_upload_question.dart';
 
 class QuestionWidget extends StatelessComponent {
   const QuestionWidget({
@@ -15,6 +16,8 @@ class QuestionWidget extends StatelessComponent {
     required this.error,
     required this.locale,
     required this.onChanged,
+    required this.client,
+    required this.ensureAuthenticated,
     super.key,
   });
 
@@ -24,6 +27,8 @@ class QuestionWidget extends StatelessComponent {
   final String? error;
   final String locale;
   final void Function(AnswerValue value) onChanged;
+  final Client client;
+  final Future<void> Function() ensureAuthenticated;
 
   @override
   Component build(BuildContext context) {
@@ -80,6 +85,14 @@ class QuestionWidget extends StatelessComponent {
           value: value as String?,
           locale: locale,
           onChanged: onChanged,
+        ),
+      QuestionType.imageUpload => ImageUploadQuestion(
+          client: client,
+          question: question,
+          value: (value as List<String>?) ?? const [],
+          locale: locale,
+          onChanged: onChanged,
+          ensureAuthenticated: ensureAuthenticated,
         ),
     };
   }

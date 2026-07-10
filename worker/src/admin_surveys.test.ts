@@ -66,7 +66,7 @@ test('createSurveyWithQuestions validates choice translations shape by question 
       envUnused(),
       admin(),
     ),
-    'questions[0].choiceTranslations must be empty for text questions',
+    'questions[0].choiceTranslations must be empty for text and image questions',
   );
 });
 

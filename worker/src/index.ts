@@ -35,6 +35,8 @@ import { notificationSettings } from './notification_settings';
 import { generateSurveyQuestions, translateLocalizedText } from './ai_generation';
 import { getAdminIntegrationSettings, isAiGenerationConfigured, isEmailConfiguredResponse, updateAdminIntegrationSettings } from './admin_settings';
 import { getPublicChoices, getPublicProject, getPublicProjectByDomain, getPublicQuestions, submitResponse } from './public_surveys';
+import { generateFollowUp, saveFollowUp } from './follow_up';
+import { getMedia, uploadMedia } from './media';
 import { listAdminVisibilityRules, listPublicVisibilityRules, replaceAdminVisibilityRules } from './visibility_rules';
 import {
   aggregatedResults,
@@ -179,6 +181,45 @@ async function route(request: Request, env: Env, ctx: ExecutionContext): Promise
   ) {
     const anonymous = await requireAnonymous(request, env);
     return submitResponse(request, env, requiredIntegerParam(parts[3], 'surveyId', { min: 1 }), anonymous, ctx);
+  }
+
+  if (
+    parts[0] === 'api' &&
+    parts[1] === 'responses' &&
+    parts[2] &&
+    parts[3] === 'follow-up'
+  ) {
+    const anonymous = await requireAnonymous(request, env);
+    const responseId = requiredIntegerParam(parts[2], 'responseId', { min: 1 });
+    if (method === 'POST' && parts[4] === 'generate' && parts.length === 5) {
+      return generateFollowUp(request, env, responseId, anonymous);
+    }
+    if (method === 'PUT' && parts.length === 4) {
+      return saveFollowUp(request, env, responseId, anonymous);
+    }
+  }
+
+  if (parts[0] === 'api' && parts[1] === 'media' && parts.length === 2) {
+    if (method === 'POST') {
+      const anonymous = await requireAnonymous(request, env);
+      return uploadMedia(request, env, anonymous);
+    }
+    if (method === 'GET') {
+      const key = url.searchParams.get('key');
+      if (!key) throw new HttpError(400, 'key is required');
+      // Admin session preferred; otherwise allow the owning anonymous token.
+      try {
+        const admin = await requireAdmin(request, env);
+        requireScope(admin, 'response:read');
+        return getMedia(env, key, { isAdmin: true });
+      } catch (error) {
+        if (!(error instanceof HttpError) || (error.status !== 401 && error.status !== 403)) {
+          throw error;
+        }
+        const anonymous = await requireAnonymous(request, env);
+        return getMedia(env, key, { anonymousId: anonymous.id });
+      }
+    }
   }
 
   if (

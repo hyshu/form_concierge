@@ -1,6 +1,15 @@
 import 'package:form_concierge_client/form_concierge_client.dart';
 
-enum SurveyViewState { loading, ready, submitting, completed, error }
+enum SurveyViewState {
+  loading,
+  ready,
+  submitting,
+  followUpLoading,
+  followUp,
+  followUpSubmitting,
+  completed,
+  error,
+}
 
 class SurveyState {
   final SurveyViewState viewState;
@@ -12,6 +21,10 @@ class SurveyState {
   final AnswerValues answers;
   final ValidationErrors validationErrors;
   final String? errorMessage;
+  final SurveyResponse? submittedResponse;
+  final FollowUp? followUp;
+  final Map<String, dynamic> followUpAnswers;
+  final Map<String, String> followUpValidationErrors;
 
   const SurveyState({
     this.viewState = SurveyViewState.loading,
@@ -23,6 +36,10 @@ class SurveyState {
     this.answers = const {},
     this.validationErrors = const {},
     this.errorMessage,
+    this.submittedResponse,
+    this.followUp,
+    this.followUpAnswers = const {},
+    this.followUpValidationErrors = const {},
   });
 
   SurveyState copyWith({
@@ -35,6 +52,10 @@ class SurveyState {
     AnswerValues? answers,
     ValidationErrors? validationErrors,
     String? errorMessage,
+    SurveyResponse? submittedResponse,
+    FollowUp? followUp,
+    Map<String, dynamic>? followUpAnswers,
+    Map<String, String>? followUpValidationErrors,
   }) {
     return SurveyState(
       viewState: viewState ?? this.viewState,
@@ -46,6 +67,11 @@ class SurveyState {
       answers: answers ?? this.answers,
       validationErrors: validationErrors ?? this.validationErrors,
       errorMessage: errorMessage,
+      submittedResponse: submittedResponse ?? this.submittedResponse,
+      followUp: followUp ?? this.followUp,
+      followUpAnswers: followUpAnswers ?? this.followUpAnswers,
+      followUpValidationErrors:
+          followUpValidationErrors ?? this.followUpValidationErrors,
     );
   }
 }

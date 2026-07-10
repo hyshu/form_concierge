@@ -1,6 +1,7 @@
 import type { ChoiceRow, Env, QuestionRow } from './types';
 import {
   HttpError,
+  MEDIA_MAX_FILES,
   assertExactIds,
   boolToInt,
   countRows,
@@ -200,11 +201,22 @@ export function normalizeQuestionValidation(
       throw new HttpError(400, 'singleChoice maxSelected cannot be greater than 1');
     }
   }
+  if (type === 'imageUpload') {
+    if (minSelected != null && minSelected > MEDIA_MAX_FILES) {
+      throw new HttpError(400, `imageUpload minSelected cannot be greater than ${MEDIA_MAX_FILES}`);
+    }
+    if (maxSelected != null && maxSelected > MEDIA_MAX_FILES) {
+      throw new HttpError(400, `imageUpload maxSelected cannot be greater than ${MEDIA_MAX_FILES}`);
+    }
+    if (maxSelected != null && maxSelected < 1) {
+      throw new HttpError(400, 'imageUpload maxSelected must be at least 1');
+    }
+  }
   return {
     minLength: isTextQuestionTypeName(type) ? minLength : null,
     maxLength: isTextQuestionTypeName(type) ? maxLength : null,
-    minSelected: isChoiceQuestionType(type) ? minSelected : null,
-    maxSelected: isChoiceQuestionType(type) ? maxSelected : null,
+    minSelected: isChoiceQuestionType(type) || type === 'imageUpload' ? minSelected : null,
+    maxSelected: isChoiceQuestionType(type) || type === 'imageUpload' ? maxSelected : null,
   };
 }
 

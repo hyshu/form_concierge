@@ -108,6 +108,7 @@ export function responseRow(overrides: Partial<ResponseRow> = {}): ResponseRow {
     device_pixel_ratio: null,
     device_info: null,
     metadata: null,
+    follow_up: null,
     ...overrides,
   };
 }
@@ -121,6 +122,7 @@ export function surveyRow(overrides: Partial<SurveyRow> = {}): SurveyRow {
     description_translations: '{"en":""}',
     status: 'draft',
     web_enabled: 1,
+    follow_up_enabled: 0,
     auth_requirement: 'anonymous',
     created_by_admin_id: 'admin-1',
     created_at: '2026-01-01T00:00:00.000Z',

@@ -205,20 +205,29 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
                       ),
                     ],
                   ),
-                ] else if (_type == QuestionType.multipleChoice)
+                ] else if (_type == QuestionType.multipleChoice ||
+                    _type == QuestionType.imageUpload)
                   Row(
                     children: [
                       Expanded(
                         child: _NumberField(
                           controller: _minSelectedController,
-                          label: context.tr('Min selections'),
+                          label: context.tr(
+                            _type == QuestionType.imageUpload
+                                ? 'Min images'
+                                : 'Min selections',
+                          ),
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: _NumberField(
                           controller: _maxSelectedController,
-                          label: context.tr('Max selections'),
+                          label: context.tr(
+                            _type == QuestionType.imageUpload
+                                ? 'Max images'
+                                : 'Max selections',
+                          ),
                         ),
                       ),
                     ],

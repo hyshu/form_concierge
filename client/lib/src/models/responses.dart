@@ -18,6 +18,163 @@ class ResponseExportFile {
   String get text => utf8.decode(bytes);
 }
 
+enum FollowUpStatus { skipped, pending, completed }
+
+class FollowUpChoice {
+  final String id;
+  final String label;
+
+  const FollowUpChoice({required this.id, required this.label});
+
+  factory FollowUpChoice.fromJson(Map<String, dynamic> json) => FollowUpChoice(
+    id: _string(json['id']),
+    label: _string(json['label']),
+  );
+
+  Map<String, dynamic> toJson() => {'id': id, 'label': label};
+}
+
+class FollowUpAnswer {
+  final String? textValue;
+  final List<String> selectedChoiceIds;
+  final List<String> fileKeys;
+
+  const FollowUpAnswer({
+    this.textValue,
+    this.selectedChoiceIds = const [],
+    this.fileKeys = const [],
+  });
+
+  factory FollowUpAnswer.fromJson(Map<String, dynamic> json) => FollowUpAnswer(
+    textValue: _optionalString(json['textValue']),
+    selectedChoiceIds: _stringList(json['selectedChoiceIds'] ?? const []),
+    fileKeys: _stringList(json['fileKeys'] ?? const []),
+  );
+
+  Map<String, dynamic> toJson() => {
+    'textValue': textValue,
+    'selectedChoiceIds': selectedChoiceIds,
+    'fileKeys': fileKeys,
+  };
+}
+
+class FollowUpItem {
+  final String id;
+  final QuestionType type;
+  final String text;
+  final bool required;
+  final String? placeholder;
+  final int? maxFiles;
+  final List<FollowUpChoice> choices;
+  final FollowUpAnswer? answer;
+
+  const FollowUpItem({
+    required this.id,
+    required this.type,
+    required this.text,
+    required this.required,
+    this.placeholder,
+    this.maxFiles,
+    this.choices = const [],
+    this.answer,
+  });
+
+  factory FollowUpItem.fromJson(Map<String, dynamic> json) => FollowUpItem(
+    id: _string(json['id']),
+    type: _enum(QuestionType.values, json['type']),
+    text: _string(json['text']),
+    required: _bool(json['required']),
+    placeholder: _optionalString(json['placeholder']),
+    maxFiles: json['maxFiles'] == null ? null : _int(json['maxFiles']),
+    choices: _objectList(json['choices'] ?? const [], FollowUpChoice.fromJson),
+    answer: _optionalObject(json['answer'], FollowUpAnswer.fromJson),
+  );
+
+  Map<String, dynamic> toJson() => _withoutNulls({
+    'id': id,
+    'type': _enumName(type),
+    'text': text,
+    'required': required,
+    'placeholder': placeholder,
+    'maxFiles': maxFiles,
+    'choices': choices.map((choice) => choice.toJson()).toList(),
+    'answer': answer?.toJson(),
+  });
+}
+
+class MediaUpload {
+  final String key;
+  final String contentType;
+  final int size;
+
+  const MediaUpload({
+    required this.key,
+    required this.contentType,
+    required this.size,
+  });
+
+  factory MediaUpload.fromJson(Map<String, dynamic> json) => MediaUpload(
+    key: _string(json['key']),
+    contentType: _string(json['contentType']),
+    size: _int(json['size']),
+  );
+}
+
+class FollowUp {
+  final int version;
+  final FollowUpStatus status;
+  final DateTime generatedAt;
+  final DateTime? completedAt;
+  final String locale;
+  final List<FollowUpItem> items;
+
+  const FollowUp({
+    this.version = 1,
+    required this.status,
+    required this.generatedAt,
+    this.completedAt,
+    required this.locale,
+    this.items = const [],
+  });
+
+  factory FollowUp.fromJson(Map<String, dynamic> json) => FollowUp(
+    version: _int(json['version'] ?? 1),
+    status: _enum(FollowUpStatus.values, json['status']),
+    generatedAt: _date(json['generatedAt']),
+    completedAt: _optionalDate(json['completedAt']),
+    locale: _string(json['locale']),
+    items: _objectList(json['items'] ?? const [], FollowUpItem.fromJson),
+  );
+
+  Map<String, dynamic> toJson() => _withoutNulls({
+    'version': version,
+    'status': _enumName(status),
+    'generatedAt': generatedAt.toIso8601String(),
+    'completedAt': completedAt?.toIso8601String(),
+    'locale': locale,
+    'items': items.map((item) => item.toJson()).toList(),
+  });
+}
+
+class FollowUpGenerateResult {
+  final bool needed;
+  final FollowUp followUp;
+  final String? error;
+
+  const FollowUpGenerateResult({
+    required this.needed,
+    required this.followUp,
+    this.error,
+  });
+
+  factory FollowUpGenerateResult.fromJson(Map<String, dynamic> json) =>
+      FollowUpGenerateResult(
+        needed: _bool(json['needed']),
+        followUp: _object(json['followUp'], FollowUp.fromJson),
+        error: _optionalString(json['error']),
+      );
+}
+
 class SurveyResponse {
   final int? id;
   final int surveyId;
@@ -27,6 +184,7 @@ class SurveyResponse {
   final DateTime submittedAt;
   final DeviceInfo? deviceInfo;
   final Map<String, dynamic>? metadata;
+  final FollowUp? followUp;
 
   const SurveyResponse({
     this.id,
@@ -37,6 +195,7 @@ class SurveyResponse {
     required this.submittedAt,
     this.deviceInfo,
     this.metadata,
+    this.followUp,
   });
 
   factory SurveyResponse.fromJson(Map<String, dynamic> json) => SurveyResponse(
@@ -48,6 +207,7 @@ class SurveyResponse {
     submittedAt: _date(json['submittedAt']),
     deviceInfo: _optionalObject(json['deviceInfo'], DeviceInfo.fromJson),
     metadata: _map(json['metadata']),
+    followUp: _optionalObject(json['followUp'], FollowUp.fromJson),
   );
 
   Map<String, dynamic> toJson() => _withoutNulls({
@@ -59,6 +219,7 @@ class SurveyResponse {
     'submittedAt': submittedAt.toIso8601String(),
     'deviceInfo': deviceInfo?.toJson(),
     'metadata': metadata,
+    'followUp': followUp?.toJson(),
   });
 }
 
@@ -69,6 +230,7 @@ class IndividualAnswer {
   final String? anonymousId;
   final String? textValue;
   final List<int>? selectedChoiceIds;
+  final List<String>? fileKeys;
 
   const IndividualAnswer({
     required this.responseId,
@@ -76,6 +238,7 @@ class IndividualAnswer {
     this.anonymousId,
     this.textValue,
     this.selectedChoiceIds,
+    this.fileKeys,
   });
 
   factory IndividualAnswer.fromJson(Map<String, dynamic> json) =>
@@ -85,6 +248,9 @@ class IndividualAnswer {
         anonymousId: _optionalString(json['anonymousId']),
         textValue: _optionalString(json['textValue']),
         selectedChoiceIds: _intList(json['selectedChoiceIds']),
+        fileKeys: json['fileKeys'] == null
+            ? null
+            : _stringList(json['fileKeys']),
       );
 }
 
@@ -94,6 +260,7 @@ class QuestionResult {
   final QuestionType questionType;
   final Map<int, int>? choiceCounts;
   final List<String>? textResponses;
+  final int? imageResponseCount;
   final List<IndividualAnswer> individualAnswers;
 
   const QuestionResult({
@@ -102,6 +269,7 @@ class QuestionResult {
     required this.questionType,
     this.choiceCounts,
     this.textResponses,
+    this.imageResponseCount,
     this.individualAnswers = const [],
   });
 
@@ -115,6 +283,9 @@ class QuestionResult {
     textResponses: json['textResponses'] == null
         ? null
         : _stringList(json['textResponses']),
+    imageResponseCount: json['imageResponseCount'] == null
+        ? null
+        : _int(json['imageResponseCount']),
     individualAnswers: json['individualAnswers'] == null
         ? const []
         : _objectList(json['individualAnswers'], IndividualAnswer.fromJson),

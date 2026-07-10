@@ -201,6 +201,7 @@ Map<String, Object?> _surveyJson({
   'descriptionTranslations': {'en': 'Tell us what you think'},
   'status': 'published',
   'webEnabled': true,
+  'followUpEnabled': false,
   'createdAt': '2026-06-22T10:00:00.000Z',
   'updatedAt': '2026-06-22T10:00:00.000Z',
   'startsAt': null,

@@ -6,6 +6,7 @@ import 'questions/question_widget.dart';
 
 class SurveyContent extends StatelessComponent {
   const SurveyContent({
+    required this.client,
     required this.project,
     required this.survey,
     required this.questions,
@@ -18,9 +19,11 @@ class SurveyContent extends StatelessComponent {
     required this.onAnswerChanged,
     required this.onLocaleChanged,
     required this.onSubmit,
+    required this.ensureAuthenticated,
     super.key,
   });
 
+  final Client client;
   final Project project;
   final Survey survey;
   final List<Question> questions;
@@ -33,6 +36,7 @@ class SurveyContent extends StatelessComponent {
   final void Function(int questionId, AnswerValue value) onAnswerChanged;
   final void Function(String locale) onLocaleChanged;
   final void Function() onSubmit;
+  final Future<void> Function() ensureAuthenticated;
 
   @override
   Component build(BuildContext context) {
@@ -106,6 +110,8 @@ class SurveyContent extends StatelessComponent {
             value: answers[question.id],
             error: validationErrors[question.id],
             locale: locale,
+            client: client,
+            ensureAuthenticated: ensureAuthenticated,
             onChanged: (value) => onAnswerChanged(question.id!, value),
           ),
       ]),

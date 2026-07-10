@@ -113,6 +113,38 @@ public actor FormConciergeClient {
     )
   }
 
+  /// Upload an image for the current anonymous account (creates one if needed).
+  public func uploadMedia(data: Data, contentType: String) async throws -> MediaUpload {
+    if anonymousToken == nil {
+      _ = try await createAnonymousAccount()
+    }
+    var request = URLRequest(url: try resolveURL("/api/media"))
+    request.httpMethod = "POST"
+    request.setValue("application/json", forHTTPHeaderField: "Accept")
+    request.setValue(contentType, forHTTPHeaderField: "Content-Type")
+    if let anonymousToken {
+      request.setValue("Bearer \(anonymousToken)", forHTTPHeaderField: "Authorization")
+    }
+    request.httpBody = data
+
+    let (responseData, response) = try await session.data(for: request)
+    guard let http = response as? HTTPURLResponse else {
+      throw FormConciergeError.invalidResponse
+    }
+    if !(200..<300).contains(http.statusCode) {
+      if let payload = try? decoder.decode(APIErrorPayload.self, from: responseData),
+         !payload.error.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+      {
+        throw FormConciergeError.api(status: http.statusCode, message: payload.error)
+      }
+      throw FormConciergeError.api(
+        status: http.statusCode,
+        message: "Request failed with status \(http.statusCode)"
+      )
+    }
+    return try decoder.decode(MediaUpload.self, from: responseData)
+  }
+
   public func replies(responseId: Int? = nil) async throws -> [AdminReply] {
     var path = "/api/anonymous/replies"
     if let responseId {

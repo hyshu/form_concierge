@@ -43,6 +43,7 @@ void main() {
                     required String slug,
                     required LocalizedText titleTranslations,
                     required LocalizedText descriptionTranslations,
+                    required bool followUpEnabled,
                   }) async {
                     saveWasCalled = true;
                     savedTitleTranslations = titleTranslations;
@@ -176,6 +177,7 @@ void main() {
                     required String slug,
                     required LocalizedText titleTranslations,
                     required LocalizedText descriptionTranslations,
+                    required bool followUpEnabled,
                   }) async {},
             ),
           ),

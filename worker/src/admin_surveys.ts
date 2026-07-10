@@ -73,6 +73,9 @@ async function insertSurvey(
   const webEnabled = Object.hasOwn(body, 'webEnabled')
     ? boolToInt(requiredBoolean(body.webEnabled, 'webEnabled'))
     : 1;
+  const followUpEnabled = Object.hasOwn(body, 'followUpEnabled')
+    ? boolToInt(requiredBoolean(body.followUpEnabled, 'followUpEnabled'))
+    : 0;
   const startsAt = optionalIsoDateTime(body.startsAt, 'startsAt');
   const endsAt = optionalIsoDateTime(body.endsAt, 'endsAt');
   const titleJson = JSON.stringify(content.titleTranslations);
@@ -83,9 +86,9 @@ async function insertSurvey(
     try {
       const row = await db.prepare(
         `INSERT INTO surveys
-           (project_id, slug, title_translations, description_translations, status, web_enabled, created_by_admin_id,
-            created_at, updated_at, starts_at, ends_at)
-         VALUES (?, ?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?)
+           (project_id, slug, title_translations, description_translations, status, web_enabled, follow_up_enabled,
+            created_by_admin_id, created_at, updated_at, starts_at, ends_at)
+         VALUES (?, ?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?)
          RETURNING *`,
       )
         .bind(
@@ -94,6 +97,7 @@ async function insertSurvey(
           titleJson,
           descriptionJson,
           webEnabled,
+          followUpEnabled,
           admin.id,
           now,
           now,
@@ -154,7 +158,7 @@ export async function updateSurvey(request: Request, env: Env, surveyId: number)
   const row = await env.DB.prepare(
     `UPDATE surveys
      SET slug = ?, title_translations = ?, description_translations = ?,
-         web_enabled = ?, starts_at = ?, ends_at = ?, updated_at = ?
+         web_enabled = ?, follow_up_enabled = ?, starts_at = ?, ends_at = ?, updated_at = ?
      WHERE id = ?
      RETURNING *`,
   ).bind(
@@ -162,6 +166,9 @@ export async function updateSurvey(request: Request, env: Env, surveyId: number)
     JSON.stringify(content.titleTranslations),
     JSON.stringify(content.descriptionTranslations),
     Object.hasOwn(body, 'webEnabled') ? boolToInt(requiredBoolean(body.webEnabled, 'webEnabled')) : existing.web_enabled,
+    Object.hasOwn(body, 'followUpEnabled')
+      ? boolToInt(requiredBoolean(body.followUpEnabled, 'followUpEnabled'))
+      : existing.follow_up_enabled,
     Object.hasOwn(body, 'startsAt')
       ? optionalIsoDateTime(body.startsAt, 'startsAt')
       : existing.starts_at,
@@ -213,8 +220,11 @@ function validateQuestionInputShape(value: unknown): void {
     if (isChoiceQuestionType(type) && question.choiceTranslations.length === 0) {
       throw new HttpError(400, `questions[${index}].choiceTranslations must not be empty`);
     }
-    if (isTextQuestionType(type) && question.choiceTranslations.length > 0) {
-      throw new HttpError(400, `questions[${index}].choiceTranslations must be empty for text questions`);
+    if ((isTextQuestionType(type) || type === 'imageUpload') && question.choiceTranslations.length > 0) {
+      throw new HttpError(
+        400,
+        `questions[${index}].choiceTranslations must be empty for text and image questions`,
+      );
     }
   });
 }

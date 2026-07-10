@@ -7,6 +7,7 @@ import 'widgets/survey_loading.dart';
 import 'widgets/survey_error.dart';
 import 'widgets/survey_completed.dart';
 import 'widgets/survey_content.dart';
+import 'widgets/follow_up_content.dart';
 
 class FormConciergeSurvey extends StatefulWidget {
   final Client client;
@@ -230,17 +231,186 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
       }
 
       if (!mounted) return;
-      setState(() {
-        _state = _state.copyWith(viewState: SurveyViewState.completed);
-      });
-
       widget.onSubmitted?.call();
       widget.onResponseSubmitted?.call(response, answers);
+
+      if (_state.survey?.followUpEnabled == true && response.id != null) {
+        setState(() {
+          _state = _state.copyWith(
+            viewState: SurveyViewState.followUpLoading,
+            submittedResponse: response,
+            errorMessage: null,
+          );
+        });
+        await _startFollowUp(response.id!);
+        return;
+      }
+
+      setState(() {
+        _state = _state.copyWith(
+          viewState: SurveyViewState.completed,
+          submittedResponse: response,
+        );
+      });
     } on Exception catch (_) {
       if (!mounted) return;
       setState(() {
         _state = _state.copyWith(
           viewState: SurveyViewState.ready,
+          errorMessage: FormContentMessages.text(_locale, 'submitFailed'),
+        );
+      });
+    }
+  }
+
+  Future<void> _startFollowUp(int responseId) async {
+    try {
+      final result = await widget.client.survey.generateFollowUp(
+        responseId: responseId,
+        locale: _locale,
+      );
+      if (!mounted) return;
+      if (!result.needed ||
+          result.followUp.status != FollowUpStatus.pending ||
+          result.followUp.items.isEmpty) {
+        setState(() {
+          _state = _state.copyWith(viewState: SurveyViewState.completed);
+        });
+        return;
+      }
+      setState(() {
+        _state = _state.copyWith(
+          viewState: SurveyViewState.followUp,
+          followUp: result.followUp,
+          followUpAnswers: const {},
+          followUpValidationErrors: const {},
+          errorMessage: null,
+        );
+      });
+    } on Exception catch (_) {
+      // Follow-up is optional; main response is already saved.
+      if (!mounted) return;
+      setState(() {
+        _state = _state.copyWith(viewState: SurveyViewState.completed);
+      });
+    }
+  }
+
+  void _updateFollowUpAnswer(String itemId, dynamic value) {
+    setState(() {
+      final next = Map<String, dynamic>.from(_state.followUpAnswers);
+      next[itemId] = value;
+      final errors = Map<String, String>.from(_state.followUpValidationErrors)
+        ..remove(itemId);
+      _state = _state.copyWith(
+        followUpAnswers: next,
+        followUpValidationErrors: errors,
+        errorMessage: null,
+      );
+    });
+  }
+
+  Map<String, String> _validateFollowUp() {
+    final followUp = _state.followUp;
+    if (followUp == null) return const {};
+    final errors = <String, String>{};
+    for (final item in followUp.items) {
+      final value = _state.followUpAnswers[item.id];
+      if (!item.required) continue;
+      final missing = switch (item.type) {
+        QuestionType.textSingle || QuestionType.textMultiLine =>
+          value is! String || value.trim().isEmpty,
+        QuestionType.singleChoice => value is! String || value.isEmpty,
+        QuestionType.multipleChoice || QuestionType.imageUpload => switch (value) {
+          final List list => list.isEmpty,
+          _ => true,
+        },
+      };
+      if (missing) {
+        errors[item.id] = FormContentMessages.requiredQuestion(_locale);
+      }
+    }
+    return errors;
+  }
+
+  Future<void> _submitFollowUp() async {
+    final errors = _validateFollowUp();
+    if (errors.isNotEmpty) {
+      setState(() {
+        _state = _state.copyWith(
+          followUpValidationErrors: errors,
+          errorMessage: null,
+        );
+      });
+      return;
+    }
+
+    final responseId = _state.submittedResponse?.id;
+    final followUp = _state.followUp;
+    if (responseId == null || followUp == null) {
+      setState(() {
+        _state = _state.copyWith(viewState: SurveyViewState.completed);
+      });
+      return;
+    }
+
+    setState(() {
+      _state = _state.copyWith(
+        viewState: SurveyViewState.followUpSubmitting,
+        errorMessage: null,
+      );
+    });
+
+    try {
+      final payload = followUp.items.map((item) {
+        final value = _state.followUpAnswers[item.id];
+        return switch (item.type) {
+          QuestionType.textSingle || QuestionType.textMultiLine => {
+            'id': item.id,
+            'textValue': value is String ? value.trim() : null,
+            'selectedChoiceIds': <String>[],
+            'fileKeys': <String>[],
+          },
+          QuestionType.singleChoice => {
+            'id': item.id,
+            'textValue': null,
+            'selectedChoiceIds': value is String && value.isNotEmpty
+                ? <String>[value]
+                : <String>[],
+            'fileKeys': <String>[],
+          },
+          QuestionType.multipleChoice => {
+            'id': item.id,
+            'textValue': null,
+            'selectedChoiceIds': value is List
+                ? value.whereType<String>().toList()
+                : <String>[],
+            'fileKeys': <String>[],
+          },
+          QuestionType.imageUpload => {
+            'id': item.id,
+            'textValue': null,
+            'selectedChoiceIds': <String>[],
+            'fileKeys': value is List
+                ? value.whereType<String>().toList()
+                : <String>[],
+          },
+        };
+      }).toList();
+
+      await widget.client.survey.saveFollowUp(
+        responseId: responseId,
+        answers: payload,
+      );
+      if (!mounted) return;
+      setState(() {
+        _state = _state.copyWith(viewState: SurveyViewState.completed);
+      });
+    } on Exception catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _state = _state.copyWith(
+          viewState: SurveyViewState.followUp,
           errorMessage: FormContentMessages.text(_locale, 'submitFailed'),
         );
       });
@@ -300,7 +470,8 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
       _state.answers,
     );
     return switch (_state.viewState) {
-      SurveyViewState.loading => const SurveyLoading(),
+      SurveyViewState.loading ||
+      SurveyViewState.followUpLoading => const SurveyLoading(),
       SurveyViewState.error => SurveyError(
         locale: locale,
         message:
@@ -309,6 +480,7 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
         onRetry: _loadSurvey,
       ),
       SurveyViewState.ready || SurveyViewState.submitting => SurveyContent(
+        client: widget.client,
         project: _state.project!,
         survey: _state.survey!,
         questions: visibleQuestions,
@@ -330,7 +502,22 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
           });
         },
         onSubmit: _submit,
+        ensureAuthenticated: _ensureAnonymousSession,
         footer: widget.footer,
+      ),
+      SurveyViewState.followUp ||
+      SurveyViewState.followUpSubmitting => FollowUpContent(
+        client: widget.client,
+        survey: _state.survey!,
+        followUp: _state.followUp!,
+        answers: _state.followUpAnswers,
+        validationErrors: _state.followUpValidationErrors,
+        errorMessage: _state.errorMessage,
+        locale: locale,
+        isSubmitting: _state.viewState == SurveyViewState.followUpSubmitting,
+        onAnswerChanged: _updateFollowUpAnswer,
+        onSubmit: _submitFollowUp,
+        ensureAuthenticated: _ensureAnonymousSession,
       ),
       SurveyViewState.completed => SurveyCompleted(
         survey: _state.survey!,

@@ -46,10 +46,89 @@ class QuestionResultCard extends StatelessWidget {
           const SizedBox(height: 16),
           if (result.choiceCounts != null)
             _buildChoicesSection(context)
+          else if (result.questionType == QuestionType.imageUpload)
+            _buildImageResponses(context)
           else if (result.textResponses != null)
             _buildTextResponses(context),
         ],
       ),
+    );
+  }
+
+  Widget _buildImageResponses(BuildContext context) {
+    final withImages = result.individualAnswers
+        .where((answer) => (answer.fileKeys?.isNotEmpty ?? false))
+        .toList();
+    final count = result.imageResponseCount ?? withImages.length;
+
+    if (withImages.isEmpty) {
+      return Text(
+        context.tr('No image responses'),
+        style: TextStyle(color: HuxTokens.textSecondary(context)),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          context.tr('{count} responses with images', {'count': count}),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: HuxTokens.textSecondary(context),
+          ),
+        ),
+        const SizedBox(height: 12),
+        ...withImages.take(_kMaxTextResponsesPreview).map((answer) {
+          final keys = answer.fileKeys ?? const <String>[];
+          return Padding(
+            key: ValueKey('image-answer-${answer.responseId}'),
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: HuxTokens.surfaceSecondary(context),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: HuxTokens.borderSecondary(context)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    context.tr('Response #{id}', {
+                      'id': answer.responseId,
+                    }),
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: HuxTokens.textSecondary(context),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    context.tr('{count} image(s)', {'count': keys.length}),
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 4),
+                  SelectableText(
+                    keys.join('\n'),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: HuxTokens.textSecondary(context),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
+        if (withImages.length > _kMaxTextResponsesPreview)
+          Text(
+            context.tr('…and {count} more', {
+              'count': withImages.length - _kMaxTextResponsesPreview,
+            }),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: HuxTokens.textSecondary(context),
+            ),
+          ),
+      ],
     );
   }
 

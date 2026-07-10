@@ -2,7 +2,13 @@ part of form_concierge_client;
 
 typedef UuidValue = String;
 
-enum QuestionType { singleChoice, multipleChoice, textSingle, textMultiLine }
+enum QuestionType {
+  singleChoice,
+  multipleChoice,
+  textSingle,
+  textMultiLine,
+  imageUpload,
+}
 
 enum SurveyStatus { draft, published, closed, archived }
 
@@ -25,6 +31,8 @@ extension QuestionTypeProperties on QuestionType {
 
   bool get usesTextAnswer =>
       this == QuestionType.textSingle || this == QuestionType.textMultiLine;
+
+  bool get usesImageUpload => this == QuestionType.imageUpload;
 }
 
 String _enumName(Object value) => value.toString().split('.').last;

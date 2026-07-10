@@ -53,7 +53,13 @@ private let messages: [String: [String: String]] = [
     "minCharacters": "{question} must be at least {count} characters.",
     "maxCharacters": "{question} must be at most {count} characters.",
     "minChoices": "{question} requires at least {count} choices.",
-    "maxChoices": "{question} allows at most {count} choices."
+    "maxChoices": "{question} allows at most {count} choices.",
+    "addPhotos": "Add photos",
+    "uploadingPhotos": "Uploading...",
+    "photoUploadFailed": "Failed to upload image. Please try again.",
+    "maxPhotosReached": "Maximum {count} photos",
+    "removePhoto": "Remove",
+    "imageUploadUnsupported": "Image upload is available in the Flutter app."
   ],
   "ja": [
     "loadingSurvey": "フォームを読み込んでいます...",
@@ -69,7 +75,13 @@ private let messages: [String: [String: String]] = [
     "minCharacters": "「{question}」は{count}文字以上で入力してください。",
     "maxCharacters": "「{question}」は{count}文字以内で入力してください。",
     "minChoices": "「{question}」は{count}個以上選択してください。",
-    "maxChoices": "「{question}」は{count}個以内で選択してください。"
+    "maxChoices": "「{question}」は{count}個以内で選択してください。",
+    "addPhotos": "写真を追加",
+    "uploadingPhotos": "アップロード中...",
+    "photoUploadFailed": "画像のアップロードに失敗しました。もう一度お試しください。",
+    "maxPhotosReached": "最大 {count} 枚まで",
+    "removePhoto": "削除",
+    "imageUploadUnsupported": "画像アップロードは Flutter アプリで利用できます。"
   ],
   "zh-Hans": [
     "loadingSurvey": "正在加载表单...",
@@ -85,7 +97,13 @@ private let messages: [String: [String: String]] = [
     "minCharacters": "“{question}”至少需要 {count} 个字符。",
     "maxCharacters": "“{question}”最多允许 {count} 个字符。",
     "minChoices": "“{question}”至少选择 {count} 项。",
-    "maxChoices": "“{question}”最多选择 {count} 项。"
+    "maxChoices": "“{question}”最多选择 {count} 项。",
+    "addPhotos": "Add photos",
+    "uploadingPhotos": "Uploading...",
+    "photoUploadFailed": "Failed to upload image. Please try again.",
+    "maxPhotosReached": "Maximum {count} photos",
+    "removePhoto": "Remove",
+    "imageUploadUnsupported": "Image upload is available in the Flutter app."
   ],
   "zh-Hant": [
     "loadingSurvey": "正在載入表單...",
@@ -101,7 +119,13 @@ private let messages: [String: [String: String]] = [
     "minCharacters": "「{question}」至少需要 {count} 個字元。",
     "maxCharacters": "「{question}」最多允許 {count} 個字元。",
     "minChoices": "「{question}」至少選擇 {count} 項。",
-    "maxChoices": "「{question}」最多選擇 {count} 項。"
+    "maxChoices": "「{question}」最多選擇 {count} 項。",
+    "addPhotos": "Add photos",
+    "uploadingPhotos": "Uploading...",
+    "photoUploadFailed": "Failed to upload image. Please try again.",
+    "maxPhotosReached": "Maximum {count} photos",
+    "removePhoto": "Remove",
+    "imageUploadUnsupported": "Image upload is available in the Flutter app."
   ],
   "ko": [
     "loadingSurvey": "양식을 불러오는 중...",
@@ -117,7 +141,13 @@ private let messages: [String: [String: String]] = [
     "minCharacters": "\"{question}\"은 최소 {count}자 이상이어야 합니다.",
     "maxCharacters": "\"{question}\"은 최대 {count}자까지 입력할 수 있습니다.",
     "minChoices": "\"{question}\"은 최소 {count}개를 선택해야 합니다.",
-    "maxChoices": "\"{question}\"은 최대 {count}개까지 선택할 수 있습니다."
+    "maxChoices": "\"{question}\"은 최대 {count}개까지 선택할 수 있습니다.",
+    "addPhotos": "Add photos",
+    "uploadingPhotos": "Uploading...",
+    "photoUploadFailed": "Failed to upload image. Please try again.",
+    "maxPhotosReached": "Maximum {count} photos",
+    "removePhoto": "Remove",
+    "imageUploadUnsupported": "Image upload is available in the Flutter app."
   ],
   "de": [
     "loadingSurvey": "Formular wird geladen...",
@@ -133,7 +163,13 @@ private let messages: [String: [String: String]] = [
     "minCharacters": "\"{question}\" muss mindestens {count} Zeichen haben.",
     "maxCharacters": "\"{question}\" darf höchstens {count} Zeichen haben.",
     "minChoices": "\"{question}\" erfordert mindestens {count} Optionen.",
-    "maxChoices": "\"{question}\" erlaubt höchstens {count} Optionen."
+    "maxChoices": "\"{question}\" erlaubt höchstens {count} Optionen.",
+    "addPhotos": "Add photos",
+    "uploadingPhotos": "Uploading...",
+    "photoUploadFailed": "Failed to upload image. Please try again.",
+    "maxPhotosReached": "Maximum {count} photos",
+    "removePhoto": "Remove",
+    "imageUploadUnsupported": "Image upload is available in the Flutter app."
   ],
   "es": [
     "loadingSurvey": "Cargando formulario...",
@@ -149,7 +185,13 @@ private let messages: [String: [String: String]] = [
     "minCharacters": "\"{question}\" debe tener al menos {count} caracteres.",
     "maxCharacters": "\"{question}\" puede tener como máximo {count} caracteres.",
     "minChoices": "\"{question}\" requiere al menos {count} opciones.",
-    "maxChoices": "\"{question}\" permite como máximo {count} opciones."
+    "maxChoices": "\"{question}\" permite como máximo {count} opciones.",
+    "addPhotos": "Add photos",
+    "uploadingPhotos": "Uploading...",
+    "photoUploadFailed": "Failed to upload image. Please try again.",
+    "maxPhotosReached": "Maximum {count} photos",
+    "removePhoto": "Remove",
+    "imageUploadUnsupported": "Image upload is available in the Flutter app."
   ],
   "fr": [
     "loadingSurvey": "Chargement du formulaire...",
@@ -165,7 +207,13 @@ private let messages: [String: [String: String]] = [
     "minCharacters": "« {question} » doit contenir au moins {count} caractères.",
     "maxCharacters": "« {question} » peut contenir au plus {count} caractères.",
     "minChoices": "« {question} » nécessite au moins {count} choix.",
-    "maxChoices": "« {question} » autorise au plus {count} choix."
+    "maxChoices": "« {question} » autorise au plus {count} choix.",
+    "addPhotos": "Add photos",
+    "uploadingPhotos": "Uploading...",
+    "photoUploadFailed": "Failed to upload image. Please try again.",
+    "maxPhotosReached": "Maximum {count} photos",
+    "removePhoto": "Remove",
+    "imageUploadUnsupported": "Image upload is available in the Flutter app."
   ],
   "it": [
     "loadingSurvey": "Caricamento del modulo...",
@@ -181,7 +229,13 @@ private let messages: [String: [String: String]] = [
     "minCharacters": "\"{question}\" deve contenere almeno {count} caratteri.",
     "maxCharacters": "\"{question}\" può contenere al massimo {count} caratteri.",
     "minChoices": "\"{question}\" richiede almeno {count} opzioni.",
-    "maxChoices": "\"{question}\" consente al massimo {count} opzioni."
+    "maxChoices": "\"{question}\" consente al massimo {count} opzioni.",
+    "addPhotos": "Add photos",
+    "uploadingPhotos": "Uploading...",
+    "photoUploadFailed": "Failed to upload image. Please try again.",
+    "maxPhotosReached": "Maximum {count} photos",
+    "removePhoto": "Remove",
+    "imageUploadUnsupported": "Image upload is available in the Flutter app."
   ],
   "th": [
     "loadingSurvey": "กำลังโหลดแบบฟอร์ม...",
@@ -197,7 +251,13 @@ private let messages: [String: [String: String]] = [
     "minCharacters": "\"{question}\" ต้องมีอย่างน้อย {count} ตัวอักษร",
     "maxCharacters": "\"{question}\" ใส่ได้สูงสุด {count} ตัวอักษร",
     "minChoices": "\"{question}\" ต้องเลือกอย่างน้อย {count} รายการ",
-    "maxChoices": "\"{question}\" เลือกได้สูงสุด {count} รายการ"
+    "maxChoices": "\"{question}\" เลือกได้สูงสุด {count} รายการ",
+    "addPhotos": "Add photos",
+    "uploadingPhotos": "Uploading...",
+    "photoUploadFailed": "Failed to upload image. Please try again.",
+    "maxPhotosReached": "Maximum {count} photos",
+    "removePhoto": "Remove",
+    "imageUploadUnsupported": "Image upload is available in the Flutter app."
   ],
   "tr": [
     "loadingSurvey": "Form yükleniyor...",
@@ -213,6 +273,12 @@ private let messages: [String: [String: String]] = [
     "minCharacters": "\"{question}\" en az {count} karakter olmalıdır.",
     "maxCharacters": "\"{question}\" en fazla {count} karakter olabilir.",
     "minChoices": "\"{question}\" en az {count} seçenek gerektirir.",
-    "maxChoices": "\"{question}\" en fazla {count} seçeneğe izin verir."
+    "maxChoices": "\"{question}\" en fazla {count} seçeneğe izin verir.",
+    "addPhotos": "Add photos",
+    "uploadingPhotos": "Uploading...",
+    "photoUploadFailed": "Failed to upload image. Please try again.",
+    "maxPhotosReached": "Maximum {count} photos",
+    "removePhoto": "Remove",
+    "imageUploadUnsupported": "Image upload is available in the Flutter app."
   ]
 ]

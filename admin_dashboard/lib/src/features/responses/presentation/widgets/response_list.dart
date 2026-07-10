@@ -293,6 +293,7 @@ class _ResponseTile extends StatelessWidget {
                     questions: questions,
                     choicesByQuestion: choicesByQuestion,
                     answers: answers,
+                    followUp: response.followUp,
                     isLoading: isLoadingAnswers,
                     error: answersError,
                   ),
@@ -360,6 +361,7 @@ class _AnswersBody extends StatelessWidget {
   final List<Question> questions;
   final Map<int, List<Choice>> choicesByQuestion;
   final List<Answer>? answers;
+  final FollowUp? followUp;
   final bool isLoading;
   final String? error;
 
@@ -367,6 +369,7 @@ class _AnswersBody extends StatelessWidget {
     required this.questions,
     required this.choicesByQuestion,
     required this.answers,
+    this.followUp,
     required this.isLoading,
     required this.error,
   });
@@ -409,7 +412,18 @@ class _AnswersBody extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    if (answers!.isEmpty) {
+    final questionById = {
+      for (final question in questions)
+        if (question.id != null) question.id!: question,
+    };
+    final sortedAnswers = List<Answer>.from(answers!)
+      ..sort((a, b) {
+        final aOrder = questionById[a.questionId]?.orderIndex ?? a.questionId;
+        final bOrder = questionById[b.questionId]?.orderIndex ?? b.questionId;
+        return aOrder.compareTo(bOrder);
+      });
+
+    if (sortedAnswers.isEmpty && followUp == null) {
       return Padding(
         padding: const EdgeInsets.all(12),
         child: Text(
@@ -422,20 +436,20 @@ class _AnswersBody extends StatelessWidget {
       );
     }
 
-    final questionById = {
-      for (final question in questions)
-        if (question.id != null) question.id!: question,
-    };
-    final sortedAnswers = List<Answer>.from(answers!)
-      ..sort((a, b) {
-        final aOrder = questionById[a.questionId]?.orderIndex ?? a.questionId;
-        final bOrder = questionById[b.questionId]?.orderIndex ?? b.questionId;
-        return aOrder.compareTo(bOrder);
-      });
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (sortedAnswers.isEmpty)
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Text(
+              context.tr('No answers for this response'),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: HuxTokens.textSecondary(context),
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ),
         for (final answer in sortedAnswers)
           _AnswerRow(
             key: ValueKey('answer-${answer.id ?? answer.questionId}'),
@@ -443,8 +457,84 @@ class _AnswersBody extends StatelessWidget {
             answer: answer,
             choices: choicesByQuestion[answer.questionId] ?? const [],
           ),
+        if (followUp != null) ...[
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+            child: Text(
+              context.tr('Follow-up interview'),
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+            child: Text(
+              context.tr('Follow-up status: {status}', {
+                'status': followUp!.status.name,
+              }),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: HuxTokens.textSecondary(context),
+              ),
+            ),
+          ),
+          for (final item in followUp!.items)
+            _FollowUpAnswerRow(key: ValueKey('follow-up-${item.id}'), item: item),
+        ],
       ],
     );
+  }
+}
+
+class _FollowUpAnswerRow extends StatelessWidget {
+  final FollowUpItem item;
+
+  const _FollowUpAnswerRow({super.key, required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: HuxTokens.surfaceSecondary(context),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: HuxTokens.borderSecondary(context)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            item.text,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: HuxTokens.textSecondary(context),
+            ),
+          ),
+          const SizedBox(height: 4),
+          SelectableText(
+            _formatFollowUpAnswer(item),
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatFollowUpAnswer(FollowUpItem item) {
+    final answer = item.answer;
+    if (answer == null) return '—';
+    if (item.type == QuestionType.imageUpload) {
+      if (answer.fileKeys.isEmpty) return '—';
+      return answer.fileKeys.join('\n');
+    }
+    final text = answer.textValue?.trim();
+    if (text != null && text.isNotEmpty) return text;
+    if (answer.selectedChoiceIds.isEmpty) return '—';
+    final labelsById = {
+      for (final choice in item.choices) choice.id: choice.label,
+    };
+    return answer.selectedChoiceIds
+        .map((id) => labelsById[id] ?? id)
+        .join(', ');
   }
 }
 
@@ -494,6 +584,11 @@ class _AnswerRow extends StatelessWidget {
   }
 
   String _formatAnswerValue(Answer answer, List<Choice> choices) {
+    final fileKeys = answer.fileKeys;
+    if (fileKeys != null && fileKeys.isNotEmpty) {
+      return fileKeys.join('\n');
+    }
+
     final text = answer.textValue?.trim();
     if (text != null && text.isNotEmpty) return text;
 

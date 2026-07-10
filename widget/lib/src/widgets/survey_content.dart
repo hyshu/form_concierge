@@ -4,6 +4,7 @@ import 'package:form_concierge_client/form_concierge_client.dart';
 import 'questions/question_widget.dart';
 
 class SurveyContent extends StatefulWidget {
+  final Client client;
   final Project project;
   final Survey survey;
   final List<Question> questions;
@@ -17,10 +18,12 @@ class SurveyContent extends StatefulWidget {
   final void Function(int questionId, AnswerValue value) onAnswerChanged;
   final ValueChanged<String> onLocaleChanged;
   final VoidCallback onSubmit;
+  final Future<void> Function()? ensureAuthenticated;
   final Widget? footer;
 
   const SurveyContent({
     super.key,
+    required this.client,
     required this.project,
     required this.survey,
     required this.questions,
@@ -34,6 +37,7 @@ class SurveyContent extends StatefulWidget {
     required this.onAnswerChanged,
     required this.onLocaleChanged,
     required this.onSubmit,
+    this.ensureAuthenticated,
     this.footer,
   });
 
@@ -160,6 +164,8 @@ class _SurveyContentState extends State<SurveyContent> {
                 value: widget.answers[question.id],
                 error: error,
                 locale: widget.locale,
+                client: widget.client,
+                ensureAuthenticated: widget.ensureAuthenticated,
                 onChanged: (value) =>
                     widget.onAnswerChanged(question.id!, value),
               ),

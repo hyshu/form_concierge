@@ -308,6 +308,9 @@ function renderQuestionInput(
   locale: string,
 ): string {
   const placeholder = textFor(question.placeholderTranslations, locale);
+  if (question.type === 'imageUpload') {
+    return `<div class="rounded-lg border border-dashed border-slate-300 px-4 py-6 text-sm text-slate-600">Image upload is available in the Flutter app.</div>`;
+  }
   if (question.type === 'textMultiLine') {
     return `<textarea class="w-full min-h-[120px] rounded-lg border border-slate-300 px-4 py-3 resize-y" placeholder="${escapeAttribute(placeholder)}" disabled></textarea>`;
   }

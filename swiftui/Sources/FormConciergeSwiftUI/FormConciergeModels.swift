@@ -5,6 +5,7 @@ public enum QuestionType: String, Codable, Sendable {
   case multipleChoice
   case textSingle
   case textMultiLine
+  case imageUpload
 }
 
 public enum SurveyStatus: String, Codable, Sendable {
@@ -230,13 +231,26 @@ public struct Answer: Codable, Sendable {
   public let questionId: Int
   public let textValue: String?
   public let selectedChoiceIds: [Int]?
+  public let fileKeys: [String]?
 
-  public init(questionId: Int, textValue: String? = nil, selectedChoiceIds: [Int]? = nil) {
+  public init(
+    questionId: Int,
+    textValue: String? = nil,
+    selectedChoiceIds: [Int]? = nil,
+    fileKeys: [String]? = nil
+  ) {
     self.surveyResponseId = 0
     self.questionId = questionId
     self.textValue = textValue
     self.selectedChoiceIds = selectedChoiceIds
+    self.fileKeys = fileKeys
   }
+}
+
+public struct MediaUpload: Codable, Sendable {
+  public let key: String
+  public let contentType: String
+  public let size: Int
 }
 
 public struct SurveyResponse: Codable, Identifiable, Sendable {

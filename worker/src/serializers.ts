@@ -2,6 +2,7 @@ import type { AdminContext, AdminRow, AnonymousContext, AnswerRow, ChoiceRow, No
 import { roleFromScopes } from './permissions';
 import { HttpError, compactObject } from './utils';
 import { parseLocalizedText } from './localization';
+import { parseStoredFileKeys } from './media';
 
 export function projectToJson(row: ProjectRow) {
   return {
@@ -26,6 +27,7 @@ export function surveyToJson(row: SurveyRow) {
     descriptionTranslations: parseLocalizedText(row.description_translations),
     status: row.status,
     webEnabled: row.web_enabled === 1,
+    followUpEnabled: row.follow_up_enabled === 1,
     authRequirement: row.auth_requirement,
     createdByUserId: row.created_by_admin_id,
     createdAt: row.created_at,
@@ -86,7 +88,14 @@ export function responseToJson(row: ResponseRow) {
     submittedAt: row.submitted_at,
     deviceInfo: deviceInfoToJson(row),
     metadata: metadataToJson(row.metadata),
+    followUp: followUpToJson(row.follow_up),
   };
+}
+
+export function followUpToJson(value: string | null): Record<string, unknown> | null {
+  if (!value) return null;
+  const decoded = parseJsonObject(value, 'followUp');
+  return Object.keys(decoded).length === 0 ? null : decoded;
 }
 
 export function metadataToJson(value: string | null) {
@@ -117,12 +126,14 @@ export function deviceInfoToJson(row: ResponseRow) {
 }
 
 export function answerToJson(row: AnswerRow) {
+  const fileKeys = parseStoredFileKeys(row.text_value);
   return {
     id: row.id,
     surveyResponseId: row.survey_response_id,
     questionId: row.question_id,
-    textValue: row.text_value,
+    textValue: fileKeys ? null : row.text_value,
     selectedChoiceIds: parseChoiceIds(row.selected_choice_ids),
+    fileKeys,
   };
 }
 

@@ -230,6 +230,9 @@ function answerHasValue(source: QuestionRow, answer: AnswerInput | undefined): b
   if (isTextQuestionType(source.type)) {
     return typeof answer.textValue === 'string' && answer.textValue.trim().length > 0;
   }
+  if (source.type === 'imageUpload') {
+    return Array.isArray(answer.fileKeys) && answer.fileKeys.length > 0;
+  }
   return Array.isArray(answer.selectedChoiceIds) && answer.selectedChoiceIds.length > 0;
 }
 

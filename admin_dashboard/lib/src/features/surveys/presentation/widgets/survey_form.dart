@@ -27,11 +27,15 @@ class SurveyForm extends StatefulWidget {
   final Iterable<String> locales;
   final bool showSubmitButton;
   final bool aiTranslateEnabled;
+  final bool aiGenerationEnabled;
+  final bool followUpEnabled;
+  final ValueChanged<bool>? onFollowUpEnabledChanged;
   final SurveyLocalizedTranslate? onTranslate;
   final Future<void> Function({
     required String slug,
     required LocalizedText titleTranslations,
     required LocalizedText descriptionTranslations,
+    required bool followUpEnabled,
   })
   onSave;
 
@@ -45,6 +49,9 @@ class SurveyForm extends StatefulWidget {
     this.locales = formContentLocaleCodes,
     this.showSubmitButton = true,
     this.aiTranslateEnabled = false,
+    this.aiGenerationEnabled = false,
+    this.followUpEnabled = false,
+    this.onFollowUpEnabledChanged,
     this.onTranslate,
     required this.onSave,
   });
@@ -57,10 +64,14 @@ class SurveyFormWidgetState extends State<SurveyForm> {
   final _formKey = GlobalKey<FormState>();
   final _slugAutoFill = SlugAutoFill();
   String? _listeningTitleLocale;
+  late bool _followUpEnabled;
 
   @override
   void initState() {
     super.initState();
+    _followUpEnabled =
+        widget.followUpEnabled ||
+        (widget.existingSurvey?.followUpEnabled ?? false);
     if (widget.existingSurvey != null) {
       widget.controllers.populateFrom(widget.existingSurvey!);
     }
@@ -73,6 +84,9 @@ class SurveyFormWidgetState extends State<SurveyForm> {
     if (oldWidget.existingSurvey != widget.existingSurvey &&
         widget.existingSurvey != null) {
       widget.controllers.populateFrom(widget.existingSurvey!);
+      _followUpEnabled = widget.existingSurvey!.followUpEnabled;
+    } else if (oldWidget.followUpEnabled != widget.followUpEnabled) {
+      _followUpEnabled = widget.followUpEnabled;
     }
     if (oldWidget.controllers != widget.controllers ||
         oldWidget.primaryLocale != widget.primaryLocale ||
@@ -156,6 +170,25 @@ class SurveyFormWidgetState extends State<SurveyForm> {
                       fieldKind: 'description',
                     ),
             ),
+            if (widget.aiGenerationEnabled) ...[
+              const SizedBox(height: 16),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(context.tr('Flutter follow-up interview')),
+                subtitle: Text(
+                  context.tr(
+                    'After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.',
+                  ),
+                ),
+                value: _followUpEnabled,
+                onChanged: widget.isSaving
+                    ? null
+                    : (value) {
+                        setState(() => _followUpEnabled = value);
+                        widget.onFollowUpEnabledChanged?.call(value);
+                      },
+              ),
+            ],
             if (widget.error != null) ...[
               const SizedBox(height: 16),
               Text(
@@ -200,6 +233,7 @@ class SurveyFormWidgetState extends State<SurveyForm> {
         widget.controllers.descriptionTranslations,
         locales: widget.locales,
       ),
+      followUpEnabled: _followUpEnabled,
     );
     return true;
   }

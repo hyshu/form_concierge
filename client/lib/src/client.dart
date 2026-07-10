@@ -120,6 +120,50 @@ class Client {
     );
   }
 
+  /// Upload raw bytes (e.g. image/jpeg) without JSON encoding the body.
+  Future<dynamic> uploadBytes(
+    String method,
+    String path, {
+    required List<int> bytes,
+    required String contentType,
+    Map<String, String>? query,
+    bool authenticated = false,
+    String? bearerToken,
+  }) async {
+    final response = await _sendRequest(
+      method,
+      path,
+      query: query,
+      bodyBytes: bytes,
+      bodyContentType: contentType,
+      authenticated: authenticated,
+      bearerToken: bearerToken,
+      accept: 'application/json',
+    );
+
+    final text = response.body;
+    Object? decoded;
+    if (text.isNotEmpty) {
+      try {
+        decoded = jsonDecode(text);
+      } on Object {
+        if (response.statusCode < 200 || response.statusCode >= 300) {
+          throw ApiException(
+            response.statusCode,
+            'Request failed with status ${response.statusCode}',
+          );
+        }
+        rethrow;
+      }
+    }
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw _apiException(response.statusCode, decoded);
+    }
+
+    return decoded;
+  }
+
   void close() => _httpClient.close();
 
   Future<http.Response> _sendRequest(
@@ -127,20 +171,26 @@ class Client {
     String path, {
     Map<String, String>? query,
     Object? body,
+    List<int>? bodyBytes,
+    String? bodyContentType,
     bool authenticated = false,
     String? bearerToken,
     required String accept,
   }) {
+    final hasBody = body != null || bodyBytes != null;
     final request = http.Request(method, _uriFor(path, query))
       ..headers.addAll(
         _headers(
           accept: accept,
-          hasBody: body != null,
+          hasBody: hasBody,
+          bodyContentType: bodyContentType,
           authenticated: authenticated,
           bearerToken: bearerToken,
         ),
       );
-    if (body != null) {
+    if (bodyBytes != null) {
+      request.bodyBytes = bodyBytes;
+    } else if (body != null) {
       request.body = jsonEncode(body);
     }
 
@@ -149,6 +199,9 @@ class Client {
         .timeout(requestTimeout)
         .then(http.Response.fromStream);
   }
+
+  Uri uriFor(String path, [Map<String, String>? query]) =>
+      _uriFor(path, query);
 
   Uri _uriFor(String path, Map<String, String>? query) {
     final encodedPath = _encodePath(path);
@@ -177,12 +230,13 @@ class Client {
   Map<String, String> _headers({
     required String accept,
     required bool hasBody,
+    String? bodyContentType,
     required bool authenticated,
     required String? bearerToken,
   }) {
     return {
       'accept': accept,
-      if (hasBody) 'content-type': 'application/json',
+      if (hasBody) 'content-type': bodyContentType ?? 'application/json',
       if (bearerToken != null) 'authorization': 'Bearer $bearerToken',
       if (bearerToken == null && authenticated && auth.token != null)
         'authorization': 'Bearer ${auth.token}',

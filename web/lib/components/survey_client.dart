@@ -282,13 +282,8 @@ class SurveyClientState extends State<SurveyClient> {
   }
 
   Future<bool> _ensureAnonymousAccount() async {
-    final storageKey = _anonymousTokenStorageKey;
-    if (storageKey == null) return false;
-    _restoreAnonymousToken();
-    if (_client.anonymous.isAuthenticated) return true;
     try {
-      final session = await _client.anonymous.createAccount();
-      writeAnonymousToken(storageKey, session.token);
+      await _ensureAuthenticated();
       return true;
     } on Exception catch (_) {
       setState(() {
@@ -300,6 +295,18 @@ class SurveyClientState extends State<SurveyClient> {
       });
       return false;
     }
+  }
+
+  /// Create/restore anonymous session for media upload and submit.
+  Future<void> _ensureAuthenticated() async {
+    final storageKey = _anonymousTokenStorageKey;
+    if (storageKey == null) {
+      throw StateError('Anonymous storage key is not ready');
+    }
+    _restoreAnonymousToken();
+    if (_client.anonymous.isAuthenticated) return;
+    final session = await _client.anonymous.createAccount();
+    writeAnonymousToken(storageKey, session.token);
   }
 
   void _updateAnswer(int questionId, AnswerValue value) {
@@ -408,6 +415,7 @@ class SurveyClientState extends State<SurveyClient> {
         SurveyViewState.ready || SurveyViewState.submitting => survey == null
             ? const NotFoundPage()
             : SurveyContent(
+                client: _client,
                 project: project!,
                 survey: survey,
                 questions: visibleQuestions,
@@ -426,6 +434,7 @@ class SurveyClientState extends State<SurveyClient> {
                   });
                 },
                 onSubmit: _submit,
+                ensureAuthenticated: _ensureAuthenticated,
               ),
         SurveyViewState.completed => survey == null
             ? const NotFoundPage()

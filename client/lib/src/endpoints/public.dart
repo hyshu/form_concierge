@@ -80,6 +80,52 @@ class SurveyEndpoint {
     );
     return SurveyResponse.fromJson(json);
   }
+
+  /// Generate adaptive follow-up questions after the main form was submitted.
+  Future<FollowUpGenerateResult> generateFollowUp({
+    required int responseId,
+    String? locale,
+  }) async {
+    final json = await _client.request(
+      'POST',
+      '/api/responses/$responseId/follow-up/generate',
+      body: {'locale': locale},
+      bearerToken: _client.anonymous.token,
+    );
+    return FollowUpGenerateResult.fromJson(json);
+  }
+
+  /// Save answers for a pending follow-up interview.
+  Future<SurveyResponse> saveFollowUp({
+    required int responseId,
+    required List<Map<String, dynamic>> answers,
+  }) async {
+    final json = await _client.request(
+      'PUT',
+      '/api/responses/$responseId/follow-up',
+      body: {'answers': answers},
+      bearerToken: _client.anonymous.token,
+    );
+    return SurveyResponse.fromJson(json);
+  }
+
+  /// Upload an image for the current anonymous account.
+  Future<MediaUpload> uploadMedia({
+    required List<int> bytes,
+    required String contentType,
+  }) async {
+    final json = await _client.uploadBytes(
+      'POST',
+      '/api/media',
+      bytes: bytes,
+      contentType: contentType,
+      bearerToken: _client.anonymous.token,
+    );
+    return MediaUpload.fromJson(json as Map<String, dynamic>);
+  }
+
+  /// Absolute URL to fetch media (requires admin or owner bearer token).
+  Uri mediaUrl(String key) => _client.uriFor('/api/media', {'key': key});
 }
 
 class ConfigEndpoint {

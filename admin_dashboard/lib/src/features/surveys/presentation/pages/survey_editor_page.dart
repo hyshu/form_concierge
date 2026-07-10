@@ -359,12 +359,15 @@ class SurveyEditorPage extends RearchConsumer {
       locales: locales,
       showSubmitButton: !isNewSurvey,
       aiTranslateEnabled: aiTranslateEnabled,
+      aiGenerationEnabled: aiTranslateEnabled,
+      followUpEnabled: survey?.followUpEnabled ?? false,
       onTranslate: aiTranslateEnabled ? _translateWithClient(client) : null,
       onSave:
           ({
             required String slug,
             required LocalizedText titleTranslations,
             required LocalizedText descriptionTranslations,
+            required bool followUpEnabled,
           }) async {
             if (isNewSurvey) {
               final created = await formManager.createSurveyWithQuestions(
@@ -372,6 +375,7 @@ class SurveyEditorPage extends RearchConsumer {
                 slug: slug,
                 titleTranslations: titleTranslations,
                 descriptionTranslations: descriptionTranslations,
+                followUpEnabled: followUpEnabled,
               );
               if (created != null && context.mounted) {
                 await surveyListManager.loadSurveys();
@@ -384,6 +388,7 @@ class SurveyEditorPage extends RearchConsumer {
                 slug: slug,
                 titleTranslations: titleTranslations,
                 descriptionTranslations: descriptionTranslations,
+                followUpEnabled: followUpEnabled,
                 updatedAt: DateTime.now(),
               );
               await formManager.updateSurvey(updated);

@@ -159,6 +159,7 @@ Widget _subject({
   return MaterialApp(
     home: Scaffold(
       body: SurveyContent(
+        client: Client('http://localhost:8787'),
         project: _project(),
         survey: _survey(),
         questions:

@@ -14,6 +14,7 @@ void main() {
       descriptionTranslations: LocalizedText.filled(''),
       status: SurveyStatus.published,
       webEnabled: true,
+      followUpEnabled: false,
       createdAt: now,
       updatedAt: now,
     );

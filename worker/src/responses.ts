@@ -1,8 +1,20 @@
 import type { AdminContext, AnswerRow, ChoiceRow, Env, ProjectRow, QuestionRow, ReplyRow, ResponseRow } from './types';
 import { mustProject, mustSurvey } from './admin_records';
-import { HttpError, countRows, integerParam, isChoiceQuestionType, json, nowIso, readJson, requireString, requiredRow } from './utils';
+import {
+  HttpError,
+  countRows,
+  integerParam,
+  isChoiceQuestionType,
+  isImageUploadQuestionType,
+  json,
+  nowIso,
+  readJson,
+  requireString,
+  requiredRow,
+} from './utils';
 import { answerToJson, choiceToJson, parseChoiceIds, projectToJson, questionToJson, replyToJson, responseToJson, surveyToJson } from './serializers';
 import { DEFAULT_FORM_CONTENT_LOCALE, localizedTextFor } from './localization';
+import { parseStoredFileKeys } from './media';
 
 export async function listResponses(env: Env, surveyId: number, url: URL): Promise<Response> {
   const limit = integerParam(url.searchParams.get('limit'), 'limit', 50, { min: 1, max: 100 });
@@ -11,7 +23,7 @@ export async function listResponses(env: Env, surveyId: number, url: URL): Promi
     `SELECT id, survey_id, anonymous_account_id, anonymous_id, submitted_at, user_agent,
        device_id, device_label, device_platform, device_os, device_os_version,
        device_browser, device_browser_version, device_locale, device_timezone,
-       screen_width, screen_height, device_pixel_ratio, device_info, metadata
+       screen_width, screen_height, device_pixel_ratio, device_info, metadata, follow_up
      FROM survey_responses
      WHERE survey_id = ?
      ORDER BY submitted_at DESC
@@ -64,13 +76,19 @@ export async function aggregatedResults(env: Env, surveyId: number): Promise<Res
 
   const questionResults = questions.results.map((question) => {
     const answers = answersByQuestion.get(question.id) ?? [];
-    const individualAnswers = answers.map((answer) => ({
-      responseId: answer.survey_response_id,
-      submittedAt: answer.submitted_at,
-      anonymousId: answer.anonymous_id,
-      textValue: answer.text_value,
-      selectedChoiceIds: parseChoiceIds(answer.selected_choice_ids),
-    }));
+    const individualAnswers = answers.map((answer) => {
+      const fileKeys = isImageUploadQuestionType(question.type)
+        ? (parseStoredFileKeys(answer.text_value) ?? [])
+        : null;
+      return {
+        responseId: answer.survey_response_id,
+        submittedAt: answer.submitted_at,
+        anonymousId: answer.anonymous_id,
+        textValue: fileKeys ? null : answer.text_value,
+        selectedChoiceIds: parseChoiceIds(answer.selected_choice_ids),
+        fileKeys,
+      };
+    });
     if (isChoiceQuestionType(question.type)) {
       const choices = choicesByQuestion.get(question.id) ?? [];
       const counts: Record<string, number> = {};
@@ -86,6 +104,21 @@ export async function aggregatedResults(env: Env, surveyId: number): Promise<Res
         questionType: question.type,
         choiceCounts: counts,
         textResponses: null,
+        imageResponseCount: null,
+        individualAnswers,
+      };
+    }
+    if (isImageUploadQuestionType(question.type)) {
+      const withImages = individualAnswers.filter(
+        (answer) => (answer.fileKeys?.length ?? 0) > 0,
+      );
+      return {
+        questionId: question.id,
+        questionText: localizedTextFor(question.text_translations, DEFAULT_FORM_CONTENT_LOCALE),
+        questionType: question.type,
+        choiceCounts: null,
+        textResponses: null,
+        imageResponseCount: withImages.length,
         individualAnswers,
       };
     }
@@ -97,6 +130,7 @@ export async function aggregatedResults(env: Env, surveyId: number): Promise<Res
       textResponses: answers
         .map((answer) => answer.text_value)
         .filter((value): value is string => Boolean(value)),
+      imageResponseCount: null,
       individualAnswers,
     };
   });
@@ -302,7 +336,7 @@ async function selectExportResponses(
     `SELECT r.id, r.survey_id, r.anonymous_account_id, r.anonymous_id, r.submitted_at, r.user_agent,
        r.device_id, r.device_label, r.device_platform, r.device_os, r.device_os_version,
        r.device_browser, r.device_browser_version, r.device_locale, r.device_timezone,
-       r.screen_width, r.screen_height, r.device_pixel_ratio, r.device_info, r.metadata
+       r.screen_width, r.screen_height, r.device_pixel_ratio, r.device_info, r.metadata, r.follow_up
      FROM survey_responses r
      WHERE r.survey_id = ?${dateFilter.sql}
      ORDER BY r.submitted_at DESC`,
@@ -409,10 +443,16 @@ export function formatAnswerForCsv(
   choiceTextById: Map<number, string>,
 ): string {
   if (!answer) return '';
-  if (!isChoiceQuestionType(question.type)) return answer.text_value ?? '';
-  return parseChoiceIds(answer.selected_choice_ids)
-    .map((choiceId) => choiceTextForCsv(choiceTextById, choiceId))
-    .join('; ');
+  if (isChoiceQuestionType(question.type)) {
+    return parseChoiceIds(answer.selected_choice_ids)
+      .map((choiceId) => choiceTextForCsv(choiceTextById, choiceId))
+      .join('; ');
+  }
+  if (question.type === 'imageUpload') {
+    const fileKeys = parseStoredFileKeys(answer.text_value) ?? [];
+    return fileKeys.join('; ');
+  }
+  return answer.text_value ?? '';
 }
 
 export function incrementChoiceCount(counts: Record<string, number>, choiceId: number): void {

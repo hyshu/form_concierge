@@ -10,6 +10,7 @@ class Answer {
   final int questionId;
   final String? textValue;
   final List<int>? selectedChoiceIds;
+  final List<String>? fileKeys;
 
   const Answer({
     this.id,
@@ -17,6 +18,7 @@ class Answer {
     required this.questionId,
     this.textValue,
     this.selectedChoiceIds,
+    this.fileKeys,
   });
 
   factory Answer.fromJson(Map<String, dynamic> json) => Answer(
@@ -25,6 +27,9 @@ class Answer {
     questionId: _int(json['questionId']),
     textValue: _optionalString(json['textValue']),
     selectedChoiceIds: _intList(json['selectedChoiceIds']),
+    fileKeys: json['fileKeys'] == null
+        ? null
+        : _stringList(json['fileKeys']),
   );
 
   Map<String, dynamic> toJson() => _withoutNulls({
@@ -33,6 +38,7 @@ class Answer {
     'questionId': questionId,
     'textValue': textValue,
     'selectedChoiceIds': selectedChoiceIds,
+    'fileKeys': fileKeys,
   });
 
   Answer copyWith({
@@ -41,6 +47,7 @@ class Answer {
     int? questionId,
     String? textValue,
     List<int>? selectedChoiceIds,
+    List<String>? fileKeys,
   }) {
     return Answer(
       id: id ?? this.id,
@@ -48,6 +55,7 @@ class Answer {
       questionId: questionId ?? this.questionId,
       textValue: textValue ?? this.textValue,
       selectedChoiceIds: selectedChoiceIds ?? this.selectedChoiceIds,
+      fileKeys: fileKeys ?? this.fileKeys,
     );
   }
 }
@@ -105,6 +113,16 @@ List<Answer> buildAnswers(
               surveyResponseId: surveyResponseId,
               questionId: questionId,
               textValue: value.trim(),
+            ),
+          );
+        }
+      case QuestionType.imageUpload:
+        if (value is List<String> && value.isNotEmpty) {
+          result.add(
+            Answer(
+              surveyResponseId: surveyResponseId,
+              questionId: questionId,
+              fileKeys: List<String>.from(value),
             ),
           );
         }
@@ -185,6 +203,31 @@ ValidationErrors validateSurveyAnswers(
         errors[questionId] = FormContentMessages.requiredQuestion(locale);
         continue;
       }
+    }
+
+    if (question.type.usesImageUpload) {
+      final files = answer is List<String>
+          ? answer
+          : answer is List
+          ? answer.whereType<String>().toList()
+          : const <String>[];
+      if (question.minSelected != null &&
+          files.length < question.minSelected!) {
+        errors[questionId] = FormContentMessages.minChoices(
+          locale,
+          question.minSelected!,
+        );
+        continue;
+      }
+      if (question.maxSelected != null &&
+          files.length > question.maxSelected!) {
+        errors[questionId] = FormContentMessages.maxChoices(
+          locale,
+          question.maxSelected!,
+        );
+        continue;
+      }
+      continue;
     }
 
     if (answer is String && answer.trim().isNotEmpty) {
