@@ -90,6 +90,8 @@ export async function generateFollowUpFromAnswers(
     surveyTitle: string;
     locale: string;
     answersSummary: string;
+    deviceContext: string;
+    recentResponsesSummary: string;
   },
 ): Promise<FollowUpGenerationResult> {
   const { provider, apiKey } = await requireAiProvider(env);
@@ -102,8 +104,15 @@ export async function generateFollowUpFromAnswers(
     user: [
       `Survey title: ${input.surveyTitle}`,
       `Respondent locale: ${input.locale}`,
-      'Main survey answers:',
+      '',
+      'Already known device / app metadata for this submission (do NOT ask for any of this again):',
+      input.deviceContext,
+      '',
+      'Current response answers:',
       input.answersSummary,
+      '',
+      'Recent responses on this survey within the last 30 days (context only; exclude duplicates and do not re-ask these):',
+      input.recentResponsesSummary,
     ].join('\n'),
     schemaName: 'follow_up_interview',
     schema: followUpSchema(),
@@ -123,8 +132,13 @@ function followUpSystemInstruction(locale: string): string {
     'For choice questions provide 2 to 6 choices. For text and imageUpload questions use an empty choices array.',
     'Use imageUpload when a photo, screenshot, or receipt would clarify the response (bugs, damage, UI issues, product condition).',
     'Do not request images for pure opinion or demographic questions.',
-    'At most one imageUpload item per follow-up. Prefer required=false for imageUpload.',
+    'At most one imageUpload item per follow-up.',
+    'Every follow-up question MUST have required=false. Respondents may skip all of them.',
     'Do not re-ask the same main survey questions.',
+    // Device / app telemetry is captured automatically at submit time.
+    'NEVER ask for device type, device model, manufacturer, platform, OS name, OS version, browser, browser version, app name, app version, app build, screen size, locale, timezone, user agent, or similar technical environment details. That data is already provided in the prompt.',
+    'Use recent responses only as background context for better follow-ups; do not copy them verbatim as questions.',
+    'Prefer product, feedback, or clarification questions over technical diagnostics.',
     'Return JSON only.',
   ].join('\n');
 }
@@ -212,7 +226,8 @@ function parseFollowUpGeneration(text: string, provider: AiProvider): FollowUpGe
     if (!textValue) {
       throw new HttpError(502, `${providerLabel(provider)} returned empty follow-up text`);
     }
-    if (typeof row.required !== 'boolean') {
+    // Accept required from the model for schema compatibility, but always store false.
+    if (row.required != null && typeof row.required !== 'boolean') {
       throw new HttpError(502, `${providerLabel(provider)} returned invalid required flag`);
     }
     const placeholder =
@@ -262,7 +277,8 @@ function parseFollowUpGeneration(text: string, provider: AiProvider): FollowUpGe
       id: `fu_${index + 1}`,
       type,
       text: textValue,
-      required: row.required,
+      // Follow-up is always optional; respondents may skip every item.
+      required: false,
       placeholder: isTextQuestionType(type) ? placeholder : null,
       maxFiles,
       choices: isChoiceQuestionType(type) ? choices : [],

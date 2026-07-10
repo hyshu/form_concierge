@@ -321,29 +321,8 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
     });
   }
 
-  Map<String, String> _validateFollowUp() {
-    final followUp = _state.followUp;
-    if (followUp == null) return const {};
-    final errors = <String, String>{};
-    for (final item in followUp.items) {
-      final value = _state.followUpAnswers[item.id];
-      if (!item.required) continue;
-      final missing = switch (item.type) {
-        QuestionType.textSingle ||
-        QuestionType.textMultiLine => value is! String || value.trim().isEmpty,
-        QuestionType.singleChoice => value is! String || value.isEmpty,
-        QuestionType.multipleChoice ||
-        QuestionType.imageUpload => switch (value) {
-          final List list => list.isEmpty,
-          _ => true,
-        },
-      };
-      if (missing) {
-        errors[item.id] = FormContentMessages.requiredQuestion(_locale);
-      }
-    }
-    return errors;
-  }
+  /// Follow-up items are always optional; empty answers are allowed.
+  Map<String, String> _validateFollowUp() => const {};
 
   Future<void> _submitFollowUp() async {
     final errors = _validateFollowUp();

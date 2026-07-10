@@ -79,7 +79,7 @@ class FollowUpContent extends StatelessWidget {
           child: Text(
             isSubmitting
                 ? FormContentMessages.text(locale, 'followUpSubmitting')
-                : FormContentMessages.text(locale, 'submit'),
+                : FormContentMessages.text(locale, 'followUpContinue'),
           ),
         ),
       ],

@@ -22,6 +22,12 @@ import {
 
 const MAX_FOLLOW_UP_JSON_BYTES = 64 * 1024;
 const FOLLOW_UP_STATUSES = new Set(['skipped', 'pending', 'completed']);
+/** How far back to load sibling responses for AI context. */
+const RECENT_HISTORY_DAYS = 30;
+/** Cap recent responses included in the follow-up prompt. */
+const MAX_RECENT_RESPONSES = 20;
+/** Truncate long free-text answers in history. */
+const MAX_HISTORY_ANSWER_CHARS = 200;
 
 export type FollowUpStatus = 'skipped' | 'pending' | 'completed';
 
@@ -98,11 +104,16 @@ export async function generateFollowUp(
   const locale = optionalLocale(body.locale) ?? DEFAULT_FORM_CONTENT_LOCALE;
 
   try {
-    const context = await buildAnswersSummary(env, survey, responseId, locale);
+    const [answersSummary, recentResponsesSummary] = await Promise.all([
+      buildAnswersSummary(env, survey, responseId, locale),
+      buildRecentResponsesSummary(env, survey, responseId, locale),
+    ]);
     const generated = await generateFollowUpFromAnswers(env, {
       surveyTitle: localizedTextFor(survey.title_translations, locale),
       locale,
-      answersSummary: context,
+      answersSummary,
+      deviceContext: formatDeviceContext(response),
+      recentResponsesSummary,
     });
 
     if (!generated.needed || generated.items.length === 0) {
@@ -121,7 +132,8 @@ export async function generateFollowUp(
         id: item.id,
         type: item.type,
         text: item.text,
-        required: item.required,
+        // Always optional so respondents can finish without answering.
+        required: false,
         placeholder: item.placeholder,
         maxFiles: item.maxFiles ?? null,
         choices: item.choices,
@@ -302,7 +314,8 @@ function normalizeStoredItem(value: unknown, index: number): FollowUpItem {
     id: item.id,
     type: item.type,
     text: item.text,
-    required: item.required,
+    // Historical payloads may have required=true; treat all follow-up as optional.
+    required: false,
     placeholder,
     maxFiles,
     choices,
@@ -384,18 +397,12 @@ function parseAnswerMap(value: unknown): Map<string, FollowUpAnswer> {
 }
 
 function validateFollowUpAnswer(item: FollowUpItem, answer: FollowUpAnswer | null): void {
+  // All follow-up items are optional; empty answers are always allowed.
   if (isTextQuestionType(item.type)) {
-    const value = answer?.textValue?.trim() ?? '';
-    if (item.required && value.length === 0) {
-      throw new HttpError(400, `Follow-up "${item.text}" is required`);
-    }
     return;
   }
   if (isChoiceQuestionType(item.type)) {
     const selected = answer?.selectedChoiceIds ?? [];
-    if (item.required && selected.length === 0) {
-      throw new HttpError(400, `Follow-up "${item.text}" requires a choice`);
-    }
     if (item.type === 'singleChoice' && selected.length > 1) {
       throw new HttpError(400, `Follow-up "${item.text}" allows one choice`);
     }
@@ -410,9 +417,6 @@ function validateFollowUpAnswer(item: FollowUpItem, answer: FollowUpAnswer | nul
   if (isImageUploadQuestionType(item.type)) {
     const fileKeys = answer?.fileKeys ?? [];
     const maxFiles = item.maxFiles ?? 1;
-    if (item.required && fileKeys.length === 0) {
-      throw new HttpError(400, `Follow-up "${item.text}" requires an image`);
-    }
     if (fileKeys.length > maxFiles) {
       throw new HttpError(400, `Follow-up "${item.text}" allows at most ${maxFiles} images`);
     }
@@ -436,9 +440,89 @@ async function buildAnswersSummary(
   const answerByQuestion = new Map(answers.results.map((answer) => [answer.question_id, answer]));
   const questionIds = questions.results.map((question) => question.id);
   const choicesByQuestion = await loadChoicesByQuestion(env, questionIds);
+  return formatQaLines(questions.results, answerByQuestion, choicesByQuestion, locale);
+}
+
+/**
+ * Load other responses on this survey from the last month so the model can
+ * avoid redundant follow-ups and spot clarifying themes.
+ */
+async function buildRecentResponsesSummary(
+  env: Env,
+  survey: SurveyRow,
+  currentResponseId: number,
+  locale: string,
+): Promise<string> {
+  const cutoff = new Date(Date.now() - RECENT_HISTORY_DAYS * 24 * 60 * 60 * 1000).toISOString();
+  const recent = await env.DB.prepare(
+    `SELECT id, submitted_at, anonymous_account_id, follow_up
+     FROM survey_responses
+     WHERE survey_id = ?
+       AND id != ?
+       AND submitted_at >= ?
+     ORDER BY submitted_at DESC
+     LIMIT ?`,
+  ).bind(survey.id, currentResponseId, cutoff, MAX_RECENT_RESPONSES).all<{
+    id: number;
+    submitted_at: string;
+    anonymous_account_id: string;
+    follow_up: string | null;
+  }>();
+
+  if (recent.results.length === 0) {
+    return '(no other responses in the last 30 days)';
+  }
+
+  const questions = await env.DB.prepare(
+    `SELECT * FROM questions WHERE survey_id = ? AND is_deleted = 0 ORDER BY order_index`,
+  ).bind(survey.id).all<QuestionRow>();
+  const questionIds = questions.results.map((question) => question.id);
+  const choicesByQuestion = await loadChoicesByQuestion(env, questionIds);
+
+  const responseIds = recent.results.map((row) => row.id);
+  const placeholders = responseIds.map(() => '?').join(', ');
+  const allAnswers = await env.DB.prepare(
+    `SELECT * FROM answers WHERE survey_response_id IN (${placeholders})`,
+  ).bind(...responseIds).all<AnswerRow>();
+  const answersByResponse = new Map<number, Map<number, AnswerRow>>();
+  for (const answer of allAnswers.results) {
+    const byQuestion = answersByResponse.get(answer.survey_response_id) ?? new Map();
+    byQuestion.set(answer.question_id, answer);
+    answersByResponse.set(answer.survey_response_id, byQuestion);
+  }
+
+  const blocks: string[] = [];
+  for (const row of recent.results) {
+    const answerByQuestion = answersByResponse.get(row.id) ?? new Map();
+    const qa = formatQaLines(
+      questions.results,
+      answerByQuestion,
+      choicesByQuestion,
+      locale,
+      { truncateText: true },
+    );
+    const followUpNote = formatCompletedFollowUpSummary(row.follow_up);
+    blocks.push(
+      [
+        `### Response ${row.id} at ${row.submitted_at}`,
+        qa,
+        followUpNote ? `Follow-up answers:\n${followUpNote}` : null,
+      ].filter(Boolean).join('\n'),
+    );
+  }
+  return blocks.join('\n\n');
+}
+
+function formatQaLines(
+  questions: QuestionRow[],
+  answerByQuestion: Map<number, AnswerRow>,
+  choicesByQuestion: Map<number, ChoiceRow[]>,
+  locale: string,
+  options: { truncateText?: boolean } = {},
+): string {
   const lines: string[] = [];
 
-  for (const question of questions.results) {
+  for (const question of questions) {
     const answer = answerByQuestion.get(question.id);
     const questionText = localizedTextFor(question.text_translations, locale);
     if (!answer) {
@@ -446,7 +530,9 @@ async function buildAnswersSummary(
       continue;
     }
     if (isTextQuestionType(question.type)) {
-      lines.push(`- ${questionText}: ${answer.text_value ?? '(empty)'}`);
+      const raw = answer.text_value ?? '(empty)';
+      const text = options.truncateText ? truncateText(raw, MAX_HISTORY_ANSWER_CHARS) : raw;
+      lines.push(`- ${questionText}: ${text}`);
       continue;
     }
     if (isImageUploadQuestionType(question.type)) {
@@ -471,6 +557,117 @@ async function buildAnswersSummary(
   }
 
   return lines.length > 0 ? lines.join('\n') : '(no answers)';
+}
+
+/** Compact device/app fields already stored on the response for the model. */
+function formatDeviceContext(response: ResponseRow): string {
+  const fromJson = parseDeviceInfoJson(response.device_info);
+  const pairs: Array<[string, string | null | undefined]> = [
+    ['deviceLabel', response.device_label ?? fromJson.label],
+    ['platform', response.device_platform ?? fromJson.platform],
+    ['os', response.device_os ?? fromJson.os],
+    ['osVersion', response.device_os_version ?? fromJson.osVersion],
+    ['browser', response.device_browser ?? fromJson.browser],
+    ['browserVersion', response.device_browser_version ?? fromJson.browserVersion],
+    ['appVersion', fromJson.appVersion],
+    ['appBuild', fromJson.appBuild],
+    ['model', fromJson.model],
+    ['manufacturer', fromJson.manufacturer],
+    ['deviceLocale', response.device_locale ?? fromJson.locale],
+    ['timezone', response.device_timezone ?? fromJson.timezone],
+    [
+      'screen',
+      response.screen_width != null && response.screen_height != null
+        ? `${response.screen_width}x${response.screen_height}`
+        : null,
+    ],
+    ['userAgent', response.user_agent],
+  ];
+  const lines = pairs
+    .filter(([, value]) => typeof value === 'string' && value.trim().length > 0)
+    .map(([key, value]) => `- ${key}: ${(value as string).trim()}`);
+  return lines.length > 0
+    ? lines.join('\n')
+    : '(no device metadata recorded for this submission)';
+}
+
+function parseDeviceInfoJson(value: string | null): Record<string, string | null> {
+  if (!value) return {};
+  try {
+    const decoded = JSON.parse(value) as unknown;
+    if (!decoded || typeof decoded !== 'object' || Array.isArray(decoded)) return {};
+    const raw = decoded as Record<string, unknown>;
+    const out: Record<string, string | null> = {};
+    for (const key of [
+      'label',
+      'platform',
+      'os',
+      'osVersion',
+      'browser',
+      'browserVersion',
+      'appVersion',
+      'appBuild',
+      'model',
+      'manufacturer',
+      'locale',
+      'timezone',
+    ]) {
+      const item = raw[key];
+      out[key] = typeof item === 'string' && item.trim().length > 0 ? item.trim() : null;
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+function formatCompletedFollowUpSummary(followUpJson: string | null): string | null {
+  if (!followUpJson) return null;
+  try {
+    const decoded = JSON.parse(followUpJson) as {
+      status?: string;
+      items?: Array<{
+        text?: string;
+        answer?: { textValue?: string | null; selectedChoiceIds?: string[]; fileKeys?: string[] };
+        choices?: Array<{ id: string; label: string }>;
+      }>;
+    };
+    if (decoded.status !== 'completed' || !Array.isArray(decoded.items) || decoded.items.length === 0) {
+      return null;
+    }
+    const lines: string[] = [];
+    for (const item of decoded.items) {
+      if (typeof item.text !== 'string') continue;
+      const answer = item.answer;
+      if (!answer) {
+        lines.push(`- ${item.text}: (no answer)`);
+        continue;
+      }
+      if (answer.textValue && answer.textValue.trim()) {
+        lines.push(`- ${item.text}: ${truncateText(answer.textValue.trim(), MAX_HISTORY_ANSWER_CHARS)}`);
+        continue;
+      }
+      if (Array.isArray(answer.fileKeys) && answer.fileKeys.length > 0) {
+        lines.push(`- ${item.text}: ${answer.fileKeys.length} image(s)`);
+        continue;
+      }
+      if (Array.isArray(answer.selectedChoiceIds) && answer.selectedChoiceIds.length > 0) {
+        const labelsById = new Map((item.choices ?? []).map((choice) => [choice.id, choice.label]));
+        const labels = answer.selectedChoiceIds.map((id) => labelsById.get(id) ?? id);
+        lines.push(`- ${item.text}: ${labels.join(', ')}`);
+        continue;
+      }
+      lines.push(`- ${item.text}: (no answer)`);
+    }
+    return lines.length > 0 ? lines.join('\n') : null;
+  } catch {
+    return null;
+  }
+}
+
+function truncateText(value: string, maxChars: number): string {
+  if (value.length <= maxChars) return value;
+  return `${value.slice(0, maxChars - 1)}…`;
 }
 
 async function loadChoicesByQuestion(
