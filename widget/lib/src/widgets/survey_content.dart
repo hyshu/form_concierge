@@ -16,6 +16,7 @@ class SurveyContent extends StatefulWidget {
   final void Function(int questionId, AnswerValue value) onAnswerChanged;
   final ValueChanged<String> onLocaleChanged;
   final VoidCallback onSubmit;
+  final Widget? footer;
 
   const SurveyContent({
     super.key,
@@ -31,6 +32,7 @@ class SurveyContent extends StatefulWidget {
     required this.onAnswerChanged,
     required this.onLocaleChanged,
     required this.onSubmit,
+    this.footer,
   });
 
   @override
@@ -194,6 +196,10 @@ class _SurveyContentState extends State<SurveyContent> {
               ],
             ),
           ),
+          if (widget.footer != null) ...[
+            const SizedBox(height: 12),
+            widget.footer!,
+          ],
         ],
       ),
     );

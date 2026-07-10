@@ -25,6 +25,9 @@ class FormConciergeSurvey extends StatefulWidget {
   final Map<String, dynamic>? metadata;
   final String? locale;
 
+  /// Shown below the submit button when the survey form is ready.
+  final Widget? footer;
+
   const FormConciergeSurvey({
     super.key,
     required this.client,
@@ -40,6 +43,7 @@ class FormConciergeSurvey extends StatefulWidget {
     this.deviceInfo,
     this.metadata,
     this.locale,
+    this.footer,
   });
 
   @override
@@ -319,6 +323,7 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
           });
         },
         onSubmit: _submit,
+        footer: widget.footer,
       ),
       SurveyViewState.completed => SurveyCompleted(
         survey: _state.survey!,
