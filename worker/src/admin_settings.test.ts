@@ -1,3 +1,4 @@
+import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { integrationSettingsRow } from '../test/fixtures';
@@ -72,6 +73,50 @@ test('updateAdminIntegrationSettings rejects coerced settings values', async () 
   );
 });
 
+test('updateAdminIntegrationSettings rejects a stale expectedUpdatedAt with 409', async () => {
+  await assertHttpErrorAsync(
+    () => updateAdminIntegrationSettings(
+      settingsRequest({
+        ai: { provider: 'gemini' },
+        smtp: { secureMode: 'starttls' },
+        expectedUpdatedAt: '2026-01-01T00:00:00.000Z',
+      }),
+      envWithSettings(integrationSettingsRow({ updated_at: '2026-02-01T00:00:00.000Z' })),
+    ),
+    409,
+    'Settings were changed by someone else. Reload and try again.',
+  );
+});
+
+test('updateAdminIntegrationSettings rejects non-string expectedUpdatedAt', async () => {
+  await assertHttpErrorAsync(
+    () => updateAdminIntegrationSettings(
+      settingsRequest({
+        ai: { provider: 'gemini' },
+        smtp: { secureMode: 'starttls' },
+        expectedUpdatedAt: 1234567890,
+      }),
+      envWithSettings(null),
+    ),
+    400,
+    'expectedUpdatedAt must be a string',
+  );
+});
+
+test('updateAdminIntegrationSettings saves when expectedUpdatedAt matches the stored row', async () => {
+  const stored = integrationSettingsRow({ updated_at: '2026-02-01T00:00:00.000Z' });
+  const response = await updateAdminIntegrationSettings(
+    settingsRequest({
+      ai: { provider: 'gemini' },
+      smtp: { secureMode: 'starttls' },
+      expectedUpdatedAt: '2026-02-01T00:00:00.000Z',
+    }),
+    envAllowingWrite(stored),
+  );
+  const payload = await response.json() as { ai: { provider: string } };
+  assert.equal(payload.ai.provider, 'gemini');
+});
+
 test('stored integration setting enums fail closed', async () => {
   await assertHttpErrorAsync(
     () => getAdminIntegrationSettings(envWithSettings(
@@ -92,10 +137,25 @@ function settingsRequest(body: unknown): Request {
 }
 
 function envWithSettings(row: IntegrationSettingsRow | null): Env {
+  return settingsEnv(row, { allowWrite: false });
+}
+
+function envAllowingWrite(row: IntegrationSettingsRow): Env {
+  return settingsEnv(row, { allowWrite: true });
+}
+
+function settingsEnv(
+  row: IntegrationSettingsRow | null,
+  { allowWrite }: { allowWrite: boolean },
+): Env {
   return {
     DB: d1Database((sql: string) => {
-      if (!sql.includes('SELECT * FROM integration_settings')) {
+      const isRead = sql.includes('SELECT * FROM integration_settings');
+      if (!isRead && !allowWrite) {
         throw new Error('D1 write should not be used by invalid settings tests');
+      }
+      if (!isRead && !sql.includes('INSERT INTO integration_settings')) {
+        throw new Error(`Unexpected settings query: ${sql}`);
       }
       return {
         bind() {
