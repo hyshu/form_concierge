@@ -24,6 +24,9 @@ class FormConciergeSurvey extends StatefulWidget {
   final VoidCallback? onDone;
   final void Function(SurveyResponse response, List<Answer> answers)?
   onResponseSubmitted;
+
+  /// Called after follow-up answers are saved successfully.
+  final ValueChanged<SurveyResponse>? onFollowUpSubmitted;
   final ValueChanged<AnonymousSession>? onAnonymousSession;
   final String? anonymousId;
   final String? anonymousToken;
@@ -53,6 +56,7 @@ class FormConciergeSurvey extends StatefulWidget {
     this.onSubmitted,
     this.onDone,
     this.onResponseSubmitted,
+    this.onFollowUpSubmitted,
     this.onAnonymousSession,
     this.anonymousId,
     this.anonymousToken,
@@ -421,13 +425,17 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
         };
       }).toList();
 
-      await widget.client.survey.saveFollowUp(
+      final updated = await widget.client.survey.saveFollowUp(
         responseId: responseId,
         answers: payload,
       );
       if (!mounted) return;
+      widget.onFollowUpSubmitted?.call(updated);
       setState(() {
-        _state = _state.copyWith(viewState: SurveyViewState.completed);
+        _state = _state.copyWith(
+          viewState: SurveyViewState.completed,
+          submittedResponse: updated,
+        );
       });
     } on Exception catch (_) {
       if (!mounted) return;
