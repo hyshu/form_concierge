@@ -358,12 +358,14 @@ class SurveyClientState extends State<SurveyClient> {
       final answers = buildAnswers(_answers, visible);
       final captchaToken =
           _turnstileSiteKey != null ? getTurnstileResponse() : null;
+      final idempotencyKey = generateIdempotencyKey();
       try {
         await _client.survey.submitResponse(
           surveyId: survey.id!,
           answers: answers,
           deviceInfo: _deviceInfo(),
           captchaToken: captchaToken,
+          idempotencyKey: idempotencyKey,
         );
       } on ApiException catch (e) {
         // Stale localStorage token (e.g. after DB rebuild) → recreate once.
@@ -376,6 +378,7 @@ class SurveyClientState extends State<SurveyClient> {
           answers: answers,
           deviceInfo: _deviceInfo(),
           captchaToken: captchaToken,
+          idempotencyKey: idempotencyKey,
         );
       }
 

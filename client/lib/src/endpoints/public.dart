@@ -67,6 +67,7 @@ class SurveyEndpoint {
     DeviceInfo? deviceInfo,
     Map<String, dynamic>? metadata,
     String? captchaToken,
+    String? idempotencyKey,
   }) async {
     final json = await _client.request(
       'POST',
@@ -77,6 +78,7 @@ class SurveyEndpoint {
         'deviceInfo': deviceInfo?.toJson(),
         'metadata': metadata,
         if (captchaToken != null) 'captchaToken': captchaToken,
+        if (idempotencyKey != null) 'idempotencyKey': idempotencyKey,
       },
       bearerToken: _client.anonymous.token,
     );

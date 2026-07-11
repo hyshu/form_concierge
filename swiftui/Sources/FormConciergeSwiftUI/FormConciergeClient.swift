@@ -96,7 +96,8 @@ public actor FormConciergeClient {
     surveyId: Int,
     answers: [Answer],
     deviceInfo: DeviceInfo? = nil,
-    metadata: [String: FormConciergeMetadataValue]? = nil
+    metadata: [String: FormConciergeMetadataValue]? = nil,
+    idempotencyKey: String? = nil
   ) async throws -> SurveyResponse {
     if anonymousToken == nil {
       _ = try await createAnonymousAccount()
@@ -107,7 +108,8 @@ public actor FormConciergeClient {
       body: SubmitResponsePayload(
         answers: answers,
         deviceInfo: deviceInfo ?? .current,
-        metadata: metadata
+        metadata: metadata,
+        idempotencyKey: idempotencyKey ?? UUID().uuidString.lowercased()
       ),
       bearerToken: anonymousToken
     )
@@ -226,6 +228,7 @@ private struct SubmitResponsePayload: Encodable {
   let answers: [Answer]
   let deviceInfo: DeviceInfo?
   let metadata: [String: FormConciergeMetadataValue]?
+  let idempotencyKey: String
 }
 
 private struct LatestReplyPayload: Decodable {

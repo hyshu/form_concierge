@@ -218,6 +218,7 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
       );
       final answers = buildAnswers(_state.answers, visibleQuestions);
 
+      final idempotencyKey = generateIdempotencyKey();
       late final SurveyResponse response;
       try {
         response = await widget.client.survey.submitResponse(
@@ -226,6 +227,7 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
           anonymousId: widget.anonymousId,
           deviceInfo: deviceInfo,
           metadata: widget.metadata,
+          idempotencyKey: idempotencyKey,
         );
       } on ApiException catch (e) {
         // Stale token (e.g. after DB rebuild) → recreate once, same as web.
@@ -238,6 +240,7 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
           anonymousId: widget.anonymousId,
           deviceInfo: deviceInfo,
           metadata: widget.metadata,
+          idempotencyKey: idempotencyKey,
         );
       }
 

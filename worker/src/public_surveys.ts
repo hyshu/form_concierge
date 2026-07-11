@@ -5,6 +5,7 @@ import {
   isChoiceQuestionType,
   isImageUploadQuestionType,
   isTextQuestionType,
+  isUniqueConstraintError,
   json,
   logError,
   nowIso,
@@ -119,25 +120,32 @@ export async function submitResponse(
   const visibilityRules = await getVisibilityRules(env.DB, surveyId);
   await validateAnswers(env, questions.results, visibilityRules, answers, anonymous.id);
 
+  const idempotencyKey = optionalLimitedString(body.idempotencyKey, 'idempotencyKey', 64);
+
+  if (idempotencyKey) {
+    const existing = await env.DB.prepare(
+      `SELECT * FROM survey_responses WHERE idempotency_key = ?`,
+    ).bind(idempotencyKey).first<ResponseRow>();
+    if (existing) return json(responseToJson(existing), 200);
+  }
+
   const now = nowIso();
   const userAgent = request.headers.get('user-agent');
   const deviceInfo = normalizeDeviceInfo(body.deviceInfo);
   const metadata = normalizeMetadata(body.metadata);
-  // Single batch so a failed answer insert cannot leave an orphan response
-  // (D1 batch is atomic). Capture response id once via last_insert_rowid()
-  // for any following answer rows.
+  const returningCols = `id, survey_id, anonymous_account_id, anonymous_id, submitted_at, user_agent,
+         device_id, device_label, device_platform, device_os, device_os_version,
+         device_browser, device_browser_version, device_locale, device_timezone,
+         screen_width, screen_height, device_pixel_ratio, device_info, metadata, follow_up`;
   const statements: D1PreparedStatement[] = [
     env.DB.prepare(
       `INSERT INTO survey_responses
          (survey_id, anonymous_account_id, anonymous_id, submitted_at, ip_address, user_agent,
           device_id, device_label, device_platform, device_os, device_os_version,
           device_browser, device_browser_version, device_locale, device_timezone,
-          screen_width, screen_height, device_pixel_ratio, device_info, metadata, follow_up)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)
-       RETURNING id, survey_id, anonymous_account_id, anonymous_id, submitted_at, user_agent,
-         device_id, device_label, device_platform, device_os, device_os_version,
-         device_browser, device_browser_version, device_locale, device_timezone,
-         screen_width, screen_height, device_pixel_ratio, device_info, metadata, follow_up`,
+          screen_width, screen_height, device_pixel_ratio, device_info, metadata, follow_up, idempotency_key)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)
+       RETURNING ${returningCols}`,
     ).bind(
       surveyId,
       anonymous.id,
@@ -159,6 +167,7 @@ export async function submitResponse(
       deviceInfo.devicePixelRatio,
       deviceInfo.rawJson,
       metadata,
+      idempotencyKey,
     ),
   ];
 
@@ -183,8 +192,6 @@ export async function submitResponse(
           : null,
       };
     });
-    // Cross-join freezes last_insert_rowid() (the response) once so multi-row
-    // answer inserts do not pick up each prior answer's rowid.
     statements.push(
       env.DB.prepare(
         `INSERT INTO answers
@@ -199,12 +206,21 @@ export async function submitResponse(
     );
   }
 
-  // last_seen_at is already touched (throttled) in requireAnonymous — avoid a
-  // second write on every submit.
-
-  const batchResults = await env.DB.batch(statements);
-  const response = batchResults[0]?.results?.[0] as ResponseRow | undefined;
-  if (!response) throw new HttpError(500, 'Failed to save response');
+  let response: ResponseRow;
+  try {
+    const batchResults = await env.DB.batch(statements);
+    const row = batchResults[0]?.results?.[0] as ResponseRow | undefined;
+    if (!row) throw new HttpError(500, 'Failed to save response');
+    response = row;
+  } catch (error) {
+    if (idempotencyKey && isUniqueConstraintError(error)) {
+      const existing = await env.DB.prepare(
+        `SELECT ${returningCols} FROM survey_responses WHERE idempotency_key = ?`,
+      ).bind(idempotencyKey).first<ResponseRow>();
+      if (existing) return json(responseToJson(existing), 200);
+    }
+    throw error;
+  }
 
   const notificationTask = sendResponseNotification(env, survey, response).catch((error) => {
     logError('response_notification_failed', error, {
