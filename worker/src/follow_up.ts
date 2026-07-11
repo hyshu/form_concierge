@@ -1,4 +1,4 @@
-import type { AnonymousContext, AnswerRow, ChoiceRow, Env, QuestionRow, ResponseRow, SurveyRow } from './types';
+import type { AnonymousContext, AnswerRow, ChoiceRow, Env, QuestionRow, ReplyRow, ResponseRow, SurveyRow } from './types';
 import { generateFollowUpFromAnswers } from './ai_generation';
 import { isAiGenerationConfigured } from './admin_settings';
 import {
@@ -106,7 +106,7 @@ export async function generateFollowUp(
   try {
     const [answersSummary, recentResponsesSummary] = await Promise.all([
       buildAnswersSummary(env, survey, responseId, locale),
-      buildRecentResponsesSummary(env, survey, responseId, locale),
+      buildRecentResponsesSummary(env, survey, responseId, anonymous.id, locale),
     ]);
     const generated = await generateFollowUpFromAnswers(env, {
       surveyTitle: localizedTextFor(survey.title_translations, locale),
@@ -443,34 +443,31 @@ async function buildAnswersSummary(
   return formatQaLines(questions.results, answerByQuestion, choicesByQuestion, locale);
 }
 
-/**
- * Load other responses on this survey from the last month so the model can
- * avoid redundant follow-ups and spot clarifying themes.
- */
 async function buildRecentResponsesSummary(
   env: Env,
   survey: SurveyRow,
   currentResponseId: number,
+  anonymousAccountId: string,
   locale: string,
 ): Promise<string> {
   const cutoff = new Date(Date.now() - RECENT_HISTORY_DAYS * 24 * 60 * 60 * 1000).toISOString();
   const recent = await env.DB.prepare(
-    `SELECT id, submitted_at, anonymous_account_id, follow_up
+    `SELECT id, submitted_at, follow_up
      FROM survey_responses
      WHERE survey_id = ?
        AND id != ?
+       AND anonymous_account_id = ?
        AND submitted_at >= ?
      ORDER BY submitted_at DESC
      LIMIT ?`,
-  ).bind(survey.id, currentResponseId, cutoff, MAX_RECENT_RESPONSES).all<{
+  ).bind(survey.id, currentResponseId, anonymousAccountId, cutoff, MAX_RECENT_RESPONSES).all<{
     id: number;
     submitted_at: string;
-    anonymous_account_id: string;
     follow_up: string | null;
   }>();
 
   if (recent.results.length === 0) {
-    return '(no other responses in the last 30 days)';
+    return '(no prior responses from this respondent in the last 30 days)';
   }
 
   const questions = await env.DB.prepare(
@@ -481,14 +478,25 @@ async function buildRecentResponsesSummary(
 
   const responseIds = recent.results.map((row) => row.id);
   const placeholders = responseIds.map(() => '?').join(', ');
-  const allAnswers = await env.DB.prepare(
-    `SELECT * FROM answers WHERE survey_response_id IN (${placeholders})`,
-  ).bind(...responseIds).all<AnswerRow>();
+  const [allAnswers, allReplies] = await Promise.all([
+    env.DB.prepare(
+      `SELECT * FROM answers WHERE survey_response_id IN (${placeholders})`,
+    ).bind(...responseIds).all<AnswerRow>(),
+    env.DB.prepare(
+      `SELECT * FROM admin_replies WHERE survey_response_id IN (${placeholders}) ORDER BY created_at ASC`,
+    ).bind(...responseIds).all<ReplyRow>(),
+  ]);
   const answersByResponse = new Map<number, Map<number, AnswerRow>>();
   for (const answer of allAnswers.results) {
     const byQuestion = answersByResponse.get(answer.survey_response_id) ?? new Map();
     byQuestion.set(answer.question_id, answer);
     answersByResponse.set(answer.survey_response_id, byQuestion);
+  }
+  const repliesByResponse = new Map<number, ReplyRow[]>();
+  for (const reply of allReplies.results) {
+    const list = repliesByResponse.get(reply.survey_response_id) ?? [];
+    list.push(reply);
+    repliesByResponse.set(reply.survey_response_id, list);
   }
 
   const blocks: string[] = [];
@@ -502,11 +510,16 @@ async function buildRecentResponsesSummary(
       { truncateText: true },
     );
     const followUpNote = formatCompletedFollowUpSummary(row.follow_up);
+    const replies = repliesByResponse.get(row.id) ?? [];
+    const replyLines = replies.map((r) =>
+      `- [${r.created_at}] ${truncateText(r.body.trim(), MAX_HISTORY_ANSWER_CHARS)}`,
+    );
     blocks.push(
       [
         `### Response ${row.id} at ${row.submitted_at}`,
         qa,
         followUpNote ? `Follow-up answers:\n${followUpNote}` : null,
+        replyLines.length > 0 ? `Admin replies:\n${replyLines.join('\n')}` : null,
       ].filter(Boolean).join('\n'),
     );
   }

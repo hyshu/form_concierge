@@ -111,7 +111,7 @@ export async function generateFollowUpFromAnswers(
       'Current response answers:',
       input.answersSummary,
       '',
-      'Recent responses on this survey within the last 30 days (context only; exclude duplicates and do not re-ask these):',
+      'This respondent\'s prior responses on this survey within the last 30 days (context only; do not re-ask these):',
       input.recentResponsesSummary,
     ].join('\n'),
     schemaName: 'follow_up_interview',
