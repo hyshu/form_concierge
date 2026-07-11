@@ -58,7 +58,7 @@ export async function replaceAdminVisibilityRules(
     if (source.order_index >= target.order_index) {
       throw new HttpError(400, 'A rule can only depend on an earlier question');
     }
-    validateRuleValue(source, rule.operator, rule.value);
+    await validateRuleValue(env.DB, source, rule.operator, rule.value);
   }
 
   const statements = [
@@ -177,7 +177,7 @@ export function normalizeRuleInput(value: unknown): NormalizedVisibilityRule {
   };
 }
 
-function validateRuleValue(source: QuestionRow, operator: string, value: unknown): void {
+async function validateRuleValue(db: D1Database, source: QuestionRow, operator: string, value: unknown): Promise<void> {
   if (VALUELESS_OPERATORS.has(operator)) return;
   if (isTextQuestionType(source.type)) {
     if (typeof value !== 'string' || value.trim().length === 0) {
@@ -186,7 +186,11 @@ function validateRuleValue(source: QuestionRow, operator: string, value: unknown
     return;
   }
   if (isChoiceQuestionType(source.type)) {
-    requiredInteger(value, 'Choice visibility rule value', { min: 1 });
+    const choiceId = requiredInteger(value, 'Choice visibility rule value', { min: 1 });
+    const row = await db.prepare(
+      `SELECT id FROM choices WHERE id = ? AND question_id = ?`,
+    ).bind(choiceId, source.id).first();
+    if (!row) throw new HttpError(400, `Choice ${choiceId} does not belong to question ${source.id}`);
     return;
   }
   throw new HttpError(400, 'Unsupported source question type');

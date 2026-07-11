@@ -146,7 +146,10 @@ export async function updateQuestion(request: Request, env: Env, questionId: num
     );
     await assertVisibilityOrderInvariant(env.DB, existing.survey_id, proposed);
   }
-  const row = await env.DB.prepare(
+  const typeChangedFromChoice = type !== existing.type
+    && isChoiceQuestionType(existing.type)
+    && !isChoiceQuestionType(type);
+  const updateStmt = env.DB.prepare(
     `UPDATE questions
      SET text_translations = ?, type = ?, order_index = ?, is_required = ?, placeholder_translations = ?,
          min_length = ?, max_length = ?, min_selected = ?, max_selected = ?,
@@ -171,7 +174,20 @@ export async function updateQuestion(request: Request, env: Env, questionId: num
     normalizeVisibilityConditionMode(body.visibilityConditionMode ?? existing.visibility_condition_mode),
     boolToInt(optionalBoolean(body.isDeleted, 'isDeleted') ?? (existing.is_deleted === 1)),
     questionId,
-  ).first<QuestionRow>();
+  );
+  if (typeChangedFromChoice) {
+    const results = await env.DB.batch([
+      updateStmt,
+      env.DB.prepare(`DELETE FROM choices WHERE question_id = ?`).bind(questionId),
+      env.DB.prepare(
+        `DELETE FROM question_visibility_rules
+         WHERE source_question_id = ? AND operator NOT IN ('isAnswered', 'isNotAnswered')`,
+      ).bind(questionId),
+    ]);
+    const row = (results[0] as D1Result<QuestionRow>).results?.[0];
+    return json(questionToJson(requiredRow(row, 'Question')));
+  }
+  const row = await updateStmt.first<QuestionRow>();
   return json(questionToJson(requiredRow(row, 'Question')));
 }
 
