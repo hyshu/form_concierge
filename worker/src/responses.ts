@@ -14,7 +14,7 @@ import {
 } from './utils';
 import { answerToJson, choiceToJson, parseChoiceIds, projectToJson, questionToJson, replyToJson, responseToJson, surveyToJson } from './serializers';
 import { DEFAULT_FORM_CONTENT_LOCALE, localizedTextFor } from './localization';
-import { parseStoredFileKeys } from './media';
+import { collectFileKeysFromResponse, deleteMediaKeys, parseStoredFileKeys } from './media';
 
 export async function listResponses(env: Env, surveyId: number, url: URL): Promise<Response> {
   const limit = integerParam(url.searchParams.get('limit'), 'limit', 50, { min: 1, max: 100 });
@@ -216,7 +216,22 @@ export async function exportResponses(env: Env, surveyId: number, url: URL): Pro
 }
 
 export async function deleteResponse(env: Env, responseId: number): Promise<Response> {
+  const response = await env.DB.prepare(
+    `SELECT follow_up FROM survey_responses WHERE id = ?`,
+  ).bind(responseId).first<{ follow_up: string | null }>();
+
+  const answers = response
+    ? (await env.DB.prepare(
+        `SELECT text_value FROM answers WHERE survey_response_id = ?`,
+      ).bind(responseId).all<{ text_value: string | null }>()).results
+    : [];
+
+  const fileKeys = response
+    ? collectFileKeysFromResponse(answers, response.follow_up)
+    : [];
+
   await env.DB.prepare(`DELETE FROM survey_responses WHERE id = ?`).bind(responseId).run();
+  await deleteMediaKeys(env.MEDIA_BUCKET, fileKeys);
   return json({ ok: true });
 }
 

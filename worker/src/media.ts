@@ -5,6 +5,7 @@ import {
   MEDIA_MAX_BYTES,
   json,
   jsonHeaders,
+  logError,
 } from './utils';
 
 const KEY_PATTERN = /^uploads\/[a-zA-Z0-9_-]+\/[a-zA-Z0-9-]+\.(jpe?g|png|webp|gif)$/i;
@@ -202,6 +203,72 @@ function extensionForContentType(contentType: string): string {
 function normalizeContentType(value: string | null): string {
   if (!value) throw new HttpError(400, 'content-type is required');
   return value.split(';')[0]?.trim().toLowerCase() ?? '';
+}
+
+/** Delete R2 objects by key. Best-effort: logs failures but never throws. */
+export async function deleteMediaKeys(bucket: R2Bucket, keys: string[]): Promise<void> {
+  if (keys.length === 0) return;
+  try {
+    await bucket.delete(keys);
+  } catch (error) {
+    logError('media_delete_failed', error, { keys });
+  }
+}
+
+/** Collect all file keys referenced by a set of answer rows and follow-up JSON. */
+export function collectFileKeysFromResponse(
+  answers: ReadonlyArray<{ text_value: string | null }>,
+  followUpJson: string | null,
+): string[] {
+  const keys: string[] = [];
+  for (const answer of answers) {
+    const parsed = parseStoredFileKeys(answer.text_value);
+    if (parsed) keys.push(...parsed);
+  }
+  if (followUpJson) {
+    try {
+      const payload = JSON.parse(followUpJson) as { items?: unknown[] };
+      if (Array.isArray(payload.items)) {
+        for (const item of payload.items) {
+          const answer = (item as { answer?: { fileKeys?: unknown } }).answer;
+          if (answer && Array.isArray(answer.fileKeys)) {
+            for (const k of answer.fileKeys) {
+              if (typeof k === 'string') keys.push(k);
+            }
+          }
+        }
+      }
+    } catch { /* malformed JSON — nothing to clean */ }
+  }
+  return keys;
+}
+
+/** Collect all R2 keys referenced by responses to the given survey IDs. */
+export async function collectFileKeysForSurveys(
+  db: D1Database,
+  surveyIds: readonly number[],
+): Promise<string[]> {
+  if (surveyIds.length === 0) return [];
+  const placeholders = surveyIds.map(() => '?').join(',');
+  const [answerRows, responseRows] = await Promise.all([
+    db.prepare(
+      `SELECT a.text_value FROM answers a
+       JOIN survey_responses r ON a.survey_response_id = r.id
+       WHERE r.survey_id IN (${placeholders})`,
+    ).bind(...surveyIds).all<{ text_value: string | null }>(),
+    db.prepare(
+      `SELECT follow_up FROM survey_responses WHERE survey_id IN (${placeholders}) AND follow_up IS NOT NULL`,
+    ).bind(...surveyIds).all<{ follow_up: string | null }>(),
+  ]);
+  const keys: string[] = [];
+  for (const row of answerRows.results) {
+    const parsed = parseStoredFileKeys(row.text_value);
+    if (parsed) keys.push(...parsed);
+  }
+  for (const row of responseRows.results) {
+    keys.push(...collectFileKeysFromResponse([], row.follow_up));
+  }
+  return keys;
 }
 
 /** Keep media CORS aligned with JSON endpoints for browser admin previews. */

@@ -22,6 +22,7 @@ import {
 import { surveyToJson } from './serializers';
 import { mustProject, mustSurvey, projectSupportedLocales } from './admin_records';
 import { insertQuestion, normalizeQuestionValidation, normalizeVisibilityConditionMode } from './admin_questions';
+import { collectFileKeysForSurveys, deleteMediaKeys } from './media';
 import {
   DEFAULT_FORM_CONTENT_LOCALE,
   LocalizedText,
@@ -190,7 +191,9 @@ export async function updateSurvey(request: Request, env: Env, surveyId: number)
 }
 
 export async function deleteSurvey(env: Env, surveyId: number): Promise<Response> {
+  const fileKeys = await collectFileKeysForSurveys(env.DB, [surveyId]);
   await env.DB.prepare(`DELETE FROM surveys WHERE id = ?`).bind(surveyId).run();
+  await deleteMediaKeys(env.MEDIA_BUCKET, fileKeys);
   return json({ ok: true });
 }
 

@@ -16,6 +16,7 @@ import {
   requireDefaultLocale,
   requireSupportedLocales,
 } from './localization';
+import { collectFileKeysForSurveys, deleteMediaKeys } from './media';
 
 export async function listProjects(env: Env, url: URL): Promise<Response> {
   const limit = integerParam(url.searchParams.get('limit'), 'limit', 100, { min: 1, max: 500 });
@@ -113,7 +114,13 @@ export async function updateProject(request: Request, env: Env, projectId: numbe
 }
 
 export async function deleteProject(env: Env, projectId: number): Promise<Response> {
+  const surveyRows = await env.DB.prepare(
+    `SELECT id FROM surveys WHERE project_id = ?`,
+  ).bind(projectId).all<{ id: number }>();
+  const surveyIds = surveyRows.results.map((r) => r.id);
+  const fileKeys = await collectFileKeysForSurveys(env.DB, surveyIds);
   await env.DB.prepare(`DELETE FROM projects WHERE id = ?`).bind(projectId).run();
+  await deleteMediaKeys(env.MEDIA_BUCKET, fileKeys);
   return json({ ok: true });
 }
 
