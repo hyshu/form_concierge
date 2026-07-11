@@ -25,6 +25,18 @@ test('Jaspr web form loads and submits a response', async ({ page, baseURL }) =>
   await expect(page.getByText('Your response has been submitted successfully.')).toBeVisible();
 });
 
+test('web form switches locale and renders Japanese translations', async ({ page, baseURL }) => {
+  const seed = await seedData();
+  await page.goto(`${baseURL}/${seed.projectSlug}/${seed.surveySlug}`);
+
+  await expect(page.getByText('Customer feedback')).toBeVisible();
+  await page.getByRole('combobox').selectOption({ label: '日本語' });
+
+  await expect(page.getByText('顧客フィードバック')).toBeVisible();
+  await expect(page.getByText('ご意見をお聞かせください')).toBeVisible();
+  await expect(page.getByText('お名前')).toBeVisible();
+});
+
 test('web form blocks submission when a required question is empty', async ({ page, baseURL }) => {
   const seed = await seedData();
   await page.goto(`${baseURL}/${seed.projectSlug}/${seed.surveySlug}`);
