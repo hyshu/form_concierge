@@ -90,13 +90,13 @@ export async function generateFollowUp(
 
   if (survey.follow_up_enabled !== 1) {
     const skipped = skippedFollowUp(DEFAULT_FORM_CONTENT_LOCALE);
-    await writeFollowUp(env, responseId, skipped);
+    await claimFollowUp(env, responseId, skipped);
     return json({ needed: false, followUp: skipped });
   }
 
   if (!(await isAiGenerationConfigured(env))) {
     const skipped = skippedFollowUp(DEFAULT_FORM_CONTENT_LOCALE);
-    await writeFollowUp(env, responseId, skipped);
+    await claimFollowUp(env, responseId, skipped);
     return json({ needed: false, followUp: skipped });
   }
 
@@ -118,7 +118,7 @@ export async function generateFollowUp(
 
     if (!generated.needed || generated.items.length === 0) {
       const skipped = skippedFollowUp(locale);
-      await writeFollowUp(env, responseId, skipped);
+      await claimFollowUp(env, responseId, skipped);
       return json({ needed: false, followUp: skipped });
     }
 
@@ -132,7 +132,6 @@ export async function generateFollowUp(
         id: item.id,
         type: item.type,
         text: item.text,
-        // Always optional so respondents can finish without answering.
         required: false,
         placeholder: item.placeholder,
         maxFiles: item.maxFiles ?? null,
@@ -140,12 +139,15 @@ export async function generateFollowUp(
         answer: null,
       })),
     };
-    await writeFollowUp(env, responseId, pending);
+    const claimed = await claimFollowUp(env, responseId, pending);
+    if (!claimed) {
+      const current = await loadOwnedResponse(env, responseId, anonymous.id);
+      return json({ needed: false, followUp: parseStoredFollowUp(current.follow_up) });
+    }
     return json({ needed: true, followUp: pending });
   } catch (error) {
-    // Never block main-form completion on follow-up failures.
     const skipped = skippedFollowUp(locale);
-    await writeFollowUp(env, responseId, skipped);
+    await claimFollowUp(env, responseId, skipped);
     return json({
       needed: false,
       followUp: skipped,
@@ -204,7 +206,7 @@ export async function saveFollowUp(
     completedAt: nowIso(),
     items,
   };
-  const updated = await writeFollowUp(env, responseId, completed);
+  const updated = await updateFollowUp(env, responseId, completed);
   return json(responseToJson(updated));
 }
 
@@ -223,7 +225,21 @@ async function loadOwnedResponse(
   return row;
 }
 
-async function writeFollowUp(
+async function claimFollowUp(
+  env: Env,
+  responseId: number,
+  followUp: FollowUpPayload,
+): Promise<ResponseRow | null> {
+  const encoded = JSON.stringify(followUp);
+  if (encoded.length > MAX_FOLLOW_UP_JSON_BYTES) {
+    throw new HttpError(400, 'followUp payload is too large');
+  }
+  return env.DB.prepare(
+    `UPDATE survey_responses SET follow_up = ? WHERE id = ? AND follow_up IS NULL RETURNING *`,
+  ).bind(encoded, responseId).first<ResponseRow>();
+}
+
+async function updateFollowUp(
   env: Env,
   responseId: number,
   followUp: FollowUpPayload,
