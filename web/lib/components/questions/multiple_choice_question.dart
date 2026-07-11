@@ -9,6 +9,7 @@ class MultipleChoiceQuestion extends StatelessComponent {
     required this.value,
     required this.locale,
     required this.onChanged,
+    this.disabled = false,
     super.key,
   });
 
@@ -17,6 +18,7 @@ class MultipleChoiceQuestion extends StatelessComponent {
   final List<int> value;
   final String locale;
   final void Function(AnswerValue value) onChanged;
+  final bool disabled;
 
   @override
   Component build(context) => div(classes: 'space-y-2', [
@@ -37,9 +39,10 @@ class MultipleChoiceQuestion extends StatelessComponent {
               name: 'question_${question.id}[]',
               value: choice.id.toString(),
               checked: value.contains(choice.id),
-              disabled: !value.contains(choice.id) &&
-                  question.maxSelected != null &&
-                  value.length >= question.maxSelected!,
+              disabled: disabled ||
+                  (!value.contains(choice.id) &&
+                      question.maxSelected != null &&
+                      value.length >= question.maxSelected!),
               classes:
                   'w-4 h-4 text-indigo-600 accent-indigo-600 rounded flex-shrink-0',
               onChange: (bool? checked) {

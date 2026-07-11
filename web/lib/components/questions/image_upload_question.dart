@@ -15,6 +15,7 @@ class ImageUploadQuestion extends StatefulComponent {
     required this.locale,
     required this.onChanged,
     required this.ensureAuthenticated,
+    this.disabled = false,
     super.key,
   });
 
@@ -24,6 +25,7 @@ class ImageUploadQuestion extends StatefulComponent {
   final String locale;
   final void Function(AnswerValue value) onChanged;
   final Future<void> Function() ensureAuthenticated;
+  final bool disabled;
 
   @override
   State<ImageUploadQuestion> createState() => _ImageUploadQuestionState();
@@ -41,7 +43,8 @@ class _ImageUploadQuestionState extends State<ImageUploadQuestion> {
   @override
   Component build(context) {
     final keys = component.value;
-    final canAdd = !_uploading && keys.length < _maxFiles;
+    final canAdd =
+        !component.disabled && !_uploading && keys.length < _maxFiles;
 
     return div(classes: 'space-y-3', [
       if (keys.isNotEmpty)
@@ -59,8 +62,8 @@ class _ImageUploadQuestionState extends State<ImageUploadQuestion> {
                   type: ButtonType.button,
                   classes:
                       'text-base leading-none text-red-600 hover:text-red-700 px-1',
-                  disabled: _uploading,
-                  onClick: _uploading
+                  disabled: component.disabled || _uploading,
+                  onClick: component.disabled || _uploading
                       ? null
                       : () {
                           final next = List<String>.from(keys)..remove(key);

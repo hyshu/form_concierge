@@ -79,6 +79,7 @@ class SurveyContent extends StatelessComponent {
                       ],
                       name: 'locale',
                       value: locale,
+                      disabled: isSubmitting,
                       classes:
                           'shrink-0 px-3 py-1.5 border border-slate-200 rounded-lg text-sm bg-white text-slate-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 focus:outline-none',
                       onChange: (values) {
@@ -114,6 +115,7 @@ class SurveyContent extends StatelessComponent {
               locale: locale,
               client: client,
               ensureAuthenticated: ensureAuthenticated,
+              disabled: isSubmitting,
               onChanged: (value) => onAnswerChanged(question.id!, value),
             ),
         ]),

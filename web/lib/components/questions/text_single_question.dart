@@ -8,6 +8,7 @@ class TextSingleQuestion extends StatelessComponent {
     required this.value,
     required this.locale,
     required this.onChanged,
+    this.disabled = false,
     super.key,
   });
 
@@ -15,6 +16,7 @@ class TextSingleQuestion extends StatelessComponent {
   final String? value;
   final String locale;
   final void Function(AnswerValue value) onChanged;
+  final bool disabled;
 
   @override
   Component build(context) => div([
@@ -23,6 +25,7 @@ class TextSingleQuestion extends StatelessComponent {
           id: 'question_${question.id}',
           name: 'question_${question.id}',
           value: value ?? '',
+          disabled: disabled,
           classes:
               'w-full px-4 py-3 border border-slate-200 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 focus:outline-none text-sm bg-white placeholder:text-slate-400',
           attributes: {

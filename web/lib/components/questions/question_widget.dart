@@ -18,6 +18,7 @@ class QuestionWidget extends StatelessComponent {
     required this.onChanged,
     required this.client,
     required this.ensureAuthenticated,
+    this.disabled = false,
     super.key,
   });
 
@@ -26,6 +27,10 @@ class QuestionWidget extends StatelessComponent {
   final AnswerValue value;
   final String? error;
   final String locale;
+
+  /// Disables all inputs (e.g. while the response is being submitted, so the
+  /// visible form cannot drift from the payload in flight).
+  final bool disabled;
   final void Function(AnswerValue value) onChanged;
   final Client client;
   final Future<void> Function() ensureAuthenticated;
@@ -65,6 +70,7 @@ class QuestionWidget extends StatelessComponent {
             value: value as int?,
             locale: locale,
             onChanged: onChanged,
+            disabled: disabled,
           ),
         QuestionType.multipleChoice => MultipleChoiceQuestion(
             question: question,
@@ -72,18 +78,21 @@ class QuestionWidget extends StatelessComponent {
             value: (value as List<dynamic>?)?.cast<int>() ?? [],
             locale: locale,
             onChanged: onChanged,
+            disabled: disabled,
           ),
         QuestionType.textSingle => TextSingleQuestion(
             question: question,
             value: value as String?,
             locale: locale,
             onChanged: onChanged,
+            disabled: disabled,
           ),
         QuestionType.textMultiLine => TextMultiLineQuestion(
             question: question,
             value: value as String?,
             locale: locale,
             onChanged: onChanged,
+            disabled: disabled,
           ),
         QuestionType.imageUpload => ImageUploadQuestion(
             client: client,
@@ -92,6 +101,7 @@ class QuestionWidget extends StatelessComponent {
             locale: locale,
             onChanged: onChanged,
             ensureAuthenticated: ensureAuthenticated,
+            disabled: disabled,
           ),
       };
 }

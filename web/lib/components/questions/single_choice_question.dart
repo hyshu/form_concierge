@@ -9,6 +9,7 @@ class SingleChoiceQuestion extends StatelessComponent {
     required this.value,
     required this.locale,
     required this.onChanged,
+    this.disabled = false,
     super.key,
   });
 
@@ -17,6 +18,7 @@ class SingleChoiceQuestion extends StatelessComponent {
   final int? value;
   final String locale;
   final void Function(AnswerValue value) onChanged;
+  final bool disabled;
 
   @override
   Component build(context) => div(classes: 'space-y-2', [
@@ -27,6 +29,7 @@ class SingleChoiceQuestion extends StatelessComponent {
               name: 'question_${question.id}',
               value: choice.id.toString(),
               checked: value == choice.id,
+              disabled: disabled,
               classes:
                   'w-4 h-4 text-indigo-600 accent-indigo-600 flex-shrink-0',
               onChange: (bool? checked) {
