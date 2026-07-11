@@ -15,6 +15,52 @@ export type MediaObjectMeta = {
   size: number;
 };
 
+const IMAGE_SIGNATURES: ReadonlyArray<{ type: string; bytes: number[] }> = [
+  { type: 'image/jpeg', bytes: [0xff, 0xd8, 0xff] },
+  { type: 'image/png', bytes: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a] },
+  { type: 'image/webp', bytes: [0x52, 0x49, 0x46, 0x46] }, // "RIFF"; WEBP at offset 8 checked below
+  { type: 'image/gif', bytes: [0x47, 0x49, 0x46, 0x38] },  // "GIF8"
+];
+
+function matchesSignature(header: Uint8Array, contentType: string): boolean {
+  for (const sig of IMAGE_SIGNATURES) {
+    if (sig.type !== contentType) continue;
+    if (header.length < sig.bytes.length) return false;
+    const prefixMatch = sig.bytes.every((b, i) => header[i] === b);
+    if (!prefixMatch) return false;
+    if (contentType === 'image/webp') {
+      if (header.length < 12) return false;
+      return header[8] === 0x57 && header[9] === 0x45 && header[10] === 0x42 && header[11] === 0x50;
+    }
+    return true;
+  }
+  return false;
+}
+
+async function readBodyWithLimit(body: ReadableStream<Uint8Array>, limit: number): Promise<Uint8Array> {
+  const reader = body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > limit) throw new HttpError(400, `Image must be ${limit} bytes or smaller`);
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  const result = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    result.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return result;
+}
+
 /** Upload a single image for an anonymous respondent. */
 export async function uploadMedia(
   request: Request,
@@ -26,10 +72,17 @@ export async function uploadMedia(
     throw new HttpError(400, 'Unsupported image type. Use JPEG, PNG, WebP, or GIF');
   }
 
-  const bytes = await request.arrayBuffer();
-  if (bytes.byteLength === 0) throw new HttpError(400, 'Empty image body');
-  if (bytes.byteLength > MEDIA_MAX_BYTES) {
+  const claimedLength = Number(request.headers.get('content-length') ?? '');
+  if (claimedLength > MEDIA_MAX_BYTES) {
     throw new HttpError(400, `Image must be ${MEDIA_MAX_BYTES} bytes or smaller`);
+  }
+
+  if (!request.body) throw new HttpError(400, 'Empty image body');
+  const bytes = await readBodyWithLimit(request.body, MEDIA_MAX_BYTES);
+  if (bytes.byteLength === 0) throw new HttpError(400, 'Empty image body');
+
+  if (!matchesSignature(bytes, contentType)) {
+    throw new HttpError(400, 'File content does not match declared image type');
   }
 
   const key = buildUploadKey(anonymous.id, contentType);
