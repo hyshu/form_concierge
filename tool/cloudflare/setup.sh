@@ -350,11 +350,23 @@ cleanup() {
 }
 trap cleanup EXIT
 
-read_wrangler_value() {
-  node - "$WORKER_DIR/wrangler.jsonc" "$1" <<'NODE'
+parse_jsonc() {
+  node - "$1" <<'NODE'
 const fs = require('fs');
-const [file, key] = process.argv.slice(2);
-const config = JSON.parse(fs.readFileSync(file, 'utf8'));
+const raw = fs.readFileSync(process.argv[2], 'utf8');
+const json = raw
+  .replace(/("(?:[^"\\]|\\.)*")|\/\/[^\n]*/g, (m, s) => s || '')
+  .replace(/,\s*([}\]])/g, '$1');
+process.stdout.write(json);
+NODE
+}
+
+read_wrangler_value() {
+  local json
+  json="$(parse_jsonc "$WORKER_DIR/wrangler.jsonc")"
+  node - "$json" "$1" <<'NODE'
+const [raw, key] = process.argv.slice(2);
+const config = JSON.parse(raw);
 if (key === 'database_id') {
   process.stdout.write(config.d1_databases?.[0]?.database_id ?? '');
 } else if (key === 'public_base_url') {
@@ -446,7 +458,11 @@ update_wrangler() {
 const fs = require('fs');
 const [file, workerName, databaseName, databaseId, apiUrl, assetBaseUrl, r2BucketName, r2Binding, remoteBindingsForLocalDev] = process.argv.slice(2);
 const remote = remoteBindingsForLocalDev === '1';
-const config = JSON.parse(fs.readFileSync(file, 'utf8'));
+const raw = fs.readFileSync(file, 'utf8');
+const json = raw
+  .replace(/("(?:[^"\\]|\\.)*")|\/\/[^\n]*/g, (m, s) => s || '')
+  .replace(/,\s*([}\]])/g, '$1');
+const config = JSON.parse(json);
 config.name = workerName;
 config.d1_databases = [{
   binding: 'DB',
