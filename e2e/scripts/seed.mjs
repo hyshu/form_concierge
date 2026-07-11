@@ -80,6 +80,7 @@ async function seed() {
           ja: 'ご意見をお聞かせください',
         },
         webEnabled: true,
+        captchaEnabled: false,
       },
       questions: [
         {
@@ -102,6 +103,49 @@ async function seed() {
     token,
   });
 
+  const choiceSurvey = await request('POST', '/api/admin/surveys/with-questions', {
+    token,
+    body: {
+      survey: {
+        projectId: project.id,
+        slug: 'product-survey',
+        titleTranslations: {
+          en: 'Product survey',
+          ja: '製品アンケート',
+        },
+        descriptionTranslations: {
+          en: 'Pick your favorite',
+          ja: 'お気に入りを選んでください',
+        },
+        webEnabled: true,
+        captchaEnabled: false,
+      },
+      questions: [
+        {
+          textTranslations: translations('Favorite color', '好きな色'),
+          type: 'singleChoice',
+          isRequired: true,
+          placeholderTranslations: translations(''),
+          minLength: null,
+          maxLength: null,
+          minSelected: null,
+          maxSelected: null,
+          visibilityConditionMode: 'all',
+          choiceTranslations: [
+            translations('Red', '赤'),
+            translations('Blue', '青'),
+          ],
+        },
+      ],
+    },
+  });
+
+  const publishedChoiceSurvey = await request(
+    'POST',
+    `/api/admin/surveys/${choiceSurvey.id}/publish`,
+    { token },
+  );
+
   const artifact = {
     apiUrl,
     adminEmail,
@@ -110,6 +154,8 @@ async function seed() {
     projectSlug: project.slug,
     surveyId: published.id,
     surveySlug: published.slug,
+    choiceSurveyId: publishedChoiceSurvey.id,
+    choiceSurveySlug: publishedChoiceSurvey.slug,
     locales: allLocales,
   };
   await mkdir(artifactDir, { recursive: true });
