@@ -1,8 +1,1 @@
-enum SurveyViewState {
-  loading,
-  notFound,
-  ready,
-  submitting,
-  completed,
-  error,
-}
+enum SurveyViewState { loading, notFound, ready, submitting, completed, error }

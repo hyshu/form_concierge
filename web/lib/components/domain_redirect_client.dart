@@ -7,10 +7,7 @@ import 'survey_loading.dart';
 import '../utils/domain_location.dart';
 
 class DomainRedirectClient extends StatefulComponent {
-  const DomainRedirectClient({
-    required this.serverUrl,
-    super.key,
-  });
+  const DomainRedirectClient({required this.serverUrl, super.key});
 
   final String serverUrl;
 
@@ -35,10 +32,9 @@ class DomainRedirectClientState extends State<DomainRedirectClient> {
         setState(() => _state = _DomainRedirectState.notFound);
         return;
       }
-      final project =
-          await Client(component.serverUrl).survey.getProjectByDomain(
-                domain,
-              );
+      final project = await Client(
+        component.serverUrl,
+      ).survey.getProjectByDomain(domain);
       if (project == null || project.surveys.length != 1) {
         setState(() => _state = _DomainRedirectState.notFound);
         return;
@@ -51,21 +47,17 @@ class DomainRedirectClientState extends State<DomainRedirectClient> {
 
   @override
   Component build(context) => switch (_state) {
-        _DomainRedirectState.loading => const SurveyLoading(),
-        _DomainRedirectState.notFound => const NotFoundPage(),
-        _DomainRedirectState.error => SurveyError(
-            locale: defaultFormContentLocale,
-            message: FormContentMessages.text(
-              defaultFormContentLocale,
-              'errorOccurred',
-            ),
-            onRetry: _resolveDomain,
-          ),
-      };
+    _DomainRedirectState.loading => const SurveyLoading(),
+    _DomainRedirectState.notFound => const NotFoundPage(),
+    _DomainRedirectState.error => SurveyError(
+      locale: defaultFormContentLocale,
+      message: FormContentMessages.text(
+        defaultFormContentLocale,
+        'errorOccurred',
+      ),
+      onRetry: _resolveDomain,
+    ),
+  };
 }
 
-enum _DomainRedirectState {
-  loading,
-  notFound,
-  error,
-}
+enum _DomainRedirectState { loading, notFound, error }

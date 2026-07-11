@@ -89,7 +89,8 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
   @override
   void didUpdateWidget(covariant FormConciergeSurvey oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final targetChanged = oldWidget.client != widget.client ||
+    final targetChanged =
+        oldWidget.client != widget.client ||
         oldWidget.projectSlug != widget.projectSlug ||
         oldWidget.surveySlug != widget.surveySlug ||
         oldWidget.surveyId != widget.surveyId ||

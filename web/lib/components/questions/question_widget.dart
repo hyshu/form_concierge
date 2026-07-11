@@ -64,93 +64,92 @@ class QuestionWidget extends StatelessComponent {
       // Error message (assertive live region so screen readers announce it)
       if (hasError)
         div(
-            id: _errorId,
-            classes: 'mt-3 flex items-center gap-2 text-sm text-red-600',
-            attributes: const {'role': 'alert'},
-            [
-              span(
-                classes: 'flex-shrink-0',
-                attributes: const {'aria-hidden': 'true'},
-                [Component.text('⚠')],
-              ),
-              span([Component.text(error!)]),
-            ]),
+          id: _errorId,
+          classes: 'mt-3 flex items-center gap-2 text-sm text-red-600',
+          attributes: const {'role': 'alert'},
+          [
+            span(
+              classes: 'flex-shrink-0',
+              attributes: const {'aria-hidden': 'true'},
+              [Component.text('⚠')],
+            ),
+            span([Component.text(error!)]),
+          ],
+        ),
     ];
 
     return div(
-        id: 'question_card_${question.id}',
-        classes:
-            'bg-white rounded-xl shadow-md border ${hasError ? 'border-red-300' : 'border-slate-200'} p-5',
-        [
-          if (_isChoiceGroup)
-            fieldset(
-              attributes: {
-                if (hasError) 'aria-describedby': _errorId,
-                if (question.isRequired) 'aria-required': 'true',
-              },
-              [
-                legend(classes: 'mb-4', labelChildren),
-                ...body,
-              ],
-            )
-          else if (question.type == QuestionType.imageUpload) ...[
-            // The picker renders its own <label>; this is just the heading.
-            div(classes: 'mb-4', labelChildren),
-            ...body,
-          ] else ...[
-            label(
-              classes: 'block mb-4',
-              attributes: {'for': 'question_${question.id}'},
-              labelChildren,
-            ),
-            ...body,
-          ],
-        ]);
+      id: 'question_card_${question.id}',
+      classes:
+          'bg-white rounded-xl shadow-md border ${hasError ? 'border-red-300' : 'border-slate-200'} p-5',
+      [
+        if (_isChoiceGroup)
+          fieldset(
+            attributes: {
+              if (hasError) 'aria-describedby': _errorId,
+              if (question.isRequired) 'aria-required': 'true',
+            },
+            [legend(classes: 'mb-4', labelChildren), ...body],
+          )
+        else if (question.type == QuestionType.imageUpload) ...[
+          // The picker renders its own <label>; this is just the heading.
+          div(classes: 'mb-4', labelChildren),
+          ...body,
+        ] else ...[
+          label(
+            classes: 'block mb-4',
+            attributes: {'for': 'question_${question.id}'},
+            labelChildren,
+          ),
+          ...body,
+        ],
+      ],
+    );
   }
 
   Component _buildQuestionInput() => switch (question.type) {
-        QuestionType.singleChoice => SingleChoiceQuestion(
-            question: question,
-            choices: choices,
-            value: value as int?,
-            locale: locale,
-            onChanged: onChanged,
-            disabled: disabled,
-          ),
-        QuestionType.multipleChoice => MultipleChoiceQuestion(
-            question: question,
-            choices: choices,
-            value: (value as List<dynamic>?)?.cast<int>() ?? [],
-            locale: locale,
-            onChanged: onChanged,
-            disabled: disabled,
-          ),
-        QuestionType.textSingle => TextSingleQuestion(
-            question: question,
-            value: value as String?,
-            locale: locale,
-            onChanged: onChanged,
-            disabled: disabled,
-            invalid: error != null,
-            describedById: error != null ? _errorId : null,
-          ),
-        QuestionType.textMultiLine => TextMultiLineQuestion(
-            question: question,
-            value: value as String?,
-            locale: locale,
-            onChanged: onChanged,
-            disabled: disabled,
-            invalid: error != null,
-            describedById: error != null ? _errorId : null,
-          ),
-        QuestionType.imageUpload => ImageUploadQuestion(
-            client: client,
-            question: question,
-            value: (value as List<String>?) ?? const [],
-            locale: locale,
-            onChanged: onChanged,
-            ensureAuthenticated: ensureAuthenticated,
-            disabled: disabled,
-          ),
-      };
+    QuestionType.singleChoice => SingleChoiceQuestion(
+      question: question,
+      choices: choices,
+      value: value as int?,
+      locale: locale,
+      onChanged: onChanged,
+      disabled: disabled,
+    ),
+    QuestionType.multipleChoice => MultipleChoiceQuestion(
+      question: question,
+      choices: choices,
+      value: (value as List<dynamic>?)?.cast<int>() ?? [],
+      locale: locale,
+      onChanged: onChanged,
+      disabled: disabled,
+    ),
+    QuestionType.textSingle => TextSingleQuestion(
+      question: question,
+      value: value as String?,
+      locale: locale,
+      onChanged: onChanged,
+      disabled: disabled,
+      invalid: error != null,
+      describedById: error != null ? _errorId : null,
+    ),
+    QuestionType.textMultiLine => TextMultiLineQuestion(
+      question: question,
+      value: value as String?,
+      locale: locale,
+      onChanged: onChanged,
+      disabled: disabled,
+      invalid: error != null,
+      describedById: error != null ? _errorId : null,
+    ),
+    QuestionType.imageUpload => ImageUploadQuestion(
+      client: client,
+      question: question,
+      value: (value as List<String>?) ?? const [],
+      locale: locale,
+      onChanged: onChanged,
+      ensureAuthenticated: ensureAuthenticated,
+      disabled: disabled,
+    ),
+  };
 }

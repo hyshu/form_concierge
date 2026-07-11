@@ -9,7 +9,5 @@ void main() {
   final serverUrl = readConfiguredApiUrl() ?? _serverUrl;
   removeSsrRoot();
 
-  runApp(
-    App(serverUrl: serverUrl),
-  );
+  runApp(App(serverUrl: serverUrl));
 }

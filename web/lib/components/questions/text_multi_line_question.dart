@@ -24,30 +24,30 @@ class TextMultiLineQuestion extends StatelessComponent {
 
   @override
   Component build(context) => div([
-        textarea(
-          [if (value != null) Component.text(value!)],
-          id: 'question_${question.id}',
-          name: 'question_${question.id}',
-          disabled: disabled,
-          classes:
-              'w-full px-4 py-3 border border-slate-200 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 focus:outline-none text-sm bg-white resize-y min-h-[120px] placeholder:text-slate-400',
-          attributes: {
-            if (question.isRequired) 'aria-required': 'true',
-            if (invalid) 'aria-invalid': 'true',
-            if (describedById != null) 'aria-describedby': describedById!,
-            if (question.placeholderFor(locale) != null)
-              'placeholder': question.placeholderFor(locale)!,
-            if (question.minLength != null)
-              'minlength': question.minLength.toString(),
-            if (question.maxLength != null)
-              'maxlength': question.maxLength.toString(),
-            'rows': '4',
-          },
-          onInput: (String newValue) => onChanged(newValue),
-        ),
+    textarea(
+      [if (value != null) Component.text(value!)],
+      id: 'question_${question.id}',
+      name: 'question_${question.id}',
+      disabled: disabled,
+      classes:
+          'w-full px-4 py-3 border border-slate-200 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 focus:outline-none text-sm bg-white resize-y min-h-[120px] placeholder:text-slate-400',
+      attributes: {
+        if (question.isRequired) 'aria-required': 'true',
+        if (invalid) 'aria-invalid': 'true',
+        if (describedById != null) 'aria-describedby': describedById!,
+        if (question.placeholderFor(locale) != null)
+          'placeholder': question.placeholderFor(locale)!,
+        if (question.minLength != null)
+          'minlength': question.minLength.toString(),
         if (question.maxLength != null)
-          div(classes: 'mt-1.5 text-right text-xs text-slate-400', [
-            Component.text('${(value?.length ?? 0)}/${question.maxLength}'),
-          ]),
-      ]);
+          'maxlength': question.maxLength.toString(),
+        'rows': '4',
+      },
+      onInput: (String newValue) => onChanged(newValue),
+    ),
+    if (question.maxLength != null)
+      div(classes: 'mt-1.5 text-right text-xs text-slate-400', [
+        Component.text('${(value?.length ?? 0)}/${question.maxLength}'),
+      ]),
+  ]);
 }

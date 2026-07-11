@@ -14,22 +14,22 @@ class SurveyCompleted extends StatelessComponent {
 
   @override
   Component build(context) => div(
-          classes:
-              'max-w-xl mx-auto bg-white rounded-xl shadow-md border border-slate-200 text-center py-12 px-6',
-          [
-            div(
-                classes:
-                    'w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center mx-auto',
-                [
-                  span(classes: 'text-white text-3xl', [
-                    Component.text('\u2713'),
-                  ]),
-                ]),
-            h2(classes: 'mt-5 text-xl font-semibold text-slate-900', [
-              Component.text(FormContentMessages.text(locale, 'thankYou')),
-            ]),
-            p(classes: 'mt-2 text-slate-600', [
-              Component.text(FormContentMessages.text(locale, 'submitted')),
-            ]),
-          ]);
+    classes:
+        'max-w-xl mx-auto bg-white rounded-xl shadow-md border border-slate-200 text-center py-12 px-6',
+    [
+      div(
+        classes:
+            'w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center mx-auto',
+        [
+          span(classes: 'text-white text-3xl', [Component.text('\u2713')]),
+        ],
+      ),
+      h2(classes: 'mt-5 text-xl font-semibold text-slate-900', [
+        Component.text(FormContentMessages.text(locale, 'thankYou')),
+      ]),
+      p(classes: 'mt-2 text-slate-600', [
+        Component.text(FormContentMessages.text(locale, 'submitted')),
+      ]),
+    ],
+  );
 }

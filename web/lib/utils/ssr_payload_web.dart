@@ -2,10 +2,7 @@ import 'dart:convert';
 
 import 'package:web/web.dart' as web;
 
-Map<String, dynamic>? readSsrSurveyPayload({
-  String? slug,
-  String? domain,
-}) {
+Map<String, dynamic>? readSsrSurveyPayload({String? slug, String? domain}) {
   final element = web.document.getElementById('form-concierge-ssr');
   final text = element?.textContent?.trim();
   if (text == null || text.isEmpty || text == 'null') return null;

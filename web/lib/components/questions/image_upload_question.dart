@@ -76,8 +76,10 @@ class _ImageUploadQuestionState extends State<ImageUploadQuestion> {
         ]),
       p(classes: 'text-xs text-slate-500', [
         Component.text(
-          FormContentMessages.text(component.locale, 'maxPhotosReached')
-              .replaceAll('{count}', '$_maxFiles'),
+          FormContentMessages.text(
+            component.locale,
+            'maxPhotosReached',
+          ).replaceAll('{count}', '$_maxFiles'),
         ),
       ]),
       label(

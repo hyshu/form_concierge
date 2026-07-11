@@ -1,7 +1,4 @@
-Map<String, dynamic>? readSsrSurveyPayload({
-  String? slug,
-  String? domain,
-}) =>
+Map<String, dynamic>? readSsrSurveyPayload({String? slug, String? domain}) =>
     null;
 
 String? readConfiguredApiUrl() => null;

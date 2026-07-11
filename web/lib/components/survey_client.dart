@@ -129,24 +129,28 @@ class SurveyClientState extends State<SurveyClient> {
     }
     final choicesByQuestion = (choicesPayload as Map? ?? const {})
         .map<int, List<Choice>>((key, value) {
-      if (key is! String) {
-        throw FormatException(
-            'Expected choice question id key, got ${key.runtimeType}');
-      }
-      if (value is! List) {
-        throw FormatException('Expected choice list, got ${value.runtimeType}');
-      }
-      return MapEntry(
-        int.parse(key),
-        value.map((item) {
-          if (item is! Map) {
+          if (key is! String) {
             throw FormatException(
-                'Expected choice object, got ${item.runtimeType}');
+              'Expected choice question id key, got ${key.runtimeType}',
+            );
           }
-          return Choice.fromJson(Map<String, dynamic>.from(item));
-        }).toList(),
-      );
-    });
+          if (value is! List) {
+            throw FormatException(
+              'Expected choice list, got ${value.runtimeType}',
+            );
+          }
+          return MapEntry(
+            int.parse(key),
+            value.map((item) {
+              if (item is! Map) {
+                throw FormatException(
+                  'Expected choice object, got ${item.runtimeType}',
+                );
+              }
+              return Choice.fromJson(Map<String, dynamic>.from(item));
+            }).toList(),
+          );
+        });
 
     final siteKey = payload['turnstileSiteKey'];
     if (siteKey is String && siteKey.isNotEmpty) {
@@ -194,10 +198,12 @@ class SurveyClientState extends State<SurveyClient> {
       }
 
       final questions = await _client.survey.getQuestionsForSurvey(survey.id!);
-      final visibilityRules =
-          await _client.survey.getVisibilityRulesForSurvey(survey.id!);
-      final choicesByQuestion =
-          await _client.survey.getChoicesByQuestion(questions);
+      final visibilityRules = await _client.survey.getVisibilityRulesForSurvey(
+        survey.id!,
+      );
+      final choicesByQuestion = await _client.survey.getChoicesByQuestion(
+        questions,
+      );
 
       setState(() {
         _hydrateSurvey(
@@ -272,10 +278,10 @@ class SurveyClientState extends State<SurveyClient> {
   }
 
   String _resolveLocale(Project project) => resolveFormContentLocale(
-        preferredLocales: browserPreferredLocales(),
-        supportedLocales: project.supportedLocales,
-        defaultLocale: project.defaultLocale,
-      );
+    preferredLocales: browserPreferredLocales(),
+    supportedLocales: project.supportedLocales,
+    defaultLocale: project.defaultLocale,
+  );
 
   void _restoreAnonymousToken() {
     final storageKey = _anonymousTokenStorageKey;
@@ -371,8 +377,9 @@ class SurveyClientState extends State<SurveyClient> {
       if (!hasAnonymousAccount) return;
 
       final answers = buildAnswers(_answers, visible);
-      final captchaToken =
-          _turnstileSiteKey != null ? getTurnstileResponse() : null;
+      final captchaToken = _turnstileSiteKey != null
+          ? getTurnstileResponse()
+          : null;
       final idempotencyKey = generateIdempotencyKey();
       try {
         await _client.survey.submitResponse(
@@ -432,41 +439,41 @@ class SurveyClientState extends State<SurveyClient> {
         SurveyViewState.loading => const SurveyLoading(),
         SurveyViewState.notFound => const NotFoundPage(),
         SurveyViewState.error => SurveyError(
-            locale: _locale,
-            message: _errorMessage ??
-                FormContentMessages.text(_locale, 'errorOccurred'),
-            onRetry: _loadSurvey,
-          ),
-        SurveyViewState.ready || SurveyViewState.submitting => survey == null
-            ? const NotFoundPage()
-            : SurveyContent(
-                client: _client,
-                project: project!,
-                survey: survey,
-                questions: visibleQuestions,
-                choicesByQuestion: _choicesByQuestion,
-                answers: _answers,
-                validationErrors: _validationErrors,
-                errorMessage: _errorMessage,
-                locale: _locale,
-                isSubmitting: _viewState == SurveyViewState.submitting,
-                onAnswerChanged: _updateAnswer,
-                onLocaleChanged: (locale) {
-                  setState(() {
-                    _locale = locale;
-                    _validationErrors = {};
-                    _errorMessage = null;
-                  });
-                },
-                onSubmit: _submit,
-                ensureAuthenticated: _ensureAuthenticated,
-              ),
-        SurveyViewState.completed => survey == null
-            ? const NotFoundPage()
-            : SurveyCompleted(
-                survey: survey,
-                locale: _locale,
-              ),
+          locale: _locale,
+          message:
+              _errorMessage ??
+              FormContentMessages.text(_locale, 'errorOccurred'),
+          onRetry: _loadSurvey,
+        ),
+        SurveyViewState.ready || SurveyViewState.submitting =>
+          survey == null
+              ? const NotFoundPage()
+              : SurveyContent(
+                  client: _client,
+                  project: project!,
+                  survey: survey,
+                  questions: visibleQuestions,
+                  choicesByQuestion: _choicesByQuestion,
+                  answers: _answers,
+                  validationErrors: _validationErrors,
+                  errorMessage: _errorMessage,
+                  locale: _locale,
+                  isSubmitting: _viewState == SurveyViewState.submitting,
+                  onAnswerChanged: _updateAnswer,
+                  onLocaleChanged: (locale) {
+                    setState(() {
+                      _locale = locale;
+                      _validationErrors = {};
+                      _errorMessage = null;
+                    });
+                  },
+                  onSubmit: _submit,
+                  ensureAuthenticated: _ensureAuthenticated,
+                ),
+        SurveyViewState.completed =>
+          survey == null
+              ? const NotFoundPage()
+              : SurveyCompleted(survey: survey, locale: _locale),
       },
     ]);
   }
