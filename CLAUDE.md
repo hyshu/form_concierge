@@ -67,7 +67,7 @@ jaspr build
 cd cli && dart pub get
 dart run form_concierge_cli doctor
 dart run form_concierge_cli setup cloudflare --preflight-only
-dart run form_concierge_cli setup cloudflare   # same as ./setup.sh
+dart run form_concierge_cli setup cloudflare
 ```
 
 ## Flutter

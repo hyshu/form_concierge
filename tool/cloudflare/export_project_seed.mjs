@@ -32,7 +32,7 @@ function query(sql) {
     const details = error.stderr?.toString().trim();
     if (stdout) console.error(stdout);
     if (details) console.error(details);
-    console.error('Local D1 query failed. Run `cd worker && npm install && npm run d1:migrate:local && npm run dev`, create a project in the local admin dashboard, then run `./setup.sh --list-local-projects`.');
+    console.error('Local D1 query failed. Run `cd worker && npm install && npm run d1:migrate:local && npm run dev`, create a project in the local admin dashboard, then run `form_concierge setup cloudflare --list-local-projects`.');
     console.error('If the error says `no such table: projects`, reset stale local D1 state with `rm -rf worker/.wrangler/state/v3/d1`, then rerun local migrations.');
     process.exit(1);
   }
@@ -66,7 +66,7 @@ function insert(table, columns, row, overrides = {}) {
 const projectRows = query(`SELECT * FROM projects WHERE id = ${projectId}`);
 if (projectRows.length !== 1) {
   console.error(`No local project found for project ID ${projectId}.`);
-  console.error('Run `./setup.sh --list-local-projects` to see available local project IDs.');
+  console.error('Run `form_concierge setup cloudflare --list-local-projects` to see available local project IDs.');
   process.exit(1);
 }
 

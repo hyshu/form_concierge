@@ -10,8 +10,14 @@ void main() {
     // test runs with cwd = cli/
     final root = findMonorepoRoot(start: cliDir);
     expect(root, isNotNull);
-    expect(File(p.join(root!, 'tool', 'cloudflare', 'setup.sh')).existsSync(), isTrue);
-    expect(Directory(p.join(root, 'worker')).existsSync(), isTrue);
+    expect(
+      File(p.join(root!, 'worker', 'wrangler.jsonc')).existsSync(),
+      isTrue,
+    );
+    expect(
+      File(p.join(root, 'admin_dashboard', 'pubspec.yaml')).existsSync(),
+      isTrue,
+    );
   });
 
   test('findMonorepoRoot returns null outside monorepo', () {

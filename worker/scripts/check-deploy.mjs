@@ -16,6 +16,8 @@ const bad = Object.entries(vars).filter(([, v]) =>
 if (bad.length) {
   console.error("Deploy blocked: localhost URL(s) in wrangler.jsonc vars:");
   for (const [k, v] of bad) console.error(`  ${k} = ${v}`);
-  console.error("\nRun setup.sh or set production URLs before deploying.");
+  console.error(
+  "\nRun `form_concierge setup cloudflare` or set production URLs before deploying.",
+);
   process.exit(1);
 }

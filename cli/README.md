@@ -28,16 +28,17 @@ executable. After global activate, the command is also available as
 | Command | Description |
 |---------|-------------|
 | `form_concierge doctor` | Check dart / flutter / node / npm / wrangler and monorepo layout |
-| `form_concierge setup cloudflare` | Delegate to `tool/cloudflare/setup.sh` (D1, R2, Worker, Pages) |
+| `form_concierge setup cloudflare` | Create/configure D1, R2, Worker, and Pages |
 
-`setup cloudflare` forwards flags such as `--preflight-only`,
-`--seed-project-id`, `--worker-name`, and the other options documented in
-`./setup.sh --help`.
+`setup cloudflare` accepts flags such as `--preflight-only`,
+`--seed-project-id`, `--worker-name`, and others listed in
+`form_concierge setup cloudflare --help`.
 
 ## Notes
 
-- Today the CLI expects a full monorepo checkout (markers: `worker/` and
-  `tool/cloudflare/setup.sh`). Template download for a published-only install
-  is not implemented yet.
-- Backend setup still requires Node.js and Wrangler; the Dart CLI orchestrates
-  the existing shell setup script.
+- The CLI expects a full monorepo checkout (markers: `worker/wrangler.jsonc`
+  and `admin_dashboard/pubspec.yaml`). Template download for a published-only
+  install is not implemented yet.
+- Backend setup shells out to Node.js / Wrangler / Flutter / Jaspr; the Dart CLI
+  owns orchestration. Optional D1 helpers under `tool/cloudflare/*.mjs` are used
+  for local project list/seed.

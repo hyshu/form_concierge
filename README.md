@@ -55,16 +55,17 @@ Library packages use `publish_to: none` until pub.dev release.
 
 ## Cloudflare Deployment
 
-Run the setup script to create or reuse Cloudflare D1, R2, Workers, and Pages resources:
+Use the Dart CLI to create or reuse Cloudflare D1, R2, Workers, and Pages resources:
 
 ```bash
-./setup.sh
+cd cli && dart pub get
+dart run form_concierge_cli setup cloudflare
 ```
 
-The script checks required local tools and Wrangler authentication before creating resources. To run only those checks:
+The command checks required local tools and Wrangler authentication before creating resources. To run only those checks:
 
 ```bash
-./setup.sh --preflight-only
+dart run form_concierge_cli setup cloudflare --preflight-only
 ```
 
 After deployment, open the admin Pages URL, create the first admin, and create projects in the deployed dashboard.
@@ -72,8 +73,8 @@ After deployment, open the admin Pages URL, create the first admin, and create p
 Seeding an existing local project is optional:
 
 ```bash
-./setup.sh --list-local-projects
-./setup.sh --seed-project-id <project-id>
+dart run form_concierge_cli setup cloudflare --list-local-projects
+dart run form_concierge_cli setup cloudflare --seed-project-id <project-id>
 ```
 
 ## Verification
@@ -97,6 +98,5 @@ cd swiftui && swift build
 cd cli && dart pub get
 dart run form_concierge_cli doctor
 dart run form_concierge_cli setup cloudflare --preflight-only
-# full setup (same as ./setup.sh):
 dart run form_concierge_cli setup cloudflare
 ```
