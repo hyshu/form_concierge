@@ -112,6 +112,10 @@ export function d1Database(
   } satisfies D1Database;
 }
 
+export function stubRateLimiter(): RateLimit {
+  return { async limit() { return { success: true }; } };
+}
+
 function adminJsonRequest(path: string, method: 'POST' | 'PUT', body: unknown): Request {
   return new Request(`${adminApiBaseUrl}/${path}`, {
     method,

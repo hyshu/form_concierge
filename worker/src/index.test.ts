@@ -40,6 +40,8 @@ function envWithoutDb(): Env {
     MEDIA_BUCKET: {} as R2Bucket,
     PUBLIC_BASE_URL: 'https://example.com',
     PUBLIC_FORM_ASSET_BASE_URL: 'https://forms.example.com',
+    LOGIN_RATE_LIMITER: { async limit() { return { success: true }; } },
+    ANON_CREATE_RATE_LIMITER: { async limit() { return { success: true }; } },
   };
 }
 

@@ -6,6 +6,7 @@ import {
   assertHttpError,
   assertHttpErrorAsync,
   d1Database,
+  stubRateLimiter,
 } from '../test/helpers';
 import {
   getAdminIntegrationSettings,
@@ -105,5 +106,7 @@ function envWithSettings(row: IntegrationSettingsRow | null): Env {
     MEDIA_BUCKET: {} as R2Bucket,
     PUBLIC_BASE_URL: 'https://api.example.com',
     PUBLIC_FORM_ASSET_BASE_URL: 'https://assets.example.com',
+    LOGIN_RATE_LIMITER: stubRateLimiter(),
+    ANON_CREATE_RATE_LIMITER: stubRateLimiter(),
   };
 }

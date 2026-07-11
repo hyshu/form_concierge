@@ -2,16 +2,12 @@ import type { AdminContext, AdminRow, AnonymousAccountRow, AnonymousContext, Env
 import { HttpError, bearerToken, json, nowIso, optionalLimitedString, readJson, requireEmail, requireString } from './utils';
 import { hashPassword, randomToken, sha256Hex, verifyPassword } from './crypto';
 import { adminContextToJson, adminRowToContext, anonymousAccountToJson } from './serializers';
-import { clientIp, consumeRateLimit } from './rate_limit';
+import { checkRateLimit, clientIp } from './rate_limit';
 
 const MIN_PASSWORD_LENGTH = 8;
 const DISPLAY_NAME_MAX_LENGTH = 160;
 /** Skip last_seen_at writes unless older than this (reply polling is high-frequency). */
 const LAST_SEEN_THROTTLE_MS = 5 * 60 * 1000;
-const LOGIN_RATE_LIMIT = 20;
-const LOGIN_RATE_WINDOW_MS = 15 * 60 * 1000;
-const ANON_CREATE_RATE_LIMIT = 30;
-const ANON_CREATE_RATE_WINDOW_MS = 60 * 60 * 1000;
 const ADMIN_SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 /** Refresh session expiry when less than this remains (sliding window). */
 const ADMIN_SESSION_SLIDE_THRESHOLD_MS = 15 * 24 * 60 * 60 * 1000;
@@ -53,10 +49,9 @@ export async function loginAdmin(request: Request, env: Env): Promise<Response> 
   const body = await readJson(request);
   const email = requireString(body.email, 'email').toLowerCase();
   const password = requireString(body.password, 'password');
-  consumeRateLimit(
+  await checkRateLimit(
+    env.LOGIN_RATE_LIMITER,
     `login:${clientIp(request)}:${email}`,
-    LOGIN_RATE_LIMIT,
-    LOGIN_RATE_WINDOW_MS,
     'Too many login attempts. Try again later.',
   );
   const row = await env.DB.prepare(
@@ -77,10 +72,9 @@ export async function loginAdmin(request: Request, env: Env): Promise<Response> 
 }
 
 export async function createAnonymousAccount(request: Request, env: Env): Promise<Response> {
-  consumeRateLimit(
+  await checkRateLimit(
+    env.ANON_CREATE_RATE_LIMITER,
     `anon-create:${clientIp(request)}`,
-    ANON_CREATE_RATE_LIMIT,
-    ANON_CREATE_RATE_WINDOW_MS,
     'Too many anonymous accounts created. Try again later.',
   );
   const body = await readJson(request, true);

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { projectRow, surveyRow } from '../test/fixtures';
-import { assertHttpErrorAsync, d1Database, d1Result } from '../test/helpers';
+import { assertHttpErrorAsync, d1Database, d1Result, stubRateLimiter } from '../test/helpers';
 import { renderPublicForm } from './public_form_renderer';
 import type { Env, ProjectRow, SurveyRow } from './types';
 
@@ -138,5 +138,7 @@ function envWithPublicRows(input: {
     MEDIA_BUCKET: {} as R2Bucket,
     PUBLIC_BASE_URL: publicBaseUrl,
     PUBLIC_FORM_ASSET_BASE_URL: 'https://assets.example.com',
+    LOGIN_RATE_LIMITER: stubRateLimiter(),
+    ANON_CREATE_RATE_LIMITER: stubRateLimiter(),
   };
 }

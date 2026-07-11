@@ -8,6 +8,7 @@ import {
   d1Database,
   d1Meta,
   d1Result,
+  stubRateLimiter,
 } from '../test/helpers';
 import {
   createQuestion,
@@ -126,6 +127,8 @@ function envWithRows(rows: {
     MEDIA_BUCKET: {} as R2Bucket,
     PUBLIC_BASE_URL: 'https://api.example.com',
     PUBLIC_FORM_ASSET_BASE_URL: 'https://forms.example.com',
+    LOGIN_RATE_LIMITER: stubRateLimiter(),
+    ANON_CREATE_RATE_LIMITER: stubRateLimiter(),
   };
 }
 

@@ -8,6 +8,7 @@ import {
   emptyD1Raw,
   emptyD1Result,
   localizedText,
+  stubRateLimiter,
 } from '../test/helpers';
 import { generateSurveyQuestions, toProviderSchema } from './ai_generation';
 import type { Env } from './types';
@@ -119,6 +120,8 @@ function envWithSettings(): Env {
     MEDIA_BUCKET: {} as R2Bucket,
     PUBLIC_BASE_URL: 'https://api.example.com',
     PUBLIC_FORM_ASSET_BASE_URL: 'https://forms.example.com',
+    LOGIN_RATE_LIMITER: stubRateLimiter(),
+    ANON_CREATE_RATE_LIMITER: stubRateLimiter(),
   };
 }
 

@@ -5,6 +5,7 @@ import {
   assertBadRequestAsync,
   d1Database,
   localizedText,
+  stubRateLimiter,
 } from '../test/helpers';
 import { createSurveyWithQuestions } from './admin_surveys';
 import type { AdminContext, Env } from './types';
@@ -106,5 +107,7 @@ function envUnused(): Env {
     MEDIA_BUCKET: {} as R2Bucket,
     PUBLIC_BASE_URL: 'https://api.example.com',
     PUBLIC_FORM_ASSET_BASE_URL: 'https://forms.example.com',
+    LOGIN_RATE_LIMITER: stubRateLimiter(),
+    ANON_CREATE_RATE_LIMITER: stubRateLimiter(),
   };
 }
