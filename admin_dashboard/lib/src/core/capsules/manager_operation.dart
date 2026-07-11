@@ -4,14 +4,21 @@ Future<T?> runAndReload<T>({
   required void Function(String error) setError,
   required String errorMessage,
 }) async {
+  final T result;
   try {
-    final result = await action();
-    await reload();
-    return result;
+    result = await action();
   } on Exception catch (e) {
     setError('$errorMessage: $e');
     return null;
   }
+  // The mutation succeeded; a reload failure must not look like a mutation
+  // failure, or retrying would duplicate the operation.
+  try {
+    await reload();
+  } on Exception catch (e) {
+    setError('The change was saved, but refreshing the list failed: $e');
+  }
+  return result;
 }
 
 Future<bool> runVoidAndReload({
