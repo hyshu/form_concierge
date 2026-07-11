@@ -15,12 +15,27 @@ async function enableFlutterSemantics(page) {
   await page.evaluate(() => document.querySelector('flt-semantics-placeholder')?.click());
 }
 
+async function clearFlutterInput(locator) {
+  await locator.click({ force: true });
+  // Select-all is unreliable on Flutter web, so fall back to deleting
+  // from the end one character at a time when residual text remains.
+  await locator.press(process.platform === 'darwin' ? 'Meta+A' : 'Control+A');
+  await locator.press('Backspace');
+
+  let remaining = await locator.inputValue().catch(() => '');
+  let guard = remaining.length + 8;
+  while (remaining.length > 0 && guard-- > 0) {
+    await locator.press('End');
+    await locator.press('Backspace');
+    remaining = await locator.inputValue().catch(() => '');
+  }
+  await expect(locator).toHaveValue('');
+}
+
 async function typeIntoFlutterInput(locator, value) {
   await expect(locator).toBeVisible();
   await locator.scrollIntoViewIfNeeded();
-  await locator.click({ force: true });
-  await locator.press(process.platform === 'darwin' ? 'Meta+A' : 'Control+A');
-  await locator.press('Backspace');
+  await clearFlutterInput(locator);
   await locator.pressSequentially(value, { delay: 10 });
   await expect(locator).toHaveValue(value);
 }
@@ -90,11 +105,16 @@ test('admin dashboard creates a new project from the UI', async ({ page }) => {
 
   const uniqueSuffix = Date.now().toString(36);
   const projectName = `E2E project ${uniqueSuffix}`;
+  const projectSlug = `e2e-project-${uniqueSuffix}`;
   // Hint-based names disappear once a value is typed, so target by position:
   // the New Project form renders name, slug, custom domain in order.
+  const nameInput = page.getByRole('textbox').nth(0);
+  const slugInput = page.getByRole('textbox').nth(1);
   await expect(page.getByRole('textbox', { name: 'Enter project name' })).toBeVisible();
-  await typeIntoFlutterInput(page.getByRole('textbox').nth(0), projectName);
-  await typeIntoFlutterInput(page.getByRole('textbox').nth(1), `e2e-project-${uniqueSuffix}`);
+  await typeIntoFlutterInput(nameInput, projectName);
+  // Blur the name field so ProjectForm auto-fills the slug from the name.
+  await nameInput.press('Tab');
+  await expect(slugInput).toHaveValue(projectSlug);
 
   const createResponsePromise = page.waitForResponse((response) => {
     const url = new URL(response.url());
@@ -104,7 +124,7 @@ test('admin dashboard creates a new project from the UI', async ({ page }) => {
   });
   await page.getByRole('button', { name: 'Create Project' }).click();
   const created = await (await createResponsePromise).json();
-  expect(created.slug).toBe(`e2e-project-${uniqueSuffix}`);
+  expect(created.slug).toBe(projectSlug);
 
   // The dashboard exposes each project card's name via its group aria-label.
   await expect(page.getByRole('group', { name: new RegExp(projectName) })).toBeVisible();
