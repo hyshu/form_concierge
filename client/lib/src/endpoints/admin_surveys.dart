@@ -139,14 +139,23 @@ class SurveyAdminEndpoint {
     return _objectList(json, QuestionVisibilityRule.fromJson);
   }
 
+  /// Replaces all rules and optionally updates per-question
+  /// visibility_condition_mode ({questionId: mode}) in the same transaction.
   Future<List<QuestionVisibilityRule>> replaceVisibilityRules(
     int surveyId,
-    List<QuestionVisibilityRule> rules,
-  ) async {
+    List<QuestionVisibilityRule> rules, {
+    Map<int, VisibilityConditionMode>? conditionModes,
+  }) async {
     final json = await _client.request(
       'PUT',
       '/api/admin/surveys/$surveyId/visibility-rules',
-      body: {'rules': rules.map((rule) => rule.toJson()).toList()},
+      body: {
+        'rules': rules.map((rule) => rule.toJson()).toList(),
+        if (conditionModes != null)
+          'conditionModes': conditionModes.map(
+            (questionId, mode) => MapEntry('$questionId', _enumName(mode)),
+          ),
+      },
       authenticated: true,
     );
     return _objectList(json, QuestionVisibilityRule.fromJson);

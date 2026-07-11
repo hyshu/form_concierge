@@ -1,5 +1,5 @@
 import type { AnswerInput, Env, QuestionRow, VisibilityRuleInput, VisibilityRuleRow } from './types';
-import { HttpError, isChoiceQuestionType, isTextQuestionType, json, nowIso, optionalInteger, readJson, requiredInteger } from './utils';
+import { HttpError, isChoiceQuestionType, isTextQuestionType, json, nowIso, optionalInteger, readJson, requiredInteger, requiredIntegerParam } from './utils';
 import { mustSurvey } from './admin_records';
 import { visibilityRuleToJson } from './serializers';
 
@@ -48,6 +48,7 @@ export async function replaceAdminVisibilityRules(
   const inputs = body.rules.map((rule) => normalizeRuleInput(rule));
   const questions = await getCurrentQuestions(env.DB, surveyId);
   const byId = new Map(questions.map((question) => [question.id, question]));
+  const conditionModes = normalizeConditionModes(body.conditionModes, byId);
   const now = nowIso();
 
   for (const rule of inputs) {
@@ -78,9 +79,38 @@ export async function replaceAdminVisibilityRules(
         now,
       ),
     ),
+    // Applied in the same batch so mode + rules cannot partially persist.
+    ...[...conditionModes].map(([questionId, mode]) =>
+      env.DB.prepare(
+        `UPDATE questions SET visibility_condition_mode = ?, updated_at = ? WHERE id = ?`,
+      ).bind(mode, now, questionId),
+    ),
   ];
   await env.DB.batch(statements);
   return listAdminVisibilityRules(env, surveyId);
+}
+
+/** Optional per-question visibility_condition_mode updates ({questionId: 'all'|'any'}). */
+function normalizeConditionModes(
+  value: unknown,
+  questionsById: ReadonlyMap<number, QuestionRow>,
+): Map<number, 'all' | 'any'> {
+  const modes = new Map<number, 'all' | 'any'>();
+  if (value == null) return modes;
+  if (typeof value !== 'object' || Array.isArray(value)) {
+    throw new HttpError(400, 'conditionModes must be an object');
+  }
+  for (const [key, mode] of Object.entries(value as Record<string, unknown>)) {
+    const questionId = requiredIntegerParam(key, 'conditionModes question id', { min: 1 });
+    if (!questionsById.has(questionId)) {
+      throw new HttpError(400, 'conditionModes questions must belong to this survey');
+    }
+    if (mode !== 'all' && mode !== 'any') {
+      throw new HttpError(400, 'conditionModes values must be "all" or "any"');
+    }
+    modes.set(questionId, mode);
+  }
+  return modes;
 }
 
 export async function getVisibilityRules(db: D1Database, surveyId: number): Promise<VisibilityRuleRow[]> {

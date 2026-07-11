@@ -202,24 +202,29 @@ class QuestionListManager {
     required List<QuestionVisibilityRule> targetRules,
   }) async {
     try {
-      final updatedQuestion = targetQuestion.copyWith(
-        visibilityConditionMode: conditionMode,
-      );
-      await _client.questionAdmin.update(updatedQuestion);
       final currentRules = getState(surveyId).visibilityRules;
       final otherRules = currentRules.where(
         (rule) => rule.targetQuestionId != targetQuestion.id,
       );
+      // Single call so the condition mode and the rules persist atomically.
       await _client.surveyAdmin.replaceVisibilityRules(
         surveyId,
         [...otherRules, ...targetRules],
+        conditionModes: {targetQuestion.id!: conditionMode},
       );
-      await loadQuestions(surveyId);
-      return true;
     } on Exception catch (e) {
       _setError(surveyId, 'Failed to save visibility rules: $e');
       return false;
     }
+    try {
+      await loadQuestions(surveyId);
+    } on Exception catch (e) {
+      _setError(
+        surveyId,
+        'The visibility rules were saved, but refreshing failed: $e',
+      );
+    }
+    return true;
   }
 
   Future<T?> _runAndReload<T>(
