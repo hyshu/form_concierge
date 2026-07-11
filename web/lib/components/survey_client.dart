@@ -1,6 +1,7 @@
 import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:jaspr/jaspr.dart';
 import 'package:jaspr/dom.dart';
+import 'package:universal_web/web.dart' as web;
 
 import '../state/survey_state.dart';
 import '../utils/anonymous_storage.dart';
@@ -329,6 +330,19 @@ class SurveyClientState extends State<SurveyClient> {
     });
   }
 
+  /// Move keyboard/screen-reader focus to the first invalid question.
+  void _focusFirstError(List<Question> visible, ValidationErrors errors) {
+    for (final question in visible) {
+      if (!errors.containsKey(question.id)) continue;
+      final card = web.document.getElementById('question_card_${question.id}');
+      if (card == null) return;
+      card.scrollIntoView();
+      final target = card.querySelector('input, textarea, button');
+      if (target != null) (target as web.HTMLElement).focus();
+      return;
+    }
+  }
+
   Future<void> _submit() async {
     final survey = _survey;
     if (survey == null) return;
@@ -344,6 +358,7 @@ class SurveyClientState extends State<SurveyClient> {
       setState(() {
         _validationErrors = errors;
       });
+      _focusFirstError(visible, errors);
       return;
     }
 

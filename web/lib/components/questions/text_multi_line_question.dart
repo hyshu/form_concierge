@@ -9,6 +9,8 @@ class TextMultiLineQuestion extends StatelessComponent {
     required this.locale,
     required this.onChanged,
     this.disabled = false,
+    this.invalid = false,
+    this.describedById,
     super.key,
   });
 
@@ -17,6 +19,8 @@ class TextMultiLineQuestion extends StatelessComponent {
   final String locale;
   final void Function(AnswerValue value) onChanged;
   final bool disabled;
+  final bool invalid;
+  final String? describedById;
 
   @override
   Component build(context) => div([
@@ -28,6 +32,9 @@ class TextMultiLineQuestion extends StatelessComponent {
           classes:
               'w-full px-4 py-3 border border-slate-200 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 focus:outline-none text-sm bg-white resize-y min-h-[120px] placeholder:text-slate-400',
           attributes: {
+            if (question.isRequired) 'aria-required': 'true',
+            if (invalid) 'aria-invalid': 'true',
+            if (describedById != null) 'aria-describedby': describedById!,
             if (question.placeholderFor(locale) != null)
               'placeholder': question.placeholderFor(locale)!,
             if (question.minLength != null)

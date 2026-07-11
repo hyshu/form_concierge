@@ -31,35 +31,80 @@ class QuestionWidget extends StatelessComponent {
   /// Disables all inputs (e.g. while the response is being submitted, so the
   /// visible form cannot drift from the payload in flight).
   final bool disabled;
+
   final void Function(AnswerValue value) onChanged;
   final Client client;
   final Future<void> Function() ensureAuthenticated;
 
+  bool get _isChoiceGroup =>
+      question.type == QuestionType.singleChoice ||
+      question.type == QuestionType.multipleChoice;
+
+  String get _errorId => 'question_${question.id}_error';
+
   @override
   Component build(context) {
     final hasError = error != null;
+    final labelChildren = [
+      span(classes: 'text-sm font-medium text-slate-800', [
+        Component.text(question.textFor(locale)),
+      ]),
+      if (question.isRequired)
+        span(
+          classes: 'text-red-500 ml-1 text-sm',
+          attributes: const {'aria-hidden': 'true'},
+          [Component.text('*')],
+        ),
+    ];
+
+    final body = [
+      // Question input based on type
+      _buildQuestionInput(),
+
+      // Error message (assertive live region so screen readers announce it)
+      if (hasError)
+        div(
+            id: _errorId,
+            classes: 'mt-3 flex items-center gap-2 text-sm text-red-600',
+            attributes: const {'role': 'alert'},
+            [
+              span(
+                classes: 'flex-shrink-0',
+                attributes: const {'aria-hidden': 'true'},
+                [Component.text('⚠')],
+              ),
+              span([Component.text(error!)]),
+            ]),
+    ];
+
     return div(
+        id: 'question_card_${question.id}',
         classes:
             'bg-white rounded-xl shadow-md border ${hasError ? 'border-red-300' : 'border-slate-200'} p-5',
         [
-          // Question label
-          div(classes: 'mb-4', [
-            span(classes: 'text-sm font-medium text-slate-800', [
-              Component.text(question.textFor(locale)),
-            ]),
-            if (question.isRequired)
-              span(classes: 'text-red-500 ml-1 text-sm', [Component.text('*')]),
-          ]),
-
-          // Question input based on type
-          _buildQuestionInput(),
-
-          // Error message
-          if (hasError)
-            div(classes: 'mt-3 flex items-center gap-2 text-sm text-red-600', [
-              span(classes: 'flex-shrink-0', [Component.text('\u26A0')]),
-              span([Component.text(error!)]),
-            ]),
+          if (_isChoiceGroup)
+            fieldset(
+              attributes: {
+                if (hasError) 'aria-describedby': _errorId,
+                if (question.isRequired) 'aria-required': 'true',
+              },
+              [
+                legend(classes: 'mb-4', labelChildren),
+                ...body,
+              ],
+            )
+          else if (question.type == QuestionType.imageUpload) ...[
+            // The picker renders its own <label>; this is just the heading.
+            div(classes: 'mb-4', labelChildren),
+            ...body,
+          ] else ...[
+            label(
+              classes: 'block mb-4',
+              attributes: {'for': 'question_${question.id}'},
+              labelChildren,
+            ),
+            ...body,
+          ],
         ]);
   }
 
@@ -86,6 +131,8 @@ class QuestionWidget extends StatelessComponent {
             locale: locale,
             onChanged: onChanged,
             disabled: disabled,
+            invalid: error != null,
+            describedById: error != null ? _errorId : null,
           ),
         QuestionType.textMultiLine => TextMultiLineQuestion(
             question: question,
@@ -93,6 +140,8 @@ class QuestionWidget extends StatelessComponent {
             locale: locale,
             onChanged: onChanged,
             disabled: disabled,
+            invalid: error != null,
+            describedById: error != null ? _errorId : null,
           ),
         QuestionType.imageUpload => ImageUploadQuestion(
             client: client,
