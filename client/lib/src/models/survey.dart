@@ -96,11 +96,9 @@ class LocalizedText {
   factory LocalizedText.filled(
     String value, {
     Iterable<String> locales = formContentLocaleCodes,
-  }) {
-    return LocalizedText({
-      for (final locale in locales) locale: value,
-    });
-  }
+  }) => LocalizedText({
+    for (final locale in locales) locale: value,
+  });
 
   Map<String, dynamic> toJson() => Map<String, dynamic>.from(values);
 
@@ -111,12 +109,10 @@ class LocalizedText {
         (values.isEmpty ? '' : values.values.first);
   }
 
-  LocalizedText copyWithLocale(String locale, String value) {
-    return LocalizedText({
-      ...values,
-      normalizeFormContentLocale(locale): value,
-    });
-  }
+  LocalizedText copyWithLocale(String locale, String value) => LocalizedText({
+    ...values,
+    normalizeFormContentLocale(locale): value,
+  });
 }
 
 class FormContentMessages {
@@ -214,21 +210,17 @@ class Project {
     String? createdByUserId,
     DateTime? createdAt,
     DateTime? updatedAt,
-  }) {
-    return Project(
-      id: id ?? this.id,
-      slug: slug ?? this.slug,
-      customDomain: clearCustomDomain
-          ? null
-          : customDomain ?? this.customDomain,
-      defaultLocale: defaultLocale ?? this.defaultLocale,
-      supportedLocales: supportedLocales ?? this.supportedLocales,
-      name: name ?? this.name,
-      createdByUserId: createdByUserId ?? this.createdByUserId,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
-    );
-  }
+  }) => Project(
+    id: id ?? this.id,
+    slug: slug ?? this.slug,
+    customDomain: clearCustomDomain ? null : customDomain ?? this.customDomain,
+    defaultLocale: defaultLocale ?? this.defaultLocale,
+    supportedLocales: supportedLocales ?? this.supportedLocales,
+    name: name ?? this.name,
+    createdByUserId: createdByUserId ?? this.createdByUserId,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
 }
 
 class ProjectWithSurveys {
@@ -340,25 +332,23 @@ class Survey {
     DateTime? updatedAt,
     DateTime? startsAt,
     DateTime? endsAt,
-  }) {
-    return Survey(
-      id: id ?? this.id,
-      projectId: projectId ?? this.projectId,
-      slug: slug ?? this.slug,
-      titleTranslations: titleTranslations ?? this.titleTranslations,
-      descriptionTranslations:
-          descriptionTranslations ?? this.descriptionTranslations,
-      status: status ?? this.status,
-      webEnabled: webEnabled ?? this.webEnabled,
-      followUpEnabled: followUpEnabled ?? this.followUpEnabled,
-      captchaEnabled: captchaEnabled ?? this.captchaEnabled,
-      createdByUserId: createdByUserId ?? this.createdByUserId,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
-      startsAt: startsAt ?? this.startsAt,
-      endsAt: endsAt ?? this.endsAt,
-    );
-  }
+  }) => Survey(
+    id: id ?? this.id,
+    projectId: projectId ?? this.projectId,
+    slug: slug ?? this.slug,
+    titleTranslations: titleTranslations ?? this.titleTranslations,
+    descriptionTranslations:
+        descriptionTranslations ?? this.descriptionTranslations,
+    status: status ?? this.status,
+    webEnabled: webEnabled ?? this.webEnabled,
+    followUpEnabled: followUpEnabled ?? this.followUpEnabled,
+    captchaEnabled: captchaEnabled ?? this.captchaEnabled,
+    createdByUserId: createdByUserId ?? this.createdByUserId,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    startsAt: startsAt ?? this.startsAt,
+    endsAt: endsAt ?? this.endsAt,
+  );
 
   String titleFor(String locale) => titleTranslations.valueFor(locale);
   String descriptionFor(String locale) =>
@@ -423,27 +413,25 @@ class Question {
     isDeleted: _bool(json['isDeleted']),
   );
 
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic> toJson() => {
     // Always include constraint fields (including null) so updates can clear
     // min/max on the server via Object.hasOwn. Other nulls are still stripped.
-    return {
-      ..._withoutNulls({
-        'id': id,
-        'surveyId': surveyId,
-        'textTranslations': textTranslations.toJson(),
-        'type': _enumName(type),
-        'orderIndex': orderIndex,
-        'isRequired': isRequired,
-        'placeholderTranslations': placeholderTranslations.toJson(),
-        'visibilityConditionMode': _enumName(visibilityConditionMode),
-        'isDeleted': isDeleted,
-      }),
-      'minLength': minLength,
-      'maxLength': maxLength,
-      'minSelected': minSelected,
-      'maxSelected': maxSelected,
-    };
-  }
+    ..._withoutNulls({
+      'id': id,
+      'surveyId': surveyId,
+      'textTranslations': textTranslations.toJson(),
+      'type': _enumName(type),
+      'orderIndex': orderIndex,
+      'isRequired': isRequired,
+      'placeholderTranslations': placeholderTranslations.toJson(),
+      'visibilityConditionMode': _enumName(visibilityConditionMode),
+      'isDeleted': isDeleted,
+    }),
+    'minLength': minLength,
+    'maxLength': maxLength,
+    'minSelected': minSelected,
+    'maxSelected': maxSelected,
+  };
 
   Question copyWith({
     int? id,
@@ -459,33 +447,31 @@ class Question {
     Object? maxSelected = _unset,
     VisibilityConditionMode? visibilityConditionMode,
     bool? isDeleted,
-  }) {
-    return Question(
-      id: id ?? this.id,
-      surveyId: surveyId ?? this.surveyId,
-      textTranslations: textTranslations ?? this.textTranslations,
-      type: type ?? this.type,
-      orderIndex: orderIndex ?? this.orderIndex,
-      isRequired: isRequired ?? this.isRequired,
-      placeholderTranslations:
-          placeholderTranslations ?? this.placeholderTranslations,
-      minLength: identical(minLength, _unset)
-          ? this.minLength
-          : minLength as int?,
-      maxLength: identical(maxLength, _unset)
-          ? this.maxLength
-          : maxLength as int?,
-      minSelected: identical(minSelected, _unset)
-          ? this.minSelected
-          : minSelected as int?,
-      maxSelected: identical(maxSelected, _unset)
-          ? this.maxSelected
-          : maxSelected as int?,
-      visibilityConditionMode:
-          visibilityConditionMode ?? this.visibilityConditionMode,
-      isDeleted: isDeleted ?? this.isDeleted,
-    );
-  }
+  }) => Question(
+    id: id ?? this.id,
+    surveyId: surveyId ?? this.surveyId,
+    textTranslations: textTranslations ?? this.textTranslations,
+    type: type ?? this.type,
+    orderIndex: orderIndex ?? this.orderIndex,
+    isRequired: isRequired ?? this.isRequired,
+    placeholderTranslations:
+        placeholderTranslations ?? this.placeholderTranslations,
+    minLength: identical(minLength, _unset)
+        ? this.minLength
+        : minLength as int?,
+    maxLength: identical(maxLength, _unset)
+        ? this.maxLength
+        : maxLength as int?,
+    minSelected: identical(minSelected, _unset)
+        ? this.minSelected
+        : minSelected as int?,
+    maxSelected: identical(maxSelected, _unset)
+        ? this.maxSelected
+        : maxSelected as int?,
+    visibilityConditionMode:
+        visibilityConditionMode ?? this.visibilityConditionMode,
+    isDeleted: isDeleted ?? this.isDeleted,
+  );
 
   String textFor(String locale) => textTranslations.valueFor(locale);
 
@@ -552,18 +538,16 @@ class QuestionVisibilityRule {
     bool clearValue = false,
     DateTime? createdAt,
     DateTime? updatedAt,
-  }) {
-    return QuestionVisibilityRule(
-      id: id ?? this.id,
-      surveyId: surveyId ?? this.surveyId,
-      targetQuestionId: targetQuestionId ?? this.targetQuestionId,
-      sourceQuestionId: sourceQuestionId ?? this.sourceQuestionId,
-      operator: operator ?? this.operator,
-      value: clearValue ? null : value ?? this.value,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
-    );
-  }
+  }) => QuestionVisibilityRule(
+    id: id ?? this.id,
+    surveyId: surveyId ?? this.surveyId,
+    targetQuestionId: targetQuestionId ?? this.targetQuestionId,
+    sourceQuestionId: sourceQuestionId ?? this.sourceQuestionId,
+    operator: operator ?? this.operator,
+    value: clearValue ? null : value ?? this.value,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
 }
 
 class Choice {
@@ -603,15 +587,13 @@ class Choice {
     LocalizedText? textTranslations,
     int? orderIndex,
     String? value,
-  }) {
-    return Choice(
-      id: id ?? this.id,
-      questionId: questionId ?? this.questionId,
-      textTranslations: textTranslations ?? this.textTranslations,
-      orderIndex: orderIndex ?? this.orderIndex,
-      value: value ?? this.value,
-    );
-  }
+  }) => Choice(
+    id: id ?? this.id,
+    questionId: questionId ?? this.questionId,
+    textTranslations: textTranslations ?? this.textTranslations,
+    orderIndex: orderIndex ?? this.orderIndex,
+    value: value ?? this.value,
+  );
 
   String textFor(String locale) => textTranslations.valueFor(locale);
   String get text => textFor(defaultFormContentLocale);
