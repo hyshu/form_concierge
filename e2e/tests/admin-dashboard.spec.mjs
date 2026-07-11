@@ -15,26 +15,37 @@ async function enableFlutterSemantics(page) {
   await page.evaluate(() => document.querySelector('flt-semantics-placeholder')?.click());
 }
 
+async function clearFlutterInput(locator) {
+  // Control/Meta+A alone is unreliable on Flutter web, but still helps prime
+  // the focused text editing client so the first typed key is not dropped.
+  await locator.press(process.platform === 'darwin' ? 'Meta+A' : 'Control+A');
+  await locator.press('Backspace');
+
+  const remaining = await locator.inputValue().catch(() => '');
+  if (!remaining) return;
+
+  // Fallback: Flutter keeps its own caret, so delete from the end by key events.
+  await locator.press('End');
+  const deleteCount = remaining.length + 4;
+  for (let i = 0; i < deleteCount; i++) {
+    await locator.press('Backspace');
+    if (!(await locator.inputValue().catch(() => ''))) return;
+  }
+}
+
 async function typeIntoFlutterInput(locator, value) {
   await expect(locator).toBeVisible();
   await locator.scrollIntoViewIfNeeded();
   await locator.click({ force: true });
+  await clearFlutterInput(locator);
+  await locator.pressSequentially(value, { delay: 10 });
 
-  // Control/Meta+A is flaky on Flutter web: the framework keeps its own caret
-  // and ignores DOM selection. Move to the end and delete character-by-character
-  // so TextEditingController and the DOM stay aligned.
-  let remaining = await locator.inputValue().catch(() => '');
-  if (remaining.length > 0) {
-    await locator.press('End');
-    for (let i = 0; i < remaining.length + 4; i++) {
-      await locator.press('Backspace');
-      remaining = await locator.inputValue().catch(() => '');
-      if (!remaining) break;
-    }
-    await expect(locator).toHaveValue('');
+  // One retry covers dropped first keystrokes that still show up under load.
+  if ((await locator.inputValue().catch(() => '')) !== value) {
+    await clearFlutterInput(locator);
+    await locator.pressSequentially(value, { delay: 15 });
   }
 
-  await locator.pressSequentially(value, { delay: 10 });
   await expect(locator).toHaveValue(value);
 }
 
