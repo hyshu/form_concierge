@@ -131,6 +131,8 @@
   "Title": "Title",
   "Flutter follow-up interview": "Flutter follow-up interview",
   "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.": "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.",
+  "CAPTCHA verification": "CAPTCHA verification",
+  "Require Turnstile CAPTCHA on the web form to prevent bot submissions.": "Require Turnstile CAPTCHA on the web form to prevent bot submissions.",
   "Follow-up interview": "Follow-up interview",
   "Follow-up status: {status}": "Follow-up status: {status}",
   "Image Upload": "Image Upload",

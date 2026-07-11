@@ -9,6 +9,8 @@ import {
   d1Meta,
   d1Result,
   stubRateLimiter,
+  TEST_TURNSTILE_SITE_KEY,
+  TEST_TURNSTILE_SECRET_KEY,
 } from '../test/helpers';
 import {
   createQuestion,
@@ -129,6 +131,8 @@ function envWithRows(rows: {
     PUBLIC_FORM_ASSET_BASE_URL: 'https://forms.example.com',
     LOGIN_RATE_LIMITER: stubRateLimiter(),
     ANON_CREATE_RATE_LIMITER: stubRateLimiter(),
+    TURNSTILE_SITE_KEY: TEST_TURNSTILE_SITE_KEY,
+    TURNSTILE_SECRET_KEY: TEST_TURNSTILE_SECRET_KEY,
   };
 }
 

@@ -44,6 +44,7 @@ void main() {
                     required LocalizedText titleTranslations,
                     required LocalizedText descriptionTranslations,
                     required bool followUpEnabled,
+                    required bool captchaEnabled,
                   }) async {
                     saveWasCalled = true;
                     savedTitleTranslations = titleTranslations;
@@ -178,6 +179,7 @@ void main() {
                     required LocalizedText titleTranslations,
                     required LocalizedText descriptionTranslations,
                     required bool followUpEnabled,
+                    required bool captchaEnabled,
                   }) async {},
             ),
           ),

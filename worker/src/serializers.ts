@@ -28,6 +28,7 @@ export function surveyToJson(row: SurveyRow) {
     status: row.status,
     webEnabled: row.web_enabled === 1,
     followUpEnabled: row.follow_up_enabled === 1,
+    captchaEnabled: row.captcha_enabled === 1,
     authRequirement: row.auth_requirement,
     createdByUserId: row.created_by_admin_id,
     createdAt: row.created_at,

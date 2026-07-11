@@ -292,6 +292,8 @@
   "Response notifications are paused": "Antwortbenachrichtigungen werden angehalten",
   "Flutter follow-up interview": "Flutter-Folgeinterview",
   "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.": "Generieren Sie nach dem Hauptformular optional adaptive Folgefragen in Flutter-Apps. Springt direkt zur Fertigstellung, wenn keine benötigt wird.",
+  "CAPTCHA verification": "CAPTCHA-Verifizierung",
+  "Require Turnstile CAPTCHA on the web form to prevent bot submissions.": "Turnstile-CAPTCHA im Webformular aktivieren, um Bot-Einsendungen zu verhindern.",
   "Follow-up interview": "Folgeinterview",
   "Follow-up status: {status}": "Follow-up-Status: {status}",
   "Image Upload": "Bild-Upload",

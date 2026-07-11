@@ -29,6 +29,7 @@ class SurveyForm extends StatefulWidget {
   final bool aiTranslateEnabled;
   final bool aiGenerationEnabled;
   final bool followUpEnabled;
+  final bool captchaEnabled;
   final ValueChanged<bool>? onFollowUpEnabledChanged;
   final SurveyLocalizedTranslate? onTranslate;
   final Future<void> Function({
@@ -36,6 +37,7 @@ class SurveyForm extends StatefulWidget {
     required LocalizedText titleTranslations,
     required LocalizedText descriptionTranslations,
     required bool followUpEnabled,
+    required bool captchaEnabled,
   })
   onSave;
 
@@ -51,6 +53,7 @@ class SurveyForm extends StatefulWidget {
     this.aiTranslateEnabled = false,
     this.aiGenerationEnabled = false,
     this.followUpEnabled = false,
+    this.captchaEnabled = true,
     this.onFollowUpEnabledChanged,
     this.onTranslate,
     required this.onSave,
@@ -65,6 +68,7 @@ class SurveyFormWidgetState extends State<SurveyForm> {
   final _slugAutoFill = SlugAutoFill();
   String? _listeningTitleLocale;
   late bool _followUpEnabled;
+  late bool _captchaEnabled;
 
   @override
   void initState() {
@@ -72,6 +76,8 @@ class SurveyFormWidgetState extends State<SurveyForm> {
     _followUpEnabled =
         widget.followUpEnabled ||
         (widget.existingSurvey?.followUpEnabled ?? false);
+    _captchaEnabled =
+        widget.existingSurvey?.captchaEnabled ?? widget.captchaEnabled;
     if (widget.existingSurvey != null) {
       widget.controllers.populateFrom(widget.existingSurvey!);
     }
@@ -85,6 +91,7 @@ class SurveyFormWidgetState extends State<SurveyForm> {
         widget.existingSurvey != null) {
       widget.controllers.populateFrom(widget.existingSurvey!);
       _followUpEnabled = widget.existingSurvey!.followUpEnabled;
+      _captchaEnabled = widget.existingSurvey!.captchaEnabled;
     } else if (oldWidget.followUpEnabled != widget.followUpEnabled) {
       _followUpEnabled = widget.followUpEnabled;
     }
@@ -188,6 +195,20 @@ class SurveyFormWidgetState extends State<SurveyForm> {
                     },
             ),
           ],
+          const SizedBox(height: 16),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(context.tr('CAPTCHA verification')),
+            subtitle: Text(
+              context.tr(
+                'Require Turnstile CAPTCHA on the web form to prevent bot submissions.',
+              ),
+            ),
+            value: _captchaEnabled,
+            onChanged: widget.isSaving
+                ? null
+                : (value) => setState(() => _captchaEnabled = value),
+          ),
           if (widget.error != null) ...[
             const SizedBox(height: 16),
             Text(
@@ -232,6 +253,7 @@ class SurveyFormWidgetState extends State<SurveyForm> {
         locales: widget.locales,
       ),
       followUpEnabled: _followUpEnabled,
+      captchaEnabled: _captchaEnabled,
     );
     return true;
   }

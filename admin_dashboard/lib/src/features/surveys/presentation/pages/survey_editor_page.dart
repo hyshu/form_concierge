@@ -360,6 +360,7 @@ class SurveyEditorPage extends RearchConsumer {
     aiTranslateEnabled: aiTranslateEnabled,
     aiGenerationEnabled: aiTranslateEnabled,
     followUpEnabled: survey?.followUpEnabled ?? false,
+    captchaEnabled: survey?.captchaEnabled ?? true,
     onTranslate: aiTranslateEnabled ? _translateWithClient(client) : null,
     onSave:
         ({
@@ -367,6 +368,7 @@ class SurveyEditorPage extends RearchConsumer {
           required LocalizedText titleTranslations,
           required LocalizedText descriptionTranslations,
           required bool followUpEnabled,
+          required bool captchaEnabled,
         }) async {
           if (isNewSurvey) {
             final created = await formManager.createSurveyWithQuestions(
@@ -375,6 +377,7 @@ class SurveyEditorPage extends RearchConsumer {
               titleTranslations: titleTranslations,
               descriptionTranslations: descriptionTranslations,
               followUpEnabled: followUpEnabled,
+              captchaEnabled: captchaEnabled,
             );
             if (created != null && context.mounted) {
               await surveyListManager.loadSurveys();
@@ -388,6 +391,7 @@ class SurveyEditorPage extends RearchConsumer {
               titleTranslations: titleTranslations,
               descriptionTranslations: descriptionTranslations,
               followUpEnabled: followUpEnabled,
+              captchaEnabled: captchaEnabled,
               updatedAt: DateTime.now(),
             );
             await formManager.updateSurvey(updated);

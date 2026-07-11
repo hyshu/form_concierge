@@ -330,6 +330,8 @@
   "No answers for this response": "Bu yanıt için yanıt yok",
   "Flutter follow-up interview": "Flutter takip röportajı",
   "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.": "Ana formdan sonra isteğe bağlı olarak Flutter uygulamalarında uyarlanabilir takip soruları oluşturun. Hiçbirine ihtiyaç duyulmadığında doğrudan tamamlamaya atlar.",
+  "CAPTCHA verification": "CAPTCHA doğrulaması",
+  "Require Turnstile CAPTCHA on the web form to prevent bot submissions.": "Bot gönderimlerini önlemek için web formunda Turnstile CAPTCHA gerektirin.",
   "Follow-up interview": "Takip röportajı",
   "Follow-up status: {status}": "Takip durumu: {status}",
   "Image Upload": "Resim Yükleme",

@@ -330,6 +330,8 @@
   "No answers for this response": "ไม่มีคำตอบสำหรับคำตอบนี้",
   "Flutter follow-up interview": "สัมภาษณ์ติดตามผล Flutter",
   "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.": "หลังจากแบบฟอร์มหลัก ให้เลือกสร้างคำถามติดตามผลแบบปรับเปลี่ยนได้ในแอป Flutter ข้ามไปจนจบเมื่อไม่จำเป็น",
+  "CAPTCHA verification": "การยืนยัน CAPTCHA",
+  "Require Turnstile CAPTCHA on the web form to prevent bot submissions.": "กำหนดให้ใช้ Turnstile CAPTCHA บนแบบฟอร์มเว็บเพื่อป้องกันการส่งจากบอท",
   "Follow-up interview": "สัมภาษณ์ติดตามผล",
   "Follow-up status: {status}": "สถานะติดตามผล: {status}",
   "Image Upload": "อัพโหลดรูปภาพ",

@@ -330,6 +330,8 @@
   "No answers for this response": "Aucune réponse pour cette réponse",
   "Flutter follow-up interview": "Entretien de suivi de Flutter",
   "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.": "Après le formulaire principal, générez éventuellement des questions de suivi adaptatives dans les applications Flutter. Passe directement à la fin lorsqu'aucun n'est nécessaire.",
+  "CAPTCHA verification": "Vérification CAPTCHA",
+  "Require Turnstile CAPTCHA on the web form to prevent bot submissions.": "Exiger un CAPTCHA Turnstile sur le formulaire web pour empêcher les soumissions de bots.",
   "Follow-up interview": "Entretien de suivi",
   "Follow-up status: {status}": "Statut de suivi : {status}",
   "Image Upload": "Téléchargement d'images",

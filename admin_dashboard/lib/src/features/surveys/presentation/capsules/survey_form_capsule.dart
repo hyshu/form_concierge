@@ -94,6 +94,7 @@ class SurveyFormManager {
     required LocalizedText titleTranslations,
     required LocalizedText descriptionTranslations,
     bool followUpEnabled = false,
+    bool captchaEnabled = true,
   }) async {
     _setState(null, getState(null).copyWith(isSaving: true, error: null));
     try {
@@ -104,6 +105,7 @@ class SurveyFormManager {
           titleTranslations: titleTranslations,
           descriptionTranslations: descriptionTranslations,
           followUpEnabled: followUpEnabled,
+          captchaEnabled: captchaEnabled,
         ),
       );
       _setState(null, getState(null).copyWith(isSaving: false));
@@ -271,6 +273,7 @@ class SurveyFormManager {
     required LocalizedText titleTranslations,
     required LocalizedText descriptionTranslations,
     bool followUpEnabled = false,
+    bool captchaEnabled = true,
   }) async {
     final state = getState(null);
     _setState(null, state.copyWith(isSaving: true, error: null));
@@ -286,6 +289,7 @@ class SurveyFormManager {
           titleTranslations: titleTranslations,
           descriptionTranslations: descriptionTranslations,
           followUpEnabled: followUpEnabled,
+          captchaEnabled: captchaEnabled,
         ),
         questions,
       );
@@ -312,6 +316,7 @@ class SurveyFormManager {
     required LocalizedText titleTranslations,
     required LocalizedText descriptionTranslations,
     bool followUpEnabled = false,
+    bool captchaEnabled = true,
   }) {
     final now = DateTime.now();
     return Survey(
@@ -321,6 +326,7 @@ class SurveyFormManager {
       descriptionTranslations: descriptionTranslations,
       status: SurveyStatus.draft,
       followUpEnabled: followUpEnabled,
+      captchaEnabled: captchaEnabled,
       createdAt: now,
       updatedAt: now,
     );

@@ -292,6 +292,8 @@
   "Response notifications are paused": "响应通知已暂停",
   "Flutter follow-up interview": "Flutter后续采访",
   "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.": "在主表单之后，可以选择在 Flutter 应用程序中生成自适应后续问题。当不需要时直接跳到完成。",
+  "CAPTCHA verification": "CAPTCHA 验证",
+  "Require Turnstile CAPTCHA on the web form to prevent bot submissions.": "在网页表单上要求 Turnstile CAPTCHA 以防止机器人提交。",
   "Follow-up interview": "后续采访",
   "Follow-up status: {status}": "跟进状态：{status}",
   "Image Upload": "图片上传",

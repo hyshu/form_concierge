@@ -24,6 +24,7 @@ import {
   assertOwnedMediaKeys,
   encodeFileKeysForStorage,
 } from './media';
+import { verifyTurnstileToken } from './turnstile';
 
 export async function getPublicProject(env: Env, slug: string): Promise<Response> {
   const project = await env.DB.prepare(
@@ -102,6 +103,12 @@ export async function submitResponse(
   }
 
   const body = await readJson(request);
+
+  if (survey.captcha_enabled === 1 && env.TURNSTILE_SECRET_KEY) {
+    const captchaToken = typeof body.captchaToken === 'string' ? body.captchaToken : '';
+    if (!captchaToken) throw new HttpError(400, 'CAPTCHA token is required');
+    await verifyTurnstileToken(captchaToken, env.TURNSTILE_SECRET_KEY, request.headers.get('cf-connecting-ip'));
+  }
   const answers = Array.isArray(body.answers)
     ? body.answers.map(requireAnswerInput)
     : [];

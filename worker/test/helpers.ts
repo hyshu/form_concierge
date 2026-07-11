@@ -116,6 +116,9 @@ export function stubRateLimiter(): RateLimit {
   return { async limit() { return { success: true }; } };
 }
 
+export const TEST_TURNSTILE_SITE_KEY = '1x00000000000000000000AA';
+export const TEST_TURNSTILE_SECRET_KEY = '1x0000000000000000000000000000000AA';
+
 function adminJsonRequest(path: string, method: 'POST' | 'PUT', body: unknown): Request {
   return new Request(`${adminApiBaseUrl}/${path}`, {
     method,

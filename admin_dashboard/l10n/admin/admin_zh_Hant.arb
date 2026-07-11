@@ -292,6 +292,8 @@
   "Response notifications are paused": "回應通知已暫停",
   "Flutter follow-up interview": "Flutter後續採訪",
   "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.": "在主表單之後，可以選擇在 Flutter 應用程式中產生自適應後續問題。當不需要時直接跳到完成。",
+  "CAPTCHA verification": "CAPTCHA 驗證",
+  "Require Turnstile CAPTCHA on the web form to prevent bot submissions.": "在網頁表單上要求 Turnstile CAPTCHA 以防止機器人提交。",
   "Follow-up interview": "後續採訪",
   "Follow-up status: {status}": "跟進狀態：{status}",
   "Image Upload": "圖片上傳",

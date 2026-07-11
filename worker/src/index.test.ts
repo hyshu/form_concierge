@@ -42,6 +42,8 @@ function envWithoutDb(): Env {
     PUBLIC_FORM_ASSET_BASE_URL: 'https://forms.example.com',
     LOGIN_RATE_LIMITER: { async limit() { return { success: true }; } },
     ANON_CREATE_RATE_LIMITER: { async limit() { return { success: true }; } },
+    TURNSTILE_SITE_KEY: '1x00000000000000000000AA',
+    TURNSTILE_SECRET_KEY: '1x0000000000000000000000000000000AA',
   };
 }
 

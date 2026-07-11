@@ -7,6 +7,7 @@ import '../utils/anonymous_storage.dart';
 import '../utils/device_info.dart';
 import '../utils/preferred_locales.dart';
 import '../utils/ssr_payload.dart';
+import '../utils/turnstile.dart';
 import '../utils/validation.dart';
 import 'survey_loading.dart';
 import 'survey_error.dart';
@@ -52,6 +53,7 @@ class SurveyClientState extends State<SurveyClient> {
   List<QuestionVisibilityRule> _visibilityRules = [];
   Map<int, List<Choice>> _choicesByQuestion = {};
   String? _anonymousTokenStorageKey;
+  String? _turnstileSiteKey;
   String _locale = defaultFormContentLocale;
 
   SurveyViewState _viewState = SurveyViewState.loading;
@@ -144,6 +146,11 @@ class SurveyClientState extends State<SurveyClient> {
         }).toList(),
       );
     });
+
+    final siteKey = payload['turnstileSiteKey'];
+    if (siteKey is String && siteKey.isNotEmpty) {
+      _turnstileSiteKey = siteKey;
+    }
 
     _hydrateSurvey(
       project,
@@ -349,11 +356,14 @@ class SurveyClientState extends State<SurveyClient> {
       if (!hasAnonymousAccount) return;
 
       final answers = buildAnswers(_answers, visible);
+      final captchaToken =
+          _turnstileSiteKey != null ? getTurnstileResponse() : null;
       try {
         await _client.survey.submitResponse(
           surveyId: survey.id!,
           answers: answers,
           deviceInfo: _deviceInfo(),
+          captchaToken: captchaToken,
         );
       } on ApiException catch (e) {
         // Stale localStorage token (e.g. after DB rebuild) → recreate once.
@@ -365,6 +375,7 @@ class SurveyClientState extends State<SurveyClient> {
           surveyId: survey.id!,
           answers: answers,
           deviceInfo: _deviceInfo(),
+          captchaToken: captchaToken,
         );
       }
 

@@ -131,6 +131,8 @@
   "Title": "タイトル",
   "Flutter follow-up interview": "Flutter 追加インタビュー",
   "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.": "本編の回答後、Flutter アプリのみ追加の適応型質問を生成します。不要な場合はそのまま完了します。",
+  "CAPTCHA verification": "CAPTCHA 認証",
+  "Require Turnstile CAPTCHA on the web form to prevent bot submissions.": "ボットによる送信を防ぐため、Web フォームに Turnstile CAPTCHA を要求します。",
   "Follow-up interview": "追加インタビュー",
   "Follow-up status: {status}": "追加インタビューの状態: {status}",
   "Image Upload": "画像アップロード",

@@ -167,7 +167,8 @@ function renderSurveyHtml(
   const description = textFor(data.survey.descriptionTranslations, locale);
   const assetBaseUrl = publicFormAssetBaseUrl(env);
   const apiUrl = publicApiUrl(env);
-  const payload = { ...data, apiUrl };
+  const turnstileSiteKey = data.survey.captchaEnabled ? env.TURNSTILE_SITE_KEY : null;
+  const payload = { ...data, apiUrl, turnstileSiteKey };
 
   return documentHtml({
     lang: locale,
@@ -175,6 +176,7 @@ function renderSurveyHtml(
     description,
     apiUrl,
     assetBaseUrl,
+    turnstileSiteKey,
     payload,
     body: `
       <main id="form-concierge-ssr-root" class="survey-wrapper">
@@ -189,6 +191,7 @@ function renderSurveyHtml(
         </section>
         <section class="max-w-xl mx-auto mt-6 space-y-4">
           ${data.questions.map((question) => renderQuestion(question, data.choicesByQuestion, locale)).join('')}
+          ${turnstileSiteKey ? `<div class="cf-turnstile" data-sitekey="${escapeAttribute(turnstileSiteKey)}"></div>` : ''}
           <button class="w-full px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg disabled:opacity-50" disabled>
             ${locale === 'ja' ? '送信' : 'Submit'}
           </button>
@@ -243,6 +246,7 @@ function documentHtml(input: {
   apiUrl: string;
   assetBaseUrl: string;
   includeClient?: boolean;
+  turnstileSiteKey?: string | null;
   payload: unknown;
   body: string;
 }): string {
@@ -256,6 +260,7 @@ function documentHtml(input: {
   <meta name="description" content="${escapeAttribute(input.description)}">
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="${escapeAttribute(`${input.assetBaseUrl}/styles.css`)}">
+  ${input.turnstileSiteKey ? '<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>' : ''}
   ${
     input.includeClient === false
       ? ''

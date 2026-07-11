@@ -265,6 +265,7 @@ class Survey {
   final SurveyStatus status;
   final bool webEnabled;
   final bool followUpEnabled;
+  final bool captchaEnabled;
   final String? createdByUserId;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -280,6 +281,7 @@ class Survey {
     this.status = SurveyStatus.draft,
     this.webEnabled = true,
     this.followUpEnabled = false,
+    this.captchaEnabled = true,
     this.createdByUserId,
     required this.createdAt,
     required this.updatedAt,
@@ -298,6 +300,7 @@ class Survey {
     status: _enum(SurveyStatus.values, json['status']),
     webEnabled: _bool(json['webEnabled']),
     followUpEnabled: _bool(json['followUpEnabled'] ?? false),
+    captchaEnabled: _bool(json['captchaEnabled'] ?? true),
     createdByUserId: _optionalString(json['createdByUserId']),
     createdAt: _date(json['createdAt']),
     updatedAt: _date(json['updatedAt']),
@@ -314,6 +317,7 @@ class Survey {
     'status': _enumName(status),
     'webEnabled': webEnabled,
     'followUpEnabled': followUpEnabled,
+    'captchaEnabled': captchaEnabled,
     'createdByUserId': createdByUserId,
     'createdAt': createdAt.toIso8601String(),
     'updatedAt': updatedAt.toIso8601String(),
@@ -330,6 +334,7 @@ class Survey {
     SurveyStatus? status,
     bool? webEnabled,
     bool? followUpEnabled,
+    bool? captchaEnabled,
     String? createdByUserId,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -346,6 +351,7 @@ class Survey {
       status: status ?? this.status,
       webEnabled: webEnabled ?? this.webEnabled,
       followUpEnabled: followUpEnabled ?? this.followUpEnabled,
+      captchaEnabled: captchaEnabled ?? this.captchaEnabled,
       createdByUserId: createdByUserId ?? this.createdByUserId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

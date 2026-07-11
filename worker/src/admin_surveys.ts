@@ -76,6 +76,9 @@ async function insertSurvey(
   const followUpEnabled = Object.hasOwn(body, 'followUpEnabled')
     ? boolToInt(requiredBoolean(body.followUpEnabled, 'followUpEnabled'))
     : 0;
+  const captchaEnabled = Object.hasOwn(body, 'captchaEnabled')
+    ? boolToInt(requiredBoolean(body.captchaEnabled, 'captchaEnabled'))
+    : 1;
   const startsAt = optionalIsoDateTime(body.startsAt, 'startsAt');
   const endsAt = optionalIsoDateTime(body.endsAt, 'endsAt');
   const titleJson = JSON.stringify(content.titleTranslations);
@@ -87,8 +90,8 @@ async function insertSurvey(
       const row = await db.prepare(
         `INSERT INTO surveys
            (project_id, slug, title_translations, description_translations, status, web_enabled, follow_up_enabled,
-            created_by_admin_id, created_at, updated_at, starts_at, ends_at)
-         VALUES (?, ?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?)
+            captcha_enabled, created_by_admin_id, created_at, updated_at, starts_at, ends_at)
+         VALUES (?, ?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?, ?)
          RETURNING *`,
       )
         .bind(
@@ -98,6 +101,7 @@ async function insertSurvey(
           descriptionJson,
           webEnabled,
           followUpEnabled,
+          captchaEnabled,
           admin.id,
           now,
           now,
@@ -158,7 +162,8 @@ export async function updateSurvey(request: Request, env: Env, surveyId: number)
   const row = await env.DB.prepare(
     `UPDATE surveys
      SET slug = ?, title_translations = ?, description_translations = ?,
-         web_enabled = ?, follow_up_enabled = ?, starts_at = ?, ends_at = ?, updated_at = ?
+         web_enabled = ?, follow_up_enabled = ?, captcha_enabled = ?,
+         starts_at = ?, ends_at = ?, updated_at = ?
      WHERE id = ?
      RETURNING *`,
   ).bind(
@@ -169,6 +174,9 @@ export async function updateSurvey(request: Request, env: Env, surveyId: number)
     Object.hasOwn(body, 'followUpEnabled')
       ? boolToInt(requiredBoolean(body.followUpEnabled, 'followUpEnabled'))
       : existing.follow_up_enabled,
+    Object.hasOwn(body, 'captchaEnabled')
+      ? boolToInt(requiredBoolean(body.captchaEnabled, 'captchaEnabled'))
+      : existing.captcha_enabled,
     Object.hasOwn(body, 'startsAt')
       ? optionalIsoDateTime(body.startsAt, 'startsAt')
       : existing.starts_at,

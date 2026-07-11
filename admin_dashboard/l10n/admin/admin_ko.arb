@@ -292,6 +292,8 @@
   "Response notifications are paused": "응답 알림이 일시중지되었습니다.",
   "Flutter follow-up interview": "Flutter 후속 인터뷰",
   "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.": "기본 양식 후에 선택적으로 Flutter 앱에서 적응형 후속 질문을 생성하세요. 필요하지 않은 경우 바로 완료로 건너뜁니다.",
+  "CAPTCHA verification": "CAPTCHA 인증",
+  "Require Turnstile CAPTCHA on the web form to prevent bot submissions.": "봇 제출을 방지하기 위해 웹 양식에 Turnstile CAPTCHA를 요구합니다.",
   "Follow-up interview": "후속 인터뷰",
   "Follow-up status: {status}": "후속 상태: {status}",
   "Image Upload": "이미지 업로드",
