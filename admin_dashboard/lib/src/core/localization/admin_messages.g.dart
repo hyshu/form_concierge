@@ -369,6 +369,9 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Flutter follow-up interview": "Flutter-Folgeinterview",
     "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.":
         "Generieren Sie nach dem Hauptformular optional adaptive Folgefragen in Flutter-Apps. Springt direkt zur Fertigstellung, wenn keine benötigt wird.",
+    "CAPTCHA verification": "CAPTCHA-Verifizierung",
+    "Require Turnstile CAPTCHA on the web form to prevent bot submissions.":
+        "Turnstile-CAPTCHA im Webformular aktivieren, um Bot-Einsendungen zu verhindern.",
     "Follow-up interview": "Folgeinterview",
     "Follow-up status: {status}": "Follow-up-Status: {status}",
     "Image Upload": "Bild-Upload",
@@ -581,6 +584,9 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Flutter follow-up interview": "Flutter follow-up interview",
     "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.":
         "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.",
+    "CAPTCHA verification": "CAPTCHA verification",
+    "Require Turnstile CAPTCHA on the web form to prevent bot submissions.":
+        "Require Turnstile CAPTCHA on the web form to prevent bot submissions.",
     "Follow-up interview": "Follow-up interview",
     "Follow-up status: {status}": "Follow-up status: {status}",
     "Image Upload": "Image Upload",
@@ -1216,6 +1222,9 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Flutter follow-up interview": "Entrevista de seguimiento de Flutter",
     "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.":
         "Después del formulario principal, opcionalmente genera preguntas de seguimiento adaptativas en las aplicaciones Flutter. Salta directamente hasta el final cuando no se necesita ninguno.",
+    "CAPTCHA verification": "Verificación CAPTCHA",
+    "Require Turnstile CAPTCHA on the web form to prevent bot submissions.":
+        "Requerir CAPTCHA de Turnstile en el formulario web para prevenir envíos de bots.",
     "Follow-up interview": "Entrevista de seguimiento",
     "Follow-up status: {status}": "Estado de seguimiento: {status}",
     "Image Upload": "Subir imagen",
@@ -1635,6 +1644,9 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Flutter follow-up interview": "Entretien de suivi de Flutter",
     "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.":
         "Après le formulaire principal, générez éventuellement des questions de suivi adaptatives dans les applications Flutter. Passe directement à la fin lorsqu'aucun n'est nécessaire.",
+    "CAPTCHA verification": "Vérification CAPTCHA",
+    "Require Turnstile CAPTCHA on the web form to prevent bot submissions.":
+        "Exiger un CAPTCHA Turnstile sur le formulaire web pour empêcher les soumissions de bots.",
     "Follow-up interview": "Entretien de suivi",
     "Follow-up status: {status}": "Statut de suivi : {status}",
     "Image Upload": "Téléchargement d'images",
@@ -2042,6 +2054,9 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Flutter follow-up interview": "Intervista di follow-up su Flutter",
     "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.":
         "Dopo il modulo principale, puoi facoltativamente generare domande di follow-up adattive nelle app Flutter. Passa direttamente al completamento quando non sono necessari.",
+    "CAPTCHA verification": "Verifica CAPTCHA",
+    "Require Turnstile CAPTCHA on the web form to prevent bot submissions.":
+        "Richiedere il CAPTCHA Turnstile nel modulo web per prevenire invii da bot.",
     "Follow-up interview": "Intervista di follow-up",
     "Follow-up status: {status}": "Stato successivo: {status}",
     "Image Upload": "Caricamento immagini",
@@ -2197,6 +2212,9 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Flutter follow-up interview": "Flutter 追加インタビュー",
     "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.":
         "本編の回答後、Flutter アプリのみ追加の適応型質問を生成します。不要な場合はそのまま完了します。",
+    "CAPTCHA verification": "CAPTCHA 認証",
+    "Require Turnstile CAPTCHA on the web form to prevent bot submissions.":
+        "ボットによる送信を防ぐため、Web フォームに Turnstile CAPTCHA を要求します。",
     "Follow-up interview": "追加インタビュー",
     "Follow-up status: {status}": "追加インタビューの状態: {status}",
     "Image Upload": "画像アップロード",
@@ -2741,6 +2759,9 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Flutter follow-up interview": "Flutter 후속 인터뷰",
     "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.":
         "기본 양식 후에 선택적으로 Flutter 앱에서 적응형 후속 질문을 생성하세요. 필요하지 않은 경우 바로 완료로 건너뜁니다.",
+    "CAPTCHA verification": "CAPTCHA 인증",
+    "Require Turnstile CAPTCHA on the web form to prevent bot submissions.":
+        "봇 제출을 방지하기 위해 웹 양식에 Turnstile CAPTCHA를 요구합니다.",
     "Follow-up interview": "후속 인터뷰",
     "Follow-up status: {status}": "후속 상태: {status}",
     "Image Upload": "이미지 업로드",
@@ -3170,6 +3191,9 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Flutter follow-up interview": "สัมภาษณ์ติดตามผล Flutter",
     "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.":
         "หลังจากแบบฟอร์มหลัก ให้เลือกสร้างคำถามติดตามผลแบบปรับเปลี่ยนได้ในแอป Flutter ข้ามไปจนจบเมื่อไม่จำเป็น",
+    "CAPTCHA verification": "การยืนยัน CAPTCHA",
+    "Require Turnstile CAPTCHA on the web form to prevent bot submissions.":
+        "กำหนดให้ใช้ Turnstile CAPTCHA บนแบบฟอร์มเว็บเพื่อป้องกันการส่งจากบอท",
     "Follow-up interview": "สัมภาษณ์ติดตามผล",
     "Follow-up status: {status}": "สถานะติดตามผล: {status}",
     "Image Upload": "อัพโหลดรูปภาพ",
@@ -3566,6 +3590,9 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Flutter follow-up interview": "Flutter takip röportajı",
     "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.":
         "Ana formdan sonra isteğe bağlı olarak Flutter uygulamalarında uyarlanabilir takip soruları oluşturun. Hiçbirine ihtiyaç duyulmadığında doğrudan tamamlamaya atlar.",
+    "CAPTCHA verification": "CAPTCHA doğrulaması",
+    "Require Turnstile CAPTCHA on the web form to prevent bot submissions.":
+        "Bot gönderimlerini önlemek için web formunda Turnstile CAPTCHA gerektirin.",
     "Follow-up interview": "Takip röportajı",
     "Follow-up status: {status}": "Takip durumu: {status}",
     "Image Upload": "Resim Yükleme",
@@ -3885,6 +3912,9 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Flutter follow-up interview": "Flutter后续采访",
     "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.":
         "在主表单之后，可以选择在 Flutter 应用程序中生成自适应后续问题。当不需要时直接跳到完成。",
+    "CAPTCHA verification": "CAPTCHA 验证",
+    "Require Turnstile CAPTCHA on the web form to prevent bot submissions.":
+        "在网页表单上要求 Turnstile CAPTCHA 以防止机器人提交。",
     "Follow-up interview": "后续采访",
     "Follow-up status: {status}": "跟进状态：{status}",
     "Image Upload": "图片上传",
@@ -4244,6 +4274,9 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Flutter follow-up interview": "Flutter後續採訪",
     "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.":
         "在主表單之後，可以選擇在 Flutter 應用程式中產生自適應後續問題。當不需要時直接跳到完成。",
+    "CAPTCHA verification": "CAPTCHA 驗證",
+    "Require Turnstile CAPTCHA on the web form to prevent bot submissions.":
+        "在網頁表單上要求 Turnstile CAPTCHA 以防止機器人提交。",
     "Follow-up interview": "後續採訪",
     "Follow-up status: {status}": "跟進狀態：{status}",
     "Image Upload": "圖片上傳",
