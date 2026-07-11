@@ -117,6 +117,10 @@ class AdminIntegrationSettingsInput {
   final String? smtpFromName;
   final SmtpSecureMode smtpSecureMode;
 
+  /// updatedAt from the settings snapshot the form was built from; the
+  /// server rejects the save with 409 if someone else saved in between.
+  final DateTime? expectedUpdatedAt;
+
   const AdminIntegrationSettingsInput({
     this.aiProvider = AiProvider.gemini,
     this.geminiApiKey,
@@ -135,9 +139,12 @@ class AdminIntegrationSettingsInput {
     this.smtpFromEmail,
     this.smtpFromName,
     this.smtpSecureMode = SmtpSecureMode.starttls,
+    this.expectedUpdatedAt,
   });
 
   Map<String, dynamic> toJson() => {
+    if (expectedUpdatedAt != null)
+      'expectedUpdatedAt': expectedUpdatedAt!.toIso8601String(),
     'ai': {
       'provider': _enumName(aiProvider),
       'geminiApiKey': geminiApiKey,

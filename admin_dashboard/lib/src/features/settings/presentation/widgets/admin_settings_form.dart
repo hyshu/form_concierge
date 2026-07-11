@@ -178,6 +178,7 @@ class _AdminSettingsFormState extends State<AdminSettingsForm> {
         smtpFromEmail: _nullIfBlank(_smtpFromEmailController.text),
         smtpFromName: _nullIfBlank(_smtpFromNameController.text),
         smtpSecureMode: _secureMode,
+        expectedUpdatedAt: widget.settings.updatedAt,
       ),
     );
     if (success && mounted) setState(() => _hasChanges = false);

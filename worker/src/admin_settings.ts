@@ -26,6 +26,19 @@ export async function updateAdminIntegrationSettings(request: Request, env: Env)
   const smtp = requireObject(body.smtp, 'smtp');
   const aiProvider = requireAiProvider(ai.provider);
 
+  // Optimistic concurrency: the whole row is replaced, so a concurrent save
+  // would otherwise silently overwrite the other admin's changes.
+  if (body.expectedUpdatedAt != null) {
+    if (typeof body.expectedUpdatedAt !== 'string') {
+      throw new HttpError(400, 'expectedUpdatedAt must be a string');
+    }
+    const current = await getIntegrationSettingsRow(env);
+    if (current?.updated_at != null
+      && Date.parse(current.updated_at) !== Date.parse(body.expectedUpdatedAt)) {
+      throw new HttpError(409, 'Settings were changed by someone else. Reload and try again.');
+    }
+  }
+
   const secretOps = buildSecretOps([
     { next: ai.geminiApiKey, clear: optionalBoolean(ai.clearGeminiApiKey, 'ai.clearGeminiApiKey') === true, field: 'ai.geminiApiKey', secretName: 'gemini_api_key' },
     { next: ai.openaiApiKey, clear: optionalBoolean(ai.clearOpenaiApiKey, 'ai.clearOpenaiApiKey') === true, field: 'ai.openaiApiKey', secretName: 'openai_api_key' },
