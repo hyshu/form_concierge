@@ -114,8 +114,30 @@ public struct Survey: Codable, Identifiable, Sendable {
   public let descriptionTranslations: LocalizedText
   public let status: SurveyStatus
   public let webEnabled: Bool
+  public let followUpEnabled: Bool
+  public let captchaEnabled: Bool
+  public let startsAt: Date?
+  public let endsAt: Date?
   public let createdAt: Date
   public let updatedAt: Date
+
+  public init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    id = try container.decode(Int.self, forKey: .id)
+    projectId = try container.decode(Int.self, forKey: .projectId)
+    slug = try container.decode(String.self, forKey: .slug)
+    titleTranslations = try container.decode(LocalizedText.self, forKey: .titleTranslations)
+    descriptionTranslations = try container.decode(LocalizedText.self, forKey: .descriptionTranslations)
+    status = try container.decode(SurveyStatus.self, forKey: .status)
+    webEnabled = try container.decode(Bool.self, forKey: .webEnabled)
+    // Tolerate older workers that do not send these fields yet.
+    followUpEnabled = try container.decodeIfPresent(Bool.self, forKey: .followUpEnabled) ?? false
+    captchaEnabled = try container.decodeIfPresent(Bool.self, forKey: .captchaEnabled) ?? true
+    startsAt = try container.decodeIfPresent(Date.self, forKey: .startsAt)
+    endsAt = try container.decodeIfPresent(Date.self, forKey: .endsAt)
+    createdAt = try container.decode(Date.self, forKey: .createdAt)
+    updatedAt = try container.decode(Date.self, forKey: .updatedAt)
+  }
 
   public func title(for locale: String) -> String {
     titleTranslations.value(for: locale)

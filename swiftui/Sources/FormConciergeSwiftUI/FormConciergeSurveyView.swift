@@ -194,7 +194,9 @@ public struct FormConciergeSurveyView: View {
     if let surveyId {
       return project.surveys.first { $0.id == surveyId }
     }
-    return project.surveys.first
+    // Match the Flutter widget: only auto-select when exactly one survey
+    // exists, so multi-survey projects require an explicit slug or id.
+    return project.surveys.count == 1 ? project.surveys.first : nil
   }
 
   private func submit() async {
