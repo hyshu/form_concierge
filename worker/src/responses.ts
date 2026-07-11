@@ -10,6 +10,7 @@ import {
   nowIso,
   readJson,
   requireString,
+  queryInChunks,
   requiredRow,
 } from './utils';
 import { answerToJson, choiceToJson, parseChoiceIds, projectToJson, questionToJson, replyToJson, responseToJson, surveyToJson } from './serializers';
@@ -142,24 +143,24 @@ async function loadAnswersForQuestions(
   questionIds: number[],
 ): Promise<AnswerWithResponseMeta[]> {
   if (questionIds.length === 0) return [];
-  const placeholders = questionIds.map(() => '?').join(', ');
-  const rows = await db.prepare(
-    `SELECT a.*, r.submitted_at, r.anonymous_id
+  return queryInChunks<AnswerWithResponseMeta>(
+    db,
+    (ph) => `SELECT a.*, r.submitted_at, r.anonymous_id
      FROM answers a
      JOIN survey_responses r ON r.id = a.survey_response_id
-     WHERE a.question_id IN (${placeholders})
+     WHERE a.question_id IN (${ph})
      ORDER BY r.submitted_at DESC, a.id`,
-  ).bind(...questionIds).all<AnswerWithResponseMeta>();
-  return rows.results;
+    questionIds,
+  );
 }
 
 async function loadChoicesForQuestions(db: D1Database, questionIds: number[]): Promise<ChoiceRow[]> {
   if (questionIds.length === 0) return [];
-  const placeholders = questionIds.map(() => '?').join(', ');
-  const rows = await db.prepare(
-    `SELECT * FROM choices WHERE question_id IN (${placeholders}) ORDER BY order_index`,
-  ).bind(...questionIds).all<ChoiceRow>();
-  return rows.results;
+  return queryInChunks<ChoiceRow>(
+    db,
+    (ph) => `SELECT * FROM choices WHERE question_id IN (${ph}) ORDER BY order_index`,
+    questionIds,
+  );
 }
 
 export async function responseTrends(env: Env, surveyId: number, url: URL): Promise<Response> {

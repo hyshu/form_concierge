@@ -6,6 +6,7 @@ import {
   json,
   jsonHeaders,
   logError,
+  queryInChunks,
 } from './utils';
 
 const KEY_PATTERN = /^uploads\/[a-zA-Z0-9_-]+\/[a-zA-Z0-9-]+\.(jpe?g|png|webp|gif)$/i;
@@ -249,23 +250,26 @@ export async function collectFileKeysForSurveys(
   surveyIds: readonly number[],
 ): Promise<string[]> {
   if (surveyIds.length === 0) return [];
-  const placeholders = surveyIds.map(() => '?').join(',');
   const [answerRows, responseRows] = await Promise.all([
-    db.prepare(
-      `SELECT a.text_value FROM answers a
+    queryInChunks<{ text_value: string | null }>(
+      db,
+      (ph) => `SELECT a.text_value FROM answers a
        JOIN survey_responses r ON a.survey_response_id = r.id
-       WHERE r.survey_id IN (${placeholders})`,
-    ).bind(...surveyIds).all<{ text_value: string | null }>(),
-    db.prepare(
-      `SELECT follow_up FROM survey_responses WHERE survey_id IN (${placeholders}) AND follow_up IS NOT NULL`,
-    ).bind(...surveyIds).all<{ follow_up: string | null }>(),
+       WHERE r.survey_id IN (${ph})`,
+      surveyIds,
+    ),
+    queryInChunks<{ follow_up: string | null }>(
+      db,
+      (ph) => `SELECT follow_up FROM survey_responses WHERE survey_id IN (${ph}) AND follow_up IS NOT NULL`,
+      surveyIds,
+    ),
   ]);
   const keys: string[] = [];
-  for (const row of answerRows.results) {
+  for (const row of answerRows) {
     const parsed = parseStoredFileKeys(row.text_value);
     if (parsed) keys.push(...parsed);
   }
-  for (const row of responseRows.results) {
+  for (const row of responseRows) {
     keys.push(...collectFileKeysFromResponse([], row.follow_up));
   }
   return keys;

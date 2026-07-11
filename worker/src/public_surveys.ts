@@ -12,6 +12,7 @@ import {
   optionalLimitedString,
   readJson,
   requireAnswerInput,
+  queryInChunks,
   requiredInteger,
 } from './utils';
 import { normalizeDeviceInfo, normalizeMetadata } from './metadata';
@@ -356,11 +357,12 @@ async function loadValidChoiceIdsByQuestion(
 ): Promise<Map<number, Set<number>>> {
   const map = new Map<number, Set<number>>();
   if (questionIds.length === 0) return map;
-  const placeholders = questionIds.map(() => '?').join(', ');
-  const rows = await db.prepare(
-    `SELECT id, question_id FROM choices WHERE question_id IN (${placeholders})`,
-  ).bind(...questionIds).all<{ id: number; question_id: number }>();
-  for (const row of rows.results) {
+  const rows = await queryInChunks<{ id: number; question_id: number }>(
+    db,
+    (ph) => `SELECT id, question_id FROM choices WHERE question_id IN (${ph})`,
+    questionIds,
+  );
+  for (const row of rows) {
     const set = map.get(row.question_id) ?? new Set<number>();
     set.add(row.id);
     map.set(row.question_id, set);

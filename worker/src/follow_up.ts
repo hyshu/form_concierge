@@ -10,6 +10,7 @@ import {
   json,
   nowIso,
   readJson,
+  queryInChunks,
   requireString,
 } from './utils';
 import { followUpToJson, parseChoiceIds, responseToJson } from './serializers';
@@ -493,23 +494,26 @@ async function buildRecentResponsesSummary(
   const choicesByQuestion = await loadChoicesByQuestion(env, questionIds);
 
   const responseIds = recent.results.map((row) => row.id);
-  const placeholders = responseIds.map(() => '?').join(', ');
   const [allAnswers, allReplies] = await Promise.all([
-    env.DB.prepare(
-      `SELECT * FROM answers WHERE survey_response_id IN (${placeholders})`,
-    ).bind(...responseIds).all<AnswerRow>(),
-    env.DB.prepare(
-      `SELECT * FROM admin_replies WHERE survey_response_id IN (${placeholders}) ORDER BY created_at ASC`,
-    ).bind(...responseIds).all<ReplyRow>(),
+    queryInChunks<AnswerRow>(
+      env.DB,
+      (ph) => `SELECT * FROM answers WHERE survey_response_id IN (${ph})`,
+      responseIds,
+    ),
+    queryInChunks<ReplyRow>(
+      env.DB,
+      (ph) => `SELECT * FROM admin_replies WHERE survey_response_id IN (${ph}) ORDER BY created_at ASC`,
+      responseIds,
+    ),
   ]);
   const answersByResponse = new Map<number, Map<number, AnswerRow>>();
-  for (const answer of allAnswers.results) {
+  for (const answer of allAnswers) {
     const byQuestion = answersByResponse.get(answer.survey_response_id) ?? new Map();
     byQuestion.set(answer.question_id, answer);
     answersByResponse.set(answer.survey_response_id, byQuestion);
   }
   const repliesByResponse = new Map<number, ReplyRow[]>();
-  for (const reply of allReplies.results) {
+  for (const reply of allReplies) {
     const list = repliesByResponse.get(reply.survey_response_id) ?? [];
     list.push(reply);
     repliesByResponse.set(reply.survey_response_id, list);
@@ -705,11 +709,12 @@ async function loadChoicesByQuestion(
 ): Promise<Map<number, ChoiceRow[]>> {
   const map = new Map<number, ChoiceRow[]>();
   if (questionIds.length === 0) return map;
-  const placeholders = questionIds.map(() => '?').join(', ');
-  const rows = await env.DB.prepare(
-    `SELECT * FROM choices WHERE question_id IN (${placeholders}) ORDER BY order_index`,
-  ).bind(...questionIds).all<ChoiceRow>();
-  for (const choice of rows.results) {
+  const rows = await queryInChunks<ChoiceRow>(
+    env.DB,
+    (ph) => `SELECT * FROM choices WHERE question_id IN (${ph}) ORDER BY order_index`,
+    questionIds,
+  );
+  for (const choice of rows) {
     const list = map.get(choice.question_id) ?? [];
     list.push(choice);
     map.set(choice.question_id, list);

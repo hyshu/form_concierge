@@ -1,6 +1,6 @@
 import type { ChoiceRow, Env, ProjectRow, QuestionRow, SurveyRow } from './types';
 import { choiceToJson, projectToJson, questionToJson, surveyToJson, visibilityRuleToJson } from './serializers';
-import { HttpError, optionalCustomDomain } from './utils';
+import { HttpError, optionalCustomDomain, queryInChunks } from './utils';
 import {
   DEFAULT_FORM_CONTENT_LOCALE,
   preferredLocalesFromAcceptLanguage,
@@ -146,11 +146,12 @@ async function loadChoicesByQuestion(
   }
   const questionIds = questions.map((question) => question.id);
   if (questionIds.length === 0) return choicesByQuestion;
-  const placeholders = questionIds.map(() => '?').join(', ');
-  const rows = await env.DB.prepare(
-    `SELECT * FROM choices WHERE question_id IN (${placeholders}) ORDER BY order_index`,
-  ).bind(...questionIds).all<ChoiceRow>();
-  for (const row of rows.results) {
+  const rows = await queryInChunks<ChoiceRow>(
+    env.DB,
+    (ph) => `SELECT * FROM choices WHERE question_id IN (${ph}) ORDER BY order_index`,
+    questionIds,
+  );
+  for (const row of rows) {
     const key = String(row.question_id);
     (choicesByQuestion[key] ??= []).push(choiceToJson(row));
   }

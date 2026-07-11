@@ -5,6 +5,7 @@ import {
   json,
   nowIso,
   optionalCustomDomain,
+  queryInChunks,
   readJson,
   requireSlug,
   requireString,
@@ -27,11 +28,12 @@ export async function listProjects(env: Env, url: URL): Promise<Response> {
   const projectIds = projects.results.map((project) => project.id);
   const surveysByProject = new Map<number, SurveyRow[]>();
   if (projectIds.length > 0) {
-    const placeholders = projectIds.map(() => '?').join(', ');
-    const surveys = await env.DB.prepare(
-      `SELECT * FROM surveys WHERE project_id IN (${placeholders}) ORDER BY updated_at DESC`,
-    ).bind(...projectIds).all<SurveyRow>();
-    for (const survey of surveys.results) {
+    const surveys = await queryInChunks<SurveyRow>(
+      env.DB,
+      (ph) => `SELECT * FROM surveys WHERE project_id IN (${ph}) ORDER BY updated_at DESC`,
+      projectIds,
+    );
+    for (const survey of surveys) {
       const current = surveysByProject.get(survey.project_id) ?? [];
       current.push(survey);
       surveysByProject.set(survey.project_id, current);

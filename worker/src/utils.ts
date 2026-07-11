@@ -157,6 +157,24 @@ export function requiredRow<T>(row: T | null, name: string): T {
   return row;
 }
 
+const D1_BIND_CHUNK = 90;
+
+export async function queryInChunks<T>(
+  db: D1Database,
+  buildSql: (placeholders: string) => string,
+  ids: readonly unknown[],
+): Promise<T[]> {
+  if (ids.length === 0) return [];
+  const results: T[] = [];
+  for (let i = 0; i < ids.length; i += D1_BIND_CHUNK) {
+    const chunk = ids.slice(i, i + D1_BIND_CHUNK);
+    const ph = chunk.map(() => '?').join(', ');
+    const rows = await db.prepare(buildSql(ph)).bind(...chunk).all<T>();
+    results.push(...rows.results);
+  }
+  return results;
+}
+
 export function requireString(value: unknown, field: string): string {
   if (typeof value !== 'string' || value.trim().length === 0) {
     throw new HttpError(400, `${field} is required`);
