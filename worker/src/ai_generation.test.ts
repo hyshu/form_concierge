@@ -9,6 +9,8 @@ import {
   emptyD1Result,
   localizedText,
   stubRateLimiter,
+  stubSecretsStoreEnv,
+  stubSecretsStoreSecret,
   TEST_TURNSTILE_SITE_KEY,
   TEST_TURNSTILE_SECRET_KEY,
 } from '../test/helpers';
@@ -126,6 +128,8 @@ function envWithSettings(): Env {
     ANON_CREATE_RATE_LIMITER: stubRateLimiter(),
     TURNSTILE_SITE_KEY: TEST_TURNSTILE_SITE_KEY,
     TURNSTILE_SECRET_KEY: TEST_TURNSTILE_SECRET_KEY,
+    ...stubSecretsStoreEnv(),
+    OPENAI_API_KEY: stubSecretsStoreSecret('openai-key'),
   };
 }
 
@@ -138,7 +142,6 @@ function d1WithSettings(): D1Database {
     async first<T>() {
       return integrationSettingsRow({
         ai_provider: 'openai',
-        openai_api_key: 'openai-key',
         smtp_host: null,
         smtp_port: null,
         smtp_from_email: null,

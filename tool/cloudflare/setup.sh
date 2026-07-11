@@ -415,6 +415,38 @@ ensure_d1_database() {
   fi
 }
 
+SECRETS_STORE_ID="${SECRETS_STORE_ID:-}"
+DEFAULT_SECRETS_STORE_NAME="${DEFAULT_SECRETS_STORE_NAME:-default_secrets_store}"
+SECRETS_STORE_NAME="${SECRETS_STORE_NAME:-$DEFAULT_SECRETS_STORE_NAME}"
+
+find_secrets_store_id() {
+  local json
+  json="$(cd "$WORKER_DIR" && npx wrangler secrets-store store list --remote --json 2>/dev/null || echo '[]')"
+  node - "$SECRETS_STORE_NAME" "$json" <<'NODE'
+const [name, raw] = process.argv.slice(2);
+const stores = JSON.parse(raw);
+const match = stores.find((s) => s.name === name);
+process.stdout.write(match?.id ?? '');
+NODE
+}
+
+ensure_secrets_store() {
+  if [[ -z "$SECRETS_STORE_ID" ]]; then
+    SECRETS_STORE_ID="$(find_secrets_store_id)"
+  fi
+
+  if [[ -z "$SECRETS_STORE_ID" ]]; then
+    echo "==> Create Secrets Store: $SECRETS_STORE_NAME"
+    (cd "$WORKER_DIR" && npx wrangler secrets-store store create "$SECRETS_STORE_NAME" --remote)
+    SECRETS_STORE_ID="$(find_secrets_store_id)"
+  fi
+
+  if [[ -z "$SECRETS_STORE_ID" ]]; then
+    echo "Could not resolve Secrets Store ID for $SECRETS_STORE_NAME." >&2
+    exit 1
+  fi
+}
+
 ensure_r2_bucket() {
   if (cd "$WORKER_DIR" && npx wrangler r2 bucket info "$R2_BUCKET_NAME" >/dev/null 2>&1); then
     return 0
@@ -454,9 +486,12 @@ export_local_project_seed() {
 }
 
 update_wrangler() {
-  node - "$WORKER_DIR/wrangler.jsonc" "$WORKER_NAME" "$D1_DATABASE_NAME" "$D1_DATABASE_ID" "$API_URL" "$WEB_ASSET_BASE_URL" "$R2_BUCKET_NAME" "$R2_BINDING" "$REMOTE_BINDINGS_FOR_LOCAL_DEV" <<'NODE'
+  local account_id
+  account_id="$(cd "$WORKER_DIR" && npx wrangler whoami --json 2>/dev/null | node -e "const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8'));process.stdout.write((d.accounts??d)[0]?.id??'')" 2>/dev/null || echo "")"
+
+  node - "$WORKER_DIR/wrangler.jsonc" "$WORKER_NAME" "$D1_DATABASE_NAME" "$D1_DATABASE_ID" "$API_URL" "$WEB_ASSET_BASE_URL" "$R2_BUCKET_NAME" "$R2_BINDING" "$REMOTE_BINDINGS_FOR_LOCAL_DEV" "$SECRETS_STORE_ID" "$account_id" <<'NODE'
 const fs = require('fs');
-const [file, workerName, databaseName, databaseId, apiUrl, assetBaseUrl, r2BucketName, r2Binding, remoteBindingsForLocalDev] = process.argv.slice(2);
+const [file, workerName, databaseName, databaseId, apiUrl, assetBaseUrl, r2BucketName, r2Binding, remoteBindingsForLocalDev, secretsStoreId, accountId] = process.argv.slice(2);
 const remote = remoteBindingsForLocalDev === '1';
 const raw = fs.readFileSync(file, 'utf8');
 const json = raw
@@ -471,6 +506,14 @@ config.d1_databases = [{
   migrations_dir: 'migrations',
   remote,
 }];
+if (secretsStoreId) {
+  const secretNames = ['gemini_api_key', 'openai_api_key', 'claude_api_key', 'cerebras_api_key', 'smtp_password'];
+  config.secrets_store_secrets = secretNames.map(name => ({
+    binding: name.toUpperCase(),
+    store_id: secretsStoreId,
+    secret_name: name,
+  }));
+}
 config.r2_buckets = [{
   binding: r2Binding,
   bucket_name: r2BucketName,
@@ -479,6 +522,8 @@ config.r2_buckets = [{
 config.vars = config.vars ?? {};
 if (apiUrl) config.vars.PUBLIC_BASE_URL = apiUrl.replace(/\/+$/, '');
 config.vars.PUBLIC_FORM_ASSET_BASE_URL = assetBaseUrl.replace(/\/+$/, '');
+if (accountId) config.vars.CF_ACCOUNT_ID = accountId;
+if (secretsStoreId) config.vars.CF_SECRETS_STORE_ID = secretsStoreId;
 fs.writeFileSync(file, `${JSON.stringify(config, null, 2)}\n`);
 NODE
 }
@@ -584,6 +629,21 @@ fi
 ensure_d1_database
 ensure_r2_bucket
 wait_for_r2_bucket
+ensure_secrets_store
+
+ensure_cf_api_token() {
+  if (cd "$WORKER_DIR" && npx wrangler secret list --json 2>/dev/null | node -e "
+    const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8'));
+    process.exit(d.some(s=>s.name==='CF_API_TOKEN')?0:1)
+  " 2>/dev/null); then
+    return 0
+  fi
+  echo "==> CF_API_TOKEN Worker Secret is required for Secrets Store management."
+  echo "    Create an API Token at https://dash.cloudflare.com/profile/api-tokens"
+  echo "    with 'Account > Secrets Store > Edit' permission."
+  (cd "$WORKER_DIR" && npx wrangler secret put CF_API_TOKEN)
+}
+ensure_cf_api_token
 
 echo "==> Configure Worker"
 update_wrangler

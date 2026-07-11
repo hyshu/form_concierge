@@ -7,6 +7,7 @@ import {
   assertHttpErrorAsync,
   d1Database,
   stubRateLimiter,
+  stubSecretsStoreEnv,
   TEST_TURNSTILE_SITE_KEY,
   TEST_TURNSTILE_SECRET_KEY,
 } from '../test/helpers';
@@ -79,8 +80,8 @@ test('stored integration setting enums fail closed', async () => {
     500,
     'Invalid stored AI provider',
   );
-  assertHttpError(
-    () => requireSmtpSettings(integrationSettingsRow({ smtp_secure_mode: 'ssl' })),
+  await assertHttpErrorAsync(
+    () => requireSmtpSettings(integrationSettingsRow({ smtp_secure_mode: 'ssl' }), envWithSettings(null)),
     500,
     'Invalid stored SMTP secure mode',
   );
@@ -112,5 +113,6 @@ function envWithSettings(row: IntegrationSettingsRow | null): Env {
     ANON_CREATE_RATE_LIMITER: stubRateLimiter(),
     TURNSTILE_SITE_KEY: TEST_TURNSTILE_SITE_KEY,
     TURNSTILE_SECRET_KEY: TEST_TURNSTILE_SECRET_KEY,
+    ...stubSecretsStoreEnv(),
   };
 }

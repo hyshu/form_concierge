@@ -1,4 +1,6 @@
-export type Env = WorkerEnv;
+export type Env = WorkerEnv & {
+  CF_API_TOKEN: string;
+};
 
 export type AdminContext = {
   id: string;
@@ -142,14 +144,9 @@ export type NotificationSettingsRow = {
 export type IntegrationSettingsRow = {
   id: number;
   ai_provider: string;
-  gemini_api_key: string | null;
-  openai_api_key: string | null;
-  claude_api_key: string | null;
-  cerebras_api_key: string | null;
   smtp_host: string | null;
   smtp_port: number | null;
   smtp_username: string | null;
-  smtp_password: string | null;
   smtp_from_email: string | null;
   smtp_from_name: string | null;
   smtp_secure_mode: string;

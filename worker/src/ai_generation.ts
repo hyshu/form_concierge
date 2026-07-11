@@ -332,7 +332,7 @@ async function requireAiProvider(env: Env): Promise<{ provider: AiProvider; apiK
   const settings = await getIntegrationSettingsRow(env);
   if (!settings) throw new HttpError(400, 'AI generation provider is not configured');
   const provider = normalizeAiProvider(settings.ai_provider);
-  const apiKey = apiKeyForProvider(settings, provider);
+  const apiKey = await apiKeyForProvider(env, provider);
   if (!apiKey) throw new HttpError(400, `${providerLabel(provider)} API key is not configured`);
   return { provider, apiKey };
 }

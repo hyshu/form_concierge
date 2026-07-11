@@ -50,7 +50,7 @@ export async function notificationSettings(
     return json(notificationToJson(row));
   }
   if (method === 'POST' && parts[5] === 'test') {
-    const settings = requireSmtpSettings(await getIntegrationSettingsRow(env));
+    const settings = await requireSmtpSettings(await getIntegrationSettingsRow(env), env);
     const row = await env.DB.prepare(
       `SELECT * FROM notification_settings WHERE survey_id = ?`,
     ).bind(surveyId).first<NotificationSettingsRow>();
@@ -95,7 +95,7 @@ export async function sendResponseNotification(
     return;
   }
 
-  const settings = requireSmtpSettings(integrationSettings);
+  const settings = await requireSmtpSettings(integrationSettings, env);
   const project = await env.DB.prepare(
     `SELECT * FROM projects WHERE id = ?`,
   ).bind(survey.project_id).first<ProjectRow>();

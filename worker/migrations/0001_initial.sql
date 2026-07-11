@@ -115,9 +115,12 @@ CREATE TABLE survey_responses (
   device_pixel_ratio REAL,
   device_info TEXT,
   metadata TEXT,
-  follow_up TEXT
+  follow_up TEXT,
+  idempotency_key TEXT
 );
 
+CREATE UNIQUE INDEX survey_responses_idempotency_key ON survey_responses (idempotency_key)
+  WHERE idempotency_key IS NOT NULL;
 CREATE INDEX survey_responses_survey_submitted ON survey_responses(survey_id, submitted_at);
 CREATE INDEX survey_responses_anonymous_account ON survey_responses(anonymous_account_id, submitted_at);
 
@@ -173,14 +176,9 @@ CREATE TABLE notification_settings (
 CREATE TABLE integration_settings (
   id INTEGER PRIMARY KEY CHECK (id = 1),
   ai_provider TEXT NOT NULL DEFAULT 'gemini',
-  gemini_api_key TEXT,
-  openai_api_key TEXT,
-  claude_api_key TEXT,
-  cerebras_api_key TEXT,
   smtp_host TEXT,
   smtp_port INTEGER,
   smtp_username TEXT,
-  smtp_password TEXT,
   smtp_from_email TEXT,
   smtp_from_name TEXT,
   smtp_secure_mode TEXT NOT NULL DEFAULT 'starttls',

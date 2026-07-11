@@ -7,6 +7,7 @@ import {
   d1Database,
   d1Result,
   stubRateLimiter,
+  stubSecretsStoreEnv,
   TEST_TURNSTILE_SITE_KEY,
   TEST_TURNSTILE_SECRET_KEY,
 } from '../test/helpers';
@@ -149,5 +150,6 @@ function envWithPublicRows(input: {
     ANON_CREATE_RATE_LIMITER: stubRateLimiter(),
     TURNSTILE_SITE_KEY: TEST_TURNSTILE_SITE_KEY,
     TURNSTILE_SECRET_KEY: TEST_TURNSTILE_SECRET_KEY,
+    ...stubSecretsStoreEnv(),
   };
 }

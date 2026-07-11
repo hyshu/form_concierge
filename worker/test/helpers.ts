@@ -119,6 +119,28 @@ export function stubRateLimiter(): RateLimit {
 export const TEST_TURNSTILE_SITE_KEY = '1x00000000000000000000AA';
 export const TEST_TURNSTILE_SECRET_KEY = '1x0000000000000000000000000000000AA';
 
+export function stubSecretsStoreSecret(value?: string): SecretsStoreSecret {
+  return {
+    async get() {
+      if (value === undefined) throw new Error('Secret not found');
+      return value;
+    },
+  };
+}
+
+export function stubSecretsStoreEnv() {
+  return {
+    GEMINI_API_KEY: stubSecretsStoreSecret(),
+    OPENAI_API_KEY: stubSecretsStoreSecret(),
+    CLAUDE_API_KEY: stubSecretsStoreSecret(),
+    CEREBRAS_API_KEY: stubSecretsStoreSecret(),
+    SMTP_PASSWORD: stubSecretsStoreSecret(),
+    CF_API_TOKEN: 'test-token',
+    CF_ACCOUNT_ID: 'test-account',
+    CF_SECRETS_STORE_ID: 'test-store',
+  };
+}
+
 function adminJsonRequest(path: string, method: 'POST' | 'PUT', body: unknown): Request {
   return new Request(`${adminApiBaseUrl}/${path}`, {
     method,

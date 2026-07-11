@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
+import { stubSecretsStoreEnv } from '../test/helpers';
 import worker from './index';
 import type { Env } from './types';
 
@@ -44,6 +45,7 @@ function envWithoutDb(): Env {
     ANON_CREATE_RATE_LIMITER: { async limit() { return { success: true }; } },
     TURNSTILE_SITE_KEY: '1x00000000000000000000AA',
     TURNSTILE_SECRET_KEY: '1x0000000000000000000000000000000AA',
+    ...stubSecretsStoreEnv(),
   };
 }
 

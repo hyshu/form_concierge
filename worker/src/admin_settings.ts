@@ -1,4 +1,5 @@
 import type { Env, IntegrationSettingsRow } from './types';
+import { tryGetSecret, upsertSecret, deleteSecret } from './secrets_store';
 import { HttpError, json, nowIso, optionalBoolean, optionalInteger, readJson, requireObject } from './utils';
 
 export type SmtpSecureMode = 'none' | 'starttls' | 'tls';
@@ -16,108 +17,108 @@ export async function getIntegrationSettingsRow(env: Env): Promise<IntegrationSe
 
 export async function getAdminIntegrationSettings(env: Env): Promise<Response> {
   const row = await getIntegrationSettingsRow(env);
-  return json(integrationSettingsToJson(row));
+  return json(await integrationSettingsToJson(env, row));
 }
 
 export async function updateAdminIntegrationSettings(request: Request, env: Env): Promise<Response> {
   const body = await readJson(request);
-  const existing = await getIntegrationSettingsRow(env);
   const ai = requireObject(body.ai, 'ai');
   const smtp = requireObject(body.smtp, 'smtp');
   const aiProvider = requireAiProvider(ai.provider);
 
-  const geminiApiKey = secretValue({
-    next: ai.geminiApiKey,
-    existing: existing?.gemini_api_key ?? null,
-    clear: optionalBoolean(ai.clearGeminiApiKey, 'ai.clearGeminiApiKey') === true,
-    field: 'ai.geminiApiKey',
-  });
-  const openaiApiKey = secretValue({
-    next: ai.openaiApiKey,
-    existing: existing?.openai_api_key ?? null,
-    clear: optionalBoolean(ai.clearOpenaiApiKey, 'ai.clearOpenaiApiKey') === true,
-    field: 'ai.openaiApiKey',
-  });
-  const claudeApiKey = secretValue({
-    next: ai.claudeApiKey,
-    existing: existing?.claude_api_key ?? null,
-    clear: optionalBoolean(ai.clearClaudeApiKey, 'ai.clearClaudeApiKey') === true,
-    field: 'ai.claudeApiKey',
-  });
-  const cerebrasApiKey = secretValue({
-    next: ai.cerebrasApiKey,
-    existing: existing?.cerebras_api_key ?? null,
-    clear: optionalBoolean(ai.clearCerebrasApiKey, 'ai.clearCerebrasApiKey') === true,
-    field: 'ai.cerebrasApiKey',
-  });
+  const secretOps = buildSecretOps([
+    { next: ai.geminiApiKey, clear: optionalBoolean(ai.clearGeminiApiKey, 'ai.clearGeminiApiKey') === true, field: 'ai.geminiApiKey', secretName: 'gemini_api_key' },
+    { next: ai.openaiApiKey, clear: optionalBoolean(ai.clearOpenaiApiKey, 'ai.clearOpenaiApiKey') === true, field: 'ai.openaiApiKey', secretName: 'openai_api_key' },
+    { next: ai.claudeApiKey, clear: optionalBoolean(ai.clearClaudeApiKey, 'ai.clearClaudeApiKey') === true, field: 'ai.claudeApiKey', secretName: 'claude_api_key' },
+    { next: ai.cerebrasApiKey, clear: optionalBoolean(ai.clearCerebrasApiKey, 'ai.clearCerebrasApiKey') === true, field: 'ai.cerebrasApiKey', secretName: 'cerebras_api_key' },
+    { next: smtp.password, clear: optionalBoolean(smtp.clearPassword, 'smtp.clearPassword') === true, field: 'smtp.password', secretName: 'smtp_password' },
+  ]);
 
   const smtpHost = optionalHost(smtp.host);
   const smtpPort = optionalPort(smtp.port);
   const smtpUsername = optionalSettingsString(smtp.username, 'smtp.username');
-  const smtpPassword = secretValue({
-    next: smtp.password,
-    existing: existing?.smtp_password ?? null,
-    clear: optionalBoolean(smtp.clearPassword, 'smtp.clearPassword') === true,
-    field: 'smtp.password',
-  });
   const smtpFromEmail = optionalEmail(smtp.fromEmail, 'smtp.fromEmail');
   const smtpFromName = optionalSettingsString(smtp.fromName, 'smtp.fromName');
   const smtpSecureMode = requireSecureMode(smtp.secureMode);
 
+  const smtpPasswordForValidation: string | null = secretOps.some(
+    op => op.secretName === 'smtp_password' && op.action === 'clear',
+  ) ? null : (typeof smtp.password === 'string' ? smtp.password : (await tryGetSecret(env.SMTP_PASSWORD)));
   assertSmtpSettingsAreCoherent({
     host: smtpHost,
     port: smtpPort,
     fromEmail: smtpFromEmail,
     username: smtpUsername,
-    password: smtpPassword,
+    password: smtpPasswordForValidation,
   });
 
-  const row = await env.DB.prepare(
-    `INSERT INTO integration_settings
-       (id, ai_provider, gemini_api_key, openai_api_key, claude_api_key, cerebras_api_key,
-        smtp_host, smtp_port, smtp_username, smtp_password, smtp_from_email, smtp_from_name,
-        smtp_secure_mode, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-     ON CONFLICT(id) DO UPDATE SET
-       ai_provider = excluded.ai_provider,
-       gemini_api_key = excluded.gemini_api_key,
-       openai_api_key = excluded.openai_api_key,
-       claude_api_key = excluded.claude_api_key,
-       cerebras_api_key = excluded.cerebras_api_key,
-       smtp_host = excluded.smtp_host,
-       smtp_port = excluded.smtp_port,
-       smtp_username = excluded.smtp_username,
-       smtp_password = excluded.smtp_password,
-       smtp_from_email = excluded.smtp_from_email,
-       smtp_from_name = excluded.smtp_from_name,
-       smtp_secure_mode = excluded.smtp_secure_mode,
-       updated_at = excluded.updated_at
-     RETURNING *`,
-  ).bind(
-    SETTINGS_ID,
-    aiProvider,
-    geminiApiKey,
-    openaiApiKey,
-    claudeApiKey,
-    cerebrasApiKey,
-    smtpHost,
-    smtpPort,
-    smtpUsername,
-    smtpPassword,
-    smtpFromEmail,
-    smtpFromName,
-    smtpSecureMode,
-    nowIso(),
-  ).first<IntegrationSettingsRow>();
+  const [row] = await Promise.all([
+    env.DB.prepare(
+      `INSERT INTO integration_settings
+         (id, ai_provider, smtp_host, smtp_port, smtp_username, smtp_from_email, smtp_from_name,
+          smtp_secure_mode, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(id) DO UPDATE SET
+         ai_provider = excluded.ai_provider,
+         smtp_host = excluded.smtp_host,
+         smtp_port = excluded.smtp_port,
+         smtp_username = excluded.smtp_username,
+         smtp_from_email = excluded.smtp_from_email,
+         smtp_from_name = excluded.smtp_from_name,
+         smtp_secure_mode = excluded.smtp_secure_mode,
+         updated_at = excluded.updated_at
+       RETURNING *`,
+    ).bind(
+      SETTINGS_ID,
+      aiProvider,
+      smtpHost,
+      smtpPort,
+      smtpUsername,
+      smtpFromEmail,
+      smtpFromName,
+      smtpSecureMode,
+      nowIso(),
+    ).first<IntegrationSettingsRow>(),
+    ...secretOps.map(op =>
+      op.action === 'upsert'
+        ? upsertSecret(env, op.secretName, op.value!)
+        : deleteSecret(env, op.secretName),
+    ),
+  ]);
 
   if (!row) throw new HttpError(500, 'Settings operation failed');
-  return json(integrationSettingsToJson(row));
+  return json(await integrationSettingsToJson(env, row));
+}
+
+type SecretOp = {
+  secretName: string;
+  action: 'upsert' | 'clear';
+  value?: string;
+};
+
+function buildSecretOps(
+  specs: { next: unknown; clear: boolean; field: string; secretName: string }[],
+): SecretOp[] {
+  const ops: SecretOp[] = [];
+  for (const spec of specs) {
+    if (spec.clear) {
+      ops.push({ secretName: spec.secretName, action: 'clear' });
+      continue;
+    }
+    if (spec.next == null || spec.next === '') continue;
+    if (typeof spec.next !== 'string') throw new HttpError(400, `${spec.field} must be a string`);
+    const trimmed = spec.next.trim();
+    if (trimmed.length > 0) {
+      ops.push({ secretName: spec.secretName, action: 'upsert', value: trimmed });
+    }
+  }
+  return ops;
 }
 
 export async function isAiGenerationConfigured(env: Env): Promise<boolean> {
   const row = await getIntegrationSettingsRow(env);
   if (!row) return false;
-  return Boolean(apiKeyForProvider(row, normalizeAiProvider(row.ai_provider)));
+  return Boolean(await apiKeyForProvider(env, normalizeAiProvider(row.ai_provider)));
 }
 
 export async function isEmailConfiguredResponse(env: Env): Promise<Response> {
@@ -129,7 +130,7 @@ export function isSmtpConfigured(row: IntegrationSettingsRow | null): boolean {
   return Boolean(row?.smtp_host && row.smtp_port && row.smtp_from_email);
 }
 
-export function requireSmtpSettings(row: IntegrationSettingsRow | null): RequiredSmtpSettings {
+export async function requireSmtpSettings(row: IntegrationSettingsRow | null, env: Env): Promise<RequiredSmtpSettings> {
   if (!isSmtpConfigured(row)) {
     throw new HttpError(400, 'SMTP settings are not configured');
   }
@@ -137,7 +138,7 @@ export function requireSmtpSettings(row: IntegrationSettingsRow | null): Require
     host: row!.smtp_host!,
     port: row!.smtp_port!,
     username: row!.smtp_username,
-    password: row!.smtp_password,
+    password: await tryGetSecret(env.SMTP_PASSWORD),
     fromEmail: row!.smtp_from_email!,
     fromName: row!.smtp_from_name,
     secureMode: normalizeSecureMode(row!.smtp_secure_mode),
@@ -154,22 +155,41 @@ export type RequiredSmtpSettings = {
   secureMode: SmtpSecureMode;
 };
 
-function integrationSettingsToJson(row: IntegrationSettingsRow | null) {
+const API_KEY_BINDINGS = {
+  gemini: 'GEMINI_API_KEY',
+  openai: 'OPENAI_API_KEY',
+  claude: 'CLAUDE_API_KEY',
+  cerebras: 'CEREBRAS_API_KEY',
+} as const;
+
+export async function apiKeyForProvider(env: Env, provider: AiProvider): Promise<string | null> {
+  const binding = env[API_KEY_BINDINGS[provider]];
+  return tryGetSecret(binding);
+}
+
+async function integrationSettingsToJson(env: Env, row: IntegrationSettingsRow | null) {
   const provider = normalizeAiProvider(row?.ai_provider ?? 'gemini');
+  const [gemini, openai, claude, cerebras, smtpPwd] = await Promise.all([
+    tryGetSecret(env.GEMINI_API_KEY),
+    tryGetSecret(env.OPENAI_API_KEY),
+    tryGetSecret(env.CLAUDE_API_KEY),
+    tryGetSecret(env.CEREBRAS_API_KEY),
+    tryGetSecret(env.SMTP_PASSWORD),
+  ]);
   return {
     ai: {
       provider,
-      gemini: aiProviderToJson(row?.gemini_api_key ?? null, provider === 'gemini'),
-      openai: aiProviderToJson(row?.openai_api_key ?? null, provider === 'openai'),
-      claude: aiProviderToJson(row?.claude_api_key ?? null, provider === 'claude'),
-      cerebras: aiProviderToJson(row?.cerebras_api_key ?? null, provider === 'cerebras'),
+      gemini: aiProviderToJson(gemini, provider === 'gemini'),
+      openai: aiProviderToJson(openai, provider === 'openai'),
+      claude: aiProviderToJson(claude, provider === 'claude'),
+      cerebras: aiProviderToJson(cerebras, provider === 'cerebras'),
     },
     smtp: {
       configured: isSmtpConfigured(row),
       host: row?.smtp_host ?? null,
       port: row?.smtp_port ?? null,
       username: row?.smtp_username ?? null,
-      hasPassword: Boolean(row?.smtp_password),
+      hasPassword: Boolean(smtpPwd),
       fromEmail: row?.smtp_from_email ?? null,
       fromName: row?.smtp_from_name ?? null,
       secureMode: normalizeSecureMode(row?.smtp_secure_mode ?? 'starttls'),
@@ -203,33 +223,6 @@ function requireAiProvider(value: unknown): AiProvider {
   return provider;
 }
 
-export function apiKeyForProvider(row: IntegrationSettingsRow, provider: AiProvider): string | null {
-  switch (provider) {
-    case 'gemini':
-      return row.gemini_api_key;
-    case 'openai':
-      return row.openai_api_key;
-    case 'claude':
-      return row.claude_api_key;
-    case 'cerebras':
-      return row.cerebras_api_key;
-  }
-}
-
-function secretValue(input: {
-  next: unknown;
-  existing: string | null;
-  clear: boolean;
-  field: string;
-}): string | null {
-  if (input.clear) return null;
-  if (input.next == null || input.next === '') return input.existing;
-  if (typeof input.next !== 'string') throw new HttpError(400, `${input.field} must be a string`);
-  const next = input.next.trim();
-  if (next.length > 0) return next;
-  return input.existing;
-}
-
 function optionalHost(value: unknown): string | null {
   const host = optionalSettingsString(value, 'smtp.host');
   if (host == null) return null;
@@ -248,7 +241,6 @@ function optionalPort(value: unknown): number | null {
 }
 
 function optionalEmail(value: unknown, field: string): string | null {
-  // optionalSettingsString keeps case; shared helper lowercases + validates injection chars.
   const email = optionalSettingsString(value, field);
   if (email == null) return null;
   return requireValidSmtpEmail(email, field);
