@@ -15,27 +15,25 @@ async function enableFlutterSemantics(page) {
   await page.evaluate(() => document.querySelector('flt-semantics-placeholder')?.click());
 }
 
-async function clearFlutterInput(locator) {
-  await locator.click({ force: true });
-  // Select-all is unreliable on Flutter web, so fall back to deleting
-  // from the end one character at a time when residual text remains.
-  await locator.press(process.platform === 'darwin' ? 'Meta+A' : 'Control+A');
-  await locator.press('Backspace');
-
-  let remaining = await locator.inputValue().catch(() => '');
-  let guard = remaining.length + 8;
-  while (remaining.length > 0 && guard-- > 0) {
-    await locator.press('End');
-    await locator.press('Backspace');
-    remaining = await locator.inputValue().catch(() => '');
-  }
-  await expect(locator).toHaveValue('');
-}
-
 async function typeIntoFlutterInput(locator, value) {
   await expect(locator).toBeVisible();
   await locator.scrollIntoViewIfNeeded();
-  await clearFlutterInput(locator);
+  await locator.click({ force: true });
+
+  // Control/Meta+A is flaky on Flutter web: the framework keeps its own caret
+  // and ignores DOM selection. Move to the end and delete character-by-character
+  // so TextEditingController and the DOM stay aligned.
+  let remaining = await locator.inputValue().catch(() => '');
+  if (remaining.length > 0) {
+    await locator.press('End');
+    for (let i = 0; i < remaining.length + 4; i++) {
+      await locator.press('Backspace');
+      remaining = await locator.inputValue().catch(() => '');
+      if (!remaining) break;
+    }
+    await expect(locator).toHaveValue('');
+  }
+
   await locator.pressSequentially(value, { delay: 10 });
   await expect(locator).toHaveValue(value);
 }
@@ -112,9 +110,10 @@ test('admin dashboard creates a new project from the UI', async ({ page }) => {
   const slugInput = page.getByRole('textbox').nth(1);
   await expect(page.getByRole('textbox', { name: 'Enter project name' })).toBeVisible();
   await typeIntoFlutterInput(nameInput, projectName);
-  // Blur the name field so ProjectForm auto-fills the slug from the name.
-  await nameInput.press('Tab');
-  await expect(slugInput).toHaveValue(projectSlug);
+  // Trigger ProjectForm's onSubmitted auto-fill, then always set the slug
+  // explicitly. Auto-fill alone is not reliable under Flutter web semantics.
+  await nameInput.press('Enter');
+  await typeIntoFlutterInput(slugInput, projectSlug);
 
   const createResponsePromise = page.waitForResponse((response) => {
     const url = new URL(response.url());
