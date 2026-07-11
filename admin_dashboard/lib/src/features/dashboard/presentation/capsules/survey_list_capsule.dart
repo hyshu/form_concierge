@@ -76,7 +76,7 @@ class SurveyListManager {
 
   Future<ProjectWithSurveys?> getProject(int projectId) async {
     try {
-      return _client.projectAdmin.getById(projectId);
+      return await _client.projectAdmin.getById(projectId);
     } on Exception catch (e) {
       _setState(
         state.copyWith(
