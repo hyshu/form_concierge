@@ -116,8 +116,13 @@ class LocalizedText {
 }
 
 class FormContentMessages {
-  static String text(String locale, String key) =>
-      formContentLocalizedValues[normalizeFormContentLocale(locale)]![key]!;
+  static String text(String locale, String key) {
+    final messages =
+        formContentLocalizedValues[normalizeFormContentLocale(locale)] ??
+        formContentLocalizedValues[defaultFormContentLocale]!;
+    return messages[key] ??
+        formContentLocalizedValues[defaultFormContentLocale]![key]!;
+  }
 
   static String requiredQuestion(String locale) =>
       text(locale, 'requiredQuestion');

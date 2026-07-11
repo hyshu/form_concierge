@@ -29,6 +29,9 @@ class ImageUploadQuestion extends StatefulComponent {
   State<ImageUploadQuestion> createState() => _ImageUploadQuestionState();
 }
 
+/// Must match MEDIA_MAX_BYTES enforced by the worker's /api/media endpoint.
+const _maxUploadBytes = 5 * 1024 * 1024;
+
 class _ImageUploadQuestionState extends State<ImageUploadQuestion> {
   bool _uploading = false;
   String? _error;
@@ -121,6 +124,9 @@ class _ImageUploadQuestionState extends State<ImageUploadQuestion> {
       final selected = files.take(remaining);
 
       for (final file in selected) {
+        if (file.size > _maxUploadBytes) {
+          throw Exception('Image exceeds upload size limit');
+        }
         final contentType = _contentTypeFor(file);
         final bytes = await _readFileBytes(file);
         final uploaded = await component.client.survey.uploadMedia(

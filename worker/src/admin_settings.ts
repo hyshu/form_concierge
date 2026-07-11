@@ -50,6 +50,7 @@ export async function updateAdminIntegrationSettings(request: Request, env: Env)
     fromEmail: smtpFromEmail,
     username: smtpUsername,
     password: smtpPasswordForValidation,
+    secureMode: smtpSecureMode,
   });
 
   const [row] = await Promise.all([
@@ -285,7 +286,11 @@ function assertSmtpSettingsAreCoherent(settings: {
   fromEmail: string | null;
   username: string | null;
   password: string | null;
+  secureMode: SmtpSecureMode;
 }): void {
+  if (settings.secureMode === 'none' && (settings.username || settings.password)) {
+    throw new HttpError(400, 'smtp.secureMode must be starttls or tls when SMTP authentication is configured');
+  }
   const anySmtpValue = Boolean(
     settings.host ||
       settings.port ||

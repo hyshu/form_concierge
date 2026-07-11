@@ -99,8 +99,13 @@ class ResponseListManager {
     required this._client,
   });
 
+  /// Monotonic token per survey so stale page loads cannot overwrite newer ones.
+  final Map<int, int> _loadGenerations = {};
+
   /// Load responses for a survey with pagination.
   Future<void> loadResponses(int surveyId, {int page = 0}) async {
+    final generation = (_loadGenerations[surveyId] ?? 0) + 1;
+    _loadGenerations[surveyId] = generation;
     final state = getState(surveyId);
     _setState(
       surveyId,
@@ -122,6 +127,7 @@ class ResponseListManager {
           ? await _client.questionAdmin.getChoicesByQuestion(questions)
           : state.choicesByQuestion;
 
+      if (_loadGenerations[surveyId] != generation) return;
       _setState(
         surveyId,
         getState(surveyId).copyWith(
@@ -134,6 +140,7 @@ class ResponseListManager {
         ),
       );
     } on Exception catch (e) {
+      if (_loadGenerations[surveyId] != generation) return;
       _setState(
         surveyId,
         getState(surveyId).copyWith(

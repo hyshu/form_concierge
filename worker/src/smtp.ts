@@ -15,6 +15,9 @@ export type EmailMessage = {
 };
 
 export async function sendEmail(settings: RequiredSmtpSettings, message: EmailMessage): Promise<void> {
+  if (settings.secureMode === 'none' && (settings.username || settings.password)) {
+    throw new HttpError(400, 'SMTP authentication requires starttls or tls; refusing to send credentials over an unencrypted connection');
+  }
   const secureTransport: SocketOptions['secureTransport'] = settings.secureMode === 'tls'
     ? 'on'
     : settings.secureMode === 'starttls'

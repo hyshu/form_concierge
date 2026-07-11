@@ -72,6 +72,9 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
   SurveyState _state = const SurveyState();
   String? _selectedLocale;
 
+  /// Bumped whenever the survey target changes so stale loads are ignored.
+  int _loadGeneration = 0;
+
   @override
   void initState() {
     super.initState();
@@ -79,7 +82,33 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
     _loadSurvey();
   }
 
+  @override
+  void didUpdateWidget(covariant FormConciergeSurvey oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final targetChanged = oldWidget.client != widget.client ||
+        oldWidget.projectSlug != widget.projectSlug ||
+        oldWidget.surveySlug != widget.surveySlug ||
+        oldWidget.surveyId != widget.surveyId ||
+        oldWidget.anonymousId != widget.anonymousId ||
+        oldWidget.anonymousToken != widget.anonymousToken;
+    if (targetChanged) {
+      setState(() {
+        _state = const SurveyState();
+        _selectedLocale = null;
+      });
+      _restoreAnonymousToken();
+      _loadSurvey();
+      return;
+    }
+    if (oldWidget.locale != widget.locale && widget.locale != null) {
+      setState(() {
+        _selectedLocale = normalizeFormContentLocale(widget.locale!);
+      });
+    }
+  }
+
   Future<void> _loadSurvey() async {
+    final generation = ++_loadGeneration;
     try {
       final project = await widget.client.survey.getProjectBySlug(
         widget.projectSlug,
@@ -87,7 +116,7 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
 
       final survey = _selectSurvey(project);
       if (project == null || survey == null) {
-        if (!mounted) return;
+        if (!mounted || generation != _loadGeneration) return;
         setState(() {
           _state = _state.copyWith(
             viewState: SurveyViewState.error,
@@ -113,7 +142,7 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
       // Anonymous accounts are created lazily on submit to avoid DB rows for
       // every page view (and when the host never wires onAnonymousSession).
 
-      if (!mounted) return;
+      if (!mounted || generation != _loadGeneration) return;
       setState(() {
         _selectedLocale = normalizeFormContentLocale(
           widget.locale ?? project.project.defaultLocale,
@@ -128,7 +157,7 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
         );
       });
     } on Exception catch (e) {
-      if (!mounted) return;
+      if (!mounted || generation != _loadGeneration) return;
       setState(() {
         _state = _state.copyWith(
           viewState: SurveyViewState.error,

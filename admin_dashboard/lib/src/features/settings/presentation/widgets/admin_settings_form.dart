@@ -160,23 +160,14 @@ class _AdminSettingsFormState extends State<AdminSettingsForm> {
     final success = await widget.onSave(
       AdminIntegrationSettingsInput(
         aiProvider: _aiProvider,
-        geminiApiKey: _aiProvider == AiProvider.gemini
-            ? _nullIfBlank(_geminiKeyController.text)
-            : null,
-        clearGeminiApiKey: _aiProvider == AiProvider.gemini && _clearGeminiKey,
-        openaiApiKey: _aiProvider == AiProvider.openai
-            ? _nullIfBlank(_openaiKeyController.text)
-            : null,
-        clearOpenaiApiKey: _aiProvider == AiProvider.openai && _clearOpenaiKey,
-        claudeApiKey: _aiProvider == AiProvider.claude
-            ? _nullIfBlank(_claudeKeyController.text)
-            : null,
-        clearClaudeApiKey: _aiProvider == AiProvider.claude && _clearClaudeKey,
-        cerebrasApiKey: _aiProvider == AiProvider.cerebras
-            ? _nullIfBlank(_cerebrasKeyController.text)
-            : null,
-        clearCerebrasApiKey:
-            _aiProvider == AiProvider.cerebras && _clearCerebrasKey,
+        geminiApiKey: _nullIfBlank(_geminiKeyController.text),
+        clearGeminiApiKey: _clearGeminiKey,
+        openaiApiKey: _nullIfBlank(_openaiKeyController.text),
+        clearOpenaiApiKey: _clearOpenaiKey,
+        claudeApiKey: _nullIfBlank(_claudeKeyController.text),
+        clearClaudeApiKey: _clearClaudeKey,
+        cerebrasApiKey: _nullIfBlank(_cerebrasKeyController.text),
+        clearCerebrasApiKey: _clearCerebrasKey,
         smtpHost: _nullIfBlank(_smtpHostController.text),
         smtpPort: _smtpPortController.text.trim().isEmpty
             ? null

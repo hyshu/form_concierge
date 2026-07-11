@@ -2,7 +2,11 @@ import Foundation
 
 enum FormContentMessages {
   static func text(_ locale: String, _ key: String) -> String {
-    messages[normalizeFormContentLocale(locale)]![key]!
+    let localized = messages[normalizeFormContentLocale(locale)]
+      ?? messages[defaultFormContentLocale]
+    return localized?[key]
+      ?? messages[defaultFormContentLocale]?[key]
+      ?? key
   }
 
   static func requiredQuestion(_ locale: String, question: String) -> String {

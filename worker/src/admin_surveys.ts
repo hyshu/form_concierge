@@ -82,6 +82,7 @@ async function insertSurvey(
     : 1;
   const startsAt = optionalIsoDateTime(body.startsAt, 'startsAt');
   const endsAt = optionalIsoDateTime(body.endsAt, 'endsAt');
+  assertSurveySchedule(startsAt, endsAt);
   const titleJson = JSON.stringify(content.titleTranslations);
   const descriptionJson = JSON.stringify(content.descriptionTranslations);
 
@@ -160,6 +161,13 @@ export async function updateSurvey(request: Request, env: Env, surveyId: number)
     ? requireSurveySlug(body.slug)
     : existing.slug;
   await ensureUniqueSurveySlug(env.DB, project.id, slug, surveyId);
+  const startsAt = Object.hasOwn(body, 'startsAt')
+    ? optionalIsoDateTime(body.startsAt, 'startsAt')
+    : existing.starts_at;
+  const endsAt = Object.hasOwn(body, 'endsAt')
+    ? optionalIsoDateTime(body.endsAt, 'endsAt')
+    : existing.ends_at;
+  assertSurveySchedule(startsAt, endsAt);
   const row = await env.DB.prepare(
     `UPDATE surveys
      SET slug = ?, title_translations = ?, description_translations = ?,
@@ -178,16 +186,18 @@ export async function updateSurvey(request: Request, env: Env, surveyId: number)
     Object.hasOwn(body, 'captchaEnabled')
       ? boolToInt(requiredBoolean(body.captchaEnabled, 'captchaEnabled'))
       : existing.captcha_enabled,
-    Object.hasOwn(body, 'startsAt')
-      ? optionalIsoDateTime(body.startsAt, 'startsAt')
-      : existing.starts_at,
-    Object.hasOwn(body, 'endsAt')
-      ? optionalIsoDateTime(body.endsAt, 'endsAt')
-      : existing.ends_at,
+    startsAt,
+    endsAt,
     nowIso(),
     surveyId,
   ).first<SurveyRow>();
   return json(surveyToJson(requiredRow(row, 'Survey')));
+}
+
+function assertSurveySchedule(startsAt: string | null, endsAt: string | null): void {
+  if (startsAt != null && endsAt != null && Date.parse(startsAt) >= Date.parse(endsAt)) {
+    throw new HttpError(400, 'startsAt must be before endsAt');
+  }
 }
 
 export async function deleteSurvey(env: Env, surveyId: number): Promise<Response> {

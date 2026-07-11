@@ -228,7 +228,7 @@ class _LocalizedTextFieldGroupState extends State<LocalizedTextFieldGroup> {
           )
         : primaryField;
 
-    if (secondaryLocales.isEmpty) primaryRow;
+    if (secondaryLocales.isEmpty) return primaryRow;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

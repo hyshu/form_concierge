@@ -19,7 +19,7 @@ type PublicFormData = {
 export function isPublicFormHtmlRequest(request: Request, path: string): boolean {
   const method = request.method.toUpperCase();
   if (method !== 'GET' && method !== 'HEAD') return false;
-  if (path.startsWith('/api')) return false;
+  if (path === '/api' || path.startsWith('/api/')) return false;
   const parts = path.split('/').filter(Boolean);
   if (parts.length > 2) return false;
   if (parts[0]?.includes('.')) return false;
@@ -349,7 +349,11 @@ function textFor(translations: Record<string, string>, locale: string): string {
 }
 
 function pathPartsFromPath(pathname: string): string[] {
-  return pathname.split('/').filter(Boolean).map(decodeURIComponent);
+  try {
+    return pathname.split('/').filter(Boolean).map(decodeURIComponent);
+  } catch {
+    throw new HttpError(400, 'Malformed URL path');
+  }
 }
 
 function isAccepting(survey: SurveyRow): boolean {

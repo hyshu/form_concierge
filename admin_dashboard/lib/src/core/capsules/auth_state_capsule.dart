@@ -2,6 +2,7 @@ import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:rearch/rearch.dart';
 
 import '../../features/auth/data/auth_state.dart';
+import '../widgets/admin_media_gallery.dart';
 import 'client_capsule.dart';
 
 /// Capsule that manages authentication state.
@@ -147,6 +148,7 @@ class AuthStateManager {
   /// Logout and clear stored credentials.
   Future<void> logout() async {
     await _client.auth.signOutDevice();
+    clearAdminMediaCache();
     _setState(AuthState.initial().copyWith(hasCheckedAuth: true));
   }
 

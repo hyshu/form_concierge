@@ -83,7 +83,10 @@ public struct LocalizedText: Codable, Equatable, Sendable {
   }
 
   public func value(for locale: String) -> String {
-    values[normalizeFormContentLocale(locale)]!
+    values[normalizeFormContentLocale(locale)]
+      ?? values[defaultFormContentLocale]
+      ?? values.values.first
+      ?? ""
   }
 }
 

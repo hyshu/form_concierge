@@ -7,7 +7,12 @@ import 'package:hux/hux.dart';
 import '../localization/app_localizations.dart';
 
 /// Simple in-memory cache so expanding many responses reuses bytes.
+/// Bounded (oldest-inserted evicted first) and cleared on logout.
 final Map<String, Uint8List> _adminMediaCache = {};
+const _adminMediaCacheMaxEntries = 100;
+
+/// Drop cached media bytes (e.g. when the admin session ends).
+void clearAdminMediaCache() => _adminMediaCache.clear();
 
 /// Horizontal/wrapping gallery of authenticated media thumbnails.
 class AdminMediaGallery extends StatelessWidget {
@@ -90,6 +95,9 @@ class _AdminMediaThumbnailState extends State<AdminMediaThumbnail> {
       authenticated: true,
     );
     final data = Uint8List.fromList(bytes);
+    while (_adminMediaCache.length >= _adminMediaCacheMaxEntries) {
+      _adminMediaCache.remove(_adminMediaCache.keys.first);
+    }
     _adminMediaCache[widget.fileKey] = data;
     return data;
   }
