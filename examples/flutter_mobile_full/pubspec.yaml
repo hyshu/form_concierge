@@ -27,7 +27,7 @@ dependencies:
   flutter_secure_storage: ^10.0.0
   form_concierge_client:
     path: ../../client
-  form_concierge_survey_widget:
+  form_concierge:
     path: ../../widget
   cupertino_icons: ^1.0.8
   shared_preferences: ^2.3.5

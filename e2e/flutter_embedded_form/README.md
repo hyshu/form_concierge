@@ -1,6 +1,6 @@
 # flutter_embedded_form
 
-Flutter app used by the E2E suite for embedded `form_concierge_survey_widget`.
+Flutter app used by the E2E suite for embedded `form_concierge`.
 Linux remains enabled because CI runs this app on Linux.
 
 The widget now opens a project by slug and selects the first published survey

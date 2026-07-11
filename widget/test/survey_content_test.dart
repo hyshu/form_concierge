@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
-import 'package:form_concierge_survey_widget/src/widgets/survey_content.dart';
+import 'package:form_concierge/src/widgets/survey_content.dart';
 
 void main() {
   group('SurveyContent', () {

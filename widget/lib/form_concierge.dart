@@ -1,4 +1,4 @@
-library form_concierge_survey_widget;
+library form_concierge;
 
 export 'src/form_concierge_reply_checker.dart'
     show

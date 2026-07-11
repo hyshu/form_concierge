@@ -1,10 +1,13 @@
-# form_concierge_survey_widget
+# form_concierge
 
-Flutter widget package for embedding Form Concierge surveys.
+Flutter package for embedding Form Concierge surveys.
+
+Not published to pub.dev yet (`publish_to: none`).
 
 ## Setup
 
 ```dart
+import 'package:form_concierge/form_concierge.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 
 final client = Client('https://your-worker.example.com');

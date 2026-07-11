@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
-import 'package:form_concierge_survey_widget/form_concierge_survey_widget.dart';
+import 'package:form_concierge/form_concierge.dart';
 
 const _apiUrl = String.fromEnvironment(
   'FORM_CONCIERGE_API_URL',

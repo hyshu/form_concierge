@@ -4,15 +4,18 @@ Survey forms backed by Cloudflare Workers and D1. Respondents use generated anon
 
 ## Project Structure
 
-| Directory | Description |
-|-----------|-------------|
-| `worker/` | Cloudflare Workers API and D1 migrations |
-| `client/` | Dart REST client shared by Flutter apps and Jaspr |
-| `admin_dashboard/` | Flutter admin dashboard |
-| `widget/` | Flutter package for embedding surveys |
-| `swiftui/` | Swift Package for embedding surveys in SwiftUI apps |
-| `web/` | Jaspr web survey form |
-| `examples/` | Example apps demonstrating package usage |
+| Directory | Package / role | Description |
+|-----------|----------------|-------------|
+| `worker/` | (deployed API) | Cloudflare Workers API and D1 migrations |
+| `client/` | `form_concierge_client` `0.1.0` | Dart REST client shared by Flutter apps and Jaspr |
+| `widget/` | `form_concierge` `0.1.0` | Flutter package for embedding surveys |
+| `cli/` | `form_concierge_cli` `0.1.0` | Setup / doctor CLI (`form_concierge setup cloudflare`) |
+| `admin_dashboard/` | app | Flutter admin dashboard |
+| `swiftui/` | SPM | Swift Package for embedding surveys in SwiftUI apps |
+| `web/` | app | Jaspr web survey form |
+| `examples/` | apps | Example apps demonstrating package usage |
+
+Library packages use `publish_to: none` until pub.dev release.
 
 ## Local Development
 
@@ -81,8 +84,19 @@ Useful checks:
 cd worker && npm run typecheck
 cd worker && npm run d1:migrate:local
 cd client && dart analyze
-cd web && dart analyze && jaspr build
 cd widget && flutter analyze
+cd cli && dart analyze && dart test
+cd web && dart analyze && jaspr build
 cd admin_dashboard && flutter analyze && flutter test
 cd swiftui && swift build
+```
+
+### CLI (monorepo)
+
+```bash
+cd cli && dart pub get
+dart run form_concierge_cli doctor
+dart run form_concierge_cli setup cloudflare --preflight-only
+# full setup (same as ./setup.sh):
+dart run form_concierge_cli setup cloudflare
 ```

@@ -26,6 +26,11 @@ fi
 )
 
 (
+  cd cli
+  dart pub get
+)
+
+(
   cd admin_dashboard
   flutter pub get
 )
@@ -63,7 +68,10 @@ dart format --set-exit-if-changed \
   examples/flutter_mobile_full/test \
   web/lib \
   widget/lib \
-  widget/test
+  widget/test \
+  cli/bin \
+  cli/lib \
+  cli/test
 
 mkdir -p .tmp
 
@@ -97,6 +105,13 @@ mkdir -p .tmp
   flutter pub get
   flutter analyze
   flutter test
+)
+
+(
+  cd cli
+  dart pub get
+  dart analyze
+  dart test
 )
 
 (

@@ -1,5 +1,5 @@
-name: form_concierge_survey_widget
-description: Embeddable survey widget for form_concierge
+name: form_concierge
+description: Embeddable Flutter survey package for Form Concierge.
 version: 0.1.0
 publish_to: none
 

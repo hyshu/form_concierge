@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
-import 'package:form_concierge_survey_widget/form_concierge_survey_widget.dart';
+import 'package:form_concierge/form_concierge.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 

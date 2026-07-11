@@ -9,7 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  form_concierge_survey_widget:
+  form_concierge:
     path: ../../widget
   form_concierge_client:
     path: ../../client
