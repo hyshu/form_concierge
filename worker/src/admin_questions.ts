@@ -19,7 +19,7 @@ import {
   updateOrder,
 } from './utils';
 import { choiceToJson, parseChoiceIds, questionToJson } from './serializers';
-import { mustChoice, mustProject, mustQuestion, mustSurvey, projectSupportedLocales } from './admin_records';
+import { guardPublishedSurvey, mustChoice, mustProject, mustQuestion, mustSurvey, projectSupportedLocales } from './admin_records';
 import { defaultLocalizedText, requireLocalizedText } from './localization';
 import { assertVisibilityOrderInvariant } from './visibility_rules';
 
@@ -41,6 +41,11 @@ type InsertQuestionInput = {
 export async function createQuestion(request: Request, env: Env): Promise<Response> {
   const body = await readJson(request);
   const surveyId = requiredInteger(body.surveyId, 'surveyId', { min: 1 });
+  const survey = await mustSurvey(env.DB, surveyId);
+  const isRequired = optionalBoolean(body.isRequired, 'isRequired') ?? true;
+  if (isRequired) {
+    guardPublishedSurvey(survey, 'add a required question');
+  }
   const locales = await surveySupportedLocales(env.DB, surveyId);
   const type = normalizeQuestionType(body.type);
   const validation = normalizeQuestionValidation(body, type);
@@ -98,10 +103,12 @@ export async function insertQuestion(db: D1Database, input: InsertQuestionInput)
 
 export async function updateQuestion(request: Request, env: Env, questionId: number): Promise<Response> {
   const existing = await mustQuestion(env.DB, questionId);
+  const survey = await mustSurvey(env.DB, existing.survey_id);
   const locales = await surveySupportedLocales(env.DB, existing.survey_id);
   const body = await readJson(request);
   const type = normalizeQuestionType(body.type ?? existing.type);
   if (type !== existing.type) {
+    guardPublishedSurvey(survey, 'change the question type');
     const answerCount = await countRows(
       env.DB,
       `SELECT COUNT(*) AS count FROM answers WHERE question_id = ?`,
@@ -110,6 +117,10 @@ export async function updateQuestion(request: Request, env: Env, questionId: num
     if (answerCount > 0) {
       throw new HttpError(400, 'Cannot change question type after responses exist');
     }
+  }
+  const newIsRequired = optionalBoolean(body.isRequired, 'isRequired') ?? (existing.is_required === 1);
+  if (newIsRequired && existing.is_required !== 1) {
+    guardPublishedSurvey(survey, 'make a question required');
   }
   // Object.hasOwn: explicit null clears the constraint; omitted keys keep existing.
   // (?? would treat null as "keep", so empty Max length fields could never clear.)
@@ -146,7 +157,7 @@ export async function updateQuestion(request: Request, env: Env, questionId: num
     JSON.stringify(requireLocalizedText(body.textTranslations, 'textTranslations', locales)),
     type,
     orderIndex,
-    boolToInt(optionalBoolean(body.isRequired, 'isRequired') ?? (existing.is_required === 1)),
+    boolToInt(newIsRequired),
     JSON.stringify(requireLocalizedText(
       body.placeholderTranslations,
       'placeholderTranslations',
@@ -226,6 +237,8 @@ function isTextQuestionTypeName(type: string): boolean {
 
 export async function deleteQuestion(env: Env, questionId: number): Promise<Response> {
   const question = await mustQuestion(env.DB, questionId);
+  const survey = await mustSurvey(env.DB, question.survey_id);
+  guardPublishedSurvey(survey, 'delete a question');
   const answerCount = await countRows(
     env.DB,
     `SELECT COUNT(*) AS count FROM answers WHERE question_id = ?`,
@@ -332,6 +345,9 @@ async function surveySupportedLocales(db: D1Database, surveyId: number): Promise
 
 export async function deleteChoice(env: Env, choiceId: number): Promise<Response> {
   const choice = await mustChoice(env.DB, choiceId);
+  const question = await mustQuestion(env.DB, choice.question_id);
+  const survey = await mustSurvey(env.DB, question.survey_id);
+  guardPublishedSurvey(survey, 'delete a choice');
   const answers = await env.DB.prepare(
     `SELECT selected_choice_ids FROM answers
      WHERE question_id = ? AND selected_choice_ids IS NOT NULL`,

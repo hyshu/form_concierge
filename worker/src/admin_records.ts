@@ -1,6 +1,12 @@
 import type { ChoiceRow, ProjectRow, QuestionRow, SurveyRow } from './types';
 import { HttpError } from './utils';
 
+export function guardPublishedSurvey(survey: SurveyRow, action: string): void {
+  if (survey.status === 'published') {
+    throw new HttpError(400, `Cannot ${action} while the survey is published`);
+  }
+}
+
 export async function mustProject(db: D1Database, id: number): Promise<ProjectRow> {
   const row = await db.prepare(`SELECT * FROM projects WHERE id = ?`).bind(id).first<ProjectRow>();
   if (!row) throw new HttpError(404, 'Project not found');
