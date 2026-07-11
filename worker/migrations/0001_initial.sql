@@ -51,6 +51,7 @@ CREATE TABLE surveys (
   status TEXT NOT NULL DEFAULT 'draft',
   web_enabled INTEGER NOT NULL DEFAULT 1,
   follow_up_enabled INTEGER NOT NULL DEFAULT 0,
+  captcha_enabled INTEGER NOT NULL DEFAULT 1,
   auth_requirement TEXT NOT NULL DEFAULT 'anonymous',
   created_by_admin_id TEXT REFERENCES admins(id) ON DELETE SET NULL,
   created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
