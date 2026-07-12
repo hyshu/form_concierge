@@ -1,14 +1,141 @@
 # form_concierge
 
-Flutter package for embedding Form Concierge surveys.
+Form Concierge is a self-hosted survey platform for Flutter, backed by Cloudflare Workers and D1.
 
-## Installation
+Embed surveys directly in your app, collect anonymous responses, and optionally run AI-powered adaptive follow-up interviews. The `form_concierge` package includes both the Flutter widget and the Dart client, so your app only needs a single dependency.
+
+## Key Features
+
+- Native survey UI for Flutter
+- Anonymous responses with no email or login required
+- GenUI-powered adaptive follow-up interviews
+- Single-choice, multiple-choice, text, and image-upload questions
+- Multilingual survey and widget UI
+- Admin replies for anonymous respondents
+- Device and application metadata attached to responses
+- Self-hosted Cloudflare Workers and D1 backend
+- One-command backend deployment
+- Flutter-based admin dashboard
+
+The platform also includes:
+
+- A Jaspr web survey form
+- A SwiftUI package for native iOS apps
+
+## How It Works
+
+Respondents are automatically assigned an anonymous account before submitting a response. The app can persist the generated anonymous token and reuse it across launches, allowing the respondent to receive replies from administrators without creating a conventional account.
+
+Survey answers remain on the server and are available to administrators. Anonymous respondents can retrieve administrator replies, but they cannot retrieve their own answer history through the API.
+
+When adaptive follow-up is enabled, the backend uses an AI model to generate additional questions based on the respondent's initial answers. These questions are rendered directly inside the survey widget.
+
+---
+
+## Backend Setup
+
+The `form_concierge_cli` package creates and deploys the complete Cloudflare backend, including:
+
+- Workers
+- D1
+- R2
+- Pages
+
+### Install the CLI
+
+```bash
+dart pub global activate form_concierge_cli
+```
+
+### Authenticate with Cloudflare
+
+The CLI uses Wrangler internally. Sign in to Cloudflare before running the deployment command:
+
+```bash
+npx wrangler login
+```
+
+### Check Your Environment
+
+Verify that the required local tools are installed and that Cloudflare authentication is available:
+
+```bash
+form_concierge doctor
+form_concierge setup cloudflare --preflight-only
+```
+
+### Deploy the Backend
+
+```bash
+form_concierge setup cloudflare
+```
+
+The command provisions the required Cloudflare resources and deploys the Worker, database, storage, and admin dashboard.
+
+---
+
+## API Keys and Secrets
+
+Adaptive follow-up interviews require an API key for the AI provider configured in your Worker.
+
+Store the corresponding key as a Cloudflare secret. For example, when using Gemini:
+
+```bash
+npx wrangler secret put gemini_api_key
+```
+
+Supported provider secrets include:
+
+- `gemini_api_key`
+- `openai_api_key`
+- `claude_api_key`
+- `cerebras_api_key`
+
+Set the secret that matches the model configured for your deployment.
+
+Optional features use additional secrets:
+
+- `smtp_password` for email functionality
+- `turnstile_secret_key` for Cloudflare Turnstile
+
+---
+
+## Admin Dashboard
+
+The Flutter admin dashboard is used to create accounts, projects, and surveys.
+
+Open the deployed Pages URL, or run the dashboard locally:
+
+```bash
+flutter run -d chrome
+```
+
+If no administrator account exists, the dashboard automatically opens the initial registration page. After the first account has been created, the normal sign-in page is shown.
+
+After signing in:
+
+1. Create a project.
+2. Create one or more surveys inside the project.
+3. Configure the survey questions.
+
+Each survey has:
+
+- A project slug
+- A survey slug
+
+Pass both values to the Flutter widget when embedding the survey.
+
+---
+
+## Flutter Package
+
+### Installation
 
 ```bash
 flutter pub add form_concierge
 ```
 
-## Setup
+### Create a Client
 
 ```dart
 import 'package:form_concierge/form_concierge.dart';
@@ -16,15 +143,17 @@ import 'package:form_concierge/form_concierge.dart';
 final client = Client('https://your-worker.example.com');
 ```
 
-The main entrypoint exports both the Flutter widget and the complete Dart
-client API. Apps only need the `form_concierge` dependency and import above.
-Code that only needs the client API can use the focused entrypoint:
+The main entrypoint exports both the Flutter widget and the complete Dart client API.
+
+Code that only needs the client can use the focused entrypoint:
 
 ```dart
 import 'package:form_concierge/client.dart';
 ```
 
-## Usage
+---
+
+## Embed a Survey
 
 ```dart
 FormConciergeSurvey(
@@ -50,8 +179,10 @@ FormConciergeSurvey(
     await saveAnonymousToken(session.token);
   },
   onResponseSubmitted: (response, answers) {
-    // Save the main response receipt. Do not close yet: an adaptive follow-up
-    // may start after this callback.
+    // Save the receipt for the main response.
+    //
+    // Do not close the route here when adaptive follow-up is enabled.
+    // Additional questions may be generated after this callback.
   },
   onFollowUpSubmitted: (response) {
     // Replace the saved receipt with the follow-up-completed response.
@@ -61,41 +192,119 @@ FormConciergeSurvey(
   },
   showLocalePicker: true,
   processImage: (image) async {
-    // Resize, compress, redact, or remove metadata here when needed.
+    // Resize, compress, redact, or remove metadata before upload.
     return image;
   },
   footer: const Text('Your privacy notice'),
 )
 ```
 
-`onSubmitted` and `onResponseSubmitted` run immediately after the main response
-is saved. Do not close the host route from them when adaptive follow-up is
-enabled. `onFollowUpSubmitted` runs after follow-up answers are saved, and
-`onDone` runs when the respondent taps the completion-screen Done button.
+Surveys with `followUpEnabled` automatically generate and render adaptive follow-up questions after the initial response has been submitted.
 
-Surveys with `followUpEnabled` automatically generate and render the adaptive
-follow-up interview. Image questions automatically pick and upload images;
-`processImage` is an optional host transform applied before each upload.
+Image questions automatically open the image picker and upload the selected image. Use `processImage` when the host application needs to transform the image before upload.
 
-Pass `locale` to render survey content and widget messages in that language. Locale tags are normalized, so `ja`, `ja_JP`, and `ja-JP` render Japanese. Region tags such as `en_US`, `ko_KR`, `de_DE`, `es_ES`, `fr_FR`, `it_IT`, `th_TH`, `tr_TR`, `zh_CN`, and `zh_TW` are also normalized to the supported survey locales (`en`, `ja`, `zh-Hans`, `zh-Hant`, `ko`, `de`, `es`, `fr`, `it`, `th`, `tr`).
+Possible transformations include:
 
-Pass `deviceInfo` from your app when you need stable device IDs, app versions, OS versions, model names, or any values collected outside this package. Use `metadata` for app/user/session context such as authenticated `uid`, display name, tenant, plan, or feature flags. The widget also adds basic screen, locale, timezone, and Flutter platform values when available.
+- Resizing
+- Compression
+- Metadata removal
+- Redaction
+- Format conversion
 
-The widget creates an anonymous account automatically before submission. Store `session.token` and pass it back as `anonymousToken` to receive admin replies across app launches.
+---
 
-Submitted answers are retained on the server for admins, but anonymous users cannot fetch their answer history from the API. Store any respondent-facing submission receipt locally if needed.
+## Submission Lifecycle
 
-Admin replies can be read through the shared client:
+### `onAnonymousSession`
+
+Called when the widget creates or restores an anonymous session.
+
+Persist `session.token` and pass it back through `anonymousToken` on later app launches.
+
+```dart
+onAnonymousSession: (session) async {
+  await saveAnonymousToken(session.token);
+},
+```
+
+### `onSubmitted`
+
+Called immediately after the main survey response is saved.
+
+### `onResponseSubmitted`
+
+Also called immediately after the main survey response is saved. It provides both the saved response and the submitted answers.
+
+Do not close the host route from `onSubmitted` or `onResponseSubmitted` when adaptive follow-up is enabled. The follow-up interview may begin after these callbacks run.
+
+### `onFollowUpSubmitted`
+
+Called after the adaptive follow-up answers have been saved.
+
+### `onDone`
+
+Called when the respondent taps the Done button on the completion screen.
+
+This is generally the appropriate callback for closing the survey route.
+
+---
+
+## Anonymous Sessions
+
+The widget automatically creates an anonymous account before the first response is submitted.
+
+Store the token returned through `onAnonymousSession`:
+
+```dart
+onAnonymousSession: (session) async {
+  await saveAnonymousToken(session.token);
+},
+```
+
+Pass the stored token back to the widget:
+
+```dart
+FormConciergeSurvey(
+  anonymousToken: savedAnonymousToken,
+  // ...
+)
+```
+
+Reusing the token allows the respondent to receive administrator replies across app launches.
+
+No email address, password, or conventional sign-in flow is required.
+
+---
+
+## Administrator Replies
+
+Anonymous respondents can retrieve replies associated with a submitted response.
 
 ```dart
 client.anonymous.useToken(savedAnonymousToken);
-final replies = await client.anonymous.getReplies(responseId: responseId);
+
+final replies = await client.anonymous.getReplies(
+  responseId: responseId,
+);
 ```
 
-To check whether new admin replies exist without downloading the full reply list, use the reply checker. The server returns only the latest reply timestamp; **the host app owns last-seen persistence** (this package does not depend on SharedPreferences).
+The anonymous API exposes administrator replies, but it does not expose the respondent's submitted answer history.
+
+Store any respondent-facing submission receipt locally when the app needs to display previous submissions.
+
+---
+
+## Checking for New Replies
+
+Use `FormConciergeReplyChecker` to determine whether new administrator replies are available without downloading the full reply list.
+
+The server returns only the latest reply timestamp.
+
+The host application is responsible for persisting the last-seen timestamp. The package does not depend on SharedPreferences or another storage implementation.
 
 ```dart
-final prefs = await SharedPreferences.getInstance(); // or your own store
+final prefs = await SharedPreferences.getInstance();
+
 final store = FormConciergeReplySeenStore(
   read: prefs.getString,
   write: (key, value) async {
@@ -114,28 +323,173 @@ final checker = FormConciergeReplyChecker(
 );
 
 final result = await checker.check();
+
 if (result.hasNewReplies) {
-  // Show your in-app badge or notification.
+  // Show an in-app badge, notification, or unread indicator.
 }
 
 await checker.markLatestSeen();
 ```
 
+You can replace SharedPreferences with any persistent storage implementation by providing compatible `read`, `write`, and `remove` callbacks.
+
+---
+
+## Device Information and Metadata
+
+Use `deviceInfo` for structured device and application information collected by the host app.
+
+```dart
+deviceInfo: DeviceInfo(
+  deviceId: savedLocalDeviceId,
+  label: 'Pixel 9',
+  platform: 'flutter',
+  os: 'android',
+  osVersion: '16',
+  appVersion: '1.4.2',
+),
+```
+
+Typical values include:
+
+- Stable local device ID
+- Device model or label
+- Operating system
+- Operating-system version
+- Application version
+- Application platform
+
+Use `metadata` for arbitrary application, user, tenant, or session context:
+
+```dart
+metadata: {
+  'uid': currentUser.uid,
+  'userName': currentUser.displayName,
+  'tenant': currentTenant.id,
+  'plan': currentUser.plan,
+  'featureFlags': enabledFeatureFlags,
+},
+```
+
+The widget also attaches basic environment information when available, including:
+
+- Screen information
+- Locale
+- Time zone
+- Flutter platform
+
+Avoid attaching sensitive personal data unless it is necessary for the survey and appropriately disclosed to the respondent.
+
+---
+
+## Localization
+
+Pass `locale` to control the language used for survey content and widget messages:
+
+```dart
+FormConciergeSurvey(
+  locale: 'ja_JP',
+  // ...
+)
+```
+
+Locale tags are normalized automatically.
+
+For example, all of the following select Japanese:
+
+- `ja`
+- `ja_JP`
+- `ja-JP`
+
+Supported survey locales are:
+
+- `en`
+- `ja`
+- `zh-Hans`
+- `zh-Hant`
+- `ko`
+- `de`
+- `es`
+- `fr`
+- `it`
+- `th`
+- `tr`
+
+Common regional locale tags are mapped to the corresponding supported locale:
+
+| Input locale | Normalized locale |
+|---|---|
+| `en_US` | `en` |
+| `ja_JP` | `ja` |
+| `ko_KR` | `ko` |
+| `de_DE` | `de` |
+| `es_ES` | `es` |
+| `fr_FR` | `fr` |
+| `it_IT` | `it` |
+| `th_TH` | `th` |
+| `tr_TR` | `tr` |
+| `zh_CN` | `zh-Hans` |
+| `zh_TW` | `zh-Hant` |
+
+Set `showLocalePicker` to `true` when respondents should be able to change the locale inside the widget:
+
+```dart
+showLocalePicker: true,
+```
+
+---
+
 ## Supported Question Types
+
+Form Concierge currently supports:
 
 - Single choice
 - Multiple choice
-- Single line text
+- Single-line text
 - Multi-line text
 - Image upload
 
-## API Documentation
+Question definitions and localized content are managed through the admin dashboard.
 
-Generate local API documentation from the package directory:
+---
 
-```bash
-dart doc
-```
+## Adaptive Follow-Up Interviews
 
-Open `doc/api/index.html` after generation. pub.dev builds the same API
-documentation for each published version.
+Adaptive follow-up interviews are optional and configured per survey.
+
+When enabled:
+
+1. The respondent submits the main survey.
+2. The Worker sends the initial answers to the configured AI provider.
+3. The AI generates relevant follow-up questions.
+4. The widget renders the generated questions.
+5. The follow-up answers are submitted and attached to the response.
+
+A custom prompt can be configured in the admin dashboard to control the purpose, tone, or focus of the generated interview.
+
+An AI provider secret must be configured before this feature can be used.
+
+---
+
+## Data Model and Privacy
+
+Form Concierge is designed around anonymous participation.
+
+- Respondents do not need an email address or password.
+- An anonymous token identifies the respondent's session.
+- Survey answers are stored server-side.
+- Administrators can view submitted answers.
+- Anonymous respondents can retrieve administrator replies.
+- Anonymous respondents cannot retrieve their own answer history through the API.
+- The host app may store a local submission receipt when respondent-facing history is required.
+
+Because the platform is self-hosted, the application owner controls the Cloudflare account, Worker, database, storage, and deployment configuration.
+
+The application owner is also responsible for:
+
+- Privacy notices
+- Data-retention rules
+- Consent requirements
+- Uploaded-image handling
+- AI-provider data policies
+- Access control for administrators
