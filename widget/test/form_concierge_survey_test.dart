@@ -181,6 +181,46 @@ void main() {
     expect(done, isTrue);
   });
 
+  testWidgets('supplies CAPTCHA token for CAPTCHA-enabled surveys', (
+    tester,
+  ) async {
+    String? submittedCaptchaToken;
+    final client = _client((request) {
+      return switch ((request.method, request.url.path)) {
+        ('GET', '/api/projects/customer-feedback') => _json(
+          _projectJson(surveys: [_surveyJson(captchaEnabled: true)]),
+        ),
+        ('GET', '/api/surveys/id/1/questions') => _json([]),
+        ('GET', '/api/surveys/id/1/visibility-rules') => _json([]),
+        ('POST', '/api/anonymous/accounts') => _json(_anonymousSessionJson()),
+        ('POST', '/api/surveys/id/1/responses') => () {
+          submittedCaptchaToken =
+              (jsonDecode(request.body) as Map<String, dynamic>)['captchaToken']
+                  as String?;
+          return _json(_responseJson());
+        }(),
+        _ => http.Response('Unexpected ${request.method} ${request.url}', 404),
+      };
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: FormConciergeSurvey(
+          client: client,
+          projectSlug: 'customer-feedback',
+          captchaTokenProvider: () async => 'captcha-token',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Submit'));
+    await tester.pumpAndSettle();
+
+    expect(submittedCaptchaToken, 'captcha-token');
+    expect(find.text('Thank you!'), findsOneWidget);
+  });
+
   testWidgets(
     'uses provided anonymous token instead of creating a new session',
     (tester) async {
@@ -271,6 +311,7 @@ Map<String, Object?> _surveyJson({
   int id = 1,
   String slug = 'customer-feedback',
   bool followUpEnabled = false,
+  bool captchaEnabled = false,
 }) => {
   'id': id,
   'projectId': 1,
@@ -280,6 +321,7 @@ Map<String, Object?> _surveyJson({
   'status': 'published',
   'webEnabled': true,
   'followUpEnabled': followUpEnabled,
+  'captchaEnabled': captchaEnabled,
   'createdAt': '2026-06-22T10:00:00.000Z',
   'updatedAt': '2026-06-22T10:00:00.000Z',
   'startsAt': null,
