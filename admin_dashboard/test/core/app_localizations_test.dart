@@ -112,5 +112,51 @@ void main() {
         }
       },
     );
+
+    test(
+      'Turnstile settings labels are localized for every supported locale',
+      () {
+        const turnstileKeys = [
+          'Turnstile CAPTCHA',
+          'Cloudflare Turnstile keys for web form bot protection. '
+              'Create a widget in the Cloudflare dashboard, then paste both keys here.',
+          'Site Key',
+          'Secret Key',
+          'Leave blank to keep the saved site key',
+          'Leave blank to keep the saved secret key',
+          'Clear saved site key',
+          'Clear saved secret key',
+        ];
+
+        // Product name stays "Turnstile CAPTCHA" in all locales; assert ja + others
+        // for keys that should differ from English.
+        const ja = AppLocalizations(Locale('ja'));
+        expect(ja.text('Site Key'), 'サイトキー');
+        expect(ja.text('Secret Key'), 'シークレットキー');
+        expect(ja.text('Clear saved site key'), '保存済みのサイトキーを削除');
+        expect(
+          ja.text(
+            'Cloudflare Turnstile keys for web form bot protection. '
+            'Create a widget in the Cloudflare dashboard, then paste both keys here.',
+          ),
+          contains('Cloudflare Turnstile'),
+        );
+
+        for (final locale in AppLocalizations.supportedLocales.skip(1)) {
+          final l10n = AppLocalizations(locale);
+          for (final key in turnstileKeys) {
+            // All locales must define the key (not fall through to raw key).
+            // Some values intentionally equal English (brand names).
+            final value = l10n.text(key);
+            expect(value, isNotEmpty, reason: 'Empty $key for $locale');
+            expect(
+              value == key && key != 'Turnstile CAPTCHA',
+              isFalse,
+              reason: 'Missing translation for $key ($locale)',
+            );
+          }
+        }
+      },
+    );
   });
 }

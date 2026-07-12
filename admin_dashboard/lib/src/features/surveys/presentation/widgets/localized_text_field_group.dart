@@ -181,11 +181,12 @@ class _LocalizedTextFieldGroupState extends State<LocalizedTextFieldGroup> {
       required bool isPrimary,
       String? Function(String?)? validator,
     }) {
+      final languageLabel = formContentLocaleLabels[locale] ?? locale;
       return _LocalizedField(
         controller: widget.controllers[locale],
-        label: isPrimary
-            ? widget.labelText
-            : '${widget.labelText} (${formContentLocaleLabels[locale]!})',
+        // Always show the content language (including default) so editors
+        // can tell which locale they are filling, e.g. "Title (English)".
+        label: '${widget.labelText} ($languageLabel)',
         hint: widget.hintText,
         enabled: widget.enabled && !_isTranslating,
         maxLines: widget.maxLines,

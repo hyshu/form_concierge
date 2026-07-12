@@ -429,6 +429,19 @@ const adminLocalizedValues = <String, Map<String, String>>{
         "Der Port muss zwischen 1 und 65535 liegen",
     "From email is required when SMTP settings are present":
         "Von E-Mail ist erforderlich, wenn SMTP-Einstellungen vorhanden sind",
+    "Turnstile CAPTCHA": "Turnstile CAPTCHA",
+    "Cloudflare Turnstile keys for web form bot protection. Create a widget in the Cloudflare dashboard, then paste both keys here.":
+        "Cloudflare-Turnstile-Schlüssel für den Bot-Schutz im Webformular. Erstellen Sie ein Widget im Cloudflare-Dashboard und fügen Sie beide Schlüssel hier ein.",
+    "Site Key": "Site-Schlüssel",
+    "Secret Key": "Geheimschlüssel",
+    "Leave blank to keep the saved site key":
+        "Leer lassen, um den gespeicherten Site-Schlüssel beizubehalten",
+    "Leave blank to keep the saved secret key":
+        "Leer lassen, um den gespeicherten Geheimschlüssel beizubehalten",
+    "Clear saved site key": "Gespeicherten Site-Schlüssel löschen",
+    "Clear saved secret key": "Gespeicherten Geheimschlüssel löschen",
+    "Port and Security must match: 465/2465 → TLS, 587/2587 → STARTTLS. Resend: host smtp.resend.com, username resend, password = API key.":
+        "Port und Sicherheit müssen zusammenpassen: 465/2465 → TLS, 587/2587 → STARTTLS. Resend: Host smtp.resend.com, Benutzername resend, Passwort = API-Schlüssel.",
     "Insufficient permissions": "Unzureichende Berechtigungen",
     "Failed to update web publication: ":
         "Webpublikation konnte nicht aktualisiert werden: {error}",
@@ -783,6 +796,19 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Port must be between 1 and 65535": "Port must be between 1 and 65535",
     "From email is required when SMTP settings are present":
         "From email is required when SMTP settings are present",
+    "Turnstile CAPTCHA": "Turnstile CAPTCHA",
+    "Cloudflare Turnstile keys for web form bot protection. Create a widget in the Cloudflare dashboard, then paste both keys here.":
+        "Cloudflare Turnstile keys for web form bot protection. Create a widget in the Cloudflare dashboard, then paste both keys here.",
+    "Site Key": "Site Key",
+    "Secret Key": "Secret Key",
+    "Leave blank to keep the saved site key":
+        "Leave blank to keep the saved site key",
+    "Leave blank to keep the saved secret key":
+        "Leave blank to keep the saved secret key",
+    "Clear saved site key": "Clear saved site key",
+    "Clear saved secret key": "Clear saved secret key",
+    "Port and Security must match: 465/2465 → TLS, 587/2587 → STARTTLS. Resend: host smtp.resend.com, username resend, password = API key.":
+        "Port and Security must match: 465/2465 → TLS, 587/2587 → STARTTLS. Resend: host smtp.resend.com, username resend, password = API key.",
     "Insufficient permissions": "Insufficient permissions",
     "Notifications enabled": "Notifications enabled",
     "Notifications disabled": "Notifications disabled",
@@ -1164,6 +1190,19 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Port must be between 1 and 65535": "El puerto debe estar entre 1 y 65535",
     "From email is required when SMTP settings are present":
         "El correo del remitente es obligatorio cuando hay configuración SMTP",
+    "Turnstile CAPTCHA": "Turnstile CAPTCHA",
+    "Cloudflare Turnstile keys for web form bot protection. Create a widget in the Cloudflare dashboard, then paste both keys here.":
+        "Claves de Cloudflare Turnstile para la protección contra bots en el formulario web. Cree un widget en el panel de Cloudflare y pegue ambas claves aquí.",
+    "Site Key": "Clave del sitio",
+    "Secret Key": "Clave secreta",
+    "Leave blank to keep the saved site key":
+        "Deje en blanco para conservar la clave del sitio guardada",
+    "Leave blank to keep the saved secret key":
+        "Deje en blanco para conservar la clave secreta guardada",
+    "Clear saved site key": "Borrar clave del sitio guardada",
+    "Clear saved secret key": "Borrar clave secreta guardada",
+    "Port and Security must match: 465/2465 → TLS, 587/2587 → STARTTLS. Resend: host smtp.resend.com, username resend, password = API key.":
+        "El puerto y la seguridad deben coincidir: 465/2465 → TLS, 587/2587 → STARTTLS. Resend: host smtp.resend.com, usuario resend, contraseña = clave API.",
     "Insufficient permissions": "Permisos insuficientes",
     "Notifications enabled": "Notificaciones activadas",
     "Notifications disabled": "Notificaciones desactivadas",
@@ -1572,6 +1611,19 @@ const adminLocalizedValues = <String, Map<String, String>>{
         "Le port doit être compris entre 1 et 65535",
     "From email is required when SMTP settings are present":
         "L'e-mail de l'expéditeur est obligatoire lorsque les paramètres SMTP sont présents",
+    "Turnstile CAPTCHA": "Turnstile CAPTCHA",
+    "Cloudflare Turnstile keys for web form bot protection. Create a widget in the Cloudflare dashboard, then paste both keys here.":
+        "Clés Cloudflare Turnstile pour la protection anti-bots du formulaire web. Créez un widget dans le tableau de bord Cloudflare, puis collez les deux clés ici.",
+    "Site Key": "Clé de site",
+    "Secret Key": "Clé secrète",
+    "Leave blank to keep the saved site key":
+        "Laisser vide pour conserver la clé de site enregistrée",
+    "Leave blank to keep the saved secret key":
+        "Laisser vide pour conserver la clé secrète enregistrée",
+    "Clear saved site key": "Effacer la clé de site enregistrée",
+    "Clear saved secret key": "Effacer la clé secrète enregistrée",
+    "Port and Security must match: 465/2465 → TLS, 587/2587 → STARTTLS. Resend: host smtp.resend.com, username resend, password = API key.":
+        "Le port et la sécurité doivent correspondre : 465/2465 → TLS, 587/2587 → STARTTLS. Resend : hôte smtp.resend.com, nom d’utilisateur resend, mot de passe = clé API.",
     "Insufficient permissions": "Permissions insuffisantes",
     "Notifications enabled": "Notifications activées",
     "Notifications disabled": "Notifications désactivées",
@@ -1991,6 +2043,19 @@ const adminLocalizedValues = <String, Map<String, String>>{
         "La porta deve essere compresa tra 1 e 65535",
     "From email is required when SMTP settings are present":
         "L'email del mittente è obbligatoria quando sono presenti impostazioni SMTP",
+    "Turnstile CAPTCHA": "Turnstile CAPTCHA",
+    "Cloudflare Turnstile keys for web form bot protection. Create a widget in the Cloudflare dashboard, then paste both keys here.":
+        "Chiavi Cloudflare Turnstile per la protezione dai bot nel modulo web. Crea un widget nella dashboard Cloudflare, quindi incolla entrambe le chiavi qui.",
+    "Site Key": "Chiave del sito",
+    "Secret Key": "Chiave segreta",
+    "Leave blank to keep the saved site key":
+        "Lascia vuoto per mantenere la chiave del sito salvata",
+    "Leave blank to keep the saved secret key":
+        "Lascia vuoto per mantenere la chiave segreta salvata",
+    "Clear saved site key": "Cancella la chiave del sito salvata",
+    "Clear saved secret key": "Cancella la chiave segreta salvata",
+    "Port and Security must match: 465/2465 → TLS, 587/2587 → STARTTLS. Resend: host smtp.resend.com, username resend, password = API key.":
+        "Porta e sicurezza devono corrispondere: 465/2465 → TLS, 587/2587 → STARTTLS. Resend: host smtp.resend.com, nome utente resend, password = chiave API.",
     "Insufficient permissions": "Autorizzazioni insufficienti",
     "Notifications enabled": "Notifiche abilitate",
     "Notifications disabled": "Notifiche disabilitate",
@@ -2399,6 +2464,17 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Port must be between 1 and 65535": "ポートは1から65535の範囲で入力してください",
     "From email is required when SMTP settings are present":
         "SMTP設定を入力する場合は送信元メールアドレスが必須です",
+    "Turnstile CAPTCHA": "Turnstile CAPTCHA",
+    "Cloudflare Turnstile keys for web form bot protection. Create a widget in the Cloudflare dashboard, then paste both keys here.":
+        "Webフォームのボット対策用 Cloudflare Turnstile キーです。Cloudflare ダッシュボードでウィジェットを作成し、両方のキーをここに貼り付けてください。",
+    "Site Key": "サイトキー",
+    "Secret Key": "シークレットキー",
+    "Leave blank to keep the saved site key": "空欄のままなら保存済みのサイトキーを維持します",
+    "Leave blank to keep the saved secret key": "空欄のままなら保存済みのシークレットキーを維持します",
+    "Clear saved site key": "保存済みのサイトキーを削除",
+    "Clear saved secret key": "保存済みのシークレットキーを削除",
+    "Port and Security must match: 465/2465 → TLS, 587/2587 → STARTTLS. Resend: host smtp.resend.com, username resend, password = API key.":
+        "ポートとセキュリティは一致させてください: 465/2465 → TLS、587/2587 → STARTTLS。Resend: ホスト smtp.resend.com、ユーザー名 resend、パスワード = APIキー。",
     "Insufficient permissions": "権限がありません",
     "Notifications enabled": "通知を有効にしました",
     "Notifications disabled": "通知を無効にしました",
@@ -2812,6 +2888,17 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Port must be between 1 and 65535": "포트는 1에서 65535 사이여야 합니다.",
     "From email is required when SMTP settings are present":
         "SMTP 설정이 있는 경우 이메일에서가 필요합니다.",
+    "Turnstile CAPTCHA": "Turnstile CAPTCHA",
+    "Cloudflare Turnstile keys for web form bot protection. Create a widget in the Cloudflare dashboard, then paste both keys here.":
+        "웹 양식 봇 방지를 위한 Cloudflare Turnstile 키입니다. Cloudflare 대시보드에서 위젯을 만든 뒤 두 키를 모두 여기에 붙여넣으세요.",
+    "Site Key": "사이트 키",
+    "Secret Key": "비밀 키",
+    "Leave blank to keep the saved site key": "비워 두면 저장된 사이트 키를 유지합니다",
+    "Leave blank to keep the saved secret key": "비워 두면 저장된 비밀 키를 유지합니다",
+    "Clear saved site key": "저장된 사이트 키 삭제",
+    "Clear saved secret key": "저장된 비밀 키 삭제",
+    "Port and Security must match: 465/2465 → TLS, 587/2587 → STARTTLS. Resend: host smtp.resend.com, username resend, password = API key.":
+        "포트와 보안 설정이 일치해야 합니다: 465/2465 → TLS, 587/2587 → STARTTLS. Resend: 호스트 smtp.resend.com, 사용자 이름 resend, 비밀번호 = API 키.",
     "Insufficient permissions": "권한이 부족합니다.",
     "Failed to update web publication: ": "웹 발행물 업데이트 실패: {error}",
     "Failed to load answers: ": "답변을 로드하지 못했습니다: {error}",
@@ -3135,6 +3222,19 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Port must be between 1 and 65535": "พอร์ตต้องอยู่ระหว่าง 1 ถึง 65535",
     "From email is required when SMTP settings are present":
         "ต้องระบุอีเมลผู้ส่งเมื่อมีการตั้งค่า SMTP",
+    "Turnstile CAPTCHA": "Turnstile CAPTCHA",
+    "Cloudflare Turnstile keys for web form bot protection. Create a widget in the Cloudflare dashboard, then paste both keys here.":
+        "คีย์ Cloudflare Turnstile สำหรับป้องกันบอทในแบบฟอร์มเว็บ สร้างวิดเจ็ตในแดชบอร์ด Cloudflare แล้ววางคีย์ทั้งสองที่นี่",
+    "Site Key": "ไซต์คีย์",
+    "Secret Key": "ซีเคร็ตคีย์",
+    "Leave blank to keep the saved site key":
+        "เว้นว่างไว้เพื่อคงไซต์คีย์ที่บันทึกไว้",
+    "Leave blank to keep the saved secret key":
+        "เว้นว่างไว้เพื่อคงซีเคร็ตคีย์ที่บันทึกไว้",
+    "Clear saved site key": "ลบไซต์คีย์ที่บันทึกไว้",
+    "Clear saved secret key": "ลบซีเคร็ตคีย์ที่บันทึกไว้",
+    "Port and Security must match: 465/2465 → TLS, 587/2587 → STARTTLS. Resend: host smtp.resend.com, username resend, password = API key.":
+        "พอร์ตและความปลอดภัยต้องตรงกัน: 465/2465 → TLS, 587/2587 → STARTTLS. Resend: โฮสต์ smtp.resend.com, ชื่อผู้ใช้ resend, รหัสผ่าน = API key",
     "Insufficient permissions": "สิทธิ์ไม่เพียงพอ",
     "Notifications enabled": "เปิดการแจ้งเตือนแล้ว",
     "Notifications disabled": "ปิดการแจ้งเตือนแล้ว",
@@ -3535,6 +3635,19 @@ const adminLocalizedValues = <String, Map<String, String>>{
         "Bağlantı noktası 1 ile 65535 arasında olmalıdır",
     "From email is required when SMTP settings are present":
         "SMTP ayarları varken gönderen e-posta zorunludur",
+    "Turnstile CAPTCHA": "Turnstile CAPTCHA",
+    "Cloudflare Turnstile keys for web form bot protection. Create a widget in the Cloudflare dashboard, then paste both keys here.":
+        "Web formundaki bot koruması için Cloudflare Turnstile anahtarları. Cloudflare panosunda bir widget oluşturun, ardından her iki anahtarı buraya yapıştırın.",
+    "Site Key": "Site Anahtarı",
+    "Secret Key": "Gizli Anahtar",
+    "Leave blank to keep the saved site key":
+        "Kayıtlı site anahtarını korumak için boş bırakın",
+    "Leave blank to keep the saved secret key":
+        "Kayıtlı gizli anahtarı korumak için boş bırakın",
+    "Clear saved site key": "Kayıtlı site anahtarını temizle",
+    "Clear saved secret key": "Kayıtlı gizli anahtarı temizle",
+    "Port and Security must match: 465/2465 → TLS, 587/2587 → STARTTLS. Resend: host smtp.resend.com, username resend, password = API key.":
+        "Bağlantı noktası ve güvenlik eşleşmelidir: 465/2465 → TLS, 587/2587 → STARTTLS. Resend: ana bilgisayar smtp.resend.com, kullanıcı adı resend, parola = API anahtarı.",
     "Insufficient permissions": "Yetersiz izinler",
     "Notifications enabled": "Bildirimler etkin",
     "Notifications disabled": "Bildirimler devre dışı",
@@ -3963,6 +4076,17 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Port must be between 1 and 65535": "端口必须介于 1 和 65535 之间",
     "From email is required when SMTP settings are present":
         "当存在 SMTP 设置时，需要来自电子邮件",
+    "Turnstile CAPTCHA": "Turnstile CAPTCHA",
+    "Cloudflare Turnstile keys for web form bot protection. Create a widget in the Cloudflare dashboard, then paste both keys here.":
+        "用于网页表单机器人防护的 Cloudflare Turnstile 密钥。在 Cloudflare 控制面板创建小组件，然后将两个密钥粘贴到此处。",
+    "Site Key": "站点密钥",
+    "Secret Key": "密钥",
+    "Leave blank to keep the saved site key": "留空以保留已保存的站点密钥",
+    "Leave blank to keep the saved secret key": "留空以保留已保存的密钥",
+    "Clear saved site key": "清除已保存的站点密钥",
+    "Clear saved secret key": "清除已保存的密钥",
+    "Port and Security must match: 465/2465 → TLS, 587/2587 → STARTTLS. Resend: host smtp.resend.com, username resend, password = API key.":
+        "端口与安全设置必须匹配：465/2465 → TLS，587/2587 → STARTTLS。Resend：主机 smtp.resend.com，用户名 resend，密码 = API 密钥。",
     "Insufficient permissions": "权限不足",
     "Failed to update web publication: ": "无法更新网络发布：{error}",
     "Failed to load answers: ": "无法加载答案：{error}",
@@ -4325,6 +4449,17 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Port must be between 1 and 65535": "連接埠必須介於 1 和 65535 之間",
     "From email is required when SMTP settings are present":
         "當存在 SMTP 設定時，需要來自電子郵件",
+    "Turnstile CAPTCHA": "Turnstile CAPTCHA",
+    "Cloudflare Turnstile keys for web form bot protection. Create a widget in the Cloudflare dashboard, then paste both keys here.":
+        "用於網頁表單機器人防護的 Cloudflare Turnstile 金鑰。在 Cloudflare 控制台建立小工具，然後將兩個金鑰貼到此處。",
+    "Site Key": "站台金鑰",
+    "Secret Key": "密鑰",
+    "Leave blank to keep the saved site key": "留空以保留已儲存的站台金鑰",
+    "Leave blank to keep the saved secret key": "留空以保留已儲存的密鑰",
+    "Clear saved site key": "清除已儲存的站台金鑰",
+    "Clear saved secret key": "清除已儲存的密鑰",
+    "Port and Security must match: 465/2465 → TLS, 587/2587 → STARTTLS. Resend: host smtp.resend.com, username resend, password = API key.":
+        "連接埠與安全性設定必須相符：465/2465 → TLS，587/2587 → STARTTLS。Resend：主機 smtp.resend.com，使用者名稱 resend，密碼 = API 金鑰。",
     "Insufficient permissions": "權限不足",
     "Failed to update web publication: ": "無法更新網路發布：{error}",
     "Failed to load answers: ": "無法載入答案：{error}",

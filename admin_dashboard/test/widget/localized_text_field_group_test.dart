@@ -12,7 +12,7 @@ void main() {
     ) async {
       await tester.pumpWidget(_subject(locales: const ['en']));
 
-      expect(find.text('Name'), findsOneWidget);
+      expect(find.text('Name (English)'), findsOneWidget);
       expect(find.text('Other languages'), findsNothing);
       expect(find.text('Name (日本語)'), findsNothing);
     });
@@ -22,7 +22,7 @@ void main() {
     ) async {
       await tester.pumpWidget(_subject(locales: const ['en', 'ja']));
 
-      expect(find.text('Name'), findsOneWidget);
+      expect(find.text('Name (English)'), findsOneWidget);
       expect(find.text('Other languages'), findsOneWidget);
       // Secondary fields stay mounted for validation but start collapsed.
       expect(find.text('Name (日本語)'), findsOneWidget);
