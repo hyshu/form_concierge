@@ -5,6 +5,9 @@ Minimal iOS/Android Form Concierge example.
 This sample embeds `FormConciergeSurvey` without local persistence, secure
 storage, or app localization.
 
+The route closes from `onDone`, not `onSubmitted`, so adaptive follow-up
+questions remain available after the main response is saved.
+
 Run:
 
 ```bash

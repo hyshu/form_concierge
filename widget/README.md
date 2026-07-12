@@ -38,11 +38,33 @@ FormConciergeSurvey(
   onAnonymousSession: (session) async {
     await saveAnonymousToken(session.token);
   },
-  onSubmitted: () {
+  onResponseSubmitted: (response, answers) {
+    // Save the main response receipt. Do not close yet: an adaptive follow-up
+    // may start after this callback.
+  },
+  onFollowUpSubmitted: (response) {
+    // Replace the saved receipt with the follow-up-completed response.
+  },
+  onDone: () {
     Navigator.pop(context);
   },
+  showLocalePicker: true,
+  processImage: (image) async {
+    // Resize, compress, redact, or remove metadata here when needed.
+    return image;
+  },
+  footer: const Text('Your privacy notice'),
 )
 ```
+
+`onSubmitted` and `onResponseSubmitted` run immediately after the main response
+is saved. Do not close the host route from them when adaptive follow-up is
+enabled. `onFollowUpSubmitted` runs after follow-up answers are saved, and
+`onDone` runs when the respondent taps the completion-screen Done button.
+
+Surveys with `followUpEnabled` automatically generate and render the adaptive
+follow-up interview. Image questions automatically pick and upload images;
+`processImage` is an optional host transform applied before each upload.
 
 Pass `locale` to render survey content and widget messages in that language. Locale tags are normalized, so `ja`, `ja_JP`, and `ja-JP` render Japanese. Region tags such as `en_US`, `ko_KR`, `de_DE`, `es_ES`, `fr_FR`, `it_IT`, `th_TH`, `tr_TR`, `zh_CN`, and `zh_TW` are also normalized to the supported survey locales (`en`, `ja`, `zh-Hans`, `zh-Hant`, `ko`, `de`, `es`, `fr`, `it`, `th`, `tr`).
 
@@ -94,3 +116,4 @@ await checker.markLatestSeen();
 - Multiple choice
 - Single line text
 - Multi-line text
+- Image upload

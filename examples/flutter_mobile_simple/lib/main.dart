@@ -95,7 +95,9 @@ class SurveyScreen extends StatelessWidget {
         projectSlug: _projectSlug,
         surveySlug: _surveySlug.isEmpty ? null : _surveySlug,
         surveyId: _surveyIdValue == 0 ? null : _surveyIdValue,
-        onSubmitted: () {
+        // onSubmitted fires after the main response. Keep this route open so
+        // an enabled adaptive follow-up can run, then close from onDone.
+        onDone: () {
           Navigator.of(context).pop(true);
         },
       ),

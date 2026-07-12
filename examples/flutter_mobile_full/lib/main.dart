@@ -26,6 +26,8 @@ const _surveySlugKey = 'form_concierge.flutter_mobile_full.survey_slug';
 const _surveyIdKey = 'form_concierge.flutter_mobile_full.survey_id';
 const _appLocaleKey = 'form_concierge.flutter_mobile_full.app_locale';
 const _formLocaleKey = 'form_concierge.flutter_mobile_full.form_locale';
+const _showLocalePickerKey =
+    'form_concierge.flutter_mobile_full.show_locale_picker';
 const _lastResponseIdKey =
     'form_concierge.flutter_mobile_full.last_response_id';
 const _anonymousTokenKey = 'form_concierge.flutter_mobile_full.anonymous_token';
@@ -125,6 +127,7 @@ class _FlutterMobileFullHomePageState extends State<FlutterMobileFullHomePage> {
   late final TextEditingController _surveySlugController;
   late final TextEditingController _surveyIdController;
   late String _formLocale;
+  late bool _showLocalePicker;
   String? _anonymousToken;
   int? _lastResponseId;
   bool _checkingReplies = false;
@@ -148,7 +151,13 @@ class _FlutterMobileFullHomePageState extends State<FlutterMobileFullHomePage> {
     _formLocale = _normalizedFormLocale(
       widget.prefs.getString(_formLocaleKey) ?? _defaultLocale,
     );
+    _showLocalePicker = widget.prefs.getBool(_showLocalePickerKey) ?? false;
     _lastResponseId = widget.prefs.getInt(_lastResponseIdKey);
+    if (_anonymousToken != null && _lastResponseId != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _checkReplies(silent: true);
+      });
+    }
   }
 
   String _initialSurveyIdText() {
@@ -254,6 +263,16 @@ class _FlutterMobileFullHomePageState extends State<FlutterMobileFullHomePage> {
                 ),
                 const SizedBox(height: 8),
                 Text(strings.text('localization_note')),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(strings.text('show_locale_picker')),
+                  subtitle: Text(strings.text('show_locale_picker_note')),
+                  value: _showLocalePicker,
+                  onChanged: (value) {
+                    setState(() => _showLocalePicker = value);
+                    widget.prefs.setBool(_showLocalePickerKey, value);
+                  },
+                ),
               ],
             ),
             const SizedBox(height: 16),
@@ -317,6 +336,15 @@ class _FlutterMobileFullHomePageState extends State<FlutterMobileFullHomePage> {
                           : () => _checkReplies(markSeen: true),
                       icon: const Icon(Icons.done_all),
                       label: Text(strings.text('mark_seen')),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: _checkingReplies ? null : _openReplies,
+                      icon: Badge(
+                        isLabelVisible:
+                            _replyCheckResult?.hasNewReplies ?? false,
+                        child: const Icon(Icons.forum_outlined),
+                      ),
+                      label: Text(strings.text('view_replies')),
                     ),
                   ],
                 ),
@@ -382,7 +410,7 @@ class _FlutterMobileFullHomePageState extends State<FlutterMobileFullHomePage> {
       _showSnack(strings.text('project_slug_required'));
       return;
     }
-    final submittedResponse = await Navigator.of(context).push<SurveyResponse>(
+    final result = await Navigator.of(context).push<_SurveyResult>(
       MaterialPageRoute(
         builder: (context) => SurveyScreen(
           client: _client,
@@ -393,15 +421,16 @@ class _FlutterMobileFullHomePageState extends State<FlutterMobileFullHomePage> {
           surveyId: int.tryParse(_surveyIdController.text.trim()),
           locale: _formLocale,
           anonymousToken: _anonymousToken,
+          showLocalePicker: _showLocalePicker,
           onAnonymousSession: _storeAnonymousSession,
         ),
       ),
     );
-    if (submittedResponse == null) return;
-    await widget.prefs.setInt(_lastResponseIdKey, submittedResponse.id!);
+    if (result == null) return;
+    await widget.prefs.setInt(_lastResponseIdKey, result.response.id!);
     if (!mounted) return;
-    setState(() => _lastResponseId = submittedResponse.id);
-    _showSnack(strings.text('submitted'));
+    setState(() => _lastResponseId = result.response.id);
+    _showSnack(strings.format('submitted', {'count': result.mainAnswerCount}));
   }
 
   Future<void> _storeAnonymousSession(AnonymousSession session) async {
@@ -413,7 +442,10 @@ class _FlutterMobileFullHomePageState extends State<FlutterMobileFullHomePage> {
     if (mounted) setState(() => _anonymousToken = session.token);
   }
 
-  Future<void> _checkReplies({bool markSeen = false}) async {
+  Future<void> _checkReplies({
+    bool markSeen = false,
+    bool silent = false,
+  }) async {
     final strings = ExampleStrings.of(context);
     final token = _anonymousToken;
     if (token == null) {
@@ -428,25 +460,43 @@ class _FlutterMobileFullHomePageState extends State<FlutterMobileFullHomePage> {
         anonymousToken: token,
         responseId: _lastResponseId,
         // Persistence stays in the host app; the widget package has no store.
-        store: FormConciergeReplySeenStore(
-          read: (key) async => prefs.getString(key),
-          write: (key, value) async {
-            await prefs.setString(key, value);
-          },
-          remove: (key) async {
-            await prefs.remove(key);
-          },
-        ),
+        store: _replySeenStore(prefs),
       );
       final result = await checker.check(markSeen: markSeen);
       if (!mounted) return;
       setState(() => _replyCheckResult = result);
-      _showSnack(strings.text(markSeen ? 'seen_saved' : 'reply_checked'));
+      if (!silent) {
+        _showSnack(strings.text(markSeen ? 'seen_saved' : 'reply_checked'));
+      }
     } on Exception catch (error) {
-      if (mounted) _showSnack('${strings.text('reply_check_failed')}$error');
+      if (mounted && !silent) {
+        _showSnack('${strings.text('reply_check_failed')}$error');
+      }
     } finally {
       if (mounted) setState(() => _checkingReplies = false);
     }
+  }
+
+  Future<void> _openReplies() async {
+    final strings = ExampleStrings.of(context);
+    final token = _anonymousToken;
+    final responseId = _lastResponseId;
+    if (token == null || responseId == null) {
+      _showSnack(strings.text('token_required'));
+      return;
+    }
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (context) => RepliesScreen(
+          client: _client,
+          prefs: widget.prefs,
+          anonymousToken: token,
+          responseId: responseId,
+        ),
+      ),
+    );
+    if (!mounted) return;
+    await _checkReplies(silent: true);
   }
 
   Future<void> _clearLocalState() async {
@@ -456,6 +506,7 @@ class _FlutterMobileFullHomePageState extends State<FlutterMobileFullHomePage> {
     await widget.prefs.remove(_lastResponseIdKey);
     await widget.prefs.remove(_appLocaleKey);
     await widget.prefs.remove(_formLocaleKey);
+    await widget.prefs.remove(_showLocalePickerKey);
     await widget.secureStorage.delete(key: _anonymousTokenKey);
     _client.anonymous.clear();
     if (!mounted) return;
@@ -466,6 +517,7 @@ class _FlutterMobileFullHomePageState extends State<FlutterMobileFullHomePage> {
           ? ''
           : '$_defaultSurveyId';
       _formLocale = defaultFormContentLocale;
+      _showLocalePicker = false;
       _anonymousToken = null;
       _lastResponseId = null;
       _replyCheckResult = null;
@@ -486,7 +538,139 @@ class _FlutterMobileFullHomePageState extends State<FlutterMobileFullHomePage> {
   }
 }
 
-class SurveyScreen extends StatelessWidget {
+FormConciergeReplySeenStore _replySeenStore(SharedPreferences prefs) {
+  return FormConciergeReplySeenStore(
+    read: (key) async => prefs.getString(key),
+    write: (key, value) async {
+      await prefs.setString(key, value);
+    },
+    remove: (key) async {
+      await prefs.remove(key);
+    },
+  );
+}
+
+class RepliesScreen extends StatefulWidget {
+  const RepliesScreen({
+    super.key,
+    required this.client,
+    required this.prefs,
+    required this.anonymousToken,
+    required this.responseId,
+  });
+
+  final Client client;
+  final SharedPreferences prefs;
+  final String anonymousToken;
+  final int responseId;
+
+  @override
+  State<RepliesScreen> createState() => _RepliesScreenState();
+}
+
+class _RepliesScreenState extends State<RepliesScreen> {
+  late Future<List<AdminReply>> _repliesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _repliesFuture = _loadReplies();
+  }
+
+  Future<List<AdminReply>> _loadReplies() async {
+    widget.client.anonymous.useToken(widget.anonymousToken);
+    final replies = await widget.client.anonymous.getReplies(
+      responseId: widget.responseId,
+    );
+    try {
+      await FormConciergeReplyChecker(
+        client: widget.client,
+        anonymousToken: widget.anonymousToken,
+        responseId: widget.responseId,
+        store: _replySeenStore(widget.prefs),
+      ).markLatestSeen();
+    } on Exception {
+      // Replies remain readable even when persisting the seen marker fails.
+    }
+    return replies;
+  }
+
+  void _retry() {
+    setState(() => _repliesFuture = _loadReplies());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final strings = ExampleStrings.of(context);
+    return Scaffold(
+      appBar: AppBar(title: Text(strings.text('replies'))),
+      body: FutureBuilder<List<AdminReply>>(
+        future: _repliesFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState != ConnectionState.done) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '${strings.text('reply_load_failed')}${snapshot.error}',
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    FilledButton(
+                      onPressed: _retry,
+                      child: Text(strings.text('retry')),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+          final replies = snapshot.data ?? const <AdminReply>[];
+          if (replies.isEmpty) {
+            return Center(child: Text(strings.text('no_replies')));
+          }
+          return ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemCount: replies.length,
+            separatorBuilder: (context, index) => const SizedBox(height: 8),
+            itemBuilder: (context, index) {
+              final reply = replies[index];
+              return Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        reply.createdAt.toLocal().toIso8601String(),
+                        style: Theme.of(context).textTheme.labelMedium
+                            ?.copyWith(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
+                            ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(reply.body),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
+class SurveyScreen extends StatefulWidget {
   const SurveyScreen({
     super.key,
     required this.client,
@@ -495,6 +679,7 @@ class SurveyScreen extends StatelessWidget {
     required this.surveyId,
     required this.locale,
     required this.anonymousToken,
+    required this.showLocalePicker,
     required this.onAnonymousSession,
   });
 
@@ -504,7 +689,16 @@ class SurveyScreen extends StatelessWidget {
   final int? surveyId;
   final String locale;
   final String? anonymousToken;
+  final bool showLocalePicker;
   final ValueChanged<AnonymousSession> onAnonymousSession;
+
+  @override
+  State<SurveyScreen> createState() => _SurveyScreenState();
+}
+
+class _SurveyScreenState extends State<SurveyScreen> {
+  SurveyResponse? _submittedResponse;
+  int _submittedAnswerCount = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -512,12 +706,13 @@ class SurveyScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text(strings.text('survey'))),
       body: FormConciergeSurvey(
-        client: client,
-        projectSlug: projectSlug,
-        surveySlug: surveySlug,
-        surveyId: surveyId,
-        locale: locale,
-        anonymousToken: anonymousToken,
+        client: widget.client,
+        projectSlug: widget.projectSlug,
+        surveySlug: widget.surveySlug,
+        surveyId: widget.surveyId,
+        locale: widget.locale,
+        showLocalePicker: widget.showLocalePicker,
+        anonymousToken: widget.anonymousToken,
         anonymousId: 'flutter-mobile-full',
         deviceInfo: DeviceInfo(
           label: defaultTargetPlatform.name,
@@ -527,18 +722,50 @@ class SurveyScreen extends StatelessWidget {
         ),
         metadata: {
           'source': 'flutter-mobile-full',
-          'locale': locale,
-          'projectSlug': projectSlug,
-          if (surveySlug != null) 'surveySlug': surveySlug,
-          if (surveyId != null) 'surveyId': surveyId,
+          'locale': widget.locale,
+          'projectSlug': widget.projectSlug,
+          if (widget.surveySlug != null) 'surveySlug': widget.surveySlug,
+          if (widget.surveyId != null) 'surveyId': widget.surveyId,
         },
-        onAnonymousSession: onAnonymousSession,
-        onResponseSubmitted: (response, _) {
-          Navigator.of(context).pop(response);
+        onAnonymousSession: widget.onAnonymousSession,
+        onResponseSubmitted: (response, answers) {
+          _submittedResponse = response;
+          _submittedAnswerCount = answers.length;
         },
+        onFollowUpSubmitted: (response) {
+          _submittedResponse = response;
+        },
+        onDone: () {
+          final response = _submittedResponse;
+          if (response == null) return;
+          Navigator.of(context).pop(
+            _SurveyResult(
+              response: response,
+              mainAnswerCount: _submittedAnswerCount,
+            ),
+          );
+        },
+        processImage: _processImage,
+        footer: Text(
+          strings.text('survey_footer'),
+          textAlign: TextAlign.center,
+        ),
       ),
     );
   }
+
+  // Hook point for resize, compression, redaction, or EXIF removal. This full
+  // sample keeps original bytes while demonstrating host-side processing.
+  Future<PickedSurveyImage?> _processImage(PickedSurveyImage image) async {
+    return image;
+  }
+}
+
+class _SurveyResult {
+  const _SurveyResult({required this.response, required this.mainAnswerCount});
+
+  final SurveyResponse response;
+  final int mainAnswerCount;
 }
 
 class _Section extends StatelessWidget {
@@ -648,6 +875,8 @@ const _values = {
     'form_language': 'Form language',
     'localization_note':
         'The selected locale is saved in SharedPreferences and passed to the embedded form.',
+    'show_locale_picker': 'Show locale picker inside form',
+    'show_locale_picker_note': 'Demonstrates the showLocalePicker host option.',
     'storage': 'Storage',
     'shared_preferences': 'SharedPreferences',
     'secure_storage': 'Secure storage',
@@ -664,11 +893,18 @@ const _values = {
     'none': 'None',
     'check_replies': 'Check replies',
     'mark_seen': 'Mark seen',
+    'view_replies': 'View replies',
+    'replies': 'Replies',
+    'no_replies': 'No replies yet.',
+    'reply_load_failed': 'Reply loading failed: ',
+    'retry': 'Retry',
     'open_survey': 'Open survey',
     'clear_state': 'Clear local state',
     'app_language': 'App language',
     'survey': 'Survey',
-    'submitted': 'Survey submitted.',
+    'survey_footer':
+        'Host-provided footer. Images pass through the processImage hook before upload.',
+    'submitted': 'Survey submitted with {count} main-form answers.',
     'token_required': 'Submit once to create an anonymous token.',
     'seen_saved': 'Latest reply marked seen.',
     'reply_checked': 'Reply status checked.',
@@ -691,6 +927,8 @@ const _values = {
     'form_language': 'フォーム言語',
     'localization_note':
         '選択した locale は SharedPreferences に保存され、埋め込みフォームへ渡されます。',
+    'show_locale_picker': 'フォーム内の言語選択を表示',
+    'show_locale_picker_note': 'showLocalePicker ホスト設定を確認できます。',
     'storage': 'ストレージ',
     'shared_preferences': 'SharedPreferences',
     'secure_storage': 'Secure Storage',
@@ -707,11 +945,17 @@ const _values = {
     'none': 'なし',
     'check_replies': '返信確認',
     'mark_seen': '既読にする',
+    'view_replies': '返信を見る',
+    'replies': 'お問い合わせへの返信',
+    'no_replies': '返信はまだありません。',
+    'reply_load_failed': '返信取得に失敗しました: ',
+    'retry': '再試行',
     'open_survey': 'フォームを開く',
     'clear_state': 'ローカル状態を削除',
     'app_language': 'アプリ言語',
     'survey': 'フォーム',
-    'submitted': 'フォームを送信しました。',
+    'survey_footer': 'ホスト提供footerです。画像はアップロード前に processImage hook を通ります。',
+    'submitted': '主フォームの回答 {count} 件を送信しました。',
     'token_required': '一度送信して匿名 token を作成してください。',
     'seen_saved': '最新返信を既読にしました。',
     'reply_checked': '返信状態を確認しました。',

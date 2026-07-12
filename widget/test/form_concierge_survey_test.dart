@@ -104,6 +104,84 @@ void main() {
     expect(find.text('Customer feedback'), findsOneWidget);
   });
 
+  testWidgets('keeps follow-up open until completion Done action', (
+    tester,
+  ) async {
+    SurveyResponse? mainResponse;
+    SurveyResponse? followUpResponse;
+    var done = false;
+    final client = _client((request) {
+      return switch ((request.method, request.url.path)) {
+        ('GET', '/api/projects/customer-feedback') => _json(
+          _projectJson(surveys: [_surveyJson(followUpEnabled: true)]),
+        ),
+        ('GET', '/api/surveys/id/1/questions') => _json([]),
+        ('GET', '/api/surveys/id/1/visibility-rules') => _json([]),
+        ('POST', '/api/anonymous/accounts') => _json(_anonymousSessionJson()),
+        ('POST', '/api/surveys/id/1/responses') => _json(_responseJson()),
+        ('POST', '/api/responses/99/follow-up/generate') => _json({
+          'needed': true,
+          'followUp': {
+            'version': 1,
+            'status': 'pending',
+            'generatedAt': '2026-06-22T10:02:00.000Z',
+            'completedAt': null,
+            'locale': 'en',
+            'items': [
+              {
+                'id': 'detail',
+                'type': 'textSingle',
+                'text': 'Could you add one detail?',
+                'required': false,
+                'placeholder': null,
+                'maxFiles': null,
+                'choices': [],
+                'answer': null,
+              },
+            ],
+          },
+          'error': null,
+        }),
+        ('PUT', '/api/responses/99/follow-up') => _json(_responseJson()),
+        _ => http.Response('Unexpected ${request.method} ${request.url}', 404),
+      };
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: FormConciergeSurvey(
+            client: client,
+            projectSlug: 'customer-feedback',
+            onResponseSubmitted: (response, _) => mainResponse = response,
+            onFollowUpSubmitted: (response) => followUpResponse = response,
+            onDone: () => done = true,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Submit'));
+    await tester.pumpAndSettle();
+
+    expect(mainResponse?.id, 99);
+    expect(done, isFalse);
+    expect(find.text('A few more questions'), findsOneWidget);
+    expect(find.text('Could you add one detail?'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField), 'More context');
+    await tester.tap(find.text('Finish'));
+    await tester.pumpAndSettle();
+
+    expect(followUpResponse?.id, 99);
+    expect(find.text('Thank you!'), findsOneWidget);
+    expect(done, isFalse);
+
+    await tester.tap(find.text('Done'));
+    expect(done, isTrue);
+  });
+
   testWidgets(
     'uses provided anonymous token instead of creating a new session',
     (tester) async {
@@ -193,6 +271,7 @@ Map<String, Object?> _projectJson({List<Map<String, Object?>>? surveys}) => {
 Map<String, Object?> _surveyJson({
   int id = 1,
   String slug = 'customer-feedback',
+  bool followUpEnabled = false,
 }) => {
   'id': id,
   'projectId': 1,
@@ -201,7 +280,7 @@ Map<String, Object?> _surveyJson({
   'descriptionTranslations': {'en': 'Tell us what you think'},
   'status': 'published',
   'webEnabled': true,
-  'followUpEnabled': false,
+  'followUpEnabled': followUpEnabled,
   'createdAt': '2026-06-22T10:00:00.000Z',
   'updatedAt': '2026-06-22T10:00:00.000Z',
   'startsAt': null,
