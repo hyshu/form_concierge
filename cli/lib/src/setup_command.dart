@@ -87,8 +87,8 @@ class SetupCloudflareCommand extends Command<int> {
     if (root == null) {
       throw CliException(
         'Could not find Form Concierge monorepo root.\n'
-        'Run this command from a checkout that contains worker/wrangler.jsonc '
-        'and admin_dashboard/pubspec.yaml.\n'
+        'Run this command from a checkout that contains '
+        'worker/wrangler.jsonc.example and admin_dashboard/pubspec.yaml.\n'
         '(Published template download is not implemented yet.)',
       );
     }

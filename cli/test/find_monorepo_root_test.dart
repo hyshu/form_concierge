@@ -11,7 +11,8 @@ void main() {
     final root = findMonorepoRoot(start: cliDir);
     expect(root, isNotNull);
     expect(
-      File(p.join(root!, 'worker', 'wrangler.jsonc')).existsSync(),
+      File(p.join(root!, 'worker', 'wrangler.jsonc.example')).existsSync() ||
+          File(p.join(root, 'worker', 'wrangler.jsonc')).existsSync(),
       isTrue,
     );
     expect(

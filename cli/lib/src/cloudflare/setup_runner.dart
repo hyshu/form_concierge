@@ -35,6 +35,7 @@ class CloudflareSetupRunner {
 
     if (options.listLocalProjects) {
       await _checkCommands();
+      await _ensureWranglerConfigFile();
       await _installWorkerDependencies();
       final dbName =
           options.databaseName ?? CloudflareSetupOptions.defaultD1DatabaseName;
@@ -229,9 +230,29 @@ class CloudflareSetupRunner {
   Future<void> _runPreflight() async {
     stdout.writeln('==> Preflight');
     await _checkCommands();
+    await _ensureWranglerConfigFile();
     await _installWorkerDependencies();
     await _ensureWranglerAuth();
     await _ensureJaspr();
+  }
+
+  /// Local `wrangler.jsonc` is gitignored; bootstrap from the committed example.
+  Future<void> _ensureWranglerConfigFile() async {
+    final config = File(paths.wranglerConfig);
+    if (config.existsSync()) {
+      return;
+    }
+    final example = File(paths.wranglerConfigExample);
+    if (!example.existsSync()) {
+      throw CliException(
+        'Missing ${paths.wranglerConfigExample}.\n'
+        'This monorepo checkout is incomplete.',
+      );
+    }
+    await example.copy(config.path);
+    stdout.writeln(
+      '==> Created worker/wrangler.jsonc from wrangler.jsonc.example',
+    );
   }
 
   Future<void> _checkCommands() async {

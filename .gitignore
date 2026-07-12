@@ -21,6 +21,8 @@ build/
 node_modules/
 .wrangler/
 **/.dev.vars
+# Local/env-specific Wrangler config (template: worker/wrangler.jsonc.example)
+worker/wrangler.jsonc
 
 # SwiftPM
 .build/

@@ -50,6 +50,9 @@ rm -rf .tmp/e2e-d1 e2e/.artifacts/*
 
 (
   cd worker
+  if [[ ! -f wrangler.jsonc ]]; then
+    cp wrangler.jsonc.example wrangler.jsonc
+  fi
   npm ci
   printf 'y\n' | npx wrangler d1 migrations apply form_concierge \
     --local \

@@ -77,6 +77,9 @@ mkdir -p .tmp
 
 (
   cd worker
+  if [[ ! -f wrangler.jsonc ]]; then
+    cp wrangler.jsonc.example wrangler.jsonc
+  fi
   npm ci
   npm test
   npm run typecheck

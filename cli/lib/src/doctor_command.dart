@@ -31,16 +31,25 @@ class DoctorCommand extends Command<int> {
     final root = findMonorepoRoot();
     if (root == null) {
       stdout.writeln(
-        'Monorepo root not found (looked for worker/wrangler.jsonc '
+        'Monorepo root not found (looked for worker/wrangler.jsonc.example '
         'and admin_dashboard/pubspec.yaml).',
       );
     } else {
       stdout.writeln('Monorepo root: $root');
       final paths = MonorepoPaths(root);
+      final hasExample = File(paths.wranglerConfigExample).existsSync();
+      final hasConfig = File(paths.wranglerConfig).existsSync();
       stdout.writeln(
-        File(paths.wranglerConfig).existsSync()
-            ? 'Worker config: ${paths.wranglerConfig}'
-            : 'Worker config missing: ${paths.wranglerConfig}',
+        hasExample
+            ? 'Worker config template: ${paths.wranglerConfigExample}'
+            : 'Worker config template missing: ${paths.wranglerConfigExample}',
+      );
+      stdout.writeln(
+        hasConfig
+            ? 'Worker config (local, gitignored): ${paths.wranglerConfig}'
+            : 'Worker config missing: copy '
+                  'worker/wrangler.jsonc.example → worker/wrangler.jsonc '
+                  '(or run setup cloudflare)',
       );
       final helpersOk =
           File(paths.listLocalProjectsScript).existsSync() &&
