@@ -8,9 +8,16 @@ Not published to pub.dev yet (`publish_to: none`).
 
 ```dart
 import 'package:form_concierge/form_concierge.dart';
-import 'package:form_concierge_client/form_concierge_client.dart';
 
 final client = Client('https://your-worker.example.com');
+```
+
+The main entrypoint exports both the Flutter widget and the complete Dart
+client API. Apps only need the `form_concierge` dependency and import above.
+Code that only needs the client API can use the focused entrypoint:
+
+```dart
+import 'package:form_concierge/client.dart';
 ```
 
 ## Usage

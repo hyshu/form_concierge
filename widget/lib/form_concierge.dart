@@ -1,5 +1,6 @@
 library form_concierge;
 
+export 'client.dart';
 export 'src/form_concierge_reply_checker.dart'
     show
         FormConciergeReplyChecker,

@@ -9,8 +9,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  form_concierge_client:
-    path: ../../client
   form_concierge:
     path: ../../widget
   cupertino_icons: ^1.0.8

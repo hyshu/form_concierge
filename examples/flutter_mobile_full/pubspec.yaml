@@ -25,8 +25,6 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   flutter_secure_storage: ^10.0.0
-  form_concierge_client:
-    path: ../../client
   form_concierge:
     path: ../../widget
   cupertino_icons: ^1.0.8
