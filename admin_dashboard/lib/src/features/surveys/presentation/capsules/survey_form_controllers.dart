@@ -38,6 +38,17 @@ class SurveyFormControllers {
     followUpPrompt.text = survey.followUpPrompt ?? '';
   }
 
+  void clear() {
+    slug.clear();
+    for (final controller in titleTranslations.values) {
+      controller.clear();
+    }
+    for (final controller in descriptionTranslations.values) {
+      controller.clear();
+    }
+    followUpPrompt.clear();
+  }
+
   LocalizedText titleValue() => localizedTextFromControllers(titleTranslations);
 
   LocalizedText descriptionValue() =>

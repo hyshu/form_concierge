@@ -51,20 +51,12 @@ class SurveyEditorPage extends RearchConsumer {
     if (use.isFirstBuild()) {
       publicConfig.loadConfig();
       if (isNewSurvey && projectId != null) {
+        controllers.clear();
         formManager.loadProject(projectId!);
       } else if (!isNewSurvey) {
         formManager.loadSurvey(surveyId!);
         questionManager.loadQuestions(surveyId!);
       }
-    }
-
-    // Populate form when survey is loaded (track previous to detect change)
-    final prevSurvey = use.previous(formState.survey);
-    if (formState.survey != null && prevSurvey == null) {
-      // Schedule for after build to avoid setState during build
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        controllers.populateFrom(formState.survey!);
-      });
     }
 
     if ((!isNewSurvey || projectId != null) &&

@@ -8,6 +8,30 @@ import '../support/given_when_then.dart';
 import '../support/localized_test_app.dart';
 
 void main() {
+  test('survey form controllers clear all input values', () {
+    final controllers = _controllers();
+    addTearDown(controllers.dispose);
+    controllers.slug.text = 'existing-survey';
+    controllers.titleTranslations.values.first.text = 'Existing Survey';
+    controllers.descriptionTranslations.values.first.text = 'Description';
+    controllers.followUpPrompt.text = 'Follow up';
+
+    controllers.clear();
+
+    expect(controllers.slug.text, isEmpty);
+    expect(
+      controllers.titleTranslations.values.map((controller) => controller.text),
+      everyElement(isEmpty),
+    );
+    expect(
+      controllers.descriptionTranslations.values.map(
+        (controller) => controller.text,
+      ),
+      everyElement(isEmpty),
+    );
+    expect(controllers.followUpPrompt.text, isEmpty);
+  });
+
   group('SurveyForm validation', () {
     late SurveyFormControllers controllers;
     late bool saveWasCalled;
