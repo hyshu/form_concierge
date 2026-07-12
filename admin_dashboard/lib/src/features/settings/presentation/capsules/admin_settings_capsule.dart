@@ -2,6 +2,7 @@ import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:rearch/rearch.dart';
 
 import '../../../../core/capsules/client_capsule.dart';
+import '../../../../core/capsules/public_config_capsule.dart';
 
 class AdminSettingsState {
   final AdminIntegrationSettings? settings;
@@ -40,11 +41,13 @@ class AdminSettingsState {
 AdminSettingsManager adminSettingsManagerCapsule(CapsuleHandle use) {
   final (state, setState) = use.state(const AdminSettingsState());
   final client = use(clientCapsule);
+  final publicConfig = use(publicConfigCapsule);
 
   return AdminSettingsManager(
     state: state,
     setState: setState,
     client: client,
+    publicConfig: publicConfig,
   );
 }
 
@@ -52,11 +55,13 @@ class AdminSettingsManager {
   final AdminSettingsState state;
   final void Function(AdminSettingsState state) _setState;
   final Client _client;
+  final PublicConfigManager _publicConfig;
 
   const AdminSettingsManager({
     required this.state,
     required this._setState,
     required this._client,
+    required this._publicConfig,
   });
 
   Future<void> loadSettings() async {
@@ -97,6 +102,10 @@ class AdminSettingsManager {
           successMessage: 'Settings saved successfully',
         ),
       );
+      // Survey editor / login UI read AI & password-reset flags from public
+      // config, which is cached until reload. Refresh so the first key save
+      // is visible without a full page refresh.
+      await _publicConfig.reloadConfig();
       return true;
     } on Exception catch (e) {
       _setState(

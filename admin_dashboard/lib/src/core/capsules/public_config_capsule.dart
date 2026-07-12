@@ -60,9 +60,15 @@ class PublicConfigManager {
     required this._client,
   });
 
-  /// Load public configuration from server.
-  Future<void> loadConfig() async {
-    if (state.hasLoaded || state.isLoading) return;
+  /// Load public configuration from server (no-op once loaded).
+  Future<void> loadConfig() => _fetchConfig(force: false);
+
+  /// Re-fetch public configuration, e.g. after admin settings change AI/SMTP.
+  Future<void> reloadConfig() => _fetchConfig(force: true);
+
+  Future<void> _fetchConfig({required bool force}) async {
+    if (state.isLoading) return;
+    if (!force && state.hasLoaded) return;
 
     _setState(state.copyWith(isLoading: true, error: null));
     try {
