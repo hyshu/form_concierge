@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 
+/// Result of comparing the latest server reply with the host's last-seen value.
 class FormConciergeReplyCheckResult {
   final DateTime? latestReplyAt;
   final DateTime? lastSeenReplyAt;
@@ -37,6 +38,10 @@ class FormConciergeReplySeenStore {
   });
 }
 
+/// Checks for unseen admin replies without downloading the full reply list.
+///
+/// Last-seen timestamps live in the host-provided [store]. Call
+/// [markLatestSeen] after the host has shown the latest reply to the user.
 class FormConciergeReplyChecker {
   final Client client;
   final String anonymousToken;

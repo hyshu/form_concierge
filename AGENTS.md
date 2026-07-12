@@ -62,7 +62,7 @@ Build:
 jaspr build
 ```
 
-## Form Concierge packages (publish_to: none, v0.1.0)
+## Form Concierge packages (v0.1.0)
 
 | Dir | Package |
 |-----|---------|
@@ -89,7 +89,7 @@ flutter run -d chrome
 Example app:
 
 ```bash
-cd examples/flutter_mobile_simple
+cd widget/examples/flutter_mobile_simple
 flutter run
 ```
 

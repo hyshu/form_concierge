@@ -13,6 +13,11 @@ import 'widgets/questions/image_upload_question.dart';
 export 'widgets/questions/image_upload_question.dart'
     show PickedSurveyImage, ProcessSurveyImage;
 
+/// Loads and renders a published Form Concierge survey.
+///
+/// The widget creates an anonymous session when [anonymousToken] is absent,
+/// submits answers, and renders an adaptive follow-up when enabled. Persist the
+/// session received by [onAnonymousSession] to receive replies across launches.
 class FormConciergeSurvey extends StatefulWidget {
   final Client client;
   final String projectSlug;

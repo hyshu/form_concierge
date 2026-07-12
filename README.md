@@ -7,15 +7,44 @@ Survey forms backed by Cloudflare Workers and D1. Respondents use generated anon
 | Directory | Package / role | Description |
 |-----------|----------------|-------------|
 | `worker/` | (deployed API) | Cloudflare Workers API and D1 migrations |
-| `client/` | `form_concierge_client` `0.1.0` | Dart REST client shared by Flutter apps and Jaspr |
-| `widget/` | `form_concierge` `0.1.0` | Flutter package for embedding surveys |
-| `cli/` | `form_concierge_cli` `0.1.0` | Setup / doctor CLI (`form_concierge setup cloudflare`) |
+| `client/` | `form_concierge_client` `0.1.0` | Published Dart REST client shared by Flutter apps and Jaspr |
+| `widget/` | `form_concierge` `0.1.0` | Published Flutter package for embedding surveys |
+| `cli/` | `form_concierge_cli` `0.1.0` | Published setup / doctor CLI (`form_concierge setup cloudflare`) |
 | `admin_dashboard/` | app | Flutter admin dashboard |
 | `swiftui/` | SPM | Swift Package for embedding surveys in SwiftUI apps |
 | `web/` | app | Jaspr web survey form |
-| `examples/` | apps | Example apps demonstrating package usage |
+| `widget/examples/` | apps | Full example apps demonstrating widget package usage |
 
-Library packages use `publish_to: none` until pub.dev release.
+The Dart client, Flutter widget, and setup CLI are pub.dev packages. Apps and
+deployment templates remain source distributions.
+
+## Package Release
+
+Publish the client before the widget because `form_concierge` depends on
+`form_concierge_client`. Before publishing the CLI, push the matching version
+tag and wait for the release-template workflow to attach the archive and
+checksum:
+
+```bash
+cd client
+dart pub publish --dry-run
+dart pub publish
+
+cd ../widget
+flutter pub publish --dry-run
+flutter pub publish
+
+cd ..
+git tag v0.1.0
+git push origin v0.1.0
+
+cd cli
+dart pub publish --dry-run
+dart pub publish
+```
+
+Review every file listed by each dry run before confirming an upload. Published
+versions cannot be deleted; fixes require a new version.
 
 ## Local Development
 

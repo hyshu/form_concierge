@@ -1,4 +1,6 @@
 ## 0.1.0
 
-- Initial monorepo package version (not yet published to pub.dev).
+- First public release.
 - `doctor` and `setup cloudflare` commands (pure Dart orchestration).
+- Download, verify, cache, and use versioned GitHub Release templates when the
+  CLI runs outside a Form Concierge checkout.

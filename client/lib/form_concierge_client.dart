@@ -1,3 +1,4 @@
+/// Dart client for Form Concierge Workers APIs and shared data models.
 library form_concierge_client;
 
 import 'dart:async';

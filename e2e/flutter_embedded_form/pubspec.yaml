@@ -11,6 +11,8 @@ dependencies:
     sdk: flutter
   form_concierge:
     path: ../../widget
+
+dependency_overrides:
   form_concierge_client:
     path: ../../client
 

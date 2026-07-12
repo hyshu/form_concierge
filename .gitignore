@@ -15,6 +15,7 @@ Thumbs.db
 .flutter-plugins
 .flutter-plugins-dependencies
 build/
+**/doc/api/
 *.log
 
 # Node / Cloudflare

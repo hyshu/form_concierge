@@ -2,9 +2,17 @@
 
 CLI for Form Concierge setup and local tooling.
 
-Not published to pub.dev yet (`publish_to: none`).
+## Install
 
-## Install (local monorepo)
+```bash
+dart pub global activate form_concierge_cli
+```
+
+The CLI uses files from a local Form Concierge checkout when available.
+Standalone installs download the matching versioned template from the project's
+GitHub Release, verify its SHA-256 checksum, and reuse a local cache.
+
+## Install from source
 
 ```bash
 cd cli
@@ -34,12 +42,20 @@ executable. After global activate, the command is also available as
 `--seed-project-id`, `--worker-name`, and others listed in
 `form_concierge setup cloudflare --help`.
 
+Template options:
+
+| Option | Description |
+|--------|-------------|
+| `--template-version` | Release version; defaults to the CLI version |
+| `--template-url` | Custom template archive URL |
+| `--template-sha256` | Expected SHA-256 for a custom archive |
+| `--offline` | Require a checkout or cached template |
+| `--refresh-template` | Replace the cached template |
+
 ## Notes
 
-- The CLI expects a full monorepo checkout (markers:
-  `worker/wrangler.jsonc.example` and `admin_dashboard/pubspec.yaml`).
-  Local `worker/wrangler.jsonc` is gitignored and created from the example by
-  setup. Template download for a published-only install is not implemented yet.
+- Local `worker/wrangler.jsonc` is gitignored and created from the example by
+  setup. Downloaded templates are cached under the platform user cache.
 - Backend setup shells out to Node.js / Wrangler / Flutter / Jaspr; the Dart CLI
   owns orchestration. Optional D1 helpers under `tool/cloudflare/*.mjs` are used
   for local project list/seed.

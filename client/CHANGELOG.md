@@ -1,3 +1,5 @@
 ## 0.1.0
 
-- Initial monorepo package version (not yet published to pub.dev).
+- First public release.
+- Add survey, admin, anonymous-account, response, reply, and configuration API
+  support for Form Concierge Workers deployments.

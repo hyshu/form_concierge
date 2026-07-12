@@ -1,3 +1,4 @@
+/// Flutter survey widgets and client APIs for Form Concierge.
 library form_concierge;
 
 export 'client.dart';

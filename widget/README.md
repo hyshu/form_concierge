@@ -2,7 +2,11 @@
 
 Flutter package for embedding Form Concierge surveys.
 
-Not published to pub.dev yet (`publish_to: none`).
+## Installation
+
+```bash
+flutter pub add form_concierge
+```
 
 ## Setup
 
@@ -124,3 +128,14 @@ await checker.markLatestSeen();
 - Single line text
 - Multi-line text
 - Image upload
+
+## API Documentation
+
+Generate local API documentation from the package directory:
+
+```bash
+dart doc
+```
+
+Open `doc/api/index.html` after generation. pub.dev builds the same API
+documentation for each published version.
