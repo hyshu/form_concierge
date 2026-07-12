@@ -235,6 +235,8 @@
   "Make editor": "设为编辑者",
   "Make viewer": "设为查看者",
   "Invalid email or password": "电子邮件或密码无效",
+  "CAPTCHA is required": "请完成 CAPTCHA 以继续。",
+  "CAPTCHA verification failed": "CAPTCHA 验证失败，请重试。",
   "Too many login attempts. Please try again later.": "登录尝试次数过多。请稍后再试。",
   "Login failed. Please try again.": "登录失败。请重试。",
   "Invalid state. Please start over.": "状态无效。请重新开始。",

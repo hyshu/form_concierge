@@ -30,12 +30,17 @@ class AuthStateManager {
   });
 
   /// Attempt to login with email and password.
-  Future<void> login(String email, String password) async {
+  Future<void> login(
+    String email,
+    String password, {
+    String? captchaToken,
+  }) async {
     _setState(state.copyWith(isLoading: true, error: null));
     try {
       final authSuccess = await _client.emailIdp.login(
         email: email,
         password: password,
+        captchaToken: captchaToken,
       );
 
       // Store the auth success for authenticated requests
@@ -46,6 +51,7 @@ class AuthStateManager {
           isAuthenticated: true,
           isLoading: false,
           hasCheckedAuth: true,
+          captchaRequired: false,
         ),
       );
     } on Exception catch (e) {
@@ -54,6 +60,7 @@ class AuthStateManager {
           isLoading: false,
           error: _parseAuthError(e),
           hasCheckedAuth: true,
+          captchaRequired: state.captchaRequired || _requiresCaptcha(e),
         ),
       );
     }
@@ -163,5 +170,11 @@ class AuthStateManager {
       if (e.message.isNotEmpty) return e.message;
     }
     return 'Login failed. Please try again.';
+  }
+
+  bool _requiresCaptcha(Exception error) {
+    if (error is! ApiException) return false;
+    final details = error.details;
+    return details is Map && details['captchaRequired'] == true;
   }
 }

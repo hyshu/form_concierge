@@ -7,11 +7,16 @@ class EmailIdpEndpoint {
   Future<AuthSuccess> login({
     required String email,
     required String password,
+    String? captchaToken,
   }) async {
     final json = await _client.request(
       'POST',
       '/api/admin/auth/login',
-      body: {'email': email, 'password': password},
+      body: {
+        'email': email,
+        'password': password,
+        if (captchaToken != null) 'captchaToken': captchaToken,
+      },
     );
     return AuthSuccess.fromJson(json);
   }

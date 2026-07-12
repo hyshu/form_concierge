@@ -6,6 +6,33 @@ import 'package:http/testing.dart';
 import 'package:test/test.dart';
 
 void main() {
+  test('login includes CAPTCHA token when supplied', () async {
+    http.Request? captured;
+    final client = Client(
+      'https://api.example.com',
+      httpClient: MockClient((request) async {
+        captured = request;
+        return http.Response(
+          '{"token":"session","user":{"id":"1","email":"admin@example.com","scopeNames":["admin"],"role":"admin","created":"2026-01-01T00:00:00.000Z"}}',
+          200,
+        );
+      }),
+    );
+    addTearDown(client.close);
+
+    await client.emailIdp.login(
+      email: 'admin@example.com',
+      password: 'password',
+      captchaToken: 'captcha-token',
+    );
+
+    expect(jsonDecode(captured!.body), {
+      'email': 'admin@example.com',
+      'password': 'password',
+      'captchaToken': 'captcha-token',
+    });
+  });
+
   test('request builds JSON requests with filtered query parameters', () async {
     http.Request? captured;
     final client = Client(

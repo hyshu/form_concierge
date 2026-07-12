@@ -235,6 +235,8 @@
   "Make editor": "Zum Bearbeiter machen",
   "Make viewer": "Zum Betrachter machen",
   "Invalid email or password": "E-Mail oder Passwort ist ungültig",
+  "CAPTCHA is required": "Schließen Sie das CAPTCHA ab, um fortzufahren.",
+  "CAPTCHA verification failed": "CAPTCHA-Prüfung fehlgeschlagen. Versuchen Sie es erneut.",
   "Too many login attempts. Please try again later.": "Zu viele Anmeldeversuche. Bitte später erneut versuchen.",
   "Login failed. Please try again.": "Anmeldung fehlgeschlagen. Bitte erneut versuchen.",
   "Invalid state. Please start over.": "Ungültiger Zustand. Bitte von vorn beginnen.",

@@ -1,8 +1,19 @@
 import type { AdminContext, AdminRow, AnonymousAccountRow, AnonymousContext, Env } from './types';
-import { HttpError, bearerToken, json, nowIso, optionalLimitedString, readJson, requireEmail, requireString } from './utils';
+import {
+  HttpError,
+  bearerToken,
+  json,
+  nowIso,
+  optionalLimitedString,
+  readJson,
+  requireEmail,
+  requireString,
+} from './utils';
 import { hashPassword, randomToken, sha256Hex, verifyPassword } from './crypto';
 import { adminContextToJson, adminRowToContext, anonymousAccountToJson } from './serializers';
 import { checkRateLimit, clientIp } from './rate_limit';
+import { getTurnstileSecretKey, getTurnstileSiteKey } from './admin_settings';
+import { verifyTurnstileToken } from './turnstile';
 
 const MIN_PASSWORD_LENGTH = 8;
 const DISPLAY_NAME_MAX_LENGTH = 160;
@@ -13,6 +24,9 @@ const ADMIN_SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const ADMIN_SESSION_SLIDE_THRESHOLD_MS = 15 * 24 * 60 * 60 * 1000;
 /** Drop unused anonymous accounts (no responses) older than this. */
 const ANON_ACCOUNT_TTL_MS = 90 * 24 * 60 * 60 * 1000;
+const LOGIN_CAPTCHA_FAILURE_THRESHOLD = 3;
+const LOGIN_CAPTCHA_WINDOW_MS = 15 * 60 * 1000;
+const TURNSTILE_TOKEN_MAX_LENGTH = 2048;
 const BOOTSTRAP_SCOPES = JSON.stringify([
   'admin',
   'survey:read',
@@ -39,7 +53,9 @@ export async function bootstrapAdmin(request: Request, env: Env): Promise<Respon
      SELECT ?, ?, ?, ?
      WHERE NOT EXISTS (SELECT 1 FROM admins LIMIT 1)
      RETURNING id, email, scope_names, created_at`,
-  ).bind(id, email, passwordHash, BOOTSTRAP_SCOPES).first<AdminRow>();
+  )
+    .bind(id, email, passwordHash, BOOTSTRAP_SCOPES)
+    .first<AdminRow>();
   if (!row) throw new HttpError(409, 'Admin already exists');
   const user = adminRowToContext(row);
   return json(await createAdminSession(env.DB, user));
@@ -49,26 +65,120 @@ export async function loginAdmin(request: Request, env: Env): Promise<Response> 
   const body = await readJson(request);
   const email = requireString(body.email, 'email').toLowerCase();
   const password = requireString(body.password, 'password');
-  await checkRateLimit(
-    env.LOGIN_RATE_LIMITER,
-    `login:${clientIp(request)}:${email}`,
-    'Too many login attempts. Try again later.',
-  );
+  const captchaToken = optionalLimitedString(body.captchaToken, 'captchaToken', TURNSTILE_TOKEN_MAX_LENGTH);
+  const ip = clientIp(request);
+  await checkRateLimit(env.LOGIN_RATE_LIMITER, `login:${ip}:${email}`, 'Too many login attempts. Try again later.');
+  const loginFailureKey = await sha256Hex(`${ip}\u0000${email}`);
+  const [turnstileSiteKey, turnstileSecretKey, failureCount] = await Promise.all([
+    getTurnstileSiteKey(env),
+    getTurnstileSecretKey(env),
+    getLoginFailureCount(env.DB, loginFailureKey),
+  ]);
+  const turnstileConfigured = Boolean(turnstileSiteKey && turnstileSecretKey);
+  const captchaRequired = turnstileConfigured && failureCount >= LOGIN_CAPTCHA_FAILURE_THRESHOLD;
+  if (captchaRequired) {
+    if (!captchaToken) {
+      throw new HttpError(403, 'CAPTCHA is required', {
+        captchaRequired: true,
+      });
+    }
+    try {
+      await verifyTurnstileToken(captchaToken, turnstileSecretKey!, ip === 'unknown' ? null : ip, 'turnstile-spin-v1');
+    } catch (error) {
+      if (error instanceof HttpError) {
+        throw new HttpError(error.status, error.message, {
+          captchaRequired: true,
+        });
+      }
+      throw error;
+    }
+  }
   const row = await env.DB.prepare(
     `SELECT id, email, password_hash, scope_names, created_at
      FROM admins WHERE email = ?`,
-  ).bind(email).first<{
-    id: string;
-    email: string;
-    password_hash: string;
-    scope_names: string;
-    created_at: string;
-  }>();
+  )
+    .bind(email)
+    .first<{
+      id: string;
+      email: string;
+      password_hash: string;
+      scope_names: string;
+      created_at: string;
+    }>();
   if (!row || !(await verifyPassword(password, row.password_hash))) {
-    throw new HttpError(401, 'Invalid email or password');
+    const nextFailureCount = turnstileConfigured ? await recordLoginFailure(env.DB, loginFailureKey) : 0;
+    throw new HttpError(401, 'Invalid email or password', {
+      captchaRequired: turnstileConfigured && nextFailureCount >= LOGIN_CAPTCHA_FAILURE_THRESHOLD,
+    });
   }
+  await clearLoginFailures(env.DB, loginFailureKey);
   const user = adminRowToContext(row);
   return json(await createAdminSession(env.DB, user));
+}
+
+async function getLoginFailureCount(db: D1Database, keyHash: string): Promise<number> {
+  const row = await db
+    .prepare(
+      `SELECT failed_attempts
+     FROM admin_login_failures
+     WHERE key_hash = ? AND expires_at > ?`,
+    )
+    .bind(keyHash, nowIso())
+    .first<{ failed_attempts: number }>();
+  return row?.failed_attempts ?? 0;
+}
+
+async function recordLoginFailure(db: D1Database, keyHash: string): Promise<number> {
+  const now = nowIso();
+  const expiresAt = new Date(Date.now() + LOGIN_CAPTCHA_WINDOW_MS).toISOString();
+  const row = await db
+    .prepare(
+      `INSERT INTO admin_login_failures
+       (key_hash, failed_attempts, expires_at, updated_at)
+     VALUES (?, 1, ?, ?)
+     ON CONFLICT(key_hash) DO UPDATE SET
+       failed_attempts = CASE
+         WHEN admin_login_failures.expires_at > ?
+           THEN admin_login_failures.failed_attempts + 1
+         ELSE 1
+       END,
+       expires_at = excluded.expires_at,
+       updated_at = excluded.updated_at
+     RETURNING failed_attempts`,
+    )
+    .bind(keyHash, expiresAt, now, now)
+    .first<{ failed_attempts: number }>();
+  await db
+    .prepare(
+      `DELETE FROM admin_login_failures
+       WHERE expires_at <= ?
+         AND rowid IN (
+           SELECT rowid FROM admin_login_failures
+           WHERE expires_at <= ?
+           LIMIT 100
+         )`,
+    )
+    .bind(now, now)
+    .run();
+  return row?.failed_attempts ?? 1;
+}
+
+async function clearLoginFailures(db: D1Database, keyHash: string): Promise<void> {
+  const now = nowIso();
+  await db.batch([
+    db.prepare(`DELETE FROM admin_login_failures WHERE key_hash = ?`).bind(keyHash),
+    db
+      .prepare(
+        `DELETE FROM admin_login_failures
+       WHERE expires_at <= ?
+         AND rowid IN (
+           SELECT rowid FROM admin_login_failures
+           WHERE expires_at <= ?
+           LIMIT 100
+         )`,
+      )
+      .bind(now, now),
+  ]);
 }
 
 export async function createAnonymousAccount(request: Request, env: Env): Promise<Response> {
@@ -87,11 +197,21 @@ export async function createAnonymousAccount(request: Request, env: Env): Promis
   await env.DB.prepare(
     `INSERT INTO anonymous_accounts (id, token_hash, display_name, created_at, last_seen_at)
      VALUES (?, ?, ?, ?, ?)`,
-  ).bind(id, tokenHash, displayName, now, now).run();
-  return json({
-    account: anonymousAccountToJson({ id, displayName, createdAt: now, lastSeenAt: now }),
-    token,
-  }, 201);
+  )
+    .bind(id, tokenHash, displayName, now, now)
+    .run();
+  return json(
+    {
+      account: anonymousAccountToJson({
+        id,
+        displayName,
+        createdAt: now,
+        lastSeenAt: now,
+      }),
+      token,
+    },
+    201,
+  );
 }
 
 export async function requireAdmin(request: Request, env: Env): Promise<AdminContext> {
@@ -104,14 +224,16 @@ export async function requireAdmin(request: Request, env: Env): Promise<AdminCon
      FROM admin_sessions s
      JOIN admins a ON a.id = s.admin_id
      WHERE s.token_hash = ? AND s.expires_at > ?`,
-  ).bind(tokenHash, now).first<AdminRow & { session_expires_at: string }>();
+  )
+    .bind(tokenHash, now)
+    .first<AdminRow & { session_expires_at: string }>();
   if (!row) throw new HttpError(401, 'Admin authentication required');
   const expiresMs = Date.parse(row.session_expires_at);
   if (Number.isFinite(expiresMs) && expiresMs - Date.now() < ADMIN_SESSION_SLIDE_THRESHOLD_MS) {
     const newExpiry = new Date(Date.now() + ADMIN_SESSION_TTL_MS).toISOString();
-    await env.DB.prepare(
-      `UPDATE admin_sessions SET expires_at = ? WHERE token_hash = ?`,
-    ).bind(newExpiry, tokenHash).run();
+    await env.DB.prepare(`UPDATE admin_sessions SET expires_at = ? WHERE token_hash = ?`)
+      .bind(newExpiry, tokenHash)
+      .run();
   }
   // Scope checks are done per-route via requireScope (editor/viewer lack "admin").
   return adminRowToContext(row);
@@ -137,16 +259,15 @@ export async function requireAnonymous(request: Request, env: Env): Promise<Anon
     `SELECT id, display_name, created_at, last_seen_at
      FROM anonymous_accounts
      WHERE token_hash = ?`,
-  ).bind(tokenHash).first<AnonymousAccountRow>();
+  )
+    .bind(tokenHash)
+    .first<AnonymousAccountRow>();
   if (!row) throw new HttpError(401, 'Anonymous account required');
   const now = nowIso();
   const lastSeenMs = Date.parse(row.last_seen_at);
-  const shouldTouch =
-    !Number.isFinite(lastSeenMs) || Date.now() - lastSeenMs >= LAST_SEEN_THROTTLE_MS;
+  const shouldTouch = !Number.isFinite(lastSeenMs) || Date.now() - lastSeenMs >= LAST_SEEN_THROTTLE_MS;
   if (shouldTouch) {
-    await env.DB.prepare(
-      `UPDATE anonymous_accounts SET last_seen_at = ? WHERE id = ?`,
-    ).bind(now, row.id).run();
+    await env.DB.prepare(`UPDATE anonymous_accounts SET last_seen_at = ? WHERE id = ?`).bind(now, row.id).run();
   }
   return {
     id: row.id,
@@ -162,14 +283,12 @@ async function createAdminSession(db: D1Database, user: AdminContext) {
   // Opportunistically prune expired sessions so the table does not grow unbounded.
   await db.batch([
     db.prepare(`DELETE FROM admin_sessions WHERE expires_at <= ?`).bind(now),
-    db.prepare(
-      `INSERT INTO admin_sessions (token_hash, admin_id, expires_at)
+    db
+      .prepare(
+        `INSERT INTO admin_sessions (token_hash, admin_id, expires_at)
        VALUES (?, ?, ?)`,
-    ).bind(
-      await sha256Hex(token),
-      user.id,
-      new Date(Date.now() + ADMIN_SESSION_TTL_MS).toISOString(),
-    ),
+      )
+      .bind(await sha256Hex(token), user.id, new Date(Date.now() + ADMIN_SESSION_TTL_MS).toISOString()),
   ]);
   return { token, user: adminContextToJson(user) };
 }
@@ -178,8 +297,9 @@ async function createAdminSession(db: D1Database, user: AdminContext) {
 async function pruneStaleAnonymousAccounts(db: D1Database, now: string): Promise<void> {
   const cutoff = new Date(Date.parse(now) - ANON_ACCOUNT_TTL_MS).toISOString();
   // Keep accounts referenced by responses so history stays intact.
-  await db.prepare(
-    `DELETE FROM anonymous_accounts
+  await db
+    .prepare(
+      `DELETE FROM anonymous_accounts
      WHERE last_seen_at < ?
        AND id NOT IN (SELECT DISTINCT anonymous_account_id FROM survey_responses)
        AND rowid IN (
@@ -188,12 +308,15 @@ async function pruneStaleAnonymousAccounts(db: D1Database, now: string): Promise
            AND id NOT IN (SELECT DISTINCT anonymous_account_id FROM survey_responses)
          LIMIT 100
        )`,
-  ).bind(cutoff, cutoff).run();
+    )
+    .bind(cutoff, cutoff)
+    .run();
 }
 
 export async function getAdminById(db: D1Database, id: string): Promise<AdminContext | null> {
-  const row = await db.prepare(
-    `SELECT id, email, scope_names, created_at FROM admins WHERE id = ?`,
-  ).bind(id).first<AdminRow>();
+  const row = await db
+    .prepare(`SELECT id, email, scope_names, created_at FROM admins WHERE id = ?`)
+    .bind(id)
+    .first<AdminRow>();
   return row ? adminRowToContext(row) : null;
 }

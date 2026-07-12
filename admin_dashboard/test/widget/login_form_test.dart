@@ -33,6 +33,7 @@ void main() {
       String? error,
       bool isRegistration = false,
       VoidCallback? onForgotPassword,
+      Widget? captcha,
     }) {
       return localizedTestApp(
         home: Scaffold(
@@ -42,6 +43,7 @@ void main() {
             error: error,
             isRegistration: isRegistration,
             onForgotPassword: onForgotPassword,
+            captcha: captcha,
             onSubmit: () {
               submitWasCalled = true;
             },
@@ -188,6 +190,14 @@ void main() {
     });
 
     group('fields', () {
+      testWidgets('shows CAPTCHA widget when supplied', (tester) async {
+        await tester.pumpWidget(
+          buildSubject(captcha: const Text('CAPTCHA challenge')),
+        );
+
+        expect(find.text('CAPTCHA challenge'), findsOneWidget);
+      });
+
       testWidgets('renders email and password fields', (tester) async {
         await tester.pumpWidget(buildSubject());
 

@@ -239,6 +239,8 @@
   "Make editor": "ตั้งเป็นผู้แก้ไข",
   "Make viewer": "ตั้งเป็นผู้ดู",
   "Invalid email or password": "อีเมลหรือรหัสผ่านไม่ถูกต้อง",
+  "CAPTCHA is required": "ทำ CAPTCHA ให้เสร็จเพื่อดำเนินการต่อ",
+  "CAPTCHA verification failed": "การยืนยัน CAPTCHA ล้มเหลว โปรดลองอีกครั้ง",
   "Too many login attempts. Please try again later.": "พยายามเข้าสู่ระบบมากเกินไป โปรดลองใหม่ภายหลัง",
   "Login failed. Please try again.": "เข้าสู่ระบบไม่สำเร็จ โปรดลองอีกครั้ง",
   "Invalid state. Please start over.": "สถานะไม่ถูกต้อง โปรดเริ่มใหม่",

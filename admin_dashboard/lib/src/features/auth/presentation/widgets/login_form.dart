@@ -12,6 +12,7 @@ class LoginForm extends StatelessWidget {
   final VoidCallback onSubmit;
   final bool isRegistration;
   final VoidCallback? onForgotPassword;
+  final Widget? captcha;
 
   const LoginForm({
     super.key,
@@ -21,6 +22,7 @@ class LoginForm extends StatelessWidget {
     required this.onSubmit,
     this.isRegistration = false,
     this.onForgotPassword,
+    this.captcha,
   });
 
   @override
@@ -58,6 +60,10 @@ class LoginForm extends StatelessWidget {
               child: Text(context.tr('Forgot Password?')),
             ),
           ),
+        ],
+        if (captcha != null) ...[
+          const SizedBox(height: 16),
+          captcha!,
         ],
         if (error != null) ...[
           const SizedBox(height: 16),

@@ -10,6 +10,7 @@ import '../../../../core/capsules/public_config_capsule.dart';
 import '../capsules/login_form_capsule.dart';
 import '../widgets/auth_page_scaffold.dart';
 import '../widgets/login_form.dart';
+import '../widgets/turnstile_challenge.dart';
 
 /// Login page for admin authentication.
 class LoginPage extends RearchConsumer {
@@ -39,6 +40,7 @@ class LoginPage extends RearchConsumer {
 
     final isFirstUser = authManager.state.isFirstUser == true;
     final hasCheckedFirstUser = authManager.state.hasCheckedFirstUser;
+    final turnstileSiteKey = configManager.state.turnstileSiteKey;
 
     return AuthPageScaffold(
       child: Column(
@@ -106,10 +108,21 @@ class LoginPage extends RearchConsumer {
                 isLoading: authManager.state.isLoading,
                 error: authManager.state.error,
                 isRegistration: false,
-                onSubmit: () => authManager.login(
-                  controllers.email.text.trim(),
-                  controllers.password.text,
-                ),
+                captcha:
+                    authManager.state.captchaRequired &&
+                        turnstileSiteKey != null
+                    ? TurnstileChallenge(siteKey: turnstileSiteKey)
+                    : null,
+                onSubmit: () async {
+                  await authManager.login(
+                    controllers.email.text.trim(),
+                    controllers.password.text,
+                    captchaToken: authManager.state.captchaRequired
+                        ? getTurnstileResponse()
+                        : null,
+                  );
+                  if (authManager.state.captchaRequired) resetTurnstile();
+                },
                 onForgotPassword: configManager.state.passwordResetEnabled
                     ? () => context.push('/forgot-password')
                     : null,

@@ -274,6 +274,9 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Make editor": "Zum Bearbeiter machen",
     "Make viewer": "Zum Betrachter machen",
     "Invalid email or password": "E-Mail oder Passwort ist ungültig",
+    "CAPTCHA is required": "Schließen Sie das CAPTCHA ab, um fortzufahren.",
+    "CAPTCHA verification failed":
+        "CAPTCHA-Prüfung fehlgeschlagen. Versuchen Sie es erneut.",
     "Too many login attempts. Please try again later.":
         "Zu viele Anmeldeversuche. Bitte später erneut versuchen.",
     "Login failed. Please try again.":
@@ -761,6 +764,9 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Make editor": "Make editor",
     "Make viewer": "Make viewer",
     "Invalid email or password": "Invalid email or password",
+    "CAPTCHA is required": "Complete the CAPTCHA to continue.",
+    "CAPTCHA verification failed":
+        "CAPTCHA verification failed. Please try again.",
     "Too many login attempts. Please try again later.":
         "Too many login attempts. Please try again later.",
     "Login failed. Please try again.": "Login failed. Please try again.",
@@ -1158,6 +1164,9 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Make editor": "Hacer editor",
     "Make viewer": "Hacer visualizador",
     "Invalid email or password": "Correo o contraseña no válidos",
+    "CAPTCHA is required": "Complete el CAPTCHA para continuar.",
+    "CAPTCHA verification failed":
+        "La verificación CAPTCHA falló. Inténtelo de nuevo.",
     "Too many login attempts. Please try again later.":
         "Demasiados intentos de inicio de sesión. Inténtalo más tarde.",
     "Login failed. Please try again.":
@@ -1587,6 +1596,9 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Make editor": "Définir comme éditeur",
     "Make viewer": "Définir comme lecteur",
     "Invalid email or password": "E-mail ou mot de passe incorrect",
+    "CAPTCHA is required": "Complétez le CAPTCHA pour continuer.",
+    "CAPTCHA verification failed":
+        "La vérification CAPTCHA a échoué. Réessayez.",
     "Too many login attempts. Please try again later.":
         "Trop de tentatives de connexion. Réessayez plus tard.",
     "Login failed. Please try again.":
@@ -2030,6 +2042,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Make editor": "Rendi editor",
     "Make viewer": "Rendi visualizzatore",
     "Invalid email or password": "Email o password non validi",
+    "CAPTCHA is required": "Completa il CAPTCHA per continuare.",
+    "CAPTCHA verification failed": "Verifica CAPTCHA non riuscita. Riprova.",
     "Too many login attempts. Please try again later.":
         "Troppi tentativi di accesso. Riprova più tardi.",
     "Login failed. Please try again.": "Accesso non riuscito. Riprova.",
@@ -2474,6 +2488,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Make editor": "編集者にする",
     "Make viewer": "閲覧者にする",
     "Invalid email or password": "メールアドレスまたはパスワードが無効です",
+    "CAPTCHA is required": "続行するには CAPTCHA を完了してください。",
+    "CAPTCHA verification failed": "CAPTCHA の認証に失敗しました。もう一度お試しください。",
     "Too many login attempts. Please try again later.":
         "ログイン試行回数が多すぎます。後でもう一度お試しください。",
     "Login failed. Please try again.": "ログインに失敗しました。もう一度お試しください。",
@@ -2831,6 +2847,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Make editor": "편집자로 변경",
     "Make viewer": "뷰어로 변경",
     "Invalid email or password": "이메일 또는 비밀번호가 올바르지 않습니다",
+    "CAPTCHA is required": "계속하려면 CAPTCHA를 완료하세요.",
+    "CAPTCHA verification failed": "CAPTCHA 인증에 실패했습니다. 다시 시도하세요.",
     "Too many login attempts. Please try again later.":
         "로그인 시도가 너무 많습니다. 나중에 다시 시도하세요.",
     "Login failed. Please try again.": "로그인에 실패했습니다. 다시 시도하세요.",
@@ -3240,6 +3258,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Make editor": "ตั้งเป็นผู้แก้ไข",
     "Make viewer": "ตั้งเป็นผู้ดู",
     "Invalid email or password": "อีเมลหรือรหัสผ่านไม่ถูกต้อง",
+    "CAPTCHA is required": "ทำ CAPTCHA ให้เสร็จเพื่อดำเนินการต่อ",
+    "CAPTCHA verification failed": "การยืนยัน CAPTCHA ล้มเหลว โปรดลองอีกครั้ง",
     "Too many login attempts. Please try again later.":
         "พยายามเข้าสู่ระบบมากเกินไป โปรดลองใหม่ภายหลัง",
     "Login failed. Please try again.": "เข้าสู่ระบบไม่สำเร็จ โปรดลองอีกครั้ง",
@@ -3658,6 +3678,9 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Make editor": "Editör yap",
     "Make viewer": "Görüntüleyici yap",
     "Invalid email or password": "Geçersiz e-posta veya şifre",
+    "CAPTCHA is required": "Devam etmek için CAPTCHA'yı tamamlayın.",
+    "CAPTCHA verification failed":
+        "CAPTCHA doğrulaması başarısız oldu. Tekrar deneyin.",
     "Too many login attempts. Please try again later.":
         "Çok fazla giriş denemesi. Lütfen daha sonra tekrar deneyin.",
     "Login failed. Please try again.":
@@ -4053,6 +4076,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Make editor": "设为编辑者",
     "Make viewer": "设为查看者",
     "Invalid email or password": "电子邮件或密码无效",
+    "CAPTCHA is required": "请完成 CAPTCHA 以继续。",
+    "CAPTCHA verification failed": "CAPTCHA 验证失败，请重试。",
     "Too many login attempts. Please try again later.": "登录尝试次数过多。请稍后再试。",
     "Login failed. Please try again.": "登录失败。请重试。",
     "Invalid state. Please start over.": "状态无效。请重新开始。",
@@ -4434,6 +4459,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Make editor": "設為編輯者",
     "Make viewer": "設為檢視者",
     "Invalid email or password": "電子郵件或密碼無效",
+    "CAPTCHA is required": "請完成 CAPTCHA 以繼續。",
+    "CAPTCHA verification failed": "CAPTCHA 驗證失敗，請再試一次。",
     "Too many login attempts. Please try again later.": "登入嘗試次數過多。請稍後再試。",
     "Login failed. Please try again.": "登入失敗。請重試。",
     "Invalid state. Please start over.": "狀態無效。請重新開始。",

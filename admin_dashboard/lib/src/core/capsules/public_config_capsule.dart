@@ -34,6 +34,8 @@ class PublicConfigState {
 
   /// Whether AI question generation is enabled.
   bool get aiGenerationEnabled => config?.aiGenerationEnabled ?? false;
+
+  String? get turnstileSiteKey => config?.turnstileSiteKey;
 }
 
 /// Capsule that manages public server configuration.

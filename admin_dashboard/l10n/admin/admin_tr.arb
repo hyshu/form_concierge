@@ -239,6 +239,8 @@
   "Make editor": "Editör yap",
   "Make viewer": "Görüntüleyici yap",
   "Invalid email or password": "Geçersiz e-posta veya şifre",
+  "CAPTCHA is required": "Devam etmek için CAPTCHA'yı tamamlayın.",
+  "CAPTCHA verification failed": "CAPTCHA doğrulaması başarısız oldu. Tekrar deneyin.",
   "Too many login attempts. Please try again later.": "Çok fazla giriş denemesi. Lütfen daha sonra tekrar deneyin.",
   "Login failed. Please try again.": "Giriş başarısız. Lütfen tekrar deneyin.",
   "Invalid state. Please start over.": "Geçersiz durum. Lütfen baştan başlayın.",

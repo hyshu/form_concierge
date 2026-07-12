@@ -239,6 +239,8 @@
   "Make editor": "Rendi editor",
   "Make viewer": "Rendi visualizzatore",
   "Invalid email or password": "Email o password non validi",
+  "CAPTCHA is required": "Completa il CAPTCHA per continuare.",
+  "CAPTCHA verification failed": "Verifica CAPTCHA non riuscita. Riprova.",
   "Too many login attempts. Please try again later.": "Troppi tentativi di accesso. Riprova più tardi.",
   "Login failed. Please try again.": "Accesso non riuscito. Riprova.",
   "Invalid state. Please start over.": "Stato non valido. Ricomincia da capo.",

@@ -263,6 +263,8 @@
   "Make editor": "Make editor",
   "Make viewer": "Make viewer",
   "Invalid email or password": "Invalid email or password",
+  "CAPTCHA is required": "Complete the CAPTCHA to continue.",
+  "CAPTCHA verification failed": "CAPTCHA verification failed. Please try again.",
   "Too many login attempts. Please try again later.": "Too many login attempts. Please try again later.",
   "Login failed. Please try again.": "Login failed. Please try again.",
   "Invalid state. Please start over.": "Invalid state. Please start over.",

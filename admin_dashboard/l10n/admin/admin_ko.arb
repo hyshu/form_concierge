@@ -235,6 +235,8 @@
   "Make editor": "편집자로 변경",
   "Make viewer": "뷰어로 변경",
   "Invalid email or password": "이메일 또는 비밀번호가 올바르지 않습니다",
+  "CAPTCHA is required": "계속하려면 CAPTCHA를 완료하세요.",
+  "CAPTCHA verification failed": "CAPTCHA 인증에 실패했습니다. 다시 시도하세요.",
   "Too many login attempts. Please try again later.": "로그인 시도가 너무 많습니다. 나중에 다시 시도하세요.",
   "Login failed. Please try again.": "로그인에 실패했습니다. 다시 시도하세요.",
   "Invalid state. Please start over.": "상태가 올바르지 않습니다. 처음부터 다시 시작하세요.",

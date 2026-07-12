@@ -14,7 +14,7 @@ import {
   stubRateLimiter,
   stubSecretsStoreEnv,
 } from '../test/helpers';
-import { bootstrapAdmin } from './auth';
+import { bootstrapAdmin, loginAdmin } from './auth';
 
 function adminWithScopes(scopes: string[]): AdminContext {
   return {
@@ -60,13 +60,65 @@ test('bootstrapAdmin rejects invalid email and short password', async () => {
 test('bootstrapAdmin returns 409 when an admin already exists', async () => {
   const env = bootstrapEnv({ inserted: false });
   await assertHttpErrorAsync(
-    () => bootstrapAdmin(
-      bootstrapRequest({ email: 'admin@example.com', password: 'password123' }),
-      env,
-    ),
+    () =>
+      bootstrapAdmin(
+        bootstrapRequest({
+          email: 'admin@example.com',
+          password: 'password123',
+        }),
+        env,
+      ),
     409,
     'Admin already exists',
   );
+});
+
+test('login requires CAPTCHA after three failed attempts when Turnstile is configured', async () => {
+  const { env, failures } = loginEnv({ turnstileConfigured: true });
+  const request = () =>
+    loginRequest({
+      email: 'admin@example.com',
+      password: 'wrong-password',
+    });
+
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    await assert.rejects(
+      () => loginAdmin(request(), env),
+      (error: unknown) =>
+        error instanceof Error &&
+        'details' in error &&
+        (error as { details?: { captchaRequired?: boolean } }).details?.captchaRequired === false,
+    );
+  }
+  await assert.rejects(
+    () => loginAdmin(request(), env),
+    (error: unknown) =>
+      error instanceof Error &&
+      'details' in error &&
+      (error as { details?: { captchaRequired?: boolean } }).details?.captchaRequired === true,
+  );
+  assert.equal([...failures.values()][0], 3);
+
+  await assertHttpErrorAsync(() => loginAdmin(request(), env), 403, 'CAPTCHA is required');
+});
+
+test('login never requires CAPTCHA when Turnstile keys are not configured', async () => {
+  const { env, failures } = loginEnv({ turnstileConfigured: false });
+  for (let attempt = 0; attempt < 4; attempt++) {
+    await assertHttpErrorAsync(
+      () =>
+        loginAdmin(
+          loginRequest({
+            email: 'admin@example.com',
+            password: 'wrong-password',
+          }),
+          env,
+        ),
+      401,
+      'Invalid email or password',
+    );
+  }
+  assert.equal(failures.size, 0);
 });
 
 function bootstrapRequest(body: { email: string; password: string }): Request {
@@ -77,34 +129,99 @@ function bootstrapRequest(body: { email: string; password: string }): Request {
   });
 }
 
+function loginRequest(body: { email: string; password: string; captchaToken?: string }): Request {
+  return new Request('https://example.com/api/admin/auth/login', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'cf-connecting-ip': '203.0.113.10',
+    },
+    body: JSON.stringify(body),
+  });
+}
+
+function loginEnv(options: { turnstileConfigured: boolean }): {
+  env: Env;
+  failures: Map<string, number>;
+} {
+  const failures = new Map<string, number>();
+  const db = d1Database(
+    (sql: string) =>
+      ({
+        bind(...values: unknown[]) {
+          return {
+            async first<T>() {
+              const key = String(values[0]);
+              if (sql.includes('FROM admin_login_failures')) {
+                const count = failures.get(key);
+                return (count == null ? null : { failed_attempts: count }) as T;
+              }
+              if (sql.includes('INSERT INTO admin_login_failures')) {
+                const count = (failures.get(key) ?? 0) + 1;
+                failures.set(key, count);
+                return { failed_attempts: count } as T;
+              }
+              if (sql.includes('FROM admins WHERE email')) return null;
+              throw new Error(`Unexpected first SQL: ${sql}`);
+            },
+            async all<T>() {
+              return d1Result<T>([]);
+            },
+            async run() {
+              return d1Meta();
+            },
+          };
+        },
+      }) as unknown as D1PreparedStatement,
+  );
+  return {
+    failures,
+    env: {
+      DB: db,
+      MEDIA_BUCKET: {} as R2Bucket,
+      PUBLIC_BASE_URL: 'https://api.example.com',
+      PUBLIC_FORM_ASSET_BASE_URL: 'https://forms.example.com',
+      LOGIN_RATE_LIMITER: stubRateLimiter(),
+      ANON_CREATE_RATE_LIMITER: stubRateLimiter(),
+      ...stubSecretsStoreEnv({
+        turnstileSiteKey: options.turnstileConfigured ? undefined : null,
+        turnstileSecretKey: options.turnstileConfigured ? undefined : null,
+      }),
+    },
+  };
+}
+
 function bootstrapEnv(options: { inserted: boolean }): Env {
   return {
-    DB: d1Database((sql: string) => ({
-      bind() {
-        return {
-          async first<T>() {
-            if (sql.includes('INSERT INTO admins')) {
-              return options.inserted
-                ? ({
-                    id: 'admin-1',
-                    email: 'admin@example.com',
-                    scope_names: '["admin"]',
-                    created_at: '2026-01-01T00:00:00.000Z',
-                  } as T)
-                : null;
-            }
-            if (sql.includes('INSERT INTO admin_sessions')) return null;
-            throw new Error(`Unexpected first SQL: ${sql}`);
+    DB: d1Database(
+      (sql: string) =>
+        ({
+          bind() {
+            return {
+              async first<T>() {
+                if (sql.includes('INSERT INTO admins')) {
+                  return options.inserted
+                    ? ({
+                        id: 'admin-1',
+                        email: 'admin@example.com',
+                        scope_names: '["admin"]',
+                        created_at: '2026-01-01T00:00:00.000Z',
+                      } as T)
+                    : null;
+                }
+                if (sql.includes('INSERT INTO admin_sessions')) return null;
+                throw new Error(`Unexpected first SQL: ${sql}`);
+              },
+              async all<T>() {
+                return d1Result<T>([]);
+              },
+              async run() {
+                return d1Meta();
+              },
+            };
           },
-          async all<T>() {
-            return d1Result<T>([]);
-          },
-          async run() {
-            return d1Meta();
-          },
-        };
-      },
-    } as unknown as D1PreparedStatement)),
+        }) as unknown as D1PreparedStatement,
+    ),
     MEDIA_BUCKET: {} as R2Bucket,
     PUBLIC_BASE_URL: 'https://api.example.com',
     PUBLIC_FORM_ASSET_BASE_URL: 'https://forms.example.com',
