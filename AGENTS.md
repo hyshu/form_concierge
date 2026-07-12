@@ -62,7 +62,7 @@ Build:
 jaspr build
 ```
 
-## Form Concierge packages (v0.1.0)
+## Form Concierge packages
 
 | Dir | Package |
 |-----|---------|

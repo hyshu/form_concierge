@@ -1,6 +1,6 @@
 name: form_concierge_client
 description: REST client for Form Concierge Workers API.
-version: 0.1.0
+version: 0.1.1
 homepage: https://github.com/hyshu/form_concierge
 repository: https://github.com/hyshu/form_concierge/tree/main/client
 issue_tracker: https://github.com/hyshu/form_concierge/issues

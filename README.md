@@ -7,10 +7,10 @@ Survey forms backed by Cloudflare Workers and D1. Respondents use generated anon
 | Directory | Package / role | Description |
 |-----------|----------------|-------------|
 | `worker/` | (deployed API) | Cloudflare Workers API and D1 migrations |
-| `client/` | `form_concierge_client` `0.1.0` | Published Dart REST client shared by Flutter apps and Jaspr |
-| `widget/` | `form_concierge` `0.1.0` | Published Flutter package for embedding surveys |
-| `cli/` | `form_concierge_cli` `0.1.0` | Published setup / doctor CLI (`form_concierge setup cloudflare`) |
-| `admin_dashboard/` | app | Flutter admin dashboard |
+| `client/` | `form_concierge_client` `0.1.1` | Published Dart REST client shared by Flutter apps and Jaspr |
+| `widget/` | `form_concierge` `0.1.1` | Published Flutter package for embedding surveys |
+| `cli/` | `form_concierge_cli` `0.1.1` | Published setup / doctor CLI (`form_concierge setup cloudflare`) |
+| `admin_dashboard/` | app `0.1.1` | Flutter admin dashboard |
 | `swiftui/` | SPM | Swift Package for embedding surveys in SwiftUI apps |
 | `web/` | app | Jaspr web survey form |
 | `widget/examples/` | apps | Full example apps demonstrating widget package usage |
@@ -35,8 +35,8 @@ flutter pub publish --dry-run
 flutter pub publish
 
 cd ..
-git tag v0.1.0
-git push origin v0.1.0
+git tag v0.1.1
+git push origin v0.1.1
 
 cd cli
 dart pub publish --dry-run
