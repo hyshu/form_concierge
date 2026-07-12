@@ -38,7 +38,12 @@ Future<void> mountTurnstile({
   // Drop any previous widget (rebuild / navigation).
   unmountTurnstile();
 
-  final parameters = <String, Object?>{'sitekey': siteKey}.jsify();
+  // Match the light public form UI. Default theme is "auto", which follows the
+  // visitor OS preference and looks black on a light page when the OS is dark.
+  final parameters = <String, Object?>{
+    'sitekey': siteKey,
+    'theme': 'light',
+  }.jsify();
   if (parameters == null) {
     throw StateError('Failed to build Turnstile parameters');
   }

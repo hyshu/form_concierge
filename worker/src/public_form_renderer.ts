@@ -198,7 +198,7 @@ function renderSurveyHtml(
         </section>
         <section class="max-w-xl mx-auto mt-6 space-y-4">
           ${data.questions.map((question) => renderQuestion(question, data.choicesByQuestion, locale)).join('')}
-          ${turnstileSiteKey ? `<div class="cf-turnstile" data-sitekey="${escapeAttribute(turnstileSiteKey)}"></div>` : ''}
+          ${turnstileSiteKey ? `<div class="cf-turnstile" data-sitekey="${escapeAttribute(turnstileSiteKey)}" data-theme="light"></div>` : ''}
           <button class="w-full px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg disabled:opacity-50" disabled>
             ${locale === 'ja' ? '送信' : 'Submit'}
           </button>

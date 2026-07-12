@@ -109,6 +109,7 @@ test('renderPublicForm embeds Turnstile when CAPTCHA is enabled', async () => {
   const html = await response.text();
   assert.match(html, /cf-turnstile/);
   assert.match(html, new RegExp(`data-sitekey="${TEST_TURNSTILE_SITE_KEY}"`));
+  assert.match(html, /data-theme="light"/);
   assert.match(html, /challenges\.cloudflare\.com\/turnstile/);
   assert.match(html, /"turnstileSiteKey":"[^"]+"/);
 });
