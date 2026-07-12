@@ -555,6 +555,8 @@ Run setup interactively, or pass:
     'claude_api_key',
     'cerebras_api_key',
     'smtp_password',
+    'turnstile_site_key',
+    'turnstile_secret_key',
   ];
 
   Future<void> _ensureSecretsStore() async {
@@ -610,7 +612,7 @@ Run setup interactively, or pass:
       '==> Secrets Store secrets: create ${missing.length} placeholder(s)',
     );
     stdout.writeln(
-      '    (AI/SMTP values can be set later in admin; placeholders unlock deploy)',
+      '    (AI/SMTP/Turnstile values can be set later in admin; placeholders unlock deploy)',
     );
     for (final name in missing) {
       final result = await runCapture(
@@ -823,6 +825,9 @@ Run setup interactively, or pass:
     if (secretsStoreId.isNotEmpty) {
       vars['CF_SECRETS_STORE_ID'] = secretsStoreId;
     }
+    // Turnstile keys live in Secrets Store (admin-managed), not plain vars.
+    vars.remove('TURNSTILE_SITE_KEY');
+    vars.remove('TURNSTILE_SECRET_KEY');
     config['vars'] = vars;
 
     await File(paths.wranglerConfig).writeAsString(encodePrettyJson(config));

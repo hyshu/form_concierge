@@ -170,5 +170,10 @@ AdminIntegrationSettings _settings({
       hasPassword: hasSmtpPassword,
       fromEmail: smtpFromEmail,
     ),
+    turnstile: const TurnstileIntegrationSettings(
+      configured: false,
+      hasSiteKey: false,
+      hasSecretKey: false,
+    ),
   );
 }

@@ -6,6 +6,7 @@ import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/hux_states.dart';
 import 'admin_settings_ai_section.dart';
 import 'admin_settings_smtp_section.dart';
+import 'admin_settings_turnstile_section.dart';
 
 class AdminSettingsForm extends StatefulWidget {
   const AdminSettingsForm({
@@ -41,6 +42,8 @@ class _AdminSettingsFormState extends State<AdminSettingsForm> {
   final _smtpPasswordController = TextEditingController();
   final _smtpFromEmailController = TextEditingController();
   final _smtpFromNameController = TextEditingController();
+  final _turnstileSiteKeyController = TextEditingController();
+  final _turnstileSecretKeyController = TextEditingController();
 
   late AiProvider _aiProvider;
   late SmtpSecureMode _secureMode;
@@ -49,6 +52,8 @@ class _AdminSettingsFormState extends State<AdminSettingsForm> {
   bool _clearClaudeKey = false;
   bool _clearCerebrasKey = false;
   bool _clearSmtpPassword = false;
+  bool _clearTurnstileSiteKey = false;
+  bool _clearTurnstileSecretKey = false;
   bool _hasChanges = false;
 
   @override
@@ -88,6 +93,8 @@ class _AdminSettingsFormState extends State<AdminSettingsForm> {
     _smtpPasswordController,
     _smtpFromEmailController,
     _smtpFromNameController,
+    _turnstileSiteKeyController,
+    _turnstileSecretKeyController,
   ];
 
   void _populate(AdminIntegrationSettings settings) {
@@ -101,6 +108,8 @@ class _AdminSettingsFormState extends State<AdminSettingsForm> {
     _smtpPasswordController.clear();
     _smtpFromEmailController.text = settings.smtp.fromEmail ?? '';
     _smtpFromNameController.text = settings.smtp.fromName ?? '';
+    _turnstileSiteKeyController.clear();
+    _turnstileSecretKeyController.clear();
     _aiProvider = settings.ai.provider;
     _secureMode = settings.smtp.secureMode;
     _clearGeminiKey = false;
@@ -108,6 +117,8 @@ class _AdminSettingsFormState extends State<AdminSettingsForm> {
     _clearClaudeKey = false;
     _clearCerebrasKey = false;
     _clearSmtpPassword = false;
+    _clearTurnstileSiteKey = false;
+    _clearTurnstileSecretKey = false;
     _hasChanges = false;
   }
 
@@ -145,6 +156,18 @@ class _AdminSettingsFormState extends State<AdminSettingsForm> {
     controller: _smtpPasswordController,
   );
 
+  void _setClearTurnstileSiteKey(bool value) => _setClearSecret(
+    value: value,
+    updateFlag: (next) => _clearTurnstileSiteKey = next,
+    controller: _turnstileSiteKeyController,
+  );
+
+  void _setClearTurnstileSecretKey(bool value) => _setClearSecret(
+    value: value,
+    updateFlag: (next) => _clearTurnstileSecretKey = next,
+    controller: _turnstileSecretKeyController,
+  );
+
   void _setClearSecret({
     required bool value,
     required ValueChanged<bool> updateFlag,
@@ -178,6 +201,10 @@ class _AdminSettingsFormState extends State<AdminSettingsForm> {
         smtpFromEmail: _nullIfBlank(_smtpFromEmailController.text),
         smtpFromName: _nullIfBlank(_smtpFromNameController.text),
         smtpSecureMode: _secureMode,
+        turnstileSiteKey: _nullIfBlank(_turnstileSiteKeyController.text),
+        clearTurnstileSiteKey: _clearTurnstileSiteKey,
+        turnstileSecretKey: _nullIfBlank(_turnstileSecretKeyController.text),
+        clearTurnstileSecretKey: _clearTurnstileSecretKey,
         expectedUpdatedAt: widget.settings.updatedAt,
       ),
     );
@@ -243,6 +270,16 @@ class _AdminSettingsFormState extends State<AdminSettingsForm> {
                       });
                     },
                     onClearPasswordChanged: _setClearSmtpPassword,
+                  ),
+                  const SizedBox(height: 16),
+                  AdminSettingsTurnstileSection(
+                    settings: settings.turnstile,
+                    siteKeyController: _turnstileSiteKeyController,
+                    secretKeyController: _turnstileSecretKeyController,
+                    clearSiteKey: _clearTurnstileSiteKey,
+                    clearSecretKey: _clearTurnstileSecretKey,
+                    onClearSiteKeyChanged: _setClearTurnstileSiteKey,
+                    onClearSecretKeyChanged: _setClearTurnstileSecretKey,
                   ),
                   const SizedBox(height: 20),
                   Align(

@@ -33,7 +33,14 @@ import {
 } from './admin_questions';
 import { notificationSettings } from './notification_settings';
 import { generateSurveyQuestions, translateLocalizedText } from './ai_generation';
-import { getAdminIntegrationSettings, isAiGenerationConfigured, isEmailConfiguredResponse, updateAdminIntegrationSettings } from './admin_settings';
+import {
+  getAdminIntegrationSettings,
+  getTurnstileSiteKey,
+  isAiGenerationConfigured,
+  isEmailConfiguredResponse,
+  isTurnstileConfigured,
+  updateAdminIntegrationSettings,
+} from './admin_settings';
 import { getPublicChoices, getPublicProject, getPublicProjectByDomain, getPublicQuestions, submitResponse } from './public_surveys';
 import { generateFollowUp, saveFollowUp } from './follow_up';
 import { getMedia, uploadMedia } from './media';
@@ -82,12 +89,13 @@ async function route(request: Request, env: Env, ctx: ExecutionContext): Promise
   const parts = path.split('/').filter(Boolean);
 
   if (method === 'GET' && path === '/api/config') {
-    const turnstileSiteKey = env.TURNSTILE_SITE_KEY?.trim();
     return json({
       passwordResetEnabled: false,
       requireEmailVerification: false,
       aiGenerationEnabled: await isAiGenerationConfigured(env),
-      turnstileSiteKey: turnstileSiteKey ? turnstileSiteKey : null,
+      turnstileSiteKey: await isTurnstileConfigured(env)
+        ? await getTurnstileSiteKey(env)
+        : null,
     });
   }
 

@@ -1,4 +1,5 @@
 import type { ChoiceRow, Env, ProjectRow, QuestionRow, SurveyRow } from './types';
+import { getTurnstileSiteKey, isTurnstileConfigured } from './admin_settings';
 import { choiceToJson, projectToJson, questionToJson, surveyToJson, visibilityRuleToJson } from './serializers';
 import { HttpError, optionalCustomDomain, queryInChunks } from './utils';
 import {
@@ -48,7 +49,12 @@ export async function renderPublicForm(request: Request, env: Env): Promise<Resp
     data.project.supportedLocales,
     data.project.defaultLocale,
   );
-  return html(request, renderSurveyHtml(env, url, data, locale));
+  // Only expose the site key when both keys are configured so CAPTCHA UI and
+  // server-side verification stay in sync.
+  const turnstileSiteKey = data.survey.captchaEnabled && await isTurnstileConfigured(env)
+    ? await getTurnstileSiteKey(env)
+    : null;
+  return html(request, renderSurveyHtml(env, url, data, locale, turnstileSiteKey));
 }
 
 async function loadProjectBySlug(
@@ -163,12 +169,12 @@ function renderSurveyHtml(
   url: URL,
   data: PublicFormData,
   locale: string,
+  turnstileSiteKey: string | null,
 ): string {
   const title = textFor(data.survey.titleTranslations, locale);
   const description = textFor(data.survey.descriptionTranslations, locale);
   const assetBaseUrl = publicFormAssetBaseUrl(env);
   const apiUrl = publicApiUrl(env);
-  const turnstileSiteKey = data.survey.captchaEnabled ? env.TURNSTILE_SITE_KEY : null;
   const payload = { ...data, apiUrl, turnstileSiteKey };
 
   return documentHtml({

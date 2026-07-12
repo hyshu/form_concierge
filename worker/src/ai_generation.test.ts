@@ -11,8 +11,6 @@ import {
   stubRateLimiter,
   stubSecretsStoreEnv,
   stubSecretsStoreSecret,
-  TEST_TURNSTILE_SITE_KEY,
-  TEST_TURNSTILE_SECRET_KEY,
 } from '../test/helpers';
 import { generateSurveyQuestions, toProviderSchema } from './ai_generation';
 import type { Env } from './types';
@@ -126,8 +124,6 @@ function envWithSettings(): Env {
     PUBLIC_FORM_ASSET_BASE_URL: 'https://forms.example.com',
     LOGIN_RATE_LIMITER: stubRateLimiter(),
     ANON_CREATE_RATE_LIMITER: stubRateLimiter(),
-    TURNSTILE_SITE_KEY: TEST_TURNSTILE_SITE_KEY,
-    TURNSTILE_SECRET_KEY: TEST_TURNSTILE_SECRET_KEY,
     ...stubSecretsStoreEnv(),
     OPENAI_API_KEY: stubSecretsStoreSecret('openai-key'),
   };

@@ -7,11 +7,13 @@ enum SmtpSecureMode { none, starttls, tls }
 class AdminIntegrationSettings {
   final AiIntegrationSettings ai;
   final SmtpIntegrationSettings smtp;
+  final TurnstileIntegrationSettings turnstile;
   final DateTime? updatedAt;
 
   const AdminIntegrationSettings({
     required this.ai,
     required this.smtp,
+    required this.turnstile,
     this.updatedAt,
   });
 
@@ -19,6 +21,10 @@ class AdminIntegrationSettings {
       AdminIntegrationSettings(
         ai: _object(json['ai'], AiIntegrationSettings.fromJson),
         smtp: _object(json['smtp'], SmtpIntegrationSettings.fromJson),
+        turnstile: _object(
+          json['turnstile'],
+          TurnstileIntegrationSettings.fromJson,
+        ),
         updatedAt: _optionalDate(json['updatedAt']),
       );
 }
@@ -98,6 +104,25 @@ class SmtpIntegrationSettings {
       );
 }
 
+class TurnstileIntegrationSettings {
+  final bool configured;
+  final bool hasSiteKey;
+  final bool hasSecretKey;
+
+  const TurnstileIntegrationSettings({
+    required this.configured,
+    required this.hasSiteKey,
+    required this.hasSecretKey,
+  });
+
+  factory TurnstileIntegrationSettings.fromJson(Map<String, dynamic> json) =>
+      TurnstileIntegrationSettings(
+        configured: _bool(json['configured']),
+        hasSiteKey: _bool(json['hasSiteKey']),
+        hasSecretKey: _bool(json['hasSecretKey']),
+      );
+}
+
 class AdminIntegrationSettingsInput {
   final AiProvider aiProvider;
   final String? geminiApiKey;
@@ -116,6 +141,10 @@ class AdminIntegrationSettingsInput {
   final String? smtpFromEmail;
   final String? smtpFromName;
   final SmtpSecureMode smtpSecureMode;
+  final String? turnstileSiteKey;
+  final bool clearTurnstileSiteKey;
+  final String? turnstileSecretKey;
+  final bool clearTurnstileSecretKey;
 
   /// updatedAt from the settings snapshot the form was built from; the
   /// server rejects the save with 409 if someone else saved in between.
@@ -139,6 +168,10 @@ class AdminIntegrationSettingsInput {
     this.smtpFromEmail,
     this.smtpFromName,
     this.smtpSecureMode = SmtpSecureMode.starttls,
+    this.turnstileSiteKey,
+    this.clearTurnstileSiteKey = false,
+    this.turnstileSecretKey,
+    this.clearTurnstileSecretKey = false,
     this.expectedUpdatedAt,
   });
 
@@ -165,6 +198,12 @@ class AdminIntegrationSettingsInput {
       'fromEmail': smtpFromEmail,
       'fromName': smtpFromName,
       'secureMode': _enumName(smtpSecureMode),
+    },
+    'turnstile': {
+      'siteKey': turnstileSiteKey,
+      'clearSiteKey': clearTurnstileSiteKey,
+      'secretKey': turnstileSecretKey,
+      'clearSecretKey': clearTurnstileSecretKey,
     },
   };
 }

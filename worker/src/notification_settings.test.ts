@@ -8,8 +8,6 @@ import {
   d1Database,
   stubRateLimiter,
   stubSecretsStoreEnv,
-  TEST_TURNSTILE_SECRET_KEY,
-  TEST_TURNSTILE_SITE_KEY,
 } from '../test/helpers';
 import { notificationSettings, sendResponseNotification } from './notification_settings';
 import type { Env, NotificationSettingsRow } from './types';
@@ -195,8 +193,6 @@ function notificationEnv(options: NotificationEnvOptions): Env {
     PUBLIC_FORM_ASSET_BASE_URL: 'https://assets.example.com',
     LOGIN_RATE_LIMITER: stubRateLimiter(),
     ANON_CREATE_RATE_LIMITER: stubRateLimiter(),
-    TURNSTILE_SITE_KEY: TEST_TURNSTILE_SITE_KEY,
-    TURNSTILE_SECRET_KEY: TEST_TURNSTILE_SECRET_KEY,
     ...stubSecretsStoreEnv(),
   };
 }

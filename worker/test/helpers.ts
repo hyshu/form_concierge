@@ -128,13 +128,26 @@ export function stubSecretsStoreSecret(value?: string): SecretsStoreSecret {
   };
 }
 
-export function stubSecretsStoreEnv() {
+export function stubSecretsStoreEnv(options?: {
+  turnstileSiteKey?: string | null;
+  turnstileSecretKey?: string | null;
+}) {
   return {
     GEMINI_API_KEY: stubSecretsStoreSecret(),
     OPENAI_API_KEY: stubSecretsStoreSecret(),
     CLAUDE_API_KEY: stubSecretsStoreSecret(),
     CEREBRAS_API_KEY: stubSecretsStoreSecret(),
     SMTP_PASSWORD: stubSecretsStoreSecret(),
+    TURNSTILE_SITE_KEY: stubSecretsStoreSecret(
+      options?.turnstileSiteKey === null
+        ? undefined
+        : (options?.turnstileSiteKey ?? TEST_TURNSTILE_SITE_KEY),
+    ),
+    TURNSTILE_SECRET_KEY: stubSecretsStoreSecret(
+      options?.turnstileSecretKey === null
+        ? undefined
+        : (options?.turnstileSecretKey ?? TEST_TURNSTILE_SECRET_KEY),
+    ),
     CF_API_TOKEN: 'test-token',
     CF_ACCOUNT_ID: 'test-account',
     CF_SECRETS_STORE_ID: 'test-store',

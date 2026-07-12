@@ -24,6 +24,10 @@ export async function updateAdminIntegrationSettings(request: Request, env: Env)
   const body = await readJson(request);
   const ai = requireObject(body.ai, 'ai');
   const smtp = requireObject(body.smtp, 'smtp');
+  // Optional for backward-compatible clients; omit means leave Turnstile secrets unchanged.
+  const turnstile = body.turnstile == null
+    ? null
+    : requireObject(body.turnstile, 'turnstile');
   const aiProvider = requireAiProvider(ai.provider);
 
   // Optimistic concurrency: the whole row is replaced, so a concurrent save
@@ -45,6 +49,10 @@ export async function updateAdminIntegrationSettings(request: Request, env: Env)
     { next: ai.claudeApiKey, clear: optionalBoolean(ai.clearClaudeApiKey, 'ai.clearClaudeApiKey') === true, field: 'ai.claudeApiKey', secretName: 'claude_api_key' },
     { next: ai.cerebrasApiKey, clear: optionalBoolean(ai.clearCerebrasApiKey, 'ai.clearCerebrasApiKey') === true, field: 'ai.cerebrasApiKey', secretName: 'cerebras_api_key' },
     { next: smtp.password, clear: optionalBoolean(smtp.clearPassword, 'smtp.clearPassword') === true, field: 'smtp.password', secretName: 'smtp_password' },
+    ...(turnstile == null ? [] : [
+      { next: turnstile.siteKey, clear: optionalBoolean(turnstile.clearSiteKey, 'turnstile.clearSiteKey') === true, field: 'turnstile.siteKey', secretName: 'turnstile_site_key' },
+      { next: turnstile.secretKey, clear: optionalBoolean(turnstile.clearSecretKey, 'turnstile.clearSecretKey') === true, field: 'turnstile.secretKey', secretName: 'turnstile_secret_key' },
+    ]),
   ]);
 
   const smtpHost = optionalHost(smtp.host);
@@ -135,6 +143,32 @@ export async function isAiGenerationConfigured(env: Env): Promise<boolean> {
   return Boolean(await apiKeyForProvider(env, normalizeAiProvider(row.ai_provider)));
 }
 
+/** Public Turnstile site key, or null when unset / placeholder. */
+export async function getTurnstileSiteKey(env: Env): Promise<string | null> {
+  return usableSecretValue(await tryGetSecret(env.TURNSTILE_SITE_KEY));
+}
+
+/** Turnstile secret key for siteverify, or null when unset / placeholder. */
+export async function getTurnstileSecretKey(env: Env): Promise<string | null> {
+  return usableSecretValue(await tryGetSecret(env.TURNSTILE_SECRET_KEY));
+}
+
+export async function isTurnstileConfigured(env: Env): Promise<boolean> {
+  const [siteKey, secretKey] = await Promise.all([
+    getTurnstileSiteKey(env),
+    getTurnstileSecretKey(env),
+  ]);
+  return Boolean(siteKey && secretKey);
+}
+
+/** Secrets Store placeholders created by setup are not usable production values. */
+function usableSecretValue(value: string | null): string | null {
+  if (value == null) return null;
+  const trimmed = value.trim();
+  if (trimmed.length === 0 || trimmed === 'placeholder') return null;
+  return trimmed;
+}
+
 export async function isEmailConfiguredResponse(env: Env): Promise<Response> {
   const row = await getIntegrationSettingsRow(env);
   return json({ configured: isSmtpConfigured(row) });
@@ -183,13 +217,16 @@ export async function apiKeyForProvider(env: Env, provider: AiProvider): Promise
 
 async function integrationSettingsToJson(env: Env, row: IntegrationSettingsRow | null) {
   const provider = normalizeAiProvider(row?.ai_provider ?? 'gemini');
-  const [gemini, openai, claude, cerebras, smtpPwd] = await Promise.all([
-    tryGetSecret(env.GEMINI_API_KEY),
-    tryGetSecret(env.OPENAI_API_KEY),
-    tryGetSecret(env.CLAUDE_API_KEY),
-    tryGetSecret(env.CEREBRAS_API_KEY),
-    tryGetSecret(env.SMTP_PASSWORD),
-  ]);
+  const [gemini, openai, claude, cerebras, smtpPwd, turnstileSite, turnstileSecret] =
+    await Promise.all([
+      tryGetSecret(env.GEMINI_API_KEY),
+      tryGetSecret(env.OPENAI_API_KEY),
+      tryGetSecret(env.CLAUDE_API_KEY),
+      tryGetSecret(env.CEREBRAS_API_KEY),
+      tryGetSecret(env.SMTP_PASSWORD),
+      getTurnstileSiteKey(env),
+      getTurnstileSecretKey(env),
+    ]);
   return {
     ai: {
       provider,
@@ -207,6 +244,11 @@ async function integrationSettingsToJson(env: Env, row: IntegrationSettingsRow |
       fromEmail: row?.smtp_from_email ?? null,
       fromName: row?.smtp_from_name ?? null,
       secureMode: normalizeSecureMode(row?.smtp_secure_mode ?? 'starttls'),
+    },
+    turnstile: {
+      configured: Boolean(turnstileSite && turnstileSecret),
+      hasSiteKey: Boolean(turnstileSite),
+      hasSecretKey: Boolean(turnstileSecret),
     },
     updatedAt: row?.updated_at ?? null,
   };
