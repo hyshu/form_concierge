@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:cloudflare_turnstile/cloudflare_turnstile.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -745,12 +748,60 @@ class _SurveyScreenState extends State<SurveyScreen> {
           );
         },
         processImage: _processImage,
+        // Called only when the survey has CAPTCHA enabled. The widget never
+        // embeds a CAPTCHA implementation — resolve a token with any provider
+        // (here Cloudflare Turnstile) and return it.
+        captchaTokenProvider: _resolveCaptchaToken,
+        onSubmitError: (error) =>
+            debugPrint('[form_concierge] submit failed: $error'),
         footer: Text(
           strings.text('survey_footer'),
           textAlign: TextAlign.center,
         ),
       ),
     );
+  }
+
+  // Presents a Turnstile challenge and returns its token, or null to abort.
+  Future<String?> _resolveCaptchaToken() async {
+    // The public site key is served by the backend config endpoint.
+    final config = await widget.client.config.getPublicConfig();
+    final siteKey = config.turnstileSiteKey;
+    if (siteKey == null || siteKey.isEmpty || !mounted) return null;
+
+    final completer = Completer<String?>();
+    void finish(String? token) {
+      if (!completer.isCompleted) completer.complete(token);
+    }
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: CloudflareTurnstile(
+            siteKey: siteKey,
+            // Must match a hostname allowed by the Turnstile widget config.
+            baseUrl: 'https://your-form-domain.example.com',
+            onTokenReceived: (token) {
+              finish(token);
+              if (sheetContext.mounted) Navigator.of(sheetContext).pop();
+            },
+            onError: (error) {
+              debugPrint('[turnstile] error: $error');
+              if (sheetContext.mounted) Navigator.of(sheetContext).pop();
+            },
+            onTimeout: () {
+              debugPrint('[turnstile] timeout');
+              if (sheetContext.mounted) Navigator.of(sheetContext).pop();
+            },
+          ),
+        ),
+      ),
+    );
+    finish(null);
+    return completer.future;
   }
 
   // Hook point for resize, compression, redaction, or EXIF removal. This full

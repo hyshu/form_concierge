@@ -231,7 +231,7 @@ class SurveyFormWidgetState extends State<SurveyForm> {
             title: Text(context.tr('CAPTCHA verification')),
             subtitle: Text(
               context.tr(
-                'Require Turnstile CAPTCHA on the web form to prevent bot submissions.',
+                'Require Turnstile CAPTCHA to prevent bot submissions.',
               ),
             ),
             value: _captchaEnabled,

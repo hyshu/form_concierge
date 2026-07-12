@@ -376,8 +376,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "e.g. Prefer questions about product quality; avoid asking for contact info.":
         "z. B. Fragen zur Produktqualität bevorzugen; keine Kontaktdaten erfragen.",
     "CAPTCHA verification": "CAPTCHA-Verifizierung",
-    "Require Turnstile CAPTCHA on the web form to prevent bot submissions.":
-        "Turnstile-CAPTCHA im Webformular aktivieren, um Bot-Einsendungen zu verhindern.",
+    "Require Turnstile CAPTCHA to prevent bot submissions.":
+        "Turnstile-CAPTCHA aktivieren, um Bot-Einsendungen zu verhindern.",
     "Follow-up interview": "Folgeinterview",
     "Follow-up status: {status}": "Follow-up-Status: {status}",
     "Image Upload": "Bild-Upload",
@@ -436,8 +436,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "From email is required when SMTP settings are present":
         "Von E-Mail ist erforderlich, wenn SMTP-Einstellungen vorhanden sind",
     "Turnstile CAPTCHA": "Turnstile CAPTCHA",
-    "Cloudflare Turnstile keys for web form bot protection. Create a widget in the Cloudflare dashboard, then paste both keys here.":
-        "Cloudflare-Turnstile-Schlüssel für den Bot-Schutz im Webformular. Erstellen Sie ein Widget im Cloudflare-Dashboard und fügen Sie beide Schlüssel hier ein.",
+    "Cloudflare Turnstile keys for bot protection. Create a widget in the Cloudflare dashboard, then paste both keys here.":
+        "Cloudflare-Turnstile-Schlüssel für den Bot-Schutz. Erstellen Sie ein Widget im Cloudflare-Dashboard und fügen Sie beide Schlüssel hier ein.",
     "Site Key": "Site-Schlüssel",
     "Secret Key": "Geheimschlüssel",
     "Leave blank to keep the saved site key":
@@ -609,8 +609,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "e.g. Prefer questions about product quality; avoid asking for contact info.":
         "e.g. Prefer questions about product quality; avoid asking for contact info.",
     "CAPTCHA verification": "CAPTCHA verification",
-    "Require Turnstile CAPTCHA on the web form to prevent bot submissions.":
-        "Require Turnstile CAPTCHA on the web form to prevent bot submissions.",
+    "Require Turnstile CAPTCHA to prevent bot submissions.":
+        "Require Turnstile CAPTCHA to prevent bot submissions.",
     "Follow-up interview": "Follow-up interview",
     "Follow-up status: {status}": "Follow-up status: {status}",
     "Image Upload": "Image Upload",
@@ -809,8 +809,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "From email is required when SMTP settings are present":
         "From email is required when SMTP settings are present",
     "Turnstile CAPTCHA": "Turnstile CAPTCHA",
-    "Cloudflare Turnstile keys for web form bot protection. Create a widget in the Cloudflare dashboard, then paste both keys here.":
-        "Cloudflare Turnstile keys for web form bot protection. Create a widget in the Cloudflare dashboard, then paste both keys here.",
+    "Cloudflare Turnstile keys for bot protection. Create a widget in the Cloudflare dashboard, then paste both keys here.":
+        "Cloudflare Turnstile keys for bot protection. Create a widget in the Cloudflare dashboard, then paste both keys here.",
     "Site Key": "Site Key",
     "Secret Key": "Secret Key",
     "Leave blank to keep the saved site key":
@@ -1204,8 +1204,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "From email is required when SMTP settings are present":
         "El correo del remitente es obligatorio cuando hay configuración SMTP",
     "Turnstile CAPTCHA": "Turnstile CAPTCHA",
-    "Cloudflare Turnstile keys for web form bot protection. Create a widget in the Cloudflare dashboard, then paste both keys here.":
-        "Claves de Cloudflare Turnstile para la protección contra bots en el formulario web. Cree un widget en el panel de Cloudflare y pegue ambas claves aquí.",
+    "Cloudflare Turnstile keys for bot protection. Create a widget in the Cloudflare dashboard, then paste both keys here.":
+        "Claves de Cloudflare Turnstile para la protección contra bots. Cree un widget en el panel de Cloudflare y pegue ambas claves aquí.",
     "Site Key": "Clave del sitio",
     "Secret Key": "Clave secreta",
     "Leave blank to keep the saved site key":
@@ -1280,8 +1280,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "e.g. Prefer questions about product quality; avoid asking for contact info.":
         "p. ej. Preferir preguntas sobre calidad del producto; no pedir datos de contacto.",
     "CAPTCHA verification": "Verificación CAPTCHA",
-    "Require Turnstile CAPTCHA on the web form to prevent bot submissions.":
-        "Requerir CAPTCHA de Turnstile en el formulario web para prevenir envíos de bots.",
+    "Require Turnstile CAPTCHA to prevent bot submissions.":
+        "Requerir CAPTCHA de Turnstile para prevenir envíos de bots.",
     "Follow-up interview": "Entrevista de seguimiento",
     "Follow-up status: {status}": "Estado de seguimiento: {status}",
     "Image Upload": "Subir imagen",
@@ -1631,8 +1631,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "From email is required when SMTP settings are present":
         "L'e-mail de l'expéditeur est obligatoire lorsque les paramètres SMTP sont présents",
     "Turnstile CAPTCHA": "Turnstile CAPTCHA",
-    "Cloudflare Turnstile keys for web form bot protection. Create a widget in the Cloudflare dashboard, then paste both keys here.":
-        "Clés Cloudflare Turnstile pour la protection anti-bots du formulaire web. Créez un widget dans le tableau de bord Cloudflare, puis collez les deux clés ici.",
+    "Cloudflare Turnstile keys for bot protection. Create a widget in the Cloudflare dashboard, then paste both keys here.":
+        "Clés Cloudflare Turnstile pour la protection anti-bots. Créez un widget dans le tableau de bord Cloudflare, puis collez les deux clés ici.",
     "Site Key": "Clé de site",
     "Secret Key": "Clé secrète",
     "Leave blank to keep the saved site key":
@@ -1721,8 +1721,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "e.g. Prefer questions about product quality; avoid asking for contact info.":
         "ex. Préférer les questions sur la qualité produit ; ne pas demander de coordonnées.",
     "CAPTCHA verification": "Vérification CAPTCHA",
-    "Require Turnstile CAPTCHA on the web form to prevent bot submissions.":
-        "Exiger un CAPTCHA Turnstile sur le formulaire web pour empêcher les soumissions de bots.",
+    "Require Turnstile CAPTCHA to prevent bot submissions.":
+        "Exiger un CAPTCHA Turnstile pour empêcher les soumissions de bots.",
     "Follow-up interview": "Entretien de suivi",
     "Follow-up status: {status}": "Statut de suivi : {status}",
     "Image Upload": "Téléchargement d'images",
@@ -2069,8 +2069,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "From email is required when SMTP settings are present":
         "L'email del mittente è obbligatoria quando sono presenti impostazioni SMTP",
     "Turnstile CAPTCHA": "Turnstile CAPTCHA",
-    "Cloudflare Turnstile keys for web form bot protection. Create a widget in the Cloudflare dashboard, then paste both keys here.":
-        "Chiavi Cloudflare Turnstile per la protezione dai bot nel modulo web. Crea un widget nella dashboard Cloudflare, quindi incolla entrambe le chiavi qui.",
+    "Cloudflare Turnstile keys for bot protection. Create a widget in the Cloudflare dashboard, then paste both keys here.":
+        "Chiavi Cloudflare Turnstile per la protezione dai bot. Crea un widget nella dashboard Cloudflare, quindi incolla entrambe le chiavi qui.",
     "Site Key": "Chiave del sito",
     "Secret Key": "Chiave segreta",
     "Leave blank to keep the saved site key":
@@ -2150,8 +2150,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "e.g. Prefer questions about product quality; avoid asking for contact info.":
         "es. Preferire domande sulla qualità del prodotto; non chiedere contatti.",
     "CAPTCHA verification": "Verifica CAPTCHA",
-    "Require Turnstile CAPTCHA on the web form to prevent bot submissions.":
-        "Richiedere il CAPTCHA Turnstile nel modulo web per prevenire invii da bot.",
+    "Require Turnstile CAPTCHA to prevent bot submissions.":
+        "Richiedere il CAPTCHA Turnstile per prevenire invii da bot.",
     "Follow-up interview": "Intervista di follow-up",
     "Follow-up status: {status}": "Stato successivo: {status}",
     "Image Upload": "Caricamento immagini",
@@ -2313,8 +2313,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "e.g. Prefer questions about product quality; avoid asking for contact info.":
         "例: 製品品質に関する質問を優先。連絡先の入力は求めない。",
     "CAPTCHA verification": "CAPTCHA 認証",
-    "Require Turnstile CAPTCHA on the web form to prevent bot submissions.":
-        "ボットによる送信を防ぐため、Web フォームに Turnstile CAPTCHA を要求します。",
+    "Require Turnstile CAPTCHA to prevent bot submissions.":
+        "ボットによる送信を防ぐため、Turnstile CAPTCHA を要求します。",
     "Follow-up interview": "追加インタビュー",
     "Follow-up status: {status}": "追加インタビューの状態: {status}",
     "Image Upload": "画像アップロード",
@@ -2500,8 +2500,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "From email is required when SMTP settings are present":
         "SMTP設定を入力する場合は送信元メールアドレスが必須です",
     "Turnstile CAPTCHA": "Turnstile CAPTCHA",
-    "Cloudflare Turnstile keys for web form bot protection. Create a widget in the Cloudflare dashboard, then paste both keys here.":
-        "Webフォームのボット対策用 Cloudflare Turnstile キーです。Cloudflare ダッシュボードでウィジェットを作成し、両方のキーをここに貼り付けてください。",
+    "Cloudflare Turnstile keys for bot protection. Create a widget in the Cloudflare dashboard, then paste both keys here.":
+        "ボット対策用 Cloudflare Turnstile キーです。Cloudflare ダッシュボードでウィジェットを作成し、両方のキーをここに貼り付けてください。",
     "Site Key": "サイトキー",
     "Secret Key": "シークレットキー",
     "Leave blank to keep the saved site key": "空欄のままなら保存済みのサイトキーを維持します",
@@ -2876,8 +2876,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "e.g. Prefer questions about product quality; avoid asking for contact info.":
         "예: 제품 품질 관련 질문을 우선하고, 연락처 요청은 피하세요.",
     "CAPTCHA verification": "CAPTCHA 인증",
-    "Require Turnstile CAPTCHA on the web form to prevent bot submissions.":
-        "봇 제출을 방지하기 위해 웹 양식에 Turnstile CAPTCHA를 요구합니다.",
+    "Require Turnstile CAPTCHA to prevent bot submissions.":
+        "봇 제출을 방지하기 위해 Turnstile CAPTCHA를 요구합니다.",
     "Follow-up interview": "후속 인터뷰",
     "Follow-up status: {status}": "후속 상태: {status}",
     "Image Upload": "이미지 업로드",
@@ -2929,8 +2929,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "From email is required when SMTP settings are present":
         "SMTP 설정이 있는 경우 이메일에서가 필요합니다.",
     "Turnstile CAPTCHA": "Turnstile CAPTCHA",
-    "Cloudflare Turnstile keys for web form bot protection. Create a widget in the Cloudflare dashboard, then paste both keys here.":
-        "웹 양식 봇 방지를 위한 Cloudflare Turnstile 키입니다. Cloudflare 대시보드에서 위젯을 만든 뒤 두 키를 모두 여기에 붙여넣으세요.",
+    "Cloudflare Turnstile keys for bot protection. Create a widget in the Cloudflare dashboard, then paste both keys here.":
+        "봇 방지를 위한 Cloudflare Turnstile 키입니다. Cloudflare 대시보드에서 위젯을 만든 뒤 두 키를 모두 여기에 붙여넣으세요.",
     "Site Key": "사이트 키",
     "Secret Key": "비밀 키",
     "Leave blank to keep the saved site key": "비워 두면 저장된 사이트 키를 유지합니다",
@@ -3264,8 +3264,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "From email is required when SMTP settings are present":
         "ต้องระบุอีเมลผู้ส่งเมื่อมีการตั้งค่า SMTP",
     "Turnstile CAPTCHA": "Turnstile CAPTCHA",
-    "Cloudflare Turnstile keys for web form bot protection. Create a widget in the Cloudflare dashboard, then paste both keys here.":
-        "คีย์ Cloudflare Turnstile สำหรับป้องกันบอทในแบบฟอร์มเว็บ สร้างวิดเจ็ตในแดชบอร์ด Cloudflare แล้ววางคีย์ทั้งสองที่นี่",
+    "Cloudflare Turnstile keys for bot protection. Create a widget in the Cloudflare dashboard, then paste both keys here.":
+        "คีย์ Cloudflare Turnstile สำหรับป้องกันบอท สร้างวิดเจ็ตในแดชบอร์ด Cloudflare แล้ววางคีย์ทั้งสองที่นี่",
     "Site Key": "ไซต์คีย์",
     "Secret Key": "ซีเคร็ตคีย์",
     "Leave blank to keep the saved site key":
@@ -3338,8 +3338,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "e.g. Prefer questions about product quality; avoid asking for contact info.":
         "เช่น เน้นคำถามคุณภาพสินค้า อย่าขอข้อมูลติดต่อ",
     "CAPTCHA verification": "การยืนยัน CAPTCHA",
-    "Require Turnstile CAPTCHA on the web form to prevent bot submissions.":
-        "กำหนดให้ใช้ Turnstile CAPTCHA บนแบบฟอร์มเว็บเพื่อป้องกันการส่งจากบอท",
+    "Require Turnstile CAPTCHA to prevent bot submissions.":
+        "กำหนดให้ใช้ Turnstile CAPTCHA เพื่อป้องกันการส่งจากบอท",
     "Follow-up interview": "สัมภาษณ์ติดตามผล",
     "Follow-up status: {status}": "สถานะติดตามผล: {status}",
     "Image Upload": "อัพโหลดรูปภาพ",
@@ -3683,8 +3683,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "From email is required when SMTP settings are present":
         "SMTP ayarları varken gönderen e-posta zorunludur",
     "Turnstile CAPTCHA": "Turnstile CAPTCHA",
-    "Cloudflare Turnstile keys for web form bot protection. Create a widget in the Cloudflare dashboard, then paste both keys here.":
-        "Web formundaki bot koruması için Cloudflare Turnstile anahtarları. Cloudflare panosunda bir widget oluşturun, ardından her iki anahtarı buraya yapıştırın.",
+    "Cloudflare Turnstile keys for bot protection. Create a widget in the Cloudflare dashboard, then paste both keys here.":
+        "Bot koruması için Cloudflare Turnstile anahtarları. Cloudflare panosunda bir widget oluşturun, ardından her iki anahtarı buraya yapıştırın.",
     "Site Key": "Site Anahtarı",
     "Secret Key": "Gizli Anahtar",
     "Leave blank to keep the saved site key":
@@ -3756,8 +3756,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "e.g. Prefer questions about product quality; avoid asking for contact info.":
         "örn. Ürün kalitesi sorularını tercih edin; iletişim bilgisi istemeyin.",
     "CAPTCHA verification": "CAPTCHA doğrulaması",
-    "Require Turnstile CAPTCHA on the web form to prevent bot submissions.":
-        "Bot gönderimlerini önlemek için web formunda Turnstile CAPTCHA gerektirin.",
+    "Require Turnstile CAPTCHA to prevent bot submissions.":
+        "Bot gönderimlerini önlemek için Turnstile CAPTCHA gerektirin.",
     "Follow-up interview": "Takip röportajı",
     "Follow-up status: {status}": "Takip durumu: {status}",
     "Image Upload": "Resim Yükleme",
@@ -4083,8 +4083,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "e.g. Prefer questions about product quality; avoid asking for contact info.":
         "例如：优先询问产品质量；不要索要联系方式。",
     "CAPTCHA verification": "CAPTCHA 验证",
-    "Require Turnstile CAPTCHA on the web form to prevent bot submissions.":
-        "在网页表单上要求 Turnstile CAPTCHA 以防止机器人提交。",
+    "Require Turnstile CAPTCHA to prevent bot submissions.":
+        "要求 Turnstile CAPTCHA 以防止机器人提交。",
     "Follow-up interview": "后续采访",
     "Follow-up status: {status}": "跟进状态：{status}",
     "Image Upload": "图片上传",
@@ -4134,8 +4134,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "From email is required when SMTP settings are present":
         "当存在 SMTP 设置时，需要来自电子邮件",
     "Turnstile CAPTCHA": "Turnstile CAPTCHA",
-    "Cloudflare Turnstile keys for web form bot protection. Create a widget in the Cloudflare dashboard, then paste both keys here.":
-        "用于网页表单机器人防护的 Cloudflare Turnstile 密钥。在 Cloudflare 控制面板创建小组件，然后将两个密钥粘贴到此处。",
+    "Cloudflare Turnstile keys for bot protection. Create a widget in the Cloudflare dashboard, then paste both keys here.":
+        "用于机器人防护的 Cloudflare Turnstile 密钥。在 Cloudflare 控制面板创建小组件，然后将两个密钥粘贴到此处。",
     "Site Key": "站点密钥",
     "Secret Key": "密钥",
     "Leave blank to keep the saved site key": "留空以保留已保存的站点密钥",
@@ -4461,8 +4461,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "e.g. Prefer questions about product quality; avoid asking for contact info.":
         "例如：優先詢問產品品質；不要索取聯絡方式。",
     "CAPTCHA verification": "CAPTCHA 驗證",
-    "Require Turnstile CAPTCHA on the web form to prevent bot submissions.":
-        "在網頁表單上要求 Turnstile CAPTCHA 以防止機器人提交。",
+    "Require Turnstile CAPTCHA to prevent bot submissions.":
+        "要求 Turnstile CAPTCHA 以防止機器人提交。",
     "Follow-up interview": "後續採訪",
     "Follow-up status: {status}": "跟進狀態：{status}",
     "Image Upload": "圖片上傳",
@@ -4512,8 +4512,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "From email is required when SMTP settings are present":
         "當存在 SMTP 設定時，需要來自電子郵件",
     "Turnstile CAPTCHA": "Turnstile CAPTCHA",
-    "Cloudflare Turnstile keys for web form bot protection. Create a widget in the Cloudflare dashboard, then paste both keys here.":
-        "用於網頁表單機器人防護的 Cloudflare Turnstile 金鑰。在 Cloudflare 控制台建立小工具，然後將兩個金鑰貼到此處。",
+    "Cloudflare Turnstile keys for bot protection. Create a widget in the Cloudflare dashboard, then paste both keys here.":
+        "用於機器人防護的 Cloudflare Turnstile 金鑰。在 Cloudflare 控制台建立小工具，然後將兩個金鑰貼到此處。",
     "Site Key": "站台金鑰",
     "Secret Key": "密鑰",
     "Leave blank to keep the saved site key": "留空以保留已儲存的站台金鑰",

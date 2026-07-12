@@ -38,7 +38,7 @@ class AdminSettingsTurnstileSection extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           context.tr(
-            'Cloudflare Turnstile keys for web form bot protection. '
+            'Cloudflare Turnstile keys for bot protection. '
             'Create a widget in the Cloudflare dashboard, then paste both keys here.',
           ),
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(

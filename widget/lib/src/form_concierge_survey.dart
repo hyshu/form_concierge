@@ -52,6 +52,18 @@ class FormConciergeSurvey extends StatefulWidget {
   /// Shown below the submit button when the survey form is ready.
   final Widget? footer;
 
+  /// Supplies a CAPTCHA token when the survey has CAPTCHA enabled.
+  ///
+  /// The widget never embeds a CAPTCHA implementation: the host resolves a
+  /// token with whatever provider it chooses (e.g. Cloudflare Turnstile in a
+  /// WebView) and returns it here. Return `null` to abort the submission.
+  /// Called once per submit attempt, and again if a stale-session retry occurs.
+  final Future<String?> Function()? captchaTokenProvider;
+
+  /// Called when a submission fails, with the underlying error. The widget
+  /// already shows an inline error message; use this to surface details.
+  final void Function(Object error)? onSubmitError;
+
   const FormConciergeSurvey({
     super.key,
     required this.client,
@@ -71,6 +83,8 @@ class FormConciergeSurvey extends StatefulWidget {
     this.showLocalePicker = false,
     this.processImage,
     this.footer,
+    this.captchaTokenProvider,
+    this.onSubmitError,
   });
 
   @override
@@ -258,30 +272,47 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
       final answers = buildAnswers(_state.answers, visibleQuestions);
 
       final idempotencyKey = generateIdempotencyKey();
-      late final SurveyResponse response;
-      try {
-        response = await widget.client.survey.submitResponse(
+      Future<SurveyResponse?> submit() async {
+        final captchaRequired = _state.survey?.captchaEnabled == true;
+        final captchaToken = captchaRequired
+            ? await widget.captchaTokenProvider?.call()
+            : null;
+        if (captchaRequired && (captchaToken == null || captchaToken.isEmpty)) {
+          if (!mounted) return null;
+          setState(() {
+            _state = _state.copyWith(
+              viewState: SurveyViewState.ready,
+              errorMessage: FormContentMessages.text(
+                _locale,
+                'captchaRequired',
+              ),
+            );
+          });
+          return null;
+        }
+
+        return widget.client.survey.submitResponse(
           surveyId: _state.survey!.id!,
           answers: answers,
           anonymousId: widget.anonymousId,
           deviceInfo: deviceInfo,
           metadata: widget.metadata,
           idempotencyKey: idempotencyKey,
+          captchaToken: captchaToken,
         );
+      }
+
+      SurveyResponse? response;
+      try {
+        response = await submit();
       } on ApiException catch (e) {
         // Stale token (e.g. after DB rebuild) → recreate once, same as web.
         if (e.statusCode != 401) rethrow;
         widget.client.anonymous.clear();
         await _ensureAnonymousSession();
-        response = await widget.client.survey.submitResponse(
-          surveyId: _state.survey!.id!,
-          answers: answers,
-          anonymousId: widget.anonymousId,
-          deviceInfo: deviceInfo,
-          metadata: widget.metadata,
-          idempotencyKey: idempotencyKey,
-        );
+        response = await submit();
       }
+      if (response == null) return;
 
       if (!mounted) return;
       widget.onSubmitted?.call();
@@ -305,7 +336,8 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
           submittedResponse: response,
         );
       });
-    } on Exception catch (_) {
+    } on Exception catch (e) {
+      widget.onSubmitError?.call(e);
       if (!mounted) return;
       setState(() {
         _state = _state.copyWith(

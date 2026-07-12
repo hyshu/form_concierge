@@ -247,6 +247,78 @@ Called when the respondent taps the Done button on the completion screen.
 
 This is generally the appropriate callback for closing the survey route.
 
+### `onSubmitError`
+
+Called when a submission fails, with the underlying error. The widget already shows an inline error message; use this to surface details (log or dialog).
+
+```dart
+onSubmitError: (error) => debugPrint('submit failed: $error'),
+```
+
+---
+
+## CAPTCHA (Turnstile)
+
+When a survey has CAPTCHA enabled in the admin dashboard, the backend rejects submissions without a valid token. The widget does **not** embed a CAPTCHA implementation — it asks the host for a token through `captchaTokenProvider`, so you can use any provider.
+
+`captchaTokenProvider` is called only when the survey requires CAPTCHA. Return a token, or `null` to abort the submission (the widget then shows a "complete the CAPTCHA" message).
+
+The example below uses [`cloudflare_turnstile`](https://pub.dev/packages/cloudflare_turnstile). The public site key is served by the backend config endpoint (`client.config.getPublicConfig().turnstileSiteKey`).
+
+```dart
+FormConciergeSurvey(
+  client: client,
+  projectSlug: 'my-project',
+  surveySlug: 'contact',
+  captchaTokenProvider: () => _resolveCaptchaToken(context),
+  onSubmitError: (error) => debugPrint('submit failed: $error'),
+);
+
+Future<String?> _resolveCaptchaToken(BuildContext context) async {
+  final config = await client.config.getPublicConfig();
+  final siteKey = config.turnstileSiteKey;
+  if (siteKey == null || siteKey.isEmpty || !context.mounted) return null;
+
+  final completer = Completer<String?>();
+  void finish(String? token) {
+    if (!completer.isCompleted) completer.complete(token);
+  }
+
+  await showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    builder: (sheetContext) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: CloudflareTurnstile(
+          siteKey: siteKey,
+          // Must match a hostname allowed by the Turnstile widget config.
+          baseUrl: 'https://your-form-domain.example.com',
+          onTokenReceived: (token) {
+            finish(token);
+            if (sheetContext.mounted) Navigator.of(sheetContext).pop();
+          },
+          onError: (error) {
+            debugPrint('[turnstile] error: $error');
+            if (sheetContext.mounted) Navigator.of(sheetContext).pop();
+          },
+          onTimeout: () {
+            debugPrint('[turnstile] timeout');
+            if (sheetContext.mounted) Navigator.of(sheetContext).pop();
+          },
+        ),
+      ),
+    ),
+  );
+  finish(null);
+  return completer.future;
+}
+```
+
+`baseUrl` must be a hostname allowed by the Turnstile widget configuration in the Cloudflare dashboard, otherwise the challenge fails with an error callback. Turnstile tokens are single-use.
+
+A complete, runnable version is in [`examples/flutter_mobile_full`](examples/flutter_mobile_full).
+
 ---
 
 ## Anonymous Sessions

@@ -28,6 +28,13 @@ public struct FormConciergeSurveyView: View {
   /// that image. When omitted, HEIC/unknown formats are converted to JPEG.
   private let processImage: ProcessSurveyImage?
 
+  /// Supplies a CAPTCHA token when the survey has CAPTCHA enabled.
+  ///
+  /// The view never embeds a CAPTCHA implementation: the host resolves a token
+  /// with whatever provider it chooses (e.g. Cloudflare Turnstile in a web view)
+  /// and returns it here. Return `nil` to abort the submission.
+  private let captchaTokenProvider: (() async -> String?)?
+
   @State private var project: Project?
   @State private var survey: Survey?
   @State private var questions: [Question] = []
@@ -52,7 +59,8 @@ public struct FormConciergeSurveyView: View {
     onResponseSubmitted: ((SurveyResponse) -> Void)? = nil,
     onSubmitted: (() -> Void)? = nil,
     onDone: (() -> Void)? = nil,
-    processImage: ProcessSurveyImage? = nil
+    processImage: ProcessSurveyImage? = nil,
+    captchaTokenProvider: (() async -> String?)? = nil
   ) {
     self.client = client
     self.projectSlug = projectSlug
@@ -67,6 +75,7 @@ public struct FormConciergeSurveyView: View {
     self.onSubmitted = onSubmitted
     self.onDone = onDone
     self.processImage = processImage
+    self.captchaTokenProvider = captchaTokenProvider
   }
 
   public var body: some View {
@@ -231,11 +240,20 @@ public struct FormConciergeSurveyView: View {
             ? nil : Answer(questionId: question.id, fileKeys: fileKeys)
         }
       }
+      var captchaToken: String?
+      if survey.captchaEnabled {
+        captchaToken = await captchaTokenProvider?()
+        guard let token = captchaToken, !token.isEmpty else {
+          errorMessage = FormContentMessages.text(activeLocale, "captchaRequired")
+          return
+        }
+      }
       let response = try await client.submitResponse(
         surveyId: survey.id,
         answers: payload,
         deviceInfo: deviceInfo,
-        metadata: metadata
+        metadata: metadata,
+        captchaToken: captchaToken
       )
       completed = true
       onResponseSubmitted?(response)
