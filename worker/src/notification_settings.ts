@@ -1,11 +1,15 @@
 import type { Env, NotificationSettingsRow } from './types';
-import { boolToInt, HttpError, json, logWarn, nowIso, readJson, requireEmail, requiredBoolean, requiredRow } from './utils';
+import { boolToInt, HttpError, json, logError, logWarn, nowIso, readJson, requireEmail, requiredBoolean, requiredRow } from './utils';
 import { notificationToJson } from './serializers';
 import { getIntegrationSettingsRow, isSmtpConfigured, requireSmtpSettings, type RequiredSmtpSettings } from './admin_settings';
 import type { EmailMessage } from './smtp';
 import { DEFAULT_FORM_CONTENT_LOCALE, localizedTextFor } from './localization';
 import type { ProjectRow, ResponseRow, SurveyRow } from './types';
 import { mustSurvey } from './admin_records';
+import {
+  buildAnswersSummary,
+  formatCompletedFollowUpSummary,
+} from './follow_up';
 
 export async function notificationSettings(
   request: Request,
@@ -76,11 +80,60 @@ export async function notificationSettings(
   return json({ error: 'Not found' }, 404);
 }
 
+export type ResponseNotificationKind = 'submission' | 'follow_up';
+
+export type ResponseNotificationContent = {
+  subject: string;
+  text: string;
+};
+
+/** Pure email subject/body builder (unit-tested). */
+export function buildResponseNotificationContent(input: {
+  kind: ResponseNotificationKind;
+  projectName: string;
+  surveyTitle: string;
+  responseId: number;
+  submittedAt: string;
+  answersSummary: string;
+  followUpSummary: string | null;
+}): ResponseNotificationContent {
+  const subjectPrefix = input.kind === 'follow_up' ? 'Follow-up completed' : 'New response';
+  const intro = input.kind === 'follow_up'
+    ? 'A respondent completed follow-up questions.'
+    : 'A new response was submitted.';
+
+  const bodyLines = [
+    intro,
+    '',
+    `Project: ${input.projectName}`,
+    `Survey: ${input.surveyTitle}`,
+    `Response ID: ${input.responseId}`,
+    `Submitted at: ${input.submittedAt}`,
+    '',
+    'Answers:',
+    input.answersSummary,
+  ];
+  if (input.followUpSummary) {
+    bodyLines.push('', 'Follow-up:', input.followUpSummary);
+  }
+
+  return {
+    subject: `${subjectPrefix}: ${input.projectName} / ${input.surveyTitle}`,
+    text: bodyLines.join('\n'),
+  };
+}
+
+/**
+ * Email admins about a new response (or completed follow-up).
+ * Includes project name, survey title, main answers, and follow-up when present.
+ */
 export async function sendResponseNotification(
   env: Env,
   survey: SurveyRow,
   response: ResponseRow,
+  options: { kind?: ResponseNotificationKind } = {},
 ): Promise<void> {
+  const kind = options.kind ?? 'submission';
   const notification = await env.DB.prepare(
     `SELECT * FROM notification_settings WHERE survey_id = ? AND enabled = 1`,
   ).bind(survey.id).first<NotificationSettingsRow>();
@@ -99,20 +152,38 @@ export async function sendResponseNotification(
   const project = await env.DB.prepare(
     `SELECT * FROM projects WHERE id = ?`,
   ).bind(survey.project_id).first<ProjectRow>();
-  const surveyTitle = localizedTextFor(
-    survey.title_translations,
-    project?.default_locale ?? DEFAULT_FORM_CONTENT_LOCALE,
-  );
+  const locale = project?.default_locale ?? DEFAULT_FORM_CONTENT_LOCALE;
+  const projectName = project?.name?.trim() || `Project #${survey.project_id}`;
+  const surveyTitle = localizedTextFor(survey.title_translations, locale);
+
+  let answersSummary = '(no answers)';
+  try {
+    answersSummary = await buildAnswersSummary(env, survey, response.id, locale);
+  } catch (error) {
+    logError('response_notification_answers_failed', error, {
+      surveyId: survey.id,
+      responseId: response.id,
+    });
+  }
+
+  const followUpSummary = formatCompletedFollowUpSummary(response.follow_up, {
+    truncateText: false,
+  });
+
+  const content = buildResponseNotificationContent({
+    kind,
+    projectName,
+    surveyTitle,
+    responseId: response.id,
+    submittedAt: response.submitted_at,
+    answersSummary,
+    followUpSummary,
+  });
+
   await sendEmailMessage(settings, {
     to: notification.recipient_email,
-    subject: `New response: ${surveyTitle}`,
-    text: [
-      'A new response was submitted.',
-      '',
-      `Survey: ${surveyTitle}`,
-      `Response ID: ${response.id}`,
-      `Submitted at: ${response.submitted_at}`,
-    ].join('\n'),
+    subject: content.subject,
+    text: content.text,
   });
 }
 

@@ -205,7 +205,7 @@ async function route(request: Request, env: Env, ctx: ExecutionContext): Promise
       return generateFollowUp(request, env, responseId, anonymous);
     }
     if (method === 'PUT' && parts.length === 4) {
-      return saveFollowUp(request, env, responseId, anonymous);
+      return saveFollowUp(request, env, responseId, anonymous, ctx);
     }
   }
 

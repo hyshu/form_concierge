@@ -9,7 +9,12 @@ import {
   stubRateLimiter,
   stubSecretsStoreEnv,
 } from '../test/helpers';
-import { notificationSettings, sendResponseNotification } from './notification_settings';
+import { formatCompletedFollowUpSummary } from './follow_up';
+import {
+  buildResponseNotificationContent,
+  notificationSettings,
+  sendResponseNotification,
+} from './notification_settings';
 import type { Env, NotificationSettingsRow } from './types';
 
 test('notificationSettings GET returns null when nothing is configured', async () => {
@@ -129,6 +134,54 @@ test('sendResponseNotification skips sending when SMTP is unconfigured', async (
       responseRow(),
     ),
   );
+});
+
+test('buildResponseNotificationContent includes project, survey, answers, and follow-up', () => {
+  const content = buildResponseNotificationContent({
+    kind: 'submission',
+    projectName: 'Acme Support',
+    surveyTitle: 'NPS Survey',
+    responseId: 42,
+    submittedAt: '2026-07-12T10:00:00.000Z',
+    answersSummary: '- How was it?: Great',
+    followUpSummary: '- Why?: Fast shipping',
+  });
+
+  assert.equal(content.subject, 'New response: Acme Support / NPS Survey');
+  assert.match(content.text, /Project: Acme Support/);
+  assert.match(content.text, /Survey: NPS Survey/);
+  assert.match(content.text, /Response ID: 42/);
+  assert.match(content.text, /Answers:\n- How was it\?: Great/);
+  assert.match(content.text, /Follow-up:\n- Why\?: Fast shipping/);
+});
+
+test('buildResponseNotificationContent uses follow-up subject when kind is follow_up', () => {
+  const content = buildResponseNotificationContent({
+    kind: 'follow_up',
+    projectName: 'Acme',
+    surveyTitle: 'Feedback',
+    responseId: 1,
+    submittedAt: '2026-07-12T10:00:00.000Z',
+    answersSummary: '- Q1: A',
+    followUpSummary: '- F1: B',
+  });
+  assert.equal(content.subject, 'Follow-up completed: Acme / Feedback');
+  assert.match(content.text, /completed follow-up questions/);
+});
+
+test('formatCompletedFollowUpSummary includes completed follow-up answers without truncation by default', () => {
+  const long = 'x'.repeat(300);
+  const summary = formatCompletedFollowUpSummary(JSON.stringify({
+    status: 'completed',
+    items: [
+      {
+        text: 'More detail?',
+        answer: { textValue: long, selectedChoiceIds: [], fileKeys: [] },
+        choices: [],
+      },
+    ],
+  }), { truncateText: false });
+  assert.equal(summary, `- More detail?: ${long}`);
 });
 
 function notificationRow(

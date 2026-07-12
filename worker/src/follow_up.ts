@@ -8,6 +8,7 @@ import {
   isImageUploadQuestionType,
   isTextQuestionType,
   json,
+  logError,
   nowIso,
   readJson,
   queryInChunks,
@@ -163,6 +164,7 @@ export async function saveFollowUp(
   env: Env,
   responseId: number,
   anonymous: AnonymousContext,
+  ctx?: ExecutionContext,
 ): Promise<Response> {
   const response = await loadOwnedResponse(env, responseId, anonymous.id);
   const existing = parseStoredFollowUp(response.follow_up);
@@ -208,6 +210,29 @@ export async function saveFollowUp(
     items,
   };
   const updated = await updateFollowUp(env, responseId, completed);
+
+  // Notify with main answers + follow-up once the interview is finished.
+  // Dynamic import avoids a circular dependency with notification_settings.
+  const survey = await env.DB.prepare(`SELECT * FROM surveys WHERE id = ?`)
+    .bind(updated.survey_id)
+    .first<SurveyRow>();
+  if (survey) {
+    const { sendResponseNotification } = await import('./notification_settings');
+    const notificationTask = sendResponseNotification(env, survey, updated, {
+      kind: 'follow_up',
+    }).catch((error) => {
+      logError('follow_up_notification_failed', error, {
+        surveyId: survey.id,
+        responseId: updated.id,
+      });
+    });
+    if (ctx) {
+      ctx.waitUntil(notificationTask);
+    } else {
+      await notificationTask;
+    }
+  }
+
   return json(responseToJson(updated));
 }
 
@@ -442,11 +467,13 @@ function validateFollowUpAnswer(item: FollowUpItem, answer: FollowUpAnswer | nul
   throw new HttpError(400, `Unsupported follow-up type: ${item.type}`);
 }
 
-async function buildAnswersSummary(
+/** Human-readable Q&A lines for a response (main survey questions only). */
+export async function buildAnswersSummary(
   env: Env,
   survey: SurveyRow,
   responseId: number,
   locale: string,
+  options: { truncateText?: boolean } = {},
 ): Promise<string> {
   const questions = await env.DB.prepare(
     `SELECT * FROM questions WHERE survey_id = ? AND is_deleted = 0 ORDER BY order_index`,
@@ -457,7 +484,7 @@ async function buildAnswersSummary(
   const answerByQuestion = new Map(answers.results.map((answer) => [answer.question_id, answer]));
   const questionIds = questions.results.map((question) => question.id);
   const choicesByQuestion = await loadChoicesByQuestion(env, questionIds);
-  return formatQaLines(questions.results, answerByQuestion, choicesByQuestion, locale);
+  return formatQaLines(questions.results, answerByQuestion, choicesByQuestion, locale, options);
 }
 
 async function buildRecentResponsesSummary(
@@ -654,7 +681,11 @@ function parseDeviceInfoJson(value: string | null): Record<string, string | null
   }
 }
 
-function formatCompletedFollowUpSummary(followUpJson: string | null): string | null {
+/** Format completed follow-up Q&A for AI history or notification emails. */
+export function formatCompletedFollowUpSummary(
+  followUpJson: string | null,
+  options: { truncateText?: boolean } = {},
+): string | null {
   if (!followUpJson) return null;
   try {
     const decoded = JSON.parse(followUpJson) as {
@@ -677,7 +708,10 @@ function formatCompletedFollowUpSummary(followUpJson: string | null): string | n
         continue;
       }
       if (answer.textValue && answer.textValue.trim()) {
-        lines.push(`- ${item.text}: ${truncateText(answer.textValue.trim(), MAX_HISTORY_ANSWER_CHARS)}`);
+        const text = options.truncateText
+          ? truncateText(answer.textValue.trim(), MAX_HISTORY_ANSWER_CHARS)
+          : answer.textValue.trim();
+        lines.push(`- ${item.text}: ${text}`);
         continue;
       }
       if (Array.isArray(answer.fileKeys) && answer.fileKeys.length > 0) {
