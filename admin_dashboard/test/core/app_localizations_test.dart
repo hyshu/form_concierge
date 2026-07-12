@@ -121,7 +121,7 @@ void main() {
       () {
         const turnstileKeys = [
           'Turnstile CAPTCHA',
-          'Cloudflare Turnstile keys for web form bot protection. '
+          'Cloudflare Turnstile keys for bot protection. '
               'Create a widget in the Cloudflare dashboard, then paste both keys here.',
           'Site Key',
           'Secret Key',
@@ -139,7 +139,7 @@ void main() {
         expect(ja.text('Clear saved site key'), '保存済みのサイトキーを削除');
         expect(
           ja.text(
-            'Cloudflare Turnstile keys for web form bot protection. '
+            'Cloudflare Turnstile keys for bot protection. '
             'Create a widget in the Cloudflare dashboard, then paste both keys here.',
           ),
           contains('Cloudflare Turnstile'),
