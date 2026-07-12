@@ -26,9 +26,13 @@ dependencies:
     sdk: flutter
   flutter_secure_storage: ^10.0.0
   form_concierge:
-    path: ../../widget
+    path: ../..
   cupertino_icons: ^1.0.8
   shared_preferences: ^2.3.5
+
+dependency_overrides:
+  form_concierge_client:
+    path: ../../../client
 
 dev_dependencies:
   flutter_test:

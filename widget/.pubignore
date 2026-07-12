@@ -1,0 +1,5 @@
+# Full development apps live beside the package but are not part of its archive.
+examples/
+
+# Generated API documentation is rebuilt by pub.dev.
+doc/

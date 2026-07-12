@@ -10,8 +10,12 @@ dependencies:
   flutter:
     sdk: flutter
   form_concierge:
-    path: ../../widget
+    path: ../..
   cupertino_icons: ^1.0.8
+
+dependency_overrides:
+  form_concierge_client:
+    path: ../../../client
 
 dev_dependencies:
   flutter_test:
