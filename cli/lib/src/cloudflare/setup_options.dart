@@ -45,6 +45,7 @@ class CloudflareSetupOptions {
   static const defaultAdminProject = 'form-concierge-admin';
   static const defaultWebProject = 'form-concierge-web';
   static const defaultR2BucketName = 'form-concierge-media';
+
   /// Prefer a product-specific name so setup does not hijack an unrelated store.
   static const defaultSecretsStoreName = 'form-concierge';
 }

@@ -899,9 +899,7 @@ Run setup interactively, or pass:
     }
     stdout.writeln('    Create Token → custom token with:');
     stdout.writeln('      Account → Secrets Store → Edit');
-    stdout.writeln(
-      '    Paste that token below (not the Secrets Store id).',
-    );
+    stdout.writeln('    Paste that token below (not the Secrets Store id).');
     await runInherit('npx', [
       'wrangler',
       'secret',
