@@ -11,6 +11,7 @@
   "done": "Listo",
   "anonymousStartFailed": "No se pudo iniciar la sesión anónima.",
   "submitFailed": "No se pudo enviar la respuesta. Inténtalo de nuevo.",
+  "captchaRequired": "Complete el CAPTCHA antes de enviar.",
   "errorOccurred": "Se produjo un error",
   "surveyNotFound": "Formulario no encontrado o no disponible",
   "followUpTitle": "Unas preguntas más",

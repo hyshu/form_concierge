@@ -11,6 +11,7 @@
   "done": "Fine",
   "anonymousStartFailed": "Impossibile avviare la sessione anonima.",
   "submitFailed": "Impossibile inviare la risposta. Riprova.",
+  "captchaRequired": "Completa il CAPTCHA prima di inviare.",
   "errorOccurred": "Si è verificato un errore",
   "surveyNotFound": "Modulo non trovato o non disponibile",
   "followUpTitle": "Ancora qualche domanda",

@@ -11,6 +11,7 @@
   "done": "Done",
   "anonymousStartFailed": "Failed to start anonymous session.",
   "submitFailed": "Failed to submit survey. Please try again.",
+  "captchaRequired": "Please complete the CAPTCHA before submitting.",
   "errorOccurred": "An error occurred",
   "surveyNotFound": "Survey not found or not available",
   "followUpTitle": "A few more questions",

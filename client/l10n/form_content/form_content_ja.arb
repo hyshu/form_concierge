@@ -11,6 +11,7 @@
   "done": "戻る",
   "anonymousStartFailed": "匿名セッションを開始できませんでした。",
   "submitFailed": "回答を送信できませんでした。もう一度お試しください。",
+  "captchaRequired": "送信する前に CAPTCHA を完了してください。",
   "errorOccurred": "エラーが発生しました",
   "surveyNotFound": "フォームが見つからないか、利用できません",
   "followUpTitle": "追加の質問",

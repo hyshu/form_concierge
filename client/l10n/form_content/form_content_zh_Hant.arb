@@ -11,6 +11,7 @@
   "done": "完成",
   "anonymousStartFailed": "無法啟動匿名工作階段。",
   "submitFailed": "無法送出回答。請再試一次。",
+  "captchaRequired": "請先完成 CAPTCHA 驗證再送出。",
   "errorOccurred": "發生錯誤",
   "surveyNotFound": "找不到表單或表單無法使用",
   "followUpTitle": "還有幾個問題",

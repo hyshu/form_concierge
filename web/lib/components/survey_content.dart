@@ -129,6 +129,15 @@ class SurveyContent extends StatelessComponent {
           key: ValueKey(turnstileSiteKey),
           siteKey: turnstileSiteKey!,
         ),
+      // Surface submit/CAPTCHA errors near the button (users are scrolled here).
+      if (errorMessage != null)
+        div(
+          classes:
+              'mb-3 flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg',
+          [
+            span(classes: 'text-sm', [Component.text(errorMessage!)]),
+          ],
+        ),
       button(
         [
           if (isSubmitting)

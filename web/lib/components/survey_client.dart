@@ -14,6 +14,7 @@ import 'survey_loading.dart';
 import 'survey_error.dart';
 import 'survey_completed.dart';
 import 'survey_content.dart';
+import 'turnstile_captcha.dart';
 import 'not_found_page.dart';
 
 class SurveyClient extends StatefulComponent {
@@ -366,6 +367,7 @@ class SurveyClientState extends State<SurveyClient> {
   Future<void> _submit() async {
     final survey = _survey;
     if (survey == null) return;
+    if (_viewState == SurveyViewState.submitting) return;
 
     final visible = resolveVisibleQuestions(
       _questions,
@@ -377,13 +379,30 @@ class SurveyClientState extends State<SurveyClient> {
     if (errors.isNotEmpty) {
       setState(() {
         _validationErrors = errors;
+        _errorMessage = null;
       });
       _focusFirstError(visible, errors);
       return;
     }
 
+    // Require CAPTCHA before entering "submitting" so a missing check never
+    // leaves the button stuck on a spinner.
+    final captchaRequired =
+        survey.captchaEnabled &&
+        _turnstileSiteKey != null &&
+        _turnstileSiteKey!.isNotEmpty;
+    final captchaToken = captchaRequired ? getTurnstileResponse() : null;
+    if (captchaRequired && (captchaToken == null || captchaToken.isEmpty)) {
+      setState(() {
+        _errorMessage = FormContentMessages.text(_locale, 'captchaRequired');
+      });
+      _focusCaptcha();
+      return;
+    }
+
     setState(() {
       _viewState = SurveyViewState.submitting;
+      _errorMessage = null;
     });
 
     try {
@@ -391,18 +410,6 @@ class SurveyClientState extends State<SurveyClient> {
       if (!hasAnonymousAccount) return;
 
       final answers = buildAnswers(_answers, visible);
-      final captchaRequired =
-          survey.captchaEnabled &&
-          _turnstileSiteKey != null &&
-          _turnstileSiteKey!.isNotEmpty;
-      final captchaToken = captchaRequired ? getTurnstileResponse() : null;
-      if (captchaRequired && (captchaToken == null || captchaToken.isEmpty)) {
-        setState(() {
-          _viewState = SurveyViewState.ready;
-          _errorMessage = FormContentMessages.text(_locale, 'submitFailed');
-        });
-        return;
-      }
       final idempotencyKey = generateIdempotencyKey();
       try {
         await _client.survey.submitResponse(
@@ -427,16 +434,25 @@ class SurveyClientState extends State<SurveyClient> {
         );
       }
 
+      if (!mounted) return;
       setState(() {
         _viewState = SurveyViewState.completed;
       });
-    } on Exception catch (_) {
+    } on Object catch (_) {
+      // Catch Errors from JS interop as well as Exceptions, otherwise the
+      // UI can remain stuck on SurveyViewState.submitting forever.
       resetTurnstile();
+      if (!mounted) return;
       setState(() {
         _viewState = SurveyViewState.ready;
         _errorMessage = FormContentMessages.text(_locale, 'submitFailed');
       });
     }
+  }
+
+  void _focusCaptcha() {
+    final el = web.document.getElementById(TurnstileCaptcha.containerId);
+    el?.scrollIntoView();
   }
 
   Future<void> _resetAnonymousAccount() async {

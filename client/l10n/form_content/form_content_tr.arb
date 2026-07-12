@@ -11,6 +11,7 @@
   "done": "Tamam",
   "anonymousStartFailed": "Anonim oturum başlatılamadı.",
   "submitFailed": "Yanıt gönderilemedi. Lütfen tekrar deneyin.",
+  "captchaRequired": "Göndermeden önce CAPTCHA doğrulamasını tamamlayın.",
   "errorOccurred": "Bir hata oluştu",
   "surveyNotFound": "Form bulunamadı veya kullanılamıyor",
   "followUpTitle": "Birkaç soru daha",

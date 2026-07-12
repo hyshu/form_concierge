@@ -52,19 +52,26 @@ Future<void> mountTurnstile({
 
 /// Token from the currently mounted widget, or null if incomplete.
 String? getTurnstileResponse() {
-  final widgetId = _widgetId;
-  final api = _turnstile;
-  if (widgetId == null || api == null) {
-    // Fallback for an SSR widget that was not re-mounted via JS API.
-    final input = web.document.querySelector(
-      '.cf-turnstile input[name="cf-turnstile-response"]',
-    );
-    if (input == null) return null;
-    final value = (input as web.HTMLInputElement).value;
-    return value.isEmpty ? null : value;
+  try {
+    final widgetId = _widgetId;
+    final api = _turnstile;
+    if (widgetId == null || api == null) {
+      // Fallback for an SSR widget that was not re-mounted via JS API.
+      final input = web.document.querySelector(
+        '.cf-turnstile input[name="cf-turnstile-response"]',
+      );
+      if (input == null) return null;
+      final value = (input as web.HTMLInputElement).value;
+      return value.isEmpty ? null : value;
+    }
+    final value = api.getResponse(widgetId.toJS);
+    // JS may yield null/undefined when the challenge is unfinished.
+    // ignore: unnecessary_null_comparison
+    if (value == null || value.isEmpty) return null;
+    return value;
+  } on Object {
+    return null;
   }
-  final value = api.getResponse(widgetId.toJS);
-  return value.isEmpty ? null : value;
 }
 
 /// Reset after a failed submit (tokens are single-use).

@@ -11,6 +11,7 @@
   "done": "完成",
   "anonymousStartFailed": "无法启动匿名会话。",
   "submitFailed": "无法提交回答。请重试。",
+  "captchaRequired": "请先完成 CAPTCHA 验证再提交。",
   "errorOccurred": "发生错误",
   "surveyNotFound": "找不到表单或表单不可用",
   "followUpTitle": "还有几个问题",
