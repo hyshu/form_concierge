@@ -127,184 +127,195 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
   }
 
   @override
-  Widget build(context) => HuxDialog(
-    title: context.tr(
-      widget.existingQuestion != null ? 'Edit Question' : 'Add Question',
-    ),
-    size: HuxDialogSize.large,
-    content: SizedBox(
-      width: 520,
-      child: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              LocalizedTextFieldGroup(
-                controllers: _textControllers,
-                primaryLocale: widget.primaryLocale,
-                locales: widget.locales,
-                labelText: context.tr('Question text'),
-                hintText: context.tr('Enter your question'),
-                maxLines: 2,
-                requiredMessage: context.tr('Question text is required'),
-                aiTranslateEnabled: widget.aiTranslateEnabled,
-                onTranslate: _boundTranslate('question'),
-              ),
-              const SizedBox(height: 16),
-              _SectionTitle(text: context.tr('Question Type')),
-              const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: HuxDropdown<QuestionType>(
-                  value: _type,
-                  useItemWidgetAsValue: true,
-                  items: QuestionType.values.map((type) {
-                    return HuxDropdownItem(
-                      value: type,
-                      child: Row(
-                        children: [
-                          Icon(type.icon, size: 18),
-                          const SizedBox(width: 8),
-                          Text(context.tr(type.label)),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: (value) => setState(() => _type = value),
-                ),
-              ),
-              const SizedBox(height: 16),
-              if (_type.usesTextAnswer) ...[
-                LocalizedTextFieldGroup(
-                  controllers: _placeholderControllers,
-                  primaryLocale: widget.primaryLocale,
-                  locales: widget.locales,
-                  labelText: context.tr('Placeholder (optional)'),
-                  hintText: context.tr('Placeholder text for the input'),
-                  aiTranslateEnabled: widget.aiTranslateEnabled,
-                  onTranslate: _boundTranslate('placeholder'),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _NumberField(
-                        controller: _minLengthController,
-                        label: context.tr('Min length'),
-                      ),
+  Widget build(context) {
+    final maxContentHeight = (MediaQuery.sizeOf(context).height - 240).clamp(
+      200.0,
+      720.0,
+    );
+
+    return HuxDialog(
+      title: context.tr(
+        widget.existingQuestion != null ? 'Edit Question' : 'Add Question',
+      ),
+      size: HuxDialogSize.large,
+      content: SizedBox(
+        width: double.infinity,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: maxContentHeight),
+          child: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  LocalizedTextFieldGroup(
+                    controllers: _textControllers,
+                    primaryLocale: widget.primaryLocale,
+                    locales: widget.locales,
+                    labelText: context.tr('Question text'),
+                    hintText: context.tr('Enter your question'),
+                    maxLines: 2,
+                    requiredMessage: context.tr('Question text is required'),
+                    aiTranslateEnabled: widget.aiTranslateEnabled,
+                    onTranslate: _boundTranslate('question'),
+                  ),
+                  const SizedBox(height: 16),
+                  _SectionTitle(text: context.tr('Question Type')),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: HuxDropdown<QuestionType>(
+                      value: _type,
+                      useItemWidgetAsValue: true,
+                      items: QuestionType.values.map((type) {
+                        return HuxDropdownItem(
+                          value: type,
+                          child: Row(
+                            children: [
+                              Icon(type.icon, size: 18),
+                              const SizedBox(width: 8),
+                              Text(context.tr(type.label)),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (value) => setState(() => _type = value),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _NumberField(
-                        controller: _maxLengthController,
-                        label: context.tr('Max length'),
-                      ),
+                  ),
+                  const SizedBox(height: 16),
+                  if (_type.usesTextAnswer) ...[
+                    LocalizedTextFieldGroup(
+                      controllers: _placeholderControllers,
+                      primaryLocale: widget.primaryLocale,
+                      locales: widget.locales,
+                      labelText: context.tr('Placeholder (optional)'),
+                      hintText: context.tr('Placeholder text for the input'),
+                      aiTranslateEnabled: widget.aiTranslateEnabled,
+                      onTranslate: _boundTranslate('placeholder'),
                     ),
-                  ],
-                ),
-              ] else if (_type == QuestionType.multipleChoice ||
-                  _type == QuestionType.imageUpload)
-                Row(
-                  children: [
-                    Expanded(
-                      child: _NumberField(
-                        controller: _minSelectedController,
-                        label: context.tr(
-                          _type == QuestionType.imageUpload
-                              ? 'Min images'
-                              : 'Min selections',
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _NumberField(
+                            controller: _minLengthController,
+                            label: context.tr('Min length'),
+                          ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _NumberField(
-                        controller: _maxSelectedController,
-                        label: context.tr(
-                          _type == QuestionType.imageUpload
-                              ? 'Max images'
-                              : 'Max selections',
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _NumberField(
+                            controller: _maxLengthController,
+                            label: context.tr('Max length'),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
-                ),
-              const SizedBox(height: 16),
-              _SectionTitle(text: context.tr('Visibility rule match')),
-              const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: HuxDropdown<VisibilityConditionMode>(
-                  value: _visibilityConditionMode,
-                  useItemWidgetAsValue: true,
-                  items: [
-                    HuxDropdownItem(
-                      value: VisibilityConditionMode.all,
-                      child: Text(context.tr('All rules')),
-                    ),
-                    HuxDropdownItem(
-                      value: VisibilityConditionMode.any,
-                      child: Text(context.tr('Any rule')),
-                    ),
-                  ],
-                  onChanged: (value) =>
-                      setState(() => _visibilityConditionMode = value),
-                ),
-              ),
-              const SizedBox(height: 16),
-              HuxCard(
-                backgroundColor: HuxTokens.surfaceSecondary(context),
-                child: Row(
-                  children: [
-                    HuxSwitch(
-                      value: _isRequired,
-                      onChanged: (value) => setState(() => _isRequired = value),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(context.tr('Required')),
-                          const SizedBox(height: 4),
-                          Text(
-                            context.tr(
-                              'Respondents must answer this question',
-                            ),
-                            style: TextStyle(
-                              color: HuxTokens.textSecondary(context),
+                  ] else if (_type == QuestionType.multipleChoice ||
+                      _type == QuestionType.imageUpload)
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _NumberField(
+                            controller: _minSelectedController,
+                            label: context.tr(
+                              _type == QuestionType.imageUpload
+                                  ? 'Min images'
+                                  : 'Min selections',
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _NumberField(
+                            controller: _maxSelectedController,
+                            label: context.tr(
+                              _type == QuestionType.imageUpload
+                                  ? 'Max images'
+                                  : 'Max selections',
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  const SizedBox(height: 16),
+                  _SectionTitle(text: context.tr('Visibility rule match')),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: HuxDropdown<VisibilityConditionMode>(
+                      value: _visibilityConditionMode,
+                      useItemWidgetAsValue: true,
+                      items: [
+                        HuxDropdownItem(
+                          value: VisibilityConditionMode.all,
+                          child: Text(context.tr('All rules')),
+                        ),
+                        HuxDropdownItem(
+                          value: VisibilityConditionMode.any,
+                          child: Text(context.tr('Any rule')),
+                        ),
+                      ],
+                      onChanged: (value) =>
+                          setState(() => _visibilityConditionMode = value),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  HuxCard(
+                    backgroundColor: HuxTokens.surfaceSecondary(context),
+                    child: Row(
+                      children: [
+                        HuxSwitch(
+                          value: _isRequired,
+                          onChanged: (value) =>
+                              setState(() => _isRequired = value),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(context.tr('Required')),
+                              const SizedBox(height: 4),
+                              Text(
+                                context.tr(
+                                  'Respondents must answer this question',
+                                ),
+                                style: TextStyle(
+                                  color: HuxTokens.textSecondary(context),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
-    ),
-    actions: [
-      HuxButton(
-        onPressed: () => Navigator.pop(context),
-        variant: HuxButtonVariant.secondary,
-        child: Text(context.tr('Cancel')),
-      ),
-      HuxButton(
-        onPressed: _submit,
-        icon: widget.existingQuestion != null
-            ? LucideIcons.save
-            : LucideIcons.plus,
-        child: Text(
-          context.tr(widget.existingQuestion != null ? 'Save' : 'Add'),
+      actions: [
+        HuxButton(
+          onPressed: () => Navigator.pop(context),
+          variant: HuxButtonVariant.secondary,
+          child: Text(context.tr('Cancel')),
         ),
-      ),
-    ],
-  );
+        HuxButton(
+          onPressed: _submit,
+          icon: widget.existingQuestion != null
+              ? LucideIcons.save
+              : LucideIcons.plus,
+          child: Text(
+            context.tr(widget.existingQuestion != null ? 'Save' : 'Add'),
+          ),
+        ),
+      ],
+    );
+  }
 
   LocalizedTextTranslate? _boundTranslate(String fieldKind) {
     final onTranslate = widget.onTranslate;
