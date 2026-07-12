@@ -82,10 +82,12 @@ async function route(request: Request, env: Env, ctx: ExecutionContext): Promise
   const parts = path.split('/').filter(Boolean);
 
   if (method === 'GET' && path === '/api/config') {
+    const turnstileSiteKey = env.TURNSTILE_SITE_KEY?.trim();
     return json({
       passwordResetEnabled: false,
       requireEmailVerification: false,
       aiGenerationEnabled: await isAiGenerationConfigured(env),
+      turnstileSiteKey: turnstileSiteKey ? turnstileSiteKey : null,
     });
   }
 

@@ -204,8 +204,12 @@ class SurveyClientState extends State<SurveyClient> {
       final choicesByQuestion = await _client.survey.getChoicesByQuestion(
         questions,
       );
+      final turnstileSiteKey = survey.captchaEnabled
+          ? await _loadTurnstileSiteKey()
+          : null;
 
       setState(() {
+        _turnstileSiteKey = turnstileSiteKey;
         _hydrateSurvey(
           project.project,
           survey,
@@ -224,6 +228,16 @@ class SurveyClientState extends State<SurveyClient> {
             ? error.message
             : FormContentMessages.text(_locale, 'errorOccurred');
       });
+    }
+  }
+
+  Future<String?> _loadTurnstileSiteKey() async {
+    try {
+      final config = await _client.config.getPublicConfig();
+      final key = config.turnstileSiteKey?.trim();
+      return key == null || key.isEmpty ? null : key;
+    } on Exception {
+      return null;
     }
   }
 
@@ -377,9 +391,18 @@ class SurveyClientState extends State<SurveyClient> {
       if (!hasAnonymousAccount) return;
 
       final answers = buildAnswers(_answers, visible);
-      final captchaToken = _turnstileSiteKey != null
-          ? getTurnstileResponse()
-          : null;
+      final captchaRequired =
+          survey.captchaEnabled &&
+          _turnstileSiteKey != null &&
+          _turnstileSiteKey!.isNotEmpty;
+      final captchaToken = captchaRequired ? getTurnstileResponse() : null;
+      if (captchaRequired && (captchaToken == null || captchaToken.isEmpty)) {
+        setState(() {
+          _viewState = SurveyViewState.ready;
+          _errorMessage = FormContentMessages.text(_locale, 'submitFailed');
+        });
+        return;
+      }
       final idempotencyKey = generateIdempotencyKey();
       try {
         await _client.survey.submitResponse(
@@ -408,6 +431,7 @@ class SurveyClientState extends State<SurveyClient> {
         _viewState = SurveyViewState.completed;
       });
     } on Exception catch (_) {
+      resetTurnstile();
       setState(() {
         _viewState = SurveyViewState.ready;
         _errorMessage = FormContentMessages.text(_locale, 'submitFailed');
@@ -459,6 +483,9 @@ class SurveyClientState extends State<SurveyClient> {
                   errorMessage: _errorMessage,
                   locale: _locale,
                   isSubmitting: _viewState == SurveyViewState.submitting,
+                  turnstileSiteKey: survey.captchaEnabled
+                      ? _turnstileSiteKey
+                      : null,
                   onAnswerChanged: _updateAnswer,
                   onLocaleChanged: (locale) {
                     setState(() {

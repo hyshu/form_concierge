@@ -3,6 +3,7 @@ import 'package:jaspr/jaspr.dart';
 import 'package:jaspr/dom.dart';
 
 import 'questions/question_widget.dart';
+import 'turnstile_captcha.dart';
 
 class SurveyContent extends StatelessComponent {
   const SurveyContent({
@@ -20,6 +21,7 @@ class SurveyContent extends StatelessComponent {
     required this.onLocaleChanged,
     required this.onSubmit,
     required this.ensureAuthenticated,
+    this.turnstileSiteKey,
     super.key,
   });
 
@@ -37,6 +39,7 @@ class SurveyContent extends StatelessComponent {
   final void Function(String locale) onLocaleChanged;
   final void Function() onSubmit;
   final Future<void> Function() ensureAuthenticated;
+  final String? turnstileSiteKey;
 
   @override
   Component build(context) => div(classes: 'max-w-xl mx-auto', [
@@ -118,8 +121,14 @@ class SurveyContent extends StatelessComponent {
         ),
     ]),
 
-    // Submit button
+    // CAPTCHA + submit. Turnstile is re-mounted here because the SSR shell
+    // (which embeds the widget) is removed before Jaspr takes over.
     div(classes: 'mt-8', [
+      if (turnstileSiteKey != null && turnstileSiteKey!.isNotEmpty)
+        TurnstileCaptcha(
+          key: ValueKey(turnstileSiteKey),
+          siteKey: turnstileSiteKey!,
+        ),
       button(
         [
           if (isSubmitting)

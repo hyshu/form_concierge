@@ -98,6 +98,37 @@ test('renderPublicForm returns 404 for project root when multiple surveys are av
   assert.match(await response.text(), /Page not found/);
 });
 
+test('renderPublicForm embeds Turnstile when CAPTCHA is enabled', async () => {
+  const response = await renderPublicForm(
+    htmlRequest('https://example.com/acme'),
+    envWithPublicRows({
+      survey: surveyRow({ captcha_enabled: 1 }),
+    }),
+  );
+
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /cf-turnstile/);
+  assert.match(html, new RegExp(`data-sitekey="${TEST_TURNSTILE_SITE_KEY}"`));
+  assert.match(html, /challenges\.cloudflare\.com\/turnstile/);
+  assert.match(html, /"turnstileSiteKey":"[^"]+"/);
+});
+
+test('renderPublicForm omits Turnstile when CAPTCHA is disabled', async () => {
+  const response = await renderPublicForm(
+    htmlRequest('https://example.com/acme'),
+    envWithPublicRows({
+      survey: surveyRow({ captcha_enabled: 0 }),
+    }),
+  );
+
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.doesNotMatch(html, /cf-turnstile/);
+  assert.doesNotMatch(html, /challenges\.cloudflare\.com\/turnstile/);
+  assert.match(html, /"turnstileSiteKey":null/);
+});
+
 function htmlRequest(url: string, extraHeaders: Record<string, string> = {}): Request {
   return new Request(url, {
     headers: {
