@@ -51,7 +51,7 @@ class AdminSettingsSmtpSection extends StatelessWidget {
             HuxInput(
               controller: hostController,
               label: context.tr('SMTP Host'),
-              hint: 'smtp.example.com',
+              hint: 'smtp.resend.com',
               prefixIcon: const Icon(LucideIcons.server),
               validator: (_) => _smtpRequiredError(
                 context,
@@ -62,7 +62,7 @@ class AdminSettingsSmtpSection extends StatelessWidget {
             HuxInput(
               controller: portController,
               label: context.tr('SMTP Port'),
-              hint: '587',
+              hint: '465 (TLS) or 587 (STARTTLS)',
               prefixIcon: const Icon(LucideIcons.network),
               keyboardType: TextInputType.number,
               validator: (value) {
@@ -164,6 +164,16 @@ class AdminSettingsSmtpSection extends StatelessWidget {
               ),
             ],
             onChanged: onSecureModeChanged,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          context.tr(
+            'Port and Security must match: 465/2465 → TLS, 587/2587 → STARTTLS. '
+            'Resend: host smtp.resend.com, username resend, password = API key.',
+          ),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
       ],

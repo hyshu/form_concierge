@@ -35,7 +35,7 @@ export async function sendEmail(settings: RequiredSmtpSettings, message: EmailMe
     await client.command(`EHLO ${smtpDomain(settings.fromEmail)}`, [250]);
     if (settings.secureMode === 'starttls') {
       await client.command('STARTTLS', [220]);
-      client.startTls();
+      await client.startTls();
       await client.command(`EHLO ${smtpDomain(settings.fromEmail)}`, [250]);
     }
     if (settings.username || settings.password) {
@@ -100,12 +100,14 @@ class SmtpConnection {
     return message;
   }
 
-  startTls(): void {
+  async startTls(): Promise<void> {
     this.reader.releaseLock();
     this.writer.releaseLock();
     this.socket = this.socket.startTls();
     this.reader = this.socket.readable.getReader();
     this.writer = this.socket.writable.getWriter();
+    // Wait for the TLS handshake before the next SMTP command.
+    await withTimeout(this.socket.opened, 'SMTP TLS handshake timed out');
   }
 
   async close(): Promise<void> {
@@ -147,10 +149,21 @@ function withTimeout<T>(promise: Promise<T>, message: string): Promise<T> {
     }),
     new Promise<T>((_, reject) => {
       timer = setTimeout(() => {
-        reject(new HttpError(504, message));
+        reject(new HttpError(504, smtpTimeoutHint(message)));
       }, SMTP_IO_TIMEOUT_MS);
     }),
   ]);
+}
+
+function smtpTimeoutHint(message: string): string {
+  if (message.includes('read') || message.includes('connection') || message.includes('TLS')) {
+    return (
+      `${message}. ` +
+      'Check host/port/Security match: port 465/2465 → TLS, port 587/2587 → STARTTLS ' +
+      '(Resend: smtp.resend.com, user "resend", password = API key).'
+    );
+  }
+  return message;
 }
 
 function formatMessage(settings: RequiredSmtpSettings, message: EmailMessage): string {

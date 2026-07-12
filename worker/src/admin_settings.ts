@@ -335,6 +335,11 @@ function optionalSettingsString(value: unknown, field: string): string | null {
   return trimmed.length === 0 ? null : trimmed;
 }
 
+/** Implicit TLS (SMTPS) ports — must use secureMode "tls", not STARTTLS. */
+const IMPLICIT_TLS_PORTS = new Set([465, 2465]);
+/** Explicit STARTTLS ports — must use secureMode "starttls". */
+const STARTTLS_PORTS = new Set([587, 2587]);
+
 function assertSmtpSettingsAreCoherent(settings: {
   host: string | null;
   port: number | null;
@@ -357,4 +362,18 @@ function assertSmtpSettingsAreCoherent(settings: {
   if (!settings.host) throw new HttpError(400, 'smtp.host is required');
   if (!settings.port) throw new HttpError(400, 'smtp.port is required');
   if (!settings.fromEmail) throw new HttpError(400, 'smtp.fromEmail is required');
+
+  // Port/mode mismatch causes a silent hang then "SMTP read timed out" (e.g. Resend 465 + STARTTLS).
+  if (settings.port != null && IMPLICIT_TLS_PORTS.has(settings.port) && settings.secureMode !== 'tls') {
+    throw new HttpError(
+      400,
+      `Port ${settings.port} requires Security = TLS (implicit SSL/TLS). STARTTLS is for ports 587/2587.`,
+    );
+  }
+  if (settings.port != null && STARTTLS_PORTS.has(settings.port) && settings.secureMode === 'tls') {
+    throw new HttpError(
+      400,
+      `Port ${settings.port} requires Security = STARTTLS. Use port 465 or 2465 for implicit TLS.`,
+    );
+  }
 }

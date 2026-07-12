@@ -115,6 +115,48 @@ test('updateAdminIntegrationSettings saves when expectedUpdatedAt matches the st
   assert.equal(payload.ai.provider, 'gemini');
 });
 
+test('updateAdminIntegrationSettings rejects port 465 without TLS', async () => {
+  await assertHttpErrorAsync(
+    () => updateAdminIntegrationSettings(
+      settingsRequest({
+        ai: { provider: 'gemini' },
+        smtp: {
+          host: 'smtp.resend.com',
+          port: 465,
+          fromEmail: 'forms@example.com',
+          username: 'resend',
+          password: 're_test',
+          secureMode: 'starttls',
+        },
+      }),
+      envAllowingWrite(integrationSettingsRow()),
+    ),
+    400,
+    'Port 465 requires Security = TLS (implicit SSL/TLS). STARTTLS is for ports 587/2587.',
+  );
+});
+
+test('updateAdminIntegrationSettings rejects port 587 with implicit TLS', async () => {
+  await assertHttpErrorAsync(
+    () => updateAdminIntegrationSettings(
+      settingsRequest({
+        ai: { provider: 'gemini' },
+        smtp: {
+          host: 'smtp.resend.com',
+          port: 587,
+          fromEmail: 'forms@example.com',
+          username: 'resend',
+          password: 're_test',
+          secureMode: 'tls',
+        },
+      }),
+      envAllowingWrite(integrationSettingsRow()),
+    ),
+    400,
+    'Port 587 requires Security = STARTTLS. Use port 465 or 2465 for implicit TLS.',
+  );
+});
+
 test('stored integration setting enums fail closed', async () => {
   await assertHttpErrorAsync(
     () => getAdminIntegrationSettings(envWithSettings(
