@@ -2,10 +2,10 @@ import 'dart:io';
 
 import 'package:args/command_runner.dart';
 
-import 'cli_exception.dart';
 import 'cloudflare/setup_options.dart';
 import 'cloudflare/setup_runner.dart';
 import 'monorepo.dart';
+import 'template_resolver.dart';
 
 class SetupCommand extends Command<int> {
   SetupCommand() {
@@ -52,6 +52,29 @@ class SetupCloudflareCommand extends Command<int> {
         'local-d1-persist-to',
         help: 'Local D1 state path used when reading the source project.',
       )
+      ..addOption(
+        'template-version',
+        defaultsTo: formConciergeCliVersion,
+        help: 'GitHub Release template version used outside a checkout.',
+      )
+      ..addOption(
+        'template-url',
+        help: 'Override the release template archive URL.',
+      )
+      ..addOption(
+        'template-sha256',
+        help: 'Expected archive SHA-256 (otherwise downloads URL.sha256).',
+      )
+      ..addFlag(
+        'offline',
+        help: 'Use a checkout or cached template without network access.',
+        negatable: false,
+      )
+      ..addFlag(
+        'refresh-template',
+        help: 'Redownload and replace the cached release template.',
+        negatable: false,
+      )
       ..addFlag(
         'remote-bindings-for-local-dev',
         help: 'Use remote D1/R2 bindings during wrangler dev.',
@@ -83,17 +106,19 @@ class SetupCloudflareCommand extends Command<int> {
 
   @override
   Future<int> run() async {
-    final root = findMonorepoRoot();
-    if (root == null) {
-      throw CliException(
-        'Could not find Form Concierge monorepo root.\n'
-        'Run this command from a checkout that contains '
-        'worker/wrangler.jsonc.example and admin_dashboard/pubspec.yaml.\n'
-        '(Published template download is not implemented yet.)',
-      );
-    }
-
     final results = argResults!;
+    final localRoot = findMonorepoRoot();
+    final root =
+        localRoot ??
+        (results['explain'] == true
+            ? Directory.current.path
+            : await TemplateResolver().resolve(
+                version: results['template-version'] as String,
+                archiveUrl: results['template-url'] as String?,
+                expectedSha256: results['template-sha256'] as String?,
+                offline: results['offline'] == true,
+                refresh: results['refresh-template'] == true,
+              ));
     bool? remoteBindings;
     if (results['remote-bindings-for-local-dev'] == true) {
       remoteBindings = true;

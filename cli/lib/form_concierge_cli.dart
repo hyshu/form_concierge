@@ -8,6 +8,12 @@ import 'src/setup_command.dart';
 
 export 'src/cli_exception.dart';
 export 'src/monorepo.dart';
+export 'src/template_resolver.dart'
+    show
+        TemplateResolver,
+        defaultTemplateArchiveUri,
+        defaultTemplateCacheRoot,
+        formConciergeCliVersion;
 
 /// Entry point for the Form Concierge CLI.
 Future<int> runFormConciergeCli(List<String> args) async {
