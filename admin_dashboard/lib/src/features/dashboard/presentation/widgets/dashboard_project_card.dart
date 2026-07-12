@@ -35,11 +35,18 @@ class DashboardProjectCard extends StatelessWidget {
   final void Function(Survey survey) onViewResponses;
   final void Function(Survey survey) onDeleteSurvey;
 
+  /// Space between project metadata and the survey list, and between the
+  /// survey list and the bottom of the card.
+  static const double _sectionGap = 20;
+
   @override
   Widget build(context) {
     final project = item.project;
     return HuxCard(
       margin: const EdgeInsets.only(bottom: 16),
+      // Bottom padding matches [_sectionGap] so the gap under surveys equals
+      // the gap between project info and surveys.
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, _sectionGap),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -102,7 +109,7 @@ class DashboardProjectCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: _sectionGap),
           if (item.surveys.isEmpty)
             HuxEmptyState(
               icon: LucideIcons.circleHelp,
@@ -117,7 +124,8 @@ class DashboardProjectCard extends StatelessWidget {
           else
             Column(
               children: [
-                for (final survey in item.surveys)
+                for (final (index, survey) in item.surveys.indexed) ...[
+                  if (index > 0) const SizedBox(height: 16),
                   _DashboardSurveyRow(
                     project: project,
                     survey: survey,
@@ -140,6 +148,7 @@ class DashboardProjectCard extends StatelessWidget {
                         : null,
                     onDelete: canWrite ? () => onDeleteSurvey(survey) : null,
                   ),
+                ],
               ],
             ),
         ],
@@ -191,92 +200,100 @@ class _DashboardSurveyRow extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          survey.titleFor(locale),
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.w600),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            survey.titleFor(locale),
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w600),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      SurveyStatusChip(status: survey.status),
-                    ],
-                  ),
-                  if (description.isNotEmpty) ...[
-                    const SizedBox(height: 6),
-                    Text(
-                      description,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: HuxTokens.textSecondary(context),
-                      ),
+                        const SizedBox(width: 12),
+                        SurveyStatusChip(status: survey.status),
+                      ],
                     ),
-                  ],
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 16,
-                    runSpacing: 8,
-                    children: [
-                      HuxMetadataItem(
-                        icon: LucideIcons.link,
-                        text: survey.slug,
-                      ),
-                      HuxMetadataItem(
-                        icon: LucideIcons.clock3,
-                        text: survey.updatedAt.toIsoDateString(),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      HuxSwitch(
-                        value: survey.webEnabled,
-                        onChanged: onWebEnabledChanged,
-                      ),
-                      const SizedBox(width: 8),
+                    if (description.isNotEmpty) ...[
+                      const SizedBox(height: 6),
                       Text(
-                        context.tr('Web public'),
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        description,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
                           color: HuxTokens.textSecondary(context),
                         ),
                       ),
-                      if (publicUrl != null) ...[
-                        const SizedBox(width: 4),
-                        HuxIconActionButton(
-                          icon: LucideIcons.externalLink,
-                          onPressed: () => openUrl(publicUrl),
-                          tooltip: context.tr('Open public form'),
+                    ],
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 16,
+                      runSpacing: 8,
+                      children: [
+                        HuxMetadataItem(
+                          icon: LucideIcons.link,
+                          text: survey.slug,
+                        ),
+                        HuxMetadataItem(
+                          icon: LucideIcons.clock3,
+                          text: survey.updatedAt.toIsoDateString(),
                         ),
                       ],
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            SurveyActionButtons(
-              onPublish: onPublish,
-              onClose: onClose,
-              onReopen: onReopen,
-              onViewResponses: onViewResponses,
-              onDelete: onDelete,
-            ),
-          ],
-        ),
+              const SizedBox(width: 12),
+              SurveyActionButtons(
+                onPublish: onPublish,
+                onClose: onClose,
+                onReopen: onReopen,
+                onDelete: onDelete,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              HuxSwitch(
+                value: survey.webEnabled,
+                onChanged: onWebEnabledChanged,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                context.tr('Web public'),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: HuxTokens.textSecondary(context),
+                ),
+              ),
+              if (publicUrl != null) ...[
+                const SizedBox(width: 4),
+                HuxIconActionButton(
+                  icon: LucideIcons.externalLink,
+                  onPressed: () => openUrl(publicUrl),
+                  tooltip: context.tr('Open public form'),
+                ),
+              ],
+              const Spacer(),
+              HuxButton(
+                onPressed: onViewResponses,
+                variant: HuxButtonVariant.secondary,
+                size: HuxButtonSize.small,
+                icon: LucideIcons.chartNoAxesColumn,
+                child: Text(context.tr('View Responses')),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

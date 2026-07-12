@@ -10,14 +10,14 @@ class SurveyActionButtons extends StatelessWidget {
     this.onPublish,
     this.onClose,
     this.onReopen,
-    required this.onViewResponses,
+    this.onViewResponses,
     this.onDelete,
   });
 
   final VoidCallback? onPublish;
   final VoidCallback? onClose;
   final VoidCallback? onReopen;
-  final VoidCallback onViewResponses;
+  final VoidCallback? onViewResponses;
   final VoidCallback? onDelete;
 
   @override
@@ -42,11 +42,12 @@ class SurveyActionButtons extends StatelessWidget {
           onPressed: onReopen,
           tooltip: context.tr('Reopen'),
         ),
-      HuxIconActionButton(
-        icon: LucideIcons.chartNoAxesColumn,
-        onPressed: onViewResponses,
-        tooltip: context.tr('View Responses'),
-      ),
+      if (onViewResponses != null)
+        HuxIconActionButton(
+          icon: LucideIcons.chartNoAxesColumn,
+          onPressed: onViewResponses,
+          tooltip: context.tr('View Responses'),
+        ),
       if (onDelete != null)
         HuxIconActionButton(
           icon: LucideIcons.trash2,
