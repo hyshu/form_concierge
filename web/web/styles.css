@@ -314,6 +314,10 @@ button:disabled {
   margin-top: 1.25rem;
 }
 
+.space-y-8>*+* {
+  margin-top: 2rem;
+}
+
 .rounded {
   border-radius: .25rem;
 }

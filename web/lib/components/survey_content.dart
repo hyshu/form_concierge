@@ -121,19 +121,22 @@ class SurveyContent extends StatelessComponent {
         ),
     ]),
 
-    // CAPTCHA + submit. Turnstile is re-mounted here because the SSR shell
-    // (which embeds the widget) is removed before Jaspr takes over.
-    div(classes: 'mt-8', [
+    // CAPTCHA + submit. Equal vertical rhythm (mt-8 / space-y-8) between
+    // questions, captcha, and button. Turnstile is re-mounted here because
+    // the SSR shell (which embeds the widget) is removed before Jaspr takes over.
+    div(classes: 'mt-8 space-y-8', [
       if (turnstileSiteKey != null && turnstileSiteKey!.isNotEmpty)
-        TurnstileCaptcha(
-          key: ValueKey(turnstileSiteKey),
-          siteKey: turnstileSiteKey!,
-        ),
+        div(classes: 'flex justify-center', [
+          TurnstileCaptcha(
+            key: ValueKey(turnstileSiteKey),
+            siteKey: turnstileSiteKey!,
+          ),
+        ]),
       // Surface submit/CAPTCHA errors near the button (users are scrolled here).
       if (errorMessage != null)
         div(
           classes:
-              'mb-3 flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg',
+              'flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg',
           [
             span(classes: 'text-sm', [Component.text(errorMessage!)]),
           ],

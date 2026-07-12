@@ -66,9 +66,11 @@ class _TurnstileCaptchaState extends State<TurnstileCaptcha> {
   }
 
   @override
-  Component build(context) => div(classes: 'my-4', [
+  Component build(context) => div([
     div(id: TurnstileCaptcha.containerId, classes: 'cf-turnstile', []),
     if (_error != null)
-      p(classes: 'mt-2 text-sm text-red-600', [Component.text(_error!)]),
+      p(classes: 'mt-2 text-sm text-red-600 text-center', [
+        Component.text(_error!),
+      ]),
   ]);
 }
