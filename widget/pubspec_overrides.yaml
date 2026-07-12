@@ -1,0 +1,6 @@
+# Monorepo-only: build widget against the local client source.
+# pub excludes this file when publishing, so consumers resolve
+# form_concierge_client from pub.dev instead.
+dependency_overrides:
+  form_concierge_client:
+    path: ../client

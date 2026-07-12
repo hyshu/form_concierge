@@ -20,12 +20,6 @@ dependencies:
   form_concierge_client: ^0.1.0
   image_picker: ^1.2.3
 
-# Keep monorepo development on the matching local client source. Pub ignores
-# dependency overrides when consumers install this package.
-dependency_overrides:
-  form_concierge_client:
-    path: ../client
-
 dev_dependencies:
   flutter_test:
     sdk: flutter
