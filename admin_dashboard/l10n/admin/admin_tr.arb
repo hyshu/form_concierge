@@ -132,7 +132,7 @@
   "Slug is required": "Kısa ad zorunludur",
   "Slug must include a lowercase letter": "Kısa ad en az bir küçük harf içermelidir",
   "Only lowercase letters, numbers, and hyphens allowed": "Yalnızca küçük harf, rakam ve tire kullanılabilir",
-  "Custom domain (optional)": "Özel alan adı (isteğe bağlı)",
+  "Custom domain (for web publishing, optional)": "Özel alan adı (web yayını için, isteğe bağlı)",
   "Use a dedicated host to open this survey without a slug.": "Kısa ad olmadan bu anketi açmak için özel bir host kullanın.",
   "Custom domain must be a hostname like forms.example.com": "Özel alan adı forms.example.com gibi bir ana bilgisayar adı olmalıdır",
   "Description (optional)": "Açıklama (isteğe bağlı)",

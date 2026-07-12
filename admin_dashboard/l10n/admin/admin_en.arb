@@ -153,7 +153,7 @@
   "Slug is required": "Slug is required",
   "Slug must include a lowercase letter": "Slug must include a lowercase letter",
   "Only lowercase letters, numbers, and hyphens allowed": "Only lowercase letters, numbers, and hyphens allowed",
-  "Custom domain (optional)": "Custom domain (optional)",
+  "Custom domain (for web publishing, optional)": "Custom domain (for web publishing, optional)",
   "Use a dedicated host to open this survey without a slug.": "Use a dedicated host to open this survey without a slug.",
   "Custom domain must be a hostname like forms.example.com": "Custom domain must be a hostname like forms.example.com",
   "Description (optional)": "Description (optional)",

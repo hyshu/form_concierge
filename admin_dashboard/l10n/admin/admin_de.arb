@@ -49,7 +49,7 @@
   "Project not found": "Projekt nicht gefunden",
   "Create Project": "Projekt erstellen",
   "Project URL Slug": "Projekt-URL-Slug",
-  "Custom domain (optional)": "Eigene Domain (optional)",
+  "Custom domain (for web publishing, optional)": "Eigene Domain (für Web-Veröffentlichung, optional)",
   "Custom domain must be a hostname like forms.example.com": "Eigene Domain muss ein Hostname wie forms.example.com sein",
   "Localized languages": "Lokalisierungssprachen",
   "Select languages": "Sprachen auswählen",

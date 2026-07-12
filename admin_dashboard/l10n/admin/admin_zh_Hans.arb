@@ -49,7 +49,7 @@
   "Project not found": "找不到项目",
   "Create Project": "创建项目",
   "Project URL Slug": "项目 URL Slug",
-  "Custom domain (optional)": "自定义域名（可选）",
+  "Custom domain (for web publishing, optional)": "自定义域名（用于 Web 公开，可选）",
   "Custom domain must be a hostname like forms.example.com": "自定义域名必须是 forms.example.com 这样的主机名",
   "Localized languages": "本地化语言",
   "Select languages": "选择语言",

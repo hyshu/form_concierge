@@ -49,7 +49,7 @@
   "Project not found": "找不到專案",
   "Create Project": "建立專案",
   "Project URL Slug": "專案 URL Slug",
-  "Custom domain (optional)": "自訂網域（可選）",
+  "Custom domain (for web publishing, optional)": "自訂網域（用於 Web 公開，可選）",
   "Custom domain must be a hostname like forms.example.com": "自訂網域必須是 forms.example.com 這樣的主機名稱",
   "Localized languages": "本地化語言",
   "Select languages": "選擇語言",

@@ -119,7 +119,7 @@ class _ProjectFormState extends State<ProjectForm> {
             const SizedBox(height: 16),
             HuxInput(
               controller: _customDomain,
-              label: context.tr('Custom domain (optional)'),
+              label: context.tr('Custom domain (for web publishing, optional)'),
               hint: 'forms.example.com',
               prefixIcon: const Icon(LucideIcons.globe),
               enabled: !widget.isSaving,

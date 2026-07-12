@@ -153,7 +153,7 @@
   "Slug is required": "スラッグは必須です",
   "Slug must include a lowercase letter": "スラッグには小文字の英字を含めてください",
   "Only lowercase letters, numbers, and hyphens allowed": "小文字、数字、ハイフンのみ使用できます",
-  "Custom domain (optional)": "カスタムドメイン (任意)",
+  "Custom domain (for web publishing, optional)": "カスタムドメイン（Web公開用 任意）",
   "Use a dedicated host to open this survey without a slug.": "専用ホストでスラッグなしにこのアンケートを開けます。",
   "Custom domain must be a hostname like forms.example.com": "カスタムドメインは forms.example.com のようなホスト名にしてください",
   "Description (optional)": "説明 (任意)",

@@ -74,7 +74,10 @@ void main() {
     test('Japanese translations are available for custom domain labels', () {
       const l10n = AppLocalizations(Locale('ja'));
 
-      expect(l10n.text('Custom domain (optional)'), 'カスタムドメイン (任意)');
+      expect(
+        l10n.text('Custom domain (for web publishing, optional)'),
+        'カスタムドメイン（Web公開用 任意）',
+      );
       expect(
         l10n.text('Custom domain must be a hostname like forms.example.com'),
         'カスタムドメインは forms.example.com のようなホスト名にしてください',
@@ -90,7 +93,7 @@ void main() {
           'Project not found',
           'Create Project',
           'Project URL Slug',
-          'Custom domain (optional)',
+          'Custom domain (for web publishing, optional)',
           'Localized languages',
           'Select languages',
           'Default language',

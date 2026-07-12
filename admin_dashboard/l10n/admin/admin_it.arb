@@ -132,7 +132,7 @@
   "Slug is required": "Lo slug è obbligatorio",
   "Slug must include a lowercase letter": "Lo slug deve includere una lettera minuscola",
   "Only lowercase letters, numbers, and hyphens allowed": "Sono consentiti solo lettere minuscole, numeri e trattini",
-  "Custom domain (optional)": "Dominio personalizzato (facoltativo)",
+  "Custom domain (for web publishing, optional)": "Dominio personalizzato (per pubblicazione web, facoltativo)",
   "Use a dedicated host to open this survey without a slug.": "Usa un host dedicato per aprire questo sondaggio senza slug.",
   "Custom domain must be a hostname like forms.example.com": "Il dominio personalizzato deve essere un hostname come forms.example.com",
   "Description (optional)": "Descrizione (facoltativa)",

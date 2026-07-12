@@ -58,7 +58,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Project not found": "Projekt nicht gefunden",
     "Create Project": "Projekt erstellen",
     "Project URL Slug": "Projekt-URL-Slug",
-    "Custom domain (optional)": "Eigene Domain (optional)",
+    "Custom domain (for web publishing, optional)":
+        "Eigene Domain (für Web-Veröffentlichung, optional)",
     "Custom domain must be a hostname like forms.example.com":
         "Eigene Domain muss ein Hostname wie forms.example.com sein",
     "Localized languages": "Lokalisierungssprachen",
@@ -622,7 +623,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
         "Slug must include a lowercase letter",
     "Only lowercase letters, numbers, and hyphens allowed":
         "Only lowercase letters, numbers, and hyphens allowed",
-    "Custom domain (optional)": "Custom domain (optional)",
+    "Custom domain (for web publishing, optional)":
+        "Custom domain (for web publishing, optional)",
     "Use a dedicated host to open this survey without a slug.":
         "Use a dedicated host to open this survey without a slug.",
     "Custom domain must be a hostname like forms.example.com":
@@ -1011,7 +1013,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
         "El slug debe incluir una letra minúscula",
     "Only lowercase letters, numbers, and hyphens allowed":
         "Solo se permiten letras minúsculas, números y guiones",
-    "Custom domain (optional)": "Dominio personalizado (opcional)",
+    "Custom domain (for web publishing, optional)":
+        "Dominio personalizado (para publicación web, opcional)",
     "Use a dedicated host to open this survey without a slug.":
         "Usa un host dedicado para abrir esta encuesta sin slug.",
     "Custom domain must be a hostname like forms.example.com":
@@ -1430,7 +1433,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
         "Le slug doit inclure une lettre minuscule",
     "Only lowercase letters, numbers, and hyphens allowed":
         "Seules les lettres minuscules, chiffres et tirets sont autorisés",
-    "Custom domain (optional)": "Domaine personnalisé (facultatif)",
+    "Custom domain (for web publishing, optional)":
+        "Domaine personnalisé (pour la publication web, facultatif)",
     "Use a dedicated host to open this survey without a slug.":
         "Utilisez un hôte dédié pour ouvrir cette enquête sans slug.",
     "Custom domain must be a hostname like forms.example.com":
@@ -1863,7 +1867,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
         "Lo slug deve includere una lettera minuscola",
     "Only lowercase letters, numbers, and hyphens allowed":
         "Sono consentiti solo lettere minuscole, numeri e trattini",
-    "Custom domain (optional)": "Dominio personalizzato (facoltativo)",
+    "Custom domain (for web publishing, optional)":
+        "Dominio personalizzato (per pubblicazione web, facoltativo)",
     "Use a dedicated host to open this survey without a slug.":
         "Usa un host dedicato per aprire questo sondaggio senza slug.",
     "Custom domain must be a hostname like forms.example.com":
@@ -2301,7 +2306,7 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Slug must include a lowercase letter": "スラッグには小文字の英字を含めてください",
     "Only lowercase letters, numbers, and hyphens allowed":
         "小文字、数字、ハイフンのみ使用できます",
-    "Custom domain (optional)": "カスタムドメイン (任意)",
+    "Custom domain (for web publishing, optional)": "カスタムドメイン（Web公開用 任意）",
     "Use a dedicated host to open this survey without a slug.":
         "専用ホストでスラッグなしにこのアンケートを開けます。",
     "Custom domain must be a hostname like forms.example.com":
@@ -2571,7 +2576,7 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Project not found": "프로젝트를 찾을 수 없습니다",
     "Create Project": "프로젝트 만들기",
     "Project URL Slug": "프로젝트 URL 슬러그",
-    "Custom domain (optional)": "사용자 지정 도메인(선택 사항)",
+    "Custom domain (for web publishing, optional)": "사용자 지정 도메인(웹 공개용, 선택 사항)",
     "Custom domain must be a hostname like forms.example.com":
         "사용자 지정 도메인은 forms.example.com 같은 호스트 이름이어야 합니다",
     "Localized languages": "로컬라이즈 언어",
@@ -3051,7 +3056,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
         "สลักต้องมีตัวอักษรพิมพ์เล็กอย่างน้อยหนึ่งตัว",
     "Only lowercase letters, numbers, and hyphens allowed":
         "ใช้ได้เฉพาะตัวอักษรพิมพ์เล็ก ตัวเลข และขีดกลาง",
-    "Custom domain (optional)": "โดเมนกำหนดเอง (ไม่บังคับ)",
+    "Custom domain (for web publishing, optional)":
+        "โดเมนกำหนดเอง (สำหรับเผยแพร่เว็บ, ไม่บังคับ)",
     "Use a dedicated host to open this survey without a slug.":
         "ใช้โฮสต์เฉพาะเพื่อเปิดแบบสำรวจนี้โดยไม่ต้องใช้สลัก",
     "Custom domain must be a hostname like forms.example.com":
@@ -3455,7 +3461,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
         "Kısa ad en az bir küçük harf içermelidir",
     "Only lowercase letters, numbers, and hyphens allowed":
         "Yalnızca küçük harf, rakam ve tire kullanılabilir",
-    "Custom domain (optional)": "Özel alan adı (isteğe bağlı)",
+    "Custom domain (for web publishing, optional)":
+        "Özel alan adı (web yayını için, isteğe bağlı)",
     "Use a dedicated host to open this survey without a slug.":
         "Kısa ad olmadan bu anketi açmak için özel bir host kullanın.",
     "Custom domain must be a hostname like forms.example.com":
@@ -3771,7 +3778,7 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Project not found": "找不到项目",
     "Create Project": "创建项目",
     "Project URL Slug": "项目 URL Slug",
-    "Custom domain (optional)": "自定义域名（可选）",
+    "Custom domain (for web publishing, optional)": "自定义域名（用于 Web 公开，可选）",
     "Custom domain must be a hostname like forms.example.com":
         "自定义域名必须是 forms.example.com 这样的主机名",
     "Localized languages": "本地化语言",
@@ -4144,7 +4151,7 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Project not found": "找不到專案",
     "Create Project": "建立專案",
     "Project URL Slug": "專案 URL Slug",
-    "Custom domain (optional)": "自訂網域（可選）",
+    "Custom domain (for web publishing, optional)": "自訂網域（用於 Web 公開，可選）",
     "Custom domain must be a hostname like forms.example.com":
         "自訂網域必須是 forms.example.com 這樣的主機名稱",
     "Localized languages": "本地化語言",
