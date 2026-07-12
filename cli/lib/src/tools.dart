@@ -117,3 +117,27 @@ Future<String?> promptOptional(String message) async {
   stderr.write(message);
   return stdin.readLineSync();
 }
+
+/// Opens [url] in the default browser when possible. Returns false on failure.
+Future<bool> openInBrowser(String url) async {
+  try {
+    final List<String> command;
+    if (Platform.isMacOS) {
+      command = ['open', url];
+    } else if (Platform.isWindows) {
+      command = ['cmd', '/c', 'start', '', url];
+    } else if (Platform.isLinux) {
+      command = ['xdg-open', url];
+    } else {
+      return false;
+    }
+    final result = await Process.run(
+      command.first,
+      command.skip(1).toList(),
+      runInShell: Platform.isWindows,
+    );
+    return result.exitCode == 0;
+  } catch (_) {
+    return false;
+  }
+}

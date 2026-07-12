@@ -58,17 +58,14 @@ class CloudflareSetupRunner {
         return 0;
       }
 
-      await _selectWranglerUpdateConfig();
       await _selectRemoteBindingsForLocalDev();
       await _selectResourceNames();
 
       options.webAssetBaseUrl ??= 'https://${options.webProject}.pages.dev';
+      // Always rewrite worker/wrangler.jsonc ourselves after create.
+      // Wrangler --update-config can append a second "DB" binding and break config.
+      options.wranglerUpdateConfig = true;
 
-      stdout.writeln(
-        options.wranglerUpdateConfig == true
-            ? '==> Wrangler config update: yes'
-            : '==> Wrangler config update: no',
-      );
       stdout.writeln(
         options.remoteBindingsForLocalDev == true
             ? '==> Local dev bindings: remote D1/R2'
@@ -89,10 +86,14 @@ class CloudflareSetupRunner {
         stdout.writeln('==> Project seed: skipped');
       }
 
+      // Secrets Store first: accounts often allow only one store, and create can
+      // fail after D1/R2 were already provisioned. Resolve/reuse before those.
+      // Worker deploy requires each secrets_store_secrets binding to already exist.
+      await _ensureSecretsStore();
+      await _ensureSecretsStoreSecrets();
       await _ensureD1Database();
       await _ensureR2Bucket();
       await _waitForR2Bucket();
-      await _ensureSecretsStore();
       await _ensureCfApiToken();
 
       stdout.writeln('==> Configure Worker');
@@ -255,29 +256,64 @@ class CloudflareSetupRunner {
 
   Future<void> _ensureWranglerAuth() async {
     stdout.writeln('==> Wrangler auth');
+    // Plain `whoami` exits 0 even when logged out. Prefer --json and check body.
     final result = await runCapture(
       'npx',
-      ['wrangler', 'whoami'],
+      ['wrangler', 'whoami', '--json'],
       workingDirectory: paths.worker,
       throwOnError: false,
     );
-    if (result.exitCode != 0) {
-      final out = (result.stdout as String).trim();
-      final err = (result.stderr as String).trim();
-      if (out.isNotEmpty) stderr.writeln(out);
-      if (err.isNotEmpty) stderr.writeln(err);
-      throw CliException('''
-Wrangler preflight failed.
+    final out = (result.stdout as String).trim();
+    final err = (result.stderr as String).trim();
+    final detail = [
+      if (out.isNotEmpty) out,
+      if (err.isNotEmpty) err,
+    ].join('\n');
 
-If this is an authentication failure, run one of:
+    if (_wranglerWhoamiLoggedIn(out)) {
+      return;
+    }
 
-  cd worker
+    final lower = detail.toLowerCase();
+    final looksLikeConfig =
+        lower.contains('wrangler.toml') ||
+        lower.contains('wrangler.json') ||
+        lower.contains('configuration file') ||
+        lower.contains('multiple') && lower.contains('binding') ||
+        (lower.contains('invalid') && lower.contains('config'));
+    if (looksLikeConfig) {
+      if (detail.isNotEmpty) {
+        stderr.writeln(detail);
+      }
+      throw CliException(
+        'Wrangler configuration error in worker/wrangler.jsonc.\n'
+        'Fix the config, then re-run setup.',
+      );
+    }
+
+    throw CliException('''
+Wrangler is not logged in to Cloudflare.
+
   npx wrangler login
 
-or set CLOUDFLARE_API_TOKEN with permissions for Workers, D1, R2, and Pages.
-
-If Wrangler reported a configuration error above, fix worker/wrangler.jsonc first.
+Then re-run setup.
 ''');
+  }
+
+  /// True when `wrangler whoami --json` reports an authenticated session.
+  bool _wranglerWhoamiLoggedIn(String stdout) {
+    final raw = stdout.trim();
+    if (raw.isEmpty) return false;
+    try {
+      final data = jsonDecode(raw);
+      if (data is! Map) return false;
+      if (data['loggedIn'] == false) return false;
+      if (data['loggedIn'] == true) return true;
+      // Older shapes may omit loggedIn but include accounts when authenticated.
+      final accounts = data['accounts'];
+      return accounts is List && accounts.isNotEmpty;
+    } catch (_) {
+      return false;
     }
   }
 
@@ -295,14 +331,6 @@ If Wrangler reported a configuration error above, fix worker/wrangler.jsonc firs
       '0.23.1',
     ]);
     _jasprCmd = const ['dart', 'pub', 'global', 'run', 'jaspr_cli:jaspr'];
-  }
-
-  Future<void> _selectWranglerUpdateConfig() async {
-    if (options.wranglerUpdateConfig != null) return;
-    final answer = await promptOptional(
-      'Let Wrangler add created D1/R2 resources to worker/wrangler.jsonc? [Y/n] ',
-    );
-    options.wranglerUpdateConfig = _parseYesDefaultTrue(answer);
   }
 
   Future<void> _selectRemoteBindingsForLocalDev() async {
@@ -373,13 +401,6 @@ Run setup interactively, or pass:
     final prompted = await promptName(label, defaultValue);
     if (prompted.isEmpty) return null;
     return prompted;
-  }
-
-  bool _parseYesDefaultTrue(String? answer) {
-    if (answer == null || answer.trim().isEmpty) return true;
-    final v = answer.trim().toLowerCase();
-    if (const {'0', 'false', 'n', 'no'}.contains(v)) return false;
-    return true;
   }
 
   bool _parseYesDefaultFalse(String? answer) {
@@ -454,17 +475,15 @@ Run setup interactively, or pass:
       options.databaseId = id;
     }
     if (id.isEmpty) {
-      final updateConfig = options.wranglerUpdateConfig == true;
-      final useRemote = options.remoteBindingsForLocalDev == true;
+      // Never let wrangler append bindings: an existing DB entry becomes a
+      // duplicate "DB" binding and breaks whoami/deploy. _updateWrangler owns config.
       stdout.writeln('==> Create D1 database: ${options.databaseName}');
       await runInherit('npx', [
         'wrangler',
         'd1',
         'create',
         options.databaseName!,
-        '--update-config=$updateConfig',
-        '--binding=DB',
-        '--use-remote=$useRemote',
+        '--update-config=false',
       ], workingDirectory: paths.worker);
       options.databaseId = await _findD1DatabaseId();
     }
@@ -476,50 +495,166 @@ Run setup interactively, or pass:
   }
 
   Future<String> _findSecretsStoreId() async {
+    // wrangler secrets-store store list has no --json (as of wrangler 4.103).
     final result = await runCapture(
       'npx',
-      ['wrangler', 'secrets-store', 'store', 'list', '--remote', '--json'],
+      ['wrangler', 'secrets-store', 'store', 'list', '--remote'],
       workingDirectory: paths.worker,
       throwOnError: false,
     );
-    final raw = (result.stdout as String).trim();
-    if (raw.isEmpty || result.exitCode != 0) return '';
-    try {
-      final stores = jsonDecode(raw);
-      if (stores is! List) return '';
-      for (final s in stores) {
-        if (s is Map &&
-            s['name'] == CloudflareSetupOptions.defaultSecretsStoreName) {
-          return '${s['id'] ?? ''}';
-        }
-      }
-    } catch (_) {}
+    final text = '${result.stdout}\n${result.stderr}';
+    final defaultName = CloudflareSetupOptions.defaultSecretsStoreName;
+
+    // Table row: │ name │ 32-char hex id │ ...
+    final named = RegExp(
+      '│\\s*${RegExp.escape(defaultName)}\\s*│\\s*([a-f0-9]{32})\\s*│',
+      caseSensitive: false,
+    ).firstMatch(text);
+    if (named != null) {
+      return named.group(1)!;
+    }
+
+    // Prefer any existing remote store (accounts often allow only one).
+    // Do not fall back to wrangler.jsonc — that can reuse a deleted store id.
+    for (final m in RegExp(
+      r'│\s*([A-Za-z0-9_-]+)\s*│\s*([a-f0-9]{32})\s*│',
+    ).allMatches(text)) {
+      final name = m.group(1)!;
+      if (name.toLowerCase() == 'name') continue;
+      return m.group(2)!;
+    }
+
     return '';
   }
 
+  /// Secret names bound on the Worker (must exist in the store before deploy).
+  static const _secretNames = [
+    'gemini_api_key',
+    'openai_api_key',
+    'claude_api_key',
+    'cerebras_api_key',
+    'smtp_password',
+  ];
+
   Future<void> _ensureSecretsStore() async {
     _secretsStoreId = await _findSecretsStoreId();
-    if (_secretsStoreId == null || _secretsStoreId!.isEmpty) {
-      stdout.writeln(
-        '==> Create Secrets Store: '
-        '${CloudflareSetupOptions.defaultSecretsStoreName}',
-      );
-      await runInherit('npx', [
-        'wrangler',
-        'secrets-store',
-        'store',
-        'create',
-        CloudflareSetupOptions.defaultSecretsStoreName,
-        '--remote',
-      ], workingDirectory: paths.worker);
-      _secretsStoreId = await _findSecretsStoreId();
+    if (_secretsStoreId != null && _secretsStoreId!.isNotEmpty) {
+      stdout.writeln('==> Secrets Store: using existing');
+      return;
     }
-    if (_secretsStoreId == null || _secretsStoreId!.isEmpty) {
+
+    final name = CloudflareSetupOptions.defaultSecretsStoreName;
+    stdout.writeln('==> Create Secrets Store: $name');
+    final create = await runCapture(
+      'npx',
+      ['wrangler', 'secrets-store', 'store', 'create', name, '--remote'],
+      workingDirectory: paths.worker,
+      throwOnError: false,
+    );
+    _secretsStoreId = await _findSecretsStoreId();
+    if (_secretsStoreId != null && _secretsStoreId!.isNotEmpty) {
+      return;
+    }
+
+    final detail = [
+      if ((create.stdout as String).trim().isNotEmpty)
+        (create.stdout as String).trim(),
+      if ((create.stderr as String).trim().isNotEmpty)
+        (create.stderr as String).trim(),
+    ].join('\n');
+    if (detail.isNotEmpty) {
+      stderr.writeln(detail);
+    }
+    throw CliException(
+      'Could not create or find a Secrets Store.\n'
+      'List with: npx wrangler secrets-store store list --remote',
+    );
+  }
+
+  /// Deploy fails if secrets_store_secrets bindings point at missing secrets.
+  Future<void> _ensureSecretsStoreSecrets() async {
+    final storeId = _secretsStoreId;
+    if (storeId == null || storeId.isEmpty) {
+      throw CliException('Secrets Store id is missing.');
+    }
+
+    final existing = await _listSecretsStoreSecretNames(storeId);
+    final missing = _secretNames.where((n) => !existing.contains(n)).toList();
+    if (missing.isEmpty) {
+      stdout.writeln('==> Secrets Store secrets: all present');
+      return;
+    }
+
+    stdout.writeln(
+      '==> Secrets Store secrets: create ${missing.length} placeholder(s)',
+    );
+    stdout.writeln(
+      '    (AI/SMTP values can be set later in admin; placeholders unlock deploy)',
+    );
+    for (final name in missing) {
+      final result = await runCapture(
+        'npx',
+        [
+          'wrangler',
+          'secrets-store',
+          'secret',
+          'create',
+          storeId,
+          '--name',
+          name,
+          '--scopes',
+          'workers',
+          '--remote',
+          '--value',
+          'placeholder',
+          '--comment',
+          'form_concierge setup placeholder',
+        ],
+        workingDirectory: paths.worker,
+        throwOnError: false,
+      );
+      if (result.exitCode == 0) {
+        stdout.writeln('    + $name');
+        continue;
+      }
+      final detail = [
+        if ((result.stdout as String).trim().isNotEmpty)
+          (result.stdout as String).trim(),
+        if ((result.stderr as String).trim().isNotEmpty)
+          (result.stderr as String).trim(),
+      ].join('\n');
+      final lower = detail.toLowerCase();
+      if (lower.contains('already') || lower.contains('exist')) {
+        stdout.writeln('    = $name (already exists)');
+        continue;
+      }
+      if (detail.isNotEmpty) {
+        stderr.writeln(detail);
+      }
       throw CliException(
-        'Could not resolve Secrets Store ID for '
-        '${CloudflareSetupOptions.defaultSecretsStoreName}.',
+        'Failed to create Secrets Store secret "$name".\n'
+        'Create it with:\n'
+        '  npx wrangler secrets-store secret create $storeId '
+        '--name $name --scopes workers --remote',
       );
     }
+  }
+
+  Future<Set<String>> _listSecretsStoreSecretNames(String storeId) async {
+    final result = await runCapture(
+      'npx',
+      ['wrangler', 'secrets-store', 'secret', 'list', storeId, '--remote'],
+      workingDirectory: paths.worker,
+      throwOnError: false,
+    );
+    final text = '${result.stdout}\n${result.stderr}';
+    final found = <String>{};
+    for (final name in _secretNames) {
+      if (RegExp('\\b${RegExp.escape(name)}\\b').hasMatch(text)) {
+        found.add(name);
+      }
+    }
+    return found;
   }
 
   Future<void> _ensureR2Bucket() async {
@@ -532,17 +667,14 @@ Run setup interactively, or pass:
     if (info.exitCode == 0) return;
 
     stdout.writeln('==> Create R2 bucket: ${options.r2BucketName}');
-    final updateConfig = options.wranglerUpdateConfig == true;
-    final useRemote = options.remoteBindingsForLocalDev == true;
+    // Same as D1: do not append bindings; _updateWrangler rewrites config.
     await runInherit('npx', [
       'wrangler',
       'r2',
       'bucket',
       'create',
       options.r2BucketName!,
-      '--update-config=$updateConfig',
-      '--binding=${options.r2Binding}',
-      '--use-remote=$useRemote',
+      '--update-config=false',
     ], workingDirectory: paths.worker);
   }
 
@@ -637,15 +769,8 @@ Run setup interactively, or pass:
     ];
 
     if (secretsStoreId.isNotEmpty) {
-      const secretNames = [
-        'gemini_api_key',
-        'openai_api_key',
-        'claude_api_key',
-        'cerebras_api_key',
-        'smtp_password',
-      ];
       config['secrets_store_secrets'] = [
-        for (final name in secretNames)
+        for (final name in _secretNames)
           {
             'binding': name.toUpperCase(),
             'store_id': secretsStoreId,
@@ -741,13 +866,21 @@ Run setup interactively, or pass:
         }
       } catch (_) {}
     }
+    const apiTokensUrl = 'https://dash.cloudflare.com/profile/api-tokens';
     stdout.writeln(
-      '==> CF_API_TOKEN Worker Secret is required for Secrets Store management.',
+      '==> Worker secret CF_API_TOKEN (Cloudflare API Token, not the store id)',
     );
+    final opened = await openInBrowser(apiTokensUrl);
+    if (opened) {
+      stdout.writeln('    Opened $apiTokensUrl in your browser.');
+    } else {
+      stdout.writeln('    Open $apiTokensUrl in your browser.');
+    }
+    stdout.writeln('    Create Token → custom token with:');
+    stdout.writeln('      Account → Secrets Store → Edit');
     stdout.writeln(
-      '    Create an API Token at https://dash.cloudflare.com/profile/api-tokens',
+      '    Paste that token below (not the Secrets Store id).',
     );
-    stdout.writeln("    with 'Account > Secrets Store > Edit' permission.");
     await runInherit('npx', [
       'wrangler',
       'secret',
@@ -783,13 +916,11 @@ Cloudflare setup creates/configures D1, R2, Worker, and Pages resources.
 
 Required before running setup:
 
-  cd worker
-  npm install
   npx wrangler login
-  npx wrangler whoami
 
-Also install Dart, Flutter, Node.js/npm. Jaspr CLI is installed automatically
-when missing.
+Also install Dart, Flutter, Node.js/npm (and run npm install in worker/).
+Jaspr CLI is installed automatically when missing. Setup aborts early if you
+are not logged in; log in, then re-run setup.
 
 Run setup:
 
