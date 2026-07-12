@@ -92,28 +92,39 @@ export async function generateFollowUpFromAnswers(
     answersSummary: string;
     deviceContext: string;
     recentResponsesSummary: string;
+    /** Optional admin-authored GenUI guidance included in the user prompt. */
+    followUpPrompt?: string | null;
   },
 ): Promise<FollowUpGenerationResult> {
   const { provider, apiKey } = await requireAiProvider(env);
   const model = resolveModelId(env, provider);
+  const adminPrompt = input.followUpPrompt?.trim() ?? '';
+  const userSections = [
+    `Survey title: ${input.surveyTitle}`,
+    `Respondent locale: ${input.locale}`,
+    '',
+    'Already known device / app metadata for this submission (do NOT ask for any of this again):',
+    input.deviceContext,
+    '',
+    'Current response answers:',
+    input.answersSummary,
+    '',
+    'This respondent\'s prior responses on this survey within the last 30 days (context only; do not re-ask these):',
+    input.recentResponsesSummary,
+  ];
+  if (adminPrompt.length > 0) {
+    userSections.push(
+      '',
+      'Survey-specific GenUI / follow-up instructions from the administrator (incorporate these when deciding questions):',
+      adminPrompt,
+    );
+  }
   const text = await generateStructuredJson({
     provider,
     apiKey,
     model,
     system: followUpSystemInstruction(input.locale),
-    user: [
-      `Survey title: ${input.surveyTitle}`,
-      `Respondent locale: ${input.locale}`,
-      '',
-      'Already known device / app metadata for this submission (do NOT ask for any of this again):',
-      input.deviceContext,
-      '',
-      'Current response answers:',
-      input.answersSummary,
-      '',
-      'This respondent\'s prior responses on this survey within the last 30 days (context only; do not re-ask these):',
-      input.recentResponsesSummary,
-    ].join('\n'),
+    user: userSections.join('\n'),
     schemaName: 'follow_up_interview',
     schema: followUpSchema(),
     maxTokens: 2048,

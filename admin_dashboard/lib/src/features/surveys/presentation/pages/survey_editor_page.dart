@@ -368,6 +368,7 @@ class SurveyEditorPage extends RearchConsumer {
           required LocalizedText titleTranslations,
           required LocalizedText descriptionTranslations,
           required bool followUpEnabled,
+          required String? followUpPrompt,
           required bool captchaEnabled,
         }) async {
           if (isNewSurvey) {
@@ -377,6 +378,7 @@ class SurveyEditorPage extends RearchConsumer {
               titleTranslations: titleTranslations,
               descriptionTranslations: descriptionTranslations,
               followUpEnabled: followUpEnabled,
+              followUpPrompt: followUpPrompt,
               captchaEnabled: captchaEnabled,
             );
             if (created != null && context.mounted) {
@@ -391,6 +393,8 @@ class SurveyEditorPage extends RearchConsumer {
               titleTranslations: titleTranslations,
               descriptionTranslations: descriptionTranslations,
               followUpEnabled: followUpEnabled,
+              followUpPrompt: followUpPrompt,
+              clearFollowUpPrompt: followUpPrompt == null,
               captchaEnabled: captchaEnabled,
               updatedAt: DateTime.now(),
             );

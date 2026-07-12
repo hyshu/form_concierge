@@ -262,6 +262,9 @@ class Survey {
   final SurveyStatus status;
   final bool webEnabled;
   final bool followUpEnabled;
+
+  /// Admin-authored instructions included in GenUI follow-up generation.
+  final String? followUpPrompt;
   final bool captchaEnabled;
   final String? createdByUserId;
   final DateTime createdAt;
@@ -278,6 +281,7 @@ class Survey {
     this.status = SurveyStatus.draft,
     this.webEnabled = true,
     this.followUpEnabled = false,
+    this.followUpPrompt,
     this.captchaEnabled = true,
     this.createdByUserId,
     required this.createdAt,
@@ -297,6 +301,7 @@ class Survey {
     status: _enum(SurveyStatus.values, json['status']),
     webEnabled: _bool(json['webEnabled']),
     followUpEnabled: _bool(json['followUpEnabled'] ?? false),
+    followUpPrompt: _optionalString(json['followUpPrompt']),
     captchaEnabled: _bool(json['captchaEnabled'] ?? true),
     createdByUserId: _optionalString(json['createdByUserId']),
     createdAt: _date(json['createdAt']),
@@ -305,22 +310,26 @@ class Survey {
     endsAt: _optionalDate(json['endsAt']),
   );
 
-  Map<String, dynamic> toJson() => _withoutNulls({
-    'id': id,
-    'projectId': projectId,
-    'slug': slug,
-    'titleTranslations': titleTranslations.toJson(),
-    'descriptionTranslations': descriptionTranslations.toJson(),
-    'status': _enumName(status),
-    'webEnabled': webEnabled,
-    'followUpEnabled': followUpEnabled,
-    'captchaEnabled': captchaEnabled,
-    'createdByUserId': createdByUserId,
-    'createdAt': createdAt.toIso8601String(),
-    'updatedAt': updatedAt.toIso8601String(),
-    'startsAt': startsAt?.toIso8601String(),
-    'endsAt': endsAt?.toIso8601String(),
-  });
+  Map<String, dynamic> toJson() => {
+    ..._withoutNulls({
+      'id': id,
+      'projectId': projectId,
+      'slug': slug,
+      'titleTranslations': titleTranslations.toJson(),
+      'descriptionTranslations': descriptionTranslations.toJson(),
+      'status': _enumName(status),
+      'webEnabled': webEnabled,
+      'followUpEnabled': followUpEnabled,
+      'captchaEnabled': captchaEnabled,
+      'createdByUserId': createdByUserId,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+      'startsAt': startsAt?.toIso8601String(),
+      'endsAt': endsAt?.toIso8601String(),
+    }),
+    // Empty string clears the field server-side (null would be dropped).
+    'followUpPrompt': followUpPrompt ?? '',
+  };
 
   Survey copyWith({
     int? id,
@@ -331,6 +340,8 @@ class Survey {
     SurveyStatus? status,
     bool? webEnabled,
     bool? followUpEnabled,
+    String? followUpPrompt,
+    bool clearFollowUpPrompt = false,
     bool? captchaEnabled,
     String? createdByUserId,
     DateTime? createdAt,
@@ -347,6 +358,9 @@ class Survey {
     status: status ?? this.status,
     webEnabled: webEnabled ?? this.webEnabled,
     followUpEnabled: followUpEnabled ?? this.followUpEnabled,
+    followUpPrompt: clearFollowUpPrompt
+        ? null
+        : (followUpPrompt ?? this.followUpPrompt),
     captchaEnabled: captchaEnabled ?? this.captchaEnabled,
     createdByUserId: createdByUserId ?? this.createdByUserId,
     createdAt: createdAt ?? this.createdAt,

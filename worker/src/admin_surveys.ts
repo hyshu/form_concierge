@@ -12,6 +12,7 @@ import {
   nowIso,
   optionalBoolean,
   optionalIsoDateTime,
+  optionalLimitedString,
   readJson,
   requireObject,
   requireSlug,
@@ -77,6 +78,9 @@ async function insertSurvey(
   const followUpEnabled = Object.hasOwn(body, 'followUpEnabled')
     ? boolToInt(requiredBoolean(body.followUpEnabled, 'followUpEnabled'))
     : 0;
+  const followUpPrompt = Object.hasOwn(body, 'followUpPrompt')
+    ? optionalFollowUpPrompt(body.followUpPrompt)
+    : null;
   const captchaEnabled = Object.hasOwn(body, 'captchaEnabled')
     ? boolToInt(requiredBoolean(body.captchaEnabled, 'captchaEnabled'))
     : 1;
@@ -92,8 +96,8 @@ async function insertSurvey(
       const row = await db.prepare(
         `INSERT INTO surveys
            (project_id, slug, title_translations, description_translations, status, web_enabled, follow_up_enabled,
-            captcha_enabled, created_by_admin_id, created_at, updated_at, starts_at, ends_at)
-         VALUES (?, ?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?, ?)
+            follow_up_prompt, captcha_enabled, created_by_admin_id, created_at, updated_at, starts_at, ends_at)
+         VALUES (?, ?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?, ?, ?)
          RETURNING *`,
       )
         .bind(
@@ -103,6 +107,7 @@ async function insertSurvey(
           descriptionJson,
           webEnabled,
           followUpEnabled,
+          followUpPrompt,
           captchaEnabled,
           admin.id,
           now,
@@ -171,7 +176,7 @@ export async function updateSurvey(request: Request, env: Env, surveyId: number)
   const row = await env.DB.prepare(
     `UPDATE surveys
      SET slug = ?, title_translations = ?, description_translations = ?,
-         web_enabled = ?, follow_up_enabled = ?, captcha_enabled = ?,
+         web_enabled = ?, follow_up_enabled = ?, follow_up_prompt = ?, captcha_enabled = ?,
          starts_at = ?, ends_at = ?, updated_at = ?
      WHERE id = ?
      RETURNING *`,
@@ -183,6 +188,9 @@ export async function updateSurvey(request: Request, env: Env, surveyId: number)
     Object.hasOwn(body, 'followUpEnabled')
       ? boolToInt(requiredBoolean(body.followUpEnabled, 'followUpEnabled'))
       : existing.follow_up_enabled,
+    Object.hasOwn(body, 'followUpPrompt')
+      ? optionalFollowUpPrompt(body.followUpPrompt)
+      : existing.follow_up_prompt,
     Object.hasOwn(body, 'captchaEnabled')
       ? boolToInt(requiredBoolean(body.captchaEnabled, 'captchaEnabled'))
       : existing.captcha_enabled,
@@ -192,6 +200,12 @@ export async function updateSurvey(request: Request, env: Env, surveyId: number)
     surveyId,
   ).first<SurveyRow>();
   return json(surveyToJson(requiredRow(row, 'Survey')));
+}
+
+const FOLLOW_UP_PROMPT_MAX_LENGTH = 4000;
+
+function optionalFollowUpPrompt(value: unknown): string | null {
+  return optionalLimitedString(value, 'followUpPrompt', FOLLOW_UP_PROMPT_MAX_LENGTH);
 }
 
 function assertSurveySchedule(startsAt: string | null, endsAt: string | null): void {

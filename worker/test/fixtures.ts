@@ -118,6 +118,7 @@ export function surveyRow(overrides: Partial<SurveyRow> = {}): SurveyRow {
     status: 'draft',
     web_enabled: 1,
     follow_up_enabled: 0,
+    follow_up_prompt: null,
     captcha_enabled: 1,
     auth_requirement: 'anonymous',
     created_by_admin_id: 'admin-1',

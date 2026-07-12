@@ -370,6 +370,11 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Flutter follow-up interview": "Flutter-Folgeinterview",
     "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.":
         "Generieren Sie nach dem Hauptformular optional adaptive Folgefragen in Flutter-Apps. Springt direkt zur Fertigstellung, wenn keine benötigt wird.",
+    "GenUI prompt (optional)": "GenUI-Prompt (optional)",
+    "Extra instructions included when generating follow-up questions for Flutter (GenUI).":
+        "Zusätzliche Anweisungen für die Generierung von Folgefragen in Flutter (GenUI).",
+    "e.g. Prefer questions about product quality; avoid asking for contact info.":
+        "z. B. Fragen zur Produktqualität bevorzugen; keine Kontaktdaten erfragen.",
     "CAPTCHA verification": "CAPTCHA-Verifizierung",
     "Require Turnstile CAPTCHA on the web form to prevent bot submissions.":
         "Turnstile-CAPTCHA im Webformular aktivieren, um Bot-Einsendungen zu verhindern.",
@@ -598,6 +603,11 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Flutter follow-up interview": "Flutter follow-up interview",
     "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.":
         "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.",
+    "GenUI prompt (optional)": "GenUI prompt (optional)",
+    "Extra instructions included when generating follow-up questions for Flutter (GenUI).":
+        "Extra instructions included when generating follow-up questions for Flutter (GenUI).",
+    "e.g. Prefer questions about product quality; avoid asking for contact info.":
+        "e.g. Prefer questions about product quality; avoid asking for contact info.",
     "CAPTCHA verification": "CAPTCHA verification",
     "Require Turnstile CAPTCHA on the web form to prevent bot submissions.":
         "Require Turnstile CAPTCHA on the web form to prevent bot submissions.",
@@ -1264,6 +1274,11 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Flutter follow-up interview": "Entrevista de seguimiento de Flutter",
     "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.":
         "Después del formulario principal, opcionalmente genera preguntas de seguimiento adaptativas en las aplicaciones Flutter. Salta directamente hasta el final cuando no se necesita ninguno.",
+    "GenUI prompt (optional)": "Prompt de GenUI (opcional)",
+    "Extra instructions included when generating follow-up questions for Flutter (GenUI).":
+        "Instrucciones adicionales incluidas al generar preguntas de seguimiento en Flutter (GenUI).",
+    "e.g. Prefer questions about product quality; avoid asking for contact info.":
+        "p. ej. Preferir preguntas sobre calidad del producto; no pedir datos de contacto.",
     "CAPTCHA verification": "Verificación CAPTCHA",
     "Require Turnstile CAPTCHA on the web form to prevent bot submissions.":
         "Requerir CAPTCHA de Turnstile en el formulario web para prevenir envíos de bots.",
@@ -1700,6 +1715,11 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Flutter follow-up interview": "Entretien de suivi de Flutter",
     "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.":
         "Après le formulaire principal, générez éventuellement des questions de suivi adaptatives dans les applications Flutter. Passe directement à la fin lorsqu'aucun n'est nécessaire.",
+    "GenUI prompt (optional)": "Invite GenUI (facultatif)",
+    "Extra instructions included when generating follow-up questions for Flutter (GenUI).":
+        "Instructions supplémentaires incluses lors de la génération des questions de suivi Flutter (GenUI).",
+    "e.g. Prefer questions about product quality; avoid asking for contact info.":
+        "ex. Préférer les questions sur la qualité produit ; ne pas demander de coordonnées.",
     "CAPTCHA verification": "Vérification CAPTCHA",
     "Require Turnstile CAPTCHA on the web form to prevent bot submissions.":
         "Exiger un CAPTCHA Turnstile sur le formulaire web pour empêcher les soumissions de bots.",
@@ -2124,6 +2144,11 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Flutter follow-up interview": "Intervista di follow-up su Flutter",
     "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.":
         "Dopo il modulo principale, puoi facoltativamente generare domande di follow-up adattive nelle app Flutter. Passa direttamente al completamento quando non sono necessari.",
+    "GenUI prompt (optional)": "Prompt GenUI (facoltativo)",
+    "Extra instructions included when generating follow-up questions for Flutter (GenUI).":
+        "Istruzioni aggiuntive incluse nella generazione delle domande di follow-up Flutter (GenUI).",
+    "e.g. Prefer questions about product quality; avoid asking for contact info.":
+        "es. Preferire domande sulla qualità del prodotto; non chiedere contatti.",
     "CAPTCHA verification": "Verifica CAPTCHA",
     "Require Turnstile CAPTCHA on the web form to prevent bot submissions.":
         "Richiedere il CAPTCHA Turnstile nel modulo web per prevenire invii da bot.",
@@ -2282,6 +2307,11 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Flutter follow-up interview": "Flutter 追加インタビュー",
     "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.":
         "本編の回答後、Flutter アプリのみ追加の適応型質問を生成します。不要な場合はそのまま完了します。",
+    "GenUI prompt (optional)": "GenUI プロンプト (任意)",
+    "Extra instructions included when generating follow-up questions for Flutter (GenUI).":
+        "Flutter の追加インタビュー (GenUI) 生成時にプロンプトへ含める追加指示です。",
+    "e.g. Prefer questions about product quality; avoid asking for contact info.":
+        "例: 製品品質に関する質問を優先。連絡先の入力は求めない。",
     "CAPTCHA verification": "CAPTCHA 認証",
     "Require Turnstile CAPTCHA on the web form to prevent bot submissions.":
         "ボットによる送信を防ぐため、Web フォームに Turnstile CAPTCHA を要求します。",
@@ -2840,6 +2870,11 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Flutter follow-up interview": "Flutter 후속 인터뷰",
     "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.":
         "기본 양식 후에 선택적으로 Flutter 앱에서 적응형 후속 질문을 생성하세요. 필요하지 않은 경우 바로 완료로 건너뜁니다.",
+    "GenUI prompt (optional)": "GenUI 프롬프트(선택 사항)",
+    "Extra instructions included when generating follow-up questions for Flutter (GenUI).":
+        "Flutter 후속 질문(GenUI) 생성 시 프롬프트에 포함되는 추가 지시입니다.",
+    "e.g. Prefer questions about product quality; avoid asking for contact info.":
+        "예: 제품 품질 관련 질문을 우선하고, 연락처 요청은 피하세요.",
     "CAPTCHA verification": "CAPTCHA 인증",
     "Require Turnstile CAPTCHA on the web form to prevent bot submissions.":
         "봇 제출을 방지하기 위해 웹 양식에 Turnstile CAPTCHA를 요구합니다.",
@@ -3297,6 +3332,11 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Flutter follow-up interview": "สัมภาษณ์ติดตามผล Flutter",
     "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.":
         "หลังจากแบบฟอร์มหลัก ให้เลือกสร้างคำถามติดตามผลแบบปรับเปลี่ยนได้ในแอป Flutter ข้ามไปจนจบเมื่อไม่จำเป็น",
+    "GenUI prompt (optional)": "พรอมต์ GenUI (ไม่บังคับ)",
+    "Extra instructions included when generating follow-up questions for Flutter (GenUI).":
+        "คำสั่งเพิ่มเติมที่ใส่ในพรอมต์เมื่อสร้างคำถามติดตามผล Flutter (GenUI)",
+    "e.g. Prefer questions about product quality; avoid asking for contact info.":
+        "เช่น เน้นคำถามคุณภาพสินค้า อย่าขอข้อมูลติดต่อ",
     "CAPTCHA verification": "การยืนยัน CAPTCHA",
     "Require Turnstile CAPTCHA on the web form to prevent bot submissions.":
         "กำหนดให้ใช้ Turnstile CAPTCHA บนแบบฟอร์มเว็บเพื่อป้องกันการส่งจากบอท",
@@ -3710,6 +3750,11 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Flutter follow-up interview": "Flutter takip röportajı",
     "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.":
         "Ana formdan sonra isteğe bağlı olarak Flutter uygulamalarında uyarlanabilir takip soruları oluşturun. Hiçbirine ihtiyaç duyulmadığında doğrudan tamamlamaya atlar.",
+    "GenUI prompt (optional)": "GenUI istemi (isteğe bağlı)",
+    "Extra instructions included when generating follow-up questions for Flutter (GenUI).":
+        "Flutter takip soruları (GenUI) üretilirken istemde yer alan ek yönergeler.",
+    "e.g. Prefer questions about product quality; avoid asking for contact info.":
+        "örn. Ürün kalitesi sorularını tercih edin; iletişim bilgisi istemeyin.",
     "CAPTCHA verification": "CAPTCHA doğrulaması",
     "Require Turnstile CAPTCHA on the web form to prevent bot submissions.":
         "Bot gönderimlerini önlemek için web formunda Turnstile CAPTCHA gerektirin.",
@@ -4032,6 +4077,11 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Flutter follow-up interview": "Flutter后续采访",
     "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.":
         "在主表单之后，可以选择在 Flutter 应用程序中生成自适应后续问题。当不需要时直接跳到完成。",
+    "GenUI prompt (optional)": "GenUI 提示词（可选）",
+    "Extra instructions included when generating follow-up questions for Flutter (GenUI).":
+        "生成 Flutter 跟进问题（GenUI）时写入提示词的额外说明。",
+    "e.g. Prefer questions about product quality; avoid asking for contact info.":
+        "例如：优先询问产品质量；不要索要联系方式。",
     "CAPTCHA verification": "CAPTCHA 验证",
     "Require Turnstile CAPTCHA on the web form to prevent bot submissions.":
         "在网页表单上要求 Turnstile CAPTCHA 以防止机器人提交。",
@@ -4405,6 +4455,11 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Flutter follow-up interview": "Flutter後續採訪",
     "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.":
         "在主表單之後，可以選擇在 Flutter 應用程式中產生自適應後續問題。當不需要時直接跳到完成。",
+    "GenUI prompt (optional)": "GenUI 提示詞（可選）",
+    "Extra instructions included when generating follow-up questions for Flutter (GenUI).":
+        "產生 Flutter 跟進問題（GenUI）時寫入提示詞的額外說明。",
+    "e.g. Prefer questions about product quality; avoid asking for contact info.":
+        "例如：優先詢問產品品質；不要索取聯絡方式。",
     "CAPTCHA verification": "CAPTCHA 驗證",
     "Require Turnstile CAPTCHA on the web form to prevent bot submissions.":
         "在網頁表單上要求 Turnstile CAPTCHA 以防止機器人提交。",

@@ -44,6 +44,7 @@ void main() {
                     required LocalizedText titleTranslations,
                     required LocalizedText descriptionTranslations,
                     required bool followUpEnabled,
+                    required String? followUpPrompt,
                     required bool captchaEnabled,
                   }) async {
                     saveWasCalled = true;
@@ -164,7 +165,11 @@ void main() {
       controllers.dispose();
     });
 
-    Widget buildSubject({bool isSaving = false, String? error}) {
+    Widget buildSubject({
+      bool isSaving = false,
+      String? error,
+      bool aiGenerationEnabled = false,
+    }) {
       return localizedTestApp(
         home: Scaffold(
           body: SingleChildScrollView(
@@ -173,12 +178,14 @@ void main() {
               isSaving: isSaving,
               error: error,
               primaryLocale: defaultFormContentLocale,
+              aiGenerationEnabled: aiGenerationEnabled,
               onSave:
                   ({
                     required String slug,
                     required LocalizedText titleTranslations,
                     required LocalizedText descriptionTranslations,
                     required bool followUpEnabled,
+                    required String? followUpPrompt,
                     required bool captchaEnabled,
                   }) async {},
             ),
@@ -236,6 +243,37 @@ void main() {
       expect(find.text('Other languages'), findsWidgets);
       expect(find.text('Title (日本語)'), findsOneWidget);
     });
+
+    testWidgets(
+      'shows collapsed GenUI prompt only when follow-up interview is enabled',
+      (tester) async {
+        await tester.pumpWidget(buildSubject(aiGenerationEnabled: true));
+
+        expect(find.text('Flutter follow-up interview'), findsOneWidget);
+        expect(find.text('GenUI prompt (optional)'), findsNothing);
+
+        await tester.tap(find.text('Flutter follow-up interview'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('GenUI prompt (optional)'), findsOneWidget);
+        // ExpansionTile starts collapsed — textarea hint not visible until expanded.
+        expect(
+          find.text(
+            'e.g. Prefer questions about product quality; avoid asking for contact info.',
+          ),
+          findsNothing,
+        );
+
+        await tester.tap(find.text('GenUI prompt (optional)'));
+        await tester.pumpAndSettle();
+        expect(
+          find.text(
+            'e.g. Prefer questions about product quality; avoid asking for contact info.',
+          ),
+          findsOneWidget,
+        );
+      },
+    );
   });
 
   group('SurveyFormControllers', () {
@@ -290,6 +328,7 @@ SurveyFormControllers _controllers() => SurveyFormControllers(
     for (final locale in formContentLocaleCodes)
       locale: TextEditingController(),
   },
+  followUpPrompt: TextEditingController(),
 );
 
 void _fillTitles(SurveyFormControllers controllers, String value) {

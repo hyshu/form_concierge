@@ -9,17 +9,20 @@ class SurveyFormControllers {
   final TextEditingController slug;
   final Map<String, TextEditingController> titleTranslations;
   final Map<String, TextEditingController> descriptionTranslations;
+  final TextEditingController followUpPrompt;
 
   SurveyFormControllers({
     required this.slug,
     required this.titleTranslations,
     required this.descriptionTranslations,
+    required this.followUpPrompt,
   });
 
   void dispose() {
     slug.dispose();
     disposeLocalizedTextControllers(titleTranslations);
     disposeLocalizedTextControllers(descriptionTranslations);
+    followUpPrompt.dispose();
   }
 
   void populateFrom(Survey survey) {
@@ -32,6 +35,7 @@ class SurveyFormControllers {
       descriptionTranslations,
       survey.descriptionTranslations,
     );
+    followUpPrompt.text = survey.followUpPrompt ?? '';
   }
 
   LocalizedText titleValue() => localizedTextFromControllers(titleTranslations);
@@ -47,6 +51,7 @@ SurveyFormControllers surveyFormControllersCapsule(CapsuleHandle use) {
       slug: TextEditingController(),
       titleTranslations: createLocalizedTextControllers(),
       descriptionTranslations: createLocalizedTextControllers(),
+      followUpPrompt: TextEditingController(),
     ),
   );
 

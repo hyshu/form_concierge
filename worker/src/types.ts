@@ -37,6 +37,8 @@ export type SurveyRow = {
   status: string;
   web_enabled: number;
   follow_up_enabled: number;
+  /** Admin-authored GenUI / follow-up generation instructions (nullable). */
+  follow_up_prompt: string | null;
   captcha_enabled: number;
   auth_requirement: string;
   created_by_admin_id: string | null;

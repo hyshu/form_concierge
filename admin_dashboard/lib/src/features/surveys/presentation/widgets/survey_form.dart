@@ -37,6 +37,7 @@ class SurveyForm extends StatefulWidget {
     required LocalizedText titleTranslations,
     required LocalizedText descriptionTranslations,
     required bool followUpEnabled,
+    required String? followUpPrompt,
     required bool captchaEnabled,
   })
   onSave;
@@ -194,6 +195,35 @@ class SurveyFormWidgetState extends State<SurveyForm> {
                       widget.onFollowUpEnabledChanged?.call(value);
                     },
             ),
+            if (_followUpEnabled) ...[
+              const SizedBox(height: 8),
+              ExpansionTile(
+                initiallyExpanded: false,
+                tilePadding: EdgeInsets.zero,
+                childrenPadding: const EdgeInsets.only(bottom: 8),
+                title: Text(
+                  context.tr('GenUI prompt (optional)'),
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                subtitle: Text(
+                  context.tr(
+                    'Extra instructions included when generating follow-up questions for Flutter (GenUI).',
+                  ),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                children: [
+                  HuxTextarea(
+                    controller: widget.controllers.followUpPrompt,
+                    enabled: !widget.isSaving,
+                    minLines: 4,
+                    maxLines: 8,
+                    hint: context.tr(
+                      'e.g. Prefer questions about product quality; avoid asking for contact info.',
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
           const SizedBox(height: 16),
           SwitchListTile(
@@ -242,6 +272,7 @@ class SurveyFormWidgetState extends State<SurveyForm> {
   Future<bool> submit() async {
     _fillSlugFromTitleIfEmpty();
     if (!(_formKey.currentState?.validate() ?? false)) return false;
+    final prompt = widget.controllers.followUpPrompt.text.trim();
     await widget.onSave(
       slug: widget.controllers.slug.text.trim(),
       titleTranslations: localizedTextFromControllers(
@@ -253,6 +284,7 @@ class SurveyFormWidgetState extends State<SurveyForm> {
         locales: widget.locales,
       ),
       followUpEnabled: _followUpEnabled,
+      followUpPrompt: prompt.isEmpty ? null : prompt,
       captchaEnabled: _captchaEnabled,
     );
     return true;

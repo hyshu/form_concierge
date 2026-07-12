@@ -116,6 +116,7 @@ export async function generateFollowUp(
       answersSummary,
       deviceContext: formatDeviceContext(response),
       recentResponsesSummary,
+      followUpPrompt: survey.follow_up_prompt,
     });
 
     if (!generated.needed || generated.items.length === 0) {
