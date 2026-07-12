@@ -1,0 +1,69 @@
+name: Release template
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    name: Validate release source
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.44.2"
+          cache: true
+
+      - name: Add Dart pub cache to PATH
+        run: echo "$HOME/.pub-cache/bin" >> "$GITHUB_PATH"
+
+      - name: Run static checks and unit tests
+        run: bash tool/ci/static_checks.sh
+
+  template:
+    name: Build release template
+    needs: validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build versioned template archive
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          version="${TAG#v}"
+          asset="form-concierge-template-${version}.tar.gz"
+          git archive --format=tar.gz --output="$asset" "$GITHUB_SHA" -- \
+            worker admin_dashboard web client tool/cloudflare LICENSE
+          sha256sum "$asset" > "${asset}.sha256"
+
+      - name: Create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          version="${TAG#v}"
+          asset="form-concierge-template-${version}.tar.gz"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$asset" "${asset}.sha256" --clobber
+          else
+            gh release create "$TAG" "$asset" "${asset}.sha256" \
+              --verify-tag --generate-notes
+          fi

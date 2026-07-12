@@ -41,12 +41,12 @@ fi
 )
 
 (
-  cd examples/flutter_mobile_simple
+  cd widget/examples/flutter_mobile_simple
   flutter pub get
 )
 
 (
-  cd examples/flutter_mobile_full
+  cd widget/examples/flutter_mobile_full
   flutter pub get
 )
 
@@ -58,15 +58,17 @@ git diff --exit-code -- \
 dart format --set-exit-if-changed \
   admin_dashboard/lib \
   admin_dashboard/test \
+  client/example \
   client/lib \
   client/test \
   e2e/flutter_embedded_form/lib \
   e2e/flutter_embedded_form/integration_test \
-  examples/flutter_mobile_simple/lib \
-  examples/flutter_mobile_simple/test \
-  examples/flutter_mobile_full/lib \
-  examples/flutter_mobile_full/test \
+  widget/examples/flutter_mobile_simple/lib \
+  widget/examples/flutter_mobile_simple/test \
+  widget/examples/flutter_mobile_full/lib \
+  widget/examples/flutter_mobile_full/test \
   web/lib \
+  widget/example \
   widget/lib \
   widget/test \
   cli/bin \
@@ -131,14 +133,14 @@ mkdir -p .tmp
 )
 
 (
-  cd examples/flutter_mobile_simple
+  cd widget/examples/flutter_mobile_simple
   flutter pub get
   flutter analyze
   flutter test
 )
 
 (
-  cd examples/flutter_mobile_full
+  cd widget/examples/flutter_mobile_full
   flutter pub get
   flutter analyze
   flutter test
