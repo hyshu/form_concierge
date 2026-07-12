@@ -14,6 +14,7 @@ class QuestionFormDialog extends StatefulWidget {
   final String primaryLocale;
   final Iterable<String> locales;
   final bool aiTranslateEnabled;
+  final bool canChangeType;
   final SurveyLocalizedTranslate? onTranslate;
   final void Function({
     required LocalizedText textTranslations,
@@ -34,6 +35,7 @@ class QuestionFormDialog extends StatefulWidget {
     this.primaryLocale = defaultFormContentLocale,
     this.locales = formContentLocaleCodes,
     this.aiTranslateEnabled = false,
+    this.canChangeType = true,
     this.onTranslate,
     required this.onSave,
   });
@@ -44,6 +46,7 @@ class QuestionFormDialog extends StatefulWidget {
     String primaryLocale = defaultFormContentLocale,
     Iterable<String> locales = formContentLocaleCodes,
     bool aiTranslateEnabled = false,
+    bool canChangeType = true,
     SurveyLocalizedTranslate? onTranslate,
     required void Function({
       required LocalizedText textTranslations,
@@ -65,6 +68,7 @@ class QuestionFormDialog extends StatefulWidget {
         primaryLocale: primaryLocale,
         locales: locales,
         aiTranslateEnabled: aiTranslateEnabled,
+        canChangeType: canChangeType,
         onTranslate: onTranslate,
         onSave: onSave,
       ),
@@ -163,26 +167,63 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
                   const SizedBox(height: 16),
                   _SectionTitle(text: context.tr('Question Type')),
                   const SizedBox(height: 8),
-                  SizedBox(
-                    width: double.infinity,
-                    child: HuxDropdown<QuestionType>(
-                      value: _type,
-                      useItemWidgetAsValue: true,
-                      items: QuestionType.values.map((type) {
-                        return HuxDropdownItem(
-                          value: type,
-                          child: Row(
-                            children: [
-                              Icon(type.icon, size: 18),
-                              const SizedBox(width: 8),
-                              Text(context.tr(type.label)),
-                            ],
+                  if (widget.canChangeType)
+                    SizedBox(
+                      width: double.infinity,
+                      child: HuxDropdown<QuestionType>(
+                        value: _type,
+                        useItemWidgetAsValue: true,
+                        items: QuestionType.values.map((type) {
+                          return HuxDropdownItem(
+                            value: type,
+                            child: Row(
+                              children: [
+                                Icon(type.icon, size: 18),
+                                const SizedBox(width: 8),
+                                Text(context.tr(type.label)),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (value) => setState(() => _type = value),
+                      ),
+                    )
+                  else ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 14,
+                      ),
+                      decoration: BoxDecoration(
+                        color: HuxTokens.surfaceSecondary(context),
+                        border: Border.all(
+                          color: HuxTokens.borderPrimary(context),
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            _type.icon,
+                            size: 18,
+                            color: HuxTokens.textSecondary(context),
                           ),
-                        );
-                      }).toList(),
-                      onChanged: (value) => setState(() => _type = value),
+                          const SizedBox(width: 8),
+                          Text(context.tr(_type.label)),
+                        ],
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 6),
+                    Text(
+                      context.tr(
+                        'Question type cannot be changed after publishing.',
+                      ),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: HuxTokens.textSecondary(context),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   if (_type.usesTextAnswer) ...[
                     LocalizedTextFieldGroup(

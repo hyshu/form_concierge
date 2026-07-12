@@ -120,6 +120,8 @@
   "Survey not found": "Anket bulunamadı",
   "Back to Dashboard": "Panele dön",
   "This survey is archived. You cannot edit the questions.": "Bu anket arşivlendi. Soruları düzenleyemezsiniz.",
+  "This survey is published. Stop publishing before editing its questions.": "Bu anket yayında. Soruları düzenlemeden önce yayını durdurun.",
+  "Question type cannot be changed after publishing.": "Yayınlandıktan sonra soru türü değiştirilemez.",
   "Publish Survey": "Anketi yayınla",
   "Publish survey confirmation": "Bu anketi yayınlamak istediğinizden emin misiniz?\n\nYayınlandıktan sonra soruları düzenleyemezsiniz.",
   "Title": "Başlık",

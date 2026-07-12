@@ -120,6 +120,8 @@
   "Survey not found": "ไม่พบแบบสำรวจ",
   "Back to Dashboard": "กลับไปแดชบอร์ด",
   "This survey is archived. You cannot edit the questions.": "แบบสำรวจนี้ถูกเก็บถาวรแล้ว ไม่สามารถแก้ไขคำถามได้",
+  "This survey is published. Stop publishing before editing its questions.": "แบบสำรวจนี้กำลังเผยแพร่ โปรดหยุดเผยแพร่ก่อนแก้ไขคำถาม",
+  "Question type cannot be changed after publishing.": "ไม่สามารถเปลี่ยนประเภทคำถามหลังเผยแพร่ได้",
   "Publish Survey": "เผยแพร่แบบสำรวจ",
   "Publish survey confirmation": "ต้องการเผยแพร่แบบสำรวจนี้ใช่หรือไม่?\n\nเมื่อเผยแพร่แล้วจะไม่สามารถแก้ไขคำถามได้",
   "Title": "ชื่อ",

@@ -118,19 +118,17 @@ class QuestionListTile extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (enabled) ...[
-                  HuxIconActionButton(
-                    tooltip: context.tr('Edit question'),
-                    onPressed: onEdit,
-                    icon: LucideIcons.pencil,
-                  ),
-                  HuxIconActionButton(
-                    tooltip: context.tr('Delete question'),
-                    onPressed: onDelete,
-                    icon: LucideIcons.trash2,
-                    destructive: true,
-                  ),
-                ],
+                HuxIconActionButton(
+                  tooltip: context.tr('Edit question'),
+                  onPressed: enabled ? onEdit : null,
+                  icon: LucideIcons.pencil,
+                ),
+                HuxIconActionButton(
+                  tooltip: context.tr('Delete question'),
+                  onPressed: enabled ? onDelete : null,
+                  icon: LucideIcons.trash2,
+                  destructive: true,
+                ),
               ],
             ),
             if (usesChoices) ...[

@@ -126,6 +126,8 @@
   "Survey not found": "Survey not found",
   "Back to Dashboard": "Back to Dashboard",
   "This survey is archived. You cannot edit the questions.": "This survey is archived. You cannot edit the questions.",
+  "This survey is published. Stop publishing before editing its questions.": "This survey is published. Stop publishing before editing its questions.",
+  "Question type cannot be changed after publishing.": "Question type cannot be changed after publishing.",
   "Publish Survey": "Publish Survey",
   "Publish survey confirmation": "Are you sure you want to publish this survey?\n\nOnce published, you will not be able to edit the questions.",
   "Title": "Title",

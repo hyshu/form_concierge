@@ -20,17 +20,23 @@ class HuxIconActionButton extends StatelessWidget {
   final HuxButtonSize size;
 
   @override
-  Widget build(context) => Tooltip(
-    message: tooltip,
-    child: HuxButton(
-      onPressed: onPressed,
-      variant: HuxButtonVariant.ghost,
-      size: size,
-      icon: icon,
-      textColor:
-          textColor ??
-          (destructive ? HuxTokens.textDestructive(context) : null),
-      child: const SizedBox(width: 0),
+  Widget build(context) => MouseRegion(
+    cursor: onPressed == null
+        ? SystemMouseCursors.forbidden
+        : SystemMouseCursors.click,
+    child: Tooltip(
+      message: tooltip,
+      child: HuxButton(
+        onPressed: onPressed,
+        variant: HuxButtonVariant.ghost,
+        size: size,
+        icon: icon,
+        textColor: onPressed == null
+            ? HuxTokens.textDisabled(context)
+            : textColor ??
+                  (destructive ? HuxTokens.textDestructive(context) : null),
+        child: const SizedBox(width: 0),
+      ),
     ),
   );
 }

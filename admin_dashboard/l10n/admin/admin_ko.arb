@@ -119,6 +119,8 @@
   "Survey not found": "설문을 찾을 수 없습니다",
   "Back to Dashboard": "대시보드로 돌아가기",
   "This survey is archived. You cannot edit the questions.": "이 설문은 보관되었습니다. 질문을 편집할 수 없습니다.",
+  "This survey is published. Stop publishing before editing its questions.": "이 설문은 게시 중입니다. 질문을 편집하려면 게시를 중지하세요.",
+  "Question type cannot be changed after publishing.": "게시 후에는 질문 유형을 변경할 수 없습니다.",
   "Publish Survey": "설문 게시",
   "Publish survey confirmation": "이 설문을 게시할까요?\n\n게시 후에는 질문을 편집할 수 없습니다.",
   "Title": "제목",

@@ -120,6 +120,8 @@
   "Survey not found": "Enquête introuvable",
   "Back to Dashboard": "Retour au tableau de bord",
   "This survey is archived. You cannot edit the questions.": "Cette enquête est archivée. Vous ne pouvez pas modifier les questions.",
+  "This survey is published. Stop publishing before editing its questions.": "Cette enquête est publiée. Arrêtez sa publication avant de modifier ses questions.",
+  "Question type cannot be changed after publishing.": "Le type de question ne peut plus être modifié après la publication.",
   "Publish Survey": "Publier l'enquête",
   "Publish survey confirmation": "Voulez-vous vraiment publier cette enquête ?\n\nUne fois publiée, vous ne pourrez plus modifier les questions.",
   "Title": "Titre",

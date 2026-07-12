@@ -138,6 +138,10 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Back to Dashboard": "Zurück zum Dashboard",
     "This survey is archived. You cannot edit the questions.":
         "Diese Umfrage ist archiviert. Du kannst die Fragen nicht bearbeiten.",
+    "This survey is published. Stop publishing before editing its questions.":
+        "Diese Umfrage ist veröffentlicht. Beende die Veröffentlichung, bevor du die Fragen bearbeitest.",
+    "Question type cannot be changed after publishing.":
+        "Der Fragetyp kann nach der Veröffentlichung nicht geändert werden.",
     "Publish Survey": "Umfrage veröffentlichen",
     "Publish survey confirmation":
         "Möchtest du diese Umfrage wirklich veröffentlichen?\n\nNach der Veröffentlichung kannst du die Fragen nicht mehr bearbeiten.",
@@ -596,6 +600,10 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Back to Dashboard": "Back to Dashboard",
     "This survey is archived. You cannot edit the questions.":
         "This survey is archived. You cannot edit the questions.",
+    "This survey is published. Stop publishing before editing its questions.":
+        "This survey is published. Stop publishing before editing its questions.",
+    "Question type cannot be changed after publishing.":
+        "Question type cannot be changed after publishing.",
     "Publish Survey": "Publish Survey",
     "Publish survey confirmation":
         "Are you sure you want to publish this survey?\n\nOnce published, you will not be able to edit the questions.",
@@ -1008,6 +1016,10 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Back to Dashboard": "Volver al panel",
     "This survey is archived. You cannot edit the questions.":
         "Esta encuesta está archivada. No puedes editar las preguntas.",
+    "This survey is published. Stop publishing before editing its questions.":
+        "Esta encuesta está publicada. Detén la publicación antes de editar sus preguntas.",
+    "Question type cannot be changed after publishing.":
+        "El tipo de pregunta no se puede cambiar después de publicar.",
     "Publish Survey": "Publicar encuesta",
     "Publish survey confirmation":
         "¿Seguro que quieres publicar esta encuesta?\n\nUna vez publicada, no podrás editar las preguntas.",
@@ -1433,6 +1445,10 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Back to Dashboard": "Retour au tableau de bord",
     "This survey is archived. You cannot edit the questions.":
         "Cette enquête est archivée. Vous ne pouvez pas modifier les questions.",
+    "This survey is published. Stop publishing before editing its questions.":
+        "Cette enquête est publiée. Arrêtez sa publication avant de modifier ses questions.",
+    "Question type cannot be changed after publishing.":
+        "Le type de question ne peut plus être modifié après la publication.",
     "Publish Survey": "Publier l'enquête",
     "Publish survey confirmation":
         "Voulez-vous vraiment publier cette enquête ?\n\nUne fois publiée, vous ne pourrez plus modifier les questions.",
@@ -1872,6 +1888,10 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Back to Dashboard": "Torna alla dashboard",
     "This survey is archived. You cannot edit the questions.":
         "Questo sondaggio è archiviato. Non puoi modificare le domande.",
+    "This survey is published. Stop publishing before editing its questions.":
+        "Questo sondaggio è pubblicato. Interrompi la pubblicazione prima di modificarne le domande.",
+    "Question type cannot be changed after publishing.":
+        "Il tipo di domanda non può essere modificato dopo la pubblicazione.",
     "Publish Survey": "Pubblica sondaggio",
     "Publish survey confirmation":
         "Sei sicuro di voler pubblicare questo sondaggio?\n\nUna volta pubblicato, non potrai modificare le domande.",
@@ -2300,6 +2320,9 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Back to Dashboard": "ダッシュボードに戻る",
     "This survey is archived. You cannot edit the questions.":
         "このアンケートはアーカイブ済みです。質問は編集できません。",
+    "This survey is published. Stop publishing before editing its questions.":
+        "このアンケートは公開中です。質問を編集するには公開を停止してください。",
+    "Question type cannot be changed after publishing.": "公開後は質問の種類を変更できません。",
     "Publish Survey": "アンケートを公開",
     "Publish survey confirmation":
         "このアンケートを公開してもよろしいですか？\n\n公開後は質問を編集できなくなります。",
@@ -2681,6 +2704,10 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Back to Dashboard": "대시보드로 돌아가기",
     "This survey is archived. You cannot edit the questions.":
         "이 설문은 보관되었습니다. 질문을 편집할 수 없습니다.",
+    "This survey is published. Stop publishing before editing its questions.":
+        "이 설문은 게시 중입니다. 질문을 편집하려면 게시를 중지하세요.",
+    "Question type cannot be changed after publishing.":
+        "게시 후에는 질문 유형을 변경할 수 없습니다.",
     "Publish Survey": "설문 게시",
     "Publish survey confirmation": "이 설문을 게시할까요?\n\n게시 후에는 질문을 편집할 수 없습니다.",
     "Title": "제목",
@@ -3076,6 +3103,10 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Back to Dashboard": "กลับไปแดชบอร์ด",
     "This survey is archived. You cannot edit the questions.":
         "แบบสำรวจนี้ถูกเก็บถาวรแล้ว ไม่สามารถแก้ไขคำถามได้",
+    "This survey is published. Stop publishing before editing its questions.":
+        "แบบสำรวจนี้กำลังเผยแพร่ โปรดหยุดเผยแพร่ก่อนแก้ไขคำถาม",
+    "Question type cannot be changed after publishing.":
+        "ไม่สามารถเปลี่ยนประเภทคำถามหลังเผยแพร่ได้",
     "Publish Survey": "เผยแพร่แบบสำรวจ",
     "Publish survey confirmation":
         "ต้องการเผยแพร่แบบสำรวจนี้ใช่หรือไม่?\n\nเมื่อเผยแพร่แล้วจะไม่สามารถแก้ไขคำถามได้",
@@ -3486,6 +3517,10 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Back to Dashboard": "Panele dön",
     "This survey is archived. You cannot edit the questions.":
         "Bu anket arşivlendi. Soruları düzenleyemezsiniz.",
+    "This survey is published. Stop publishing before editing its questions.":
+        "Bu anket yayında. Soruları düzenlemeden önce yayını durdurun.",
+    "Question type cannot be changed after publishing.":
+        "Yayınlandıktan sonra soru türü değiştirilemez.",
     "Publish Survey": "Anketi yayınla",
     "Publish survey confirmation":
         "Bu anketi yayınlamak istediğinizden emin misiniz?\n\nYayınlandıktan sonra soruları düzenleyemezsiniz.",
@@ -3897,6 +3932,9 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Back to Dashboard": "返回仪表板",
     "This survey is archived. You cannot edit the questions.":
         "此问卷已归档。你无法编辑问题。",
+    "This survey is published. Stop publishing before editing its questions.":
+        "此问卷正在发布。请先停止发布再编辑问题。",
+    "Question type cannot be changed after publishing.": "发布后无法更改问题类型。",
     "Publish Survey": "发布问卷",
     "Publish survey confirmation": "确定要发布此问卷吗？\n\n发布后将无法编辑问题。",
     "Title": "标题",
@@ -4275,6 +4313,9 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Back to Dashboard": "返回儀表板",
     "This survey is archived. You cannot edit the questions.":
         "此問卷已封存。你無法編輯問題。",
+    "This survey is published. Stop publishing before editing its questions.":
+        "此問卷正在發布。請先停止發布再編輯問題。",
+    "Question type cannot be changed after publishing.": "發布後無法變更問題類型。",
     "Publish Survey": "發布問卷",
     "Publish survey confirmation": "確定要發布此問卷嗎？\n\n發布後將無法編輯問題。",
     "Title": "標題",

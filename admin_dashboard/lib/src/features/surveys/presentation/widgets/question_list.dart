@@ -20,6 +20,7 @@ class QuestionList extends StatelessWidget {
   final Iterable<String> locales;
   final bool isLoading;
   final bool enabled;
+  final bool canChangeQuestionType;
   final bool aiTranslateEnabled;
   final SurveyLocalizedTranslate? onTranslate;
   final void Function({
@@ -70,6 +71,7 @@ class QuestionList extends StatelessWidget {
     this.locales = formContentLocaleCodes,
     required this.isLoading,
     required this.enabled,
+    this.canChangeQuestionType = true,
     this.aiTranslateEnabled = false,
     this.onTranslate,
     required this.onAddQuestion,
@@ -238,6 +240,7 @@ class QuestionList extends StatelessWidget {
       QuestionFormDialog.show(
         context,
         existingQuestion: question,
+        canChangeType: canChangeQuestionType,
         primaryLocale: primaryLocale,
         locales: locales,
         aiTranslateEnabled: aiTranslateEnabled,

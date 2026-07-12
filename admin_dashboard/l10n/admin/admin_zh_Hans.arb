@@ -119,6 +119,8 @@
   "Survey not found": "未找到问卷",
   "Back to Dashboard": "返回仪表板",
   "This survey is archived. You cannot edit the questions.": "此问卷已归档。你无法编辑问题。",
+  "This survey is published. Stop publishing before editing its questions.": "此问卷正在发布。请先停止发布再编辑问题。",
+  "Question type cannot be changed after publishing.": "发布后无法更改问题类型。",
   "Publish Survey": "发布问卷",
   "Publish survey confirmation": "确定要发布此问卷吗？\n\n发布后将无法编辑问题。",
   "Title": "标题",

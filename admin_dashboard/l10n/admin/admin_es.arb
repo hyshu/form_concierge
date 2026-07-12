@@ -120,6 +120,8 @@
   "Survey not found": "Encuesta no encontrada",
   "Back to Dashboard": "Volver al panel",
   "This survey is archived. You cannot edit the questions.": "Esta encuesta está archivada. No puedes editar las preguntas.",
+  "This survey is published. Stop publishing before editing its questions.": "Esta encuesta está publicada. Detén la publicación antes de editar sus preguntas.",
+  "Question type cannot be changed after publishing.": "El tipo de pregunta no se puede cambiar después de publicar.",
   "Publish Survey": "Publicar encuesta",
   "Publish survey confirmation": "¿Seguro que quieres publicar esta encuesta?\n\nUna vez publicada, no podrás editar las preguntas.",
   "Title": "Título",

@@ -126,6 +126,8 @@
   "Survey not found": "アンケートが見つかりません",
   "Back to Dashboard": "ダッシュボードに戻る",
   "This survey is archived. You cannot edit the questions.": "このアンケートはアーカイブ済みです。質問は編集できません。",
+  "This survey is published. Stop publishing before editing its questions.": "このアンケートは公開中です。質問を編集するには公開を停止してください。",
+  "Question type cannot be changed after publishing.": "公開後は質問の種類を変更できません。",
   "Publish Survey": "アンケートを公開",
   "Publish survey confirmation": "このアンケートを公開してもよろしいですか？\n\n公開後は質問を編集できなくなります。",
   "Title": "タイトル",

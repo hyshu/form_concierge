@@ -122,9 +122,16 @@ class SurveyEditorPage extends RearchConsumer {
       );
     }
 
-    final canEdit =
+    final canEditSurvey =
         canWriteSurveys &&
         (isNewSurvey || survey!.status != SurveyStatus.archived);
+    final canEditQuestions =
+        canEditSurvey &&
+        (isNewSurvey || survey!.status != SurveyStatus.published);
+    final questionsLockedByStatus =
+        !isNewSurvey &&
+        (survey!.status == SurveyStatus.published ||
+            survey.status == SurveyStatus.archived);
 
     return HuxAdminShell(
       title: isNewSurvey
@@ -152,7 +159,7 @@ class SurveyEditorPage extends RearchConsumer {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (!isNewSurvey && !canEdit) ...[
+              if (questionsLockedByStatus) ...[
                 HuxCard(
                   child: Row(
                     children: [
@@ -164,7 +171,9 @@ class SurveyEditorPage extends RearchConsumer {
                       Expanded(
                         child: Text(
                           context.tr(
-                            'This survey is archived. You cannot edit the questions.',
+                            survey.status == SurveyStatus.published
+                                ? 'This survey is published. Stop publishing before editing its questions.'
+                                : 'This survey is archived. You cannot edit the questions.',
                           ),
                           style: TextStyle(
                             color: HuxTokens.textSecondary(context),
@@ -224,9 +233,10 @@ class SurveyEditorPage extends RearchConsumer {
                   primaryLocale: activeDefaultLocale,
                   locales: activeLocales,
                   isLoading: questionState.isLoading,
-                  enabled: canEdit,
-                  aiTranslateEnabled: aiGenerationEnabled && canEdit,
-                  onTranslate: aiGenerationEnabled && canEdit
+                  enabled: canEditQuestions,
+                  canChangeQuestionType: survey!.status == SurveyStatus.draft,
+                  aiTranslateEnabled: aiGenerationEnabled && canEditQuestions,
+                  onTranslate: aiGenerationEnabled && canEditQuestions
                       ? _translateWithClient(client)
                       : null,
                   onAddQuestion:
