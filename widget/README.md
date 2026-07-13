@@ -4,13 +4,14 @@
   <img src="https://raw.githubusercontent.com/hyshu/form_concierge/main/widget/logo.svg" alt="Form Concierge logo" width="360">
 </p>
 
-Form Concierge is a self-hosted survey platform for Flutter, backed by Cloudflare Workers and D1. Embed surveys in your app, collect anonymous responses, receive administrator replies, and optionally run AI-powered adaptive follow-up interviews.
+Form Concierge is a self-hosted survey platform for Flutter, backed by Cloudflare Workers and D1. Embed surveys in your app, collect anonymous responses, and optionally run AI-powered adaptive follow-up interviews. You can also send replies directly to respondents.
 
 The package exports both the Flutter widget and the Dart client API.
 
 ## Features
 
 - Native Flutter survey UI
+- [Jaspr](https://pub.dev/packages/jaspr)-powered web survey forms
 - Anonymous responses without email or login
 - Single-choice, multiple-choice, text, and image-upload questions
 - Multilingual survey content
@@ -22,7 +23,7 @@ The package exports both the Flutter widget and the Dart client API.
 
 ### Deploy the Backend
 
-Install the setup CLI and authenticate with Cloudflare:
+Install [the setup CLI](https://pub.dev/packages/form_concierge_cli) and authenticate with Cloudflare:
 
 ```bash
 dart pub global activate form_concierge_cli
@@ -86,7 +87,8 @@ FormConciergeSurvey(
   anonymousToken: savedAnonymousToken,
   locale: 'ja_JP',
   onAnonymousSession: (session) async {
-    await saveAnonymousToken(session.token);
+    // Write the token persistence process here.
+    await secureStorage.write(key, session.token);
   },
   onDone: () {
     Navigator.pop(context);
@@ -106,30 +108,28 @@ The widget creates an anonymous account before the first submission. Persist the
 FormConciergeSurvey(
   anonymousToken: savedAnonymousToken,
   onAnonymousSession: (session) async {
-    await saveAnonymousToken(session.token);
+    // Write the token persistence process here.
+    await secureStorage.write(key, session.token);
   },
   // ...
 )
 ```
 
-Reusing the token lets a respondent receive administrator replies without a conventional account. Anonymous respondents cannot retrieve their submitted answer history through the API.
+Reusing the token lets a respondent receive administrator replies without a conventional account.
 
 ### Submission Callbacks
 
 | Callback | Called when | Typical use |
 |---|---|---|
 | `onAnonymousSession` | A session is created or restored | Persist the anonymous token |
-| `onSubmitted` | The main response is saved | Handle basic submission completion |
 | `onResponseSubmitted` | The main response is saved | Store the response and submitted answers |
 | `onFollowUpSubmitted` | Follow-up answers are saved | Update the stored receipt |
 | `onDone` | The respondent taps Done | Close the survey route |
 | `onSubmitError` | Submission fails | Log or display error details |
 
-Do not close the route from `onSubmitted` or `onResponseSubmitted` when adaptive follow-up is enabled. Additional questions may appear after those callbacks.
+Do not close the route from `onResponseSubmitted` when adaptive follow-up is enabled. Additional questions may appear after it runs.
 
-```dart
-onSubmitError: (error) => debugPrint('submit failed: $error'),
-```
+For security, anonymous respondents cannot retrieve their submitted answers through the API. To show a response history, persist the response and answers received by `onResponseSubmitted` in the host application.
 
 ### Administrator Replies
 
@@ -197,6 +197,7 @@ Image questions open the image picker and upload the selected image. Use `proces
 
 ```dart
 processImage: (image) async {
+  // Write the image conversion process here.
   return image;
 },
 ```
@@ -249,7 +250,9 @@ Configure the AI provider and its credentials in the admin dashboard before enab
 
 ## CAPTCHA with Turnstile
 
-When CAPTCHA is enabled for a survey, the widget requests a token from the host through `captchaTokenProvider`. It does not embed a CAPTCHA implementation.
+Turnstile runs JavaScript in a browser environment, so it cannot be implemented using only the Flutter UI. Supporting it directly would require an additional browser integration, such as a WebView package or native platform code. To avoid imposing that dependency and implementation choice on every application, this package does not include CAPTCHA UI.
+
+When CAPTCHA is enabled, the widget instead requests a verification token from the host application through `captchaTokenProvider`.
 
 ```dart
 FormConciergeSurvey(
@@ -257,12 +260,33 @@ FormConciergeSurvey(
   projectSlug: 'my-project',
   surveySlug: 'contact',
   captchaTokenProvider: () => resolveCaptchaToken(context),
-)
+);
+
+Future<String?> resolveCaptchaToken(BuildContext context) async {
+  final config = await client.config.getPublicConfig();
+  final siteKey = config.turnstileSiteKey;
+  if (siteKey == null || siteKey.isEmpty || !context.mounted) return null;
+
+  final completer = Completer<String?>();
+  await showModalBottomSheet<void>(
+    context: context,
+    builder: (sheetContext) => CloudflareTurnstile(
+      siteKey: siteKey,
+      baseUrl: 'https://your-form-domain.example.com',
+      onTokenReceived: (token) {
+        completer.complete(token);
+        Navigator.of(sheetContext).pop();
+      },
+    ),
+  );
+  if (!completer.isCompleted) completer.complete(null);
+  return completer.future;
+}
 ```
 
-The provider is called only when CAPTCHA is required. Return a valid token, or `null` to cancel submission. The public site key is available from `client.config.getPublicConfig().turnstileSiteKey`.
+This example uses [`cloudflare_turnstile`](https://pub.dev/packages/cloudflare_turnstile) and `dart:async`. The provider runs only when CAPTCHA is required; return `null` to cancel submission. Turnstile tokens are single-use, and `baseUrl` must use a hostname allowed by the Turnstile widget configuration.
 
-Turnstile tokens are single-use, and the challenge `baseUrl` must match a hostname allowed by the Turnstile widget configuration. A runnable implementation using [`cloudflare_turnstile`](https://pub.dev/packages/cloudflare_turnstile) is available in [`examples/flutter_mobile_full`](examples/flutter_mobile_full).
+See [`examples/flutter_mobile_full`](examples/flutter_mobile_full) for complete error and timeout handling.
 
 ## Privacy and Data Ownership
 
