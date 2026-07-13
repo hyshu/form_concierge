@@ -87,7 +87,7 @@ class SurveyPage extends StatelessWidget {
         surveyId: _surveyIdValue == 0 ? null : _surveyIdValue,
         locale: _locale.isEmpty ? null : _locale,
         metadata: const {'source': 'embedded-form-example'},
-        onSubmitted: () {
+        onResponseSubmitted: (_, _) {
           Navigator.of(context).pop(true);
         },
       ),
