@@ -4,11 +4,6 @@ version: 0.1.1
 homepage: https://github.com/hyshu/form_concierge
 repository: https://github.com/hyshu/form_concierge/tree/main/widget
 issue_tracker: https://github.com/hyshu/form_concierge/issues
-topics:
-  - cloudflare
-  - flutter-widget
-  - forms
-  - surveys
 
 environment:
   sdk: ^3.12.0
