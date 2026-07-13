@@ -50,6 +50,7 @@ form_concierge destroy cloudflare
 
 | Option | Description |
 |--------|-------------|
+| `--deployment <name>` | Select the saved deployment to destroy |
 | `--dry-run` | Print the deletion plan without deleting resources |
 | `--include-data` | Also delete D1 and the R2 bucket when it is empty |
 | `--empty-r2` | Request R2 content deletion; currently stops with manual-emptying instructions |
@@ -78,11 +79,14 @@ Command-line values override saved values. Missing values are prompted for and
 the resulting settings are written back to
 `~/.form_concierge/deployments/<name>.json`.
 
-Use `--deployment <name>` to select a deployment explicitly:
+Use `--deployment <name>` to select a deployment explicitly for setup, update,
+destroy, or local admin builds:
 
 ```bash
 form_concierge setup cloudflare --deployment production
 form_concierge update cloudflare --deployment production
+form_concierge destroy cloudflare --deployment staging --dry-run
+form_concierge build admin-macos --deployment production
 ```
 
 Without this option, the only saved deployment is selected automatically. If
@@ -100,9 +104,9 @@ Build a local macOS admin app using the saved Worker URL:
 form_concierge build admin-macos
 ```
 
-Use `--api-url` to override the Worker URL and `--output` / `-o` to choose the
-copy destination. This command only runs on macOS. Existing destination apps
-with the same name are replaced.
+Use `--deployment` to select the saved Worker URL, `--api-url` to override it,
+and `--output` / `-o` to choose the copy destination. This command only runs on
+macOS. Existing destination apps with the same name are replaced.
 
 Template options:
 
