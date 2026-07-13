@@ -29,6 +29,10 @@ class DestroyCloudflareCommand extends Command<int> {
         help: 'Print resources without deleting them.',
         negatable: false,
       )
+      ..addOption(
+        'deployment',
+        help: 'Saved deployment name (for example production or staging).',
+      )
       ..addFlag(
         'include-data',
         help: 'Also delete D1 and an empty R2 bucket.',
@@ -61,14 +65,15 @@ class DestroyCloudflareCommand extends Command<int> {
   String get name => 'cloudflare';
 
   @override
-  String get description =>
-      'Destroy resources recorded in .form_concierge/deployment.json.';
+  String get description => 'Destroy resources recorded in a saved deployment.';
 
   @override
   Future<int> run() async {
     final results = argResults!;
-    final invocationDir = Directory.current.path;
-    final store = CloudflareDeploymentStore(invocationDir);
+    final store = await CloudflareDeploymentStore.select(
+      requestedName: results['deployment'] as String?,
+      allowCreate: false,
+    );
     final deployment = await store.load();
     if (deployment == null) {
       throw CliException('Missing ${store.path}. Nothing to destroy.');

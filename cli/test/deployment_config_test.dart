@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:form_concierge_cli/src/cli_exception.dart';
 import 'package:form_concierge_cli/src/cloudflare/deployment_config.dart';
 import 'package:test/test.dart';
 
@@ -44,7 +45,11 @@ void main() {
   test('store writes and loads deployment config', () async {
     final root = await Directory.systemTemp.createTemp('deployment-store-');
     addTearDown(() => root.delete(recursive: true));
-    final store = CloudflareDeploymentStore(root.path);
+    final store = await CloudflareDeploymentStore.select(
+      requestedName: 'test',
+      allowCreate: true,
+      homeDirectory: root.path,
+    );
 
     await store.save(CloudflareDeploymentConfig(workerName: 'worker'));
     final loaded = await store.load();
@@ -58,12 +63,89 @@ void main() {
     addTearDown(() async {
       if (await root.exists()) await root.delete(recursive: true);
     });
-    final store = CloudflareDeploymentStore(root.path);
+    final store = await CloudflareDeploymentStore.select(
+      requestedName: 'test',
+      allowCreate: true,
+      homeDirectory: root.path,
+    );
     await store.save(CloudflareDeploymentConfig(workerName: 'worker'));
 
     await store.delete();
 
     expect(File(store.path).existsSync(), isFalse);
     expect(File(store.path).parent.existsSync(), isFalse);
+  });
+
+  test('store auto-selects the only deployment', () async {
+    final root = await Directory.systemTemp.createTemp('deployment-select-');
+    addTearDown(() => root.delete(recursive: true));
+    final original = await CloudflareDeploymentStore.select(
+      requestedName: 'production',
+      allowCreate: true,
+      homeDirectory: root.path,
+    );
+    await original.save(CloudflareDeploymentConfig(workerName: 'worker'));
+
+    final selected = await CloudflareDeploymentStore.select(
+      allowCreate: false,
+      homeDirectory: root.path,
+    );
+
+    expect(selected.name, 'production');
+  });
+
+  test('store creates default deployment when none exist', () async {
+    final root = await Directory.systemTemp.createTemp('deployment-default-');
+    addTearDown(() => root.delete(recursive: true));
+
+    final selected = await CloudflareDeploymentStore.select(
+      allowCreate: true,
+      homeDirectory: root.path,
+    );
+
+    expect(selected.name, 'default');
+    expect(selected.path, endsWith('.form_concierge/deployments/default.json'));
+  });
+
+  test(
+    'store requires a name for multiple non-interactive deployments',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'deployment-multiple-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      for (final name in ['production', 'staging']) {
+        final store = await CloudflareDeploymentStore.select(
+          requestedName: name,
+          allowCreate: true,
+          homeDirectory: root.path,
+        );
+        await store.save(CloudflareDeploymentConfig(workerName: name));
+      }
+
+      expect(
+        () => CloudflareDeploymentStore.select(
+          allowCreate: false,
+          homeDirectory: root.path,
+        ),
+        throwsA(
+          isA<CliException>().having(
+            (error) => error.message,
+            'message',
+            contains('--deployment <name>'),
+          ),
+        ),
+      );
+    },
+  );
+
+  test('store rejects invalid deployment names', () async {
+    expect(
+      () => CloudflareDeploymentStore.select(
+        requestedName: '../production',
+        allowCreate: true,
+      ),
+      throwsA(isA<CliException>()),
+    );
   });
 }

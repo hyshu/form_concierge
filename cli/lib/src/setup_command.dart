@@ -52,6 +52,10 @@ class CloudflareDeploymentCommand extends Command<int> {
       ..addOption('seed-project-id', help: 'Local project ID to seed remotely.')
       ..addOption('project-id', help: 'Alias for --seed-project-id.')
       ..addOption('database-id', help: 'Cloudflare D1 database UUID.')
+      ..addOption(
+        'deployment',
+        help: 'Saved deployment name (for example production or staging).',
+      )
       ..addOption('database-name', help: 'D1 database name.')
       ..addOption('worker-name', help: 'Worker name.')
       ..addOption('r2-bucket-name', help: 'R2 bucket for media uploads.')
@@ -194,6 +198,8 @@ class CloudflareDeploymentCommand extends Command<int> {
       paths: MonorepoPaths(root),
       options: options,
       invocationDir: Directory.current.path,
+      deploymentName: results['deployment'] as String?,
+      allowCreateDeployment: action == 'setup',
     );
     return runner.run();
   }

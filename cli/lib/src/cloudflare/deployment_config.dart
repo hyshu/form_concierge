@@ -153,10 +153,103 @@ class CloudflareDeploymentConfig {
 }
 
 class CloudflareDeploymentStore {
-  CloudflareDeploymentStore(String root)
-    : path = p.join(root, '.form_concierge', 'deployment.json');
+  CloudflareDeploymentStore._(this.name, this.path);
+
+  final String name;
 
   final String path;
+
+  static Future<CloudflareDeploymentStore> select({
+    String? requestedName,
+    required bool allowCreate,
+    String? homeDirectory,
+  }) async {
+    final root = p.join(
+      homeDirectory ??
+          Platform.environment['HOME'] ??
+          Platform.environment['USERPROFILE'] ??
+          Directory.current.path,
+      '.form_concierge',
+      'deployments',
+    );
+    if (requestedName != null) {
+      _validateName(requestedName);
+      final store = CloudflareDeploymentStore._(
+        requestedName,
+        p.join(root, '$requestedName.json'),
+      );
+      if (!allowCreate && !await File(store.path).exists()) {
+        throw CliException(
+          'Deployment "$requestedName" not found at ${store.path}.',
+        );
+      }
+      return store;
+    }
+
+    final directory = Directory(root);
+    final names = await directory.exists()
+        ? await directory
+              .list()
+              .where(
+                (entry) => entry is File && p.extension(entry.path) == '.json',
+              )
+              .map((entry) => p.basenameWithoutExtension(entry.path))
+              .toList()
+        : <String>[];
+    names.sort();
+
+    if (names.isEmpty) {
+      if (!allowCreate) {
+        throw CliException(
+          'No deployments found in $root. Run setup first or pass '
+          '--deployment <name>.',
+        );
+      }
+      return CloudflareDeploymentStore._(
+        'default',
+        p.join(root, 'default.json'),
+      );
+    }
+    if (names.length == 1) {
+      return CloudflareDeploymentStore._(
+        names.single,
+        p.join(root, '${names.single}.json'),
+      );
+    }
+    if (!stdin.hasTerminal) {
+      throw CliException(
+        'Multiple deployments found: ${names.join(', ')}. Pass '
+        '--deployment <name>.',
+      );
+    }
+
+    stderr.writeln('Select deployment:');
+    for (var index = 0; index < names.length; index++) {
+      stderr.writeln('  ${index + 1}. ${names[index]}');
+    }
+    while (true) {
+      stderr.write('> ');
+      final input = stdin.readLineSync();
+      if (input == null) {
+        throw CliException('No deployment selected. Pass --deployment <name>.');
+      }
+      final selection = int.tryParse(input.trim());
+      if (selection != null && selection >= 1 && selection <= names.length) {
+        final name = names[selection - 1];
+        return CloudflareDeploymentStore._(name, p.join(root, '$name.json'));
+      }
+      stderr.writeln('Enter a number from 1 to ${names.length}.');
+    }
+  }
+
+  static void _validateName(String name) {
+    if (!RegExp(r'^[A-Za-z0-9][A-Za-z0-9_-]*$').hasMatch(name)) {
+      throw CliException(
+        'Invalid deployment name "$name". Use letters, numbers, hyphens, '
+        'and underscores.',
+      );
+    }
+  }
 
   Future<CloudflareDeploymentConfig?> load() async {
     final file = File(path);
@@ -186,9 +279,11 @@ class CloudflareDeploymentStore {
   Future<void> delete() async {
     final file = File(path);
     if (await file.exists()) await file.delete();
-    final directory = file.parent;
-    if (await directory.exists() && await directory.list().isEmpty) {
+    var directory = file.parent;
+    while (await directory.exists() && await directory.list().isEmpty) {
       await directory.delete();
+      if (p.basename(directory.path) == '.form_concierge') break;
+      directory = directory.parent;
     }
   }
 }

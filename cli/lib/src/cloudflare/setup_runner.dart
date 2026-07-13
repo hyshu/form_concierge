@@ -16,17 +16,20 @@ class CloudflareSetupRunner {
     required this.paths,
     required this.options,
     this.invocationDir,
+    this.deploymentName,
+    this.allowCreateDeployment = true,
   });
 
   final MonorepoPaths paths;
   final CloudflareSetupOptions options;
   final String? invocationDir;
+  final String? deploymentName;
+  final bool allowCreateDeployment;
 
   List<String> _jasprCmd = const ['jaspr'];
   String? _seedFile;
   String? _secretsStoreId;
-  late final CloudflareDeploymentStore _deploymentStore =
-      CloudflareDeploymentStore(invocationDir ?? Directory.current.path);
+  late CloudflareDeploymentStore _deploymentStore;
   CloudflareDeploymentConfig _deployment = CloudflareDeploymentConfig();
 
   Future<int> run() async {
@@ -236,6 +239,11 @@ class CloudflareSetupRunner {
   }
 
   Future<void> _loadDeployment() async {
+    _deploymentStore = await CloudflareDeploymentStore.select(
+      requestedName: deploymentName,
+      allowCreate: allowCreateDeployment,
+    );
+    stdout.writeln('==> Deployment: ${_deploymentStore.name}');
     _deployment = await _deploymentStore.load() ?? CloudflareDeploymentConfig();
     options.workerName ??= _deployment.workerName;
     options.apiUrl ??= _deployment.workerUrl;

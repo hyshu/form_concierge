@@ -26,6 +26,10 @@ class AdminMacosBuildCommand extends Command<int> {
     argParser
       ..addOption('api-url', help: 'Worker API URL embedded in the app.')
       ..addOption(
+        'deployment',
+        help: 'Saved deployment name (for example production or staging).',
+      )
+      ..addOption(
         'output',
         abbr: 'o',
         help: 'Destination directory; defaults to the current directory.',
@@ -75,12 +79,18 @@ class AdminMacosBuildCommand extends Command<int> {
           refresh: results['refresh-template'] == true,
         );
     final paths = MonorepoPaths(root);
-    final deployment = await CloudflareDeploymentStore(invocationDir).load();
+    CloudflareDeploymentConfig? deployment;
+    if (results['api-url'] == null) {
+      final store = await CloudflareDeploymentStore.select(
+        requestedName: results['deployment'] as String?,
+        allowCreate: false,
+      );
+      deployment = await store.load();
+    }
     final apiUrl = results['api-url'] as String? ?? deployment?.workerUrl;
     if (apiUrl == null || apiUrl.isEmpty) {
       throw CliException(
-        'Worker API URL missing. Pass --api-url or run from a directory with '
-        '.form_concierge/deployment.json.',
+        'Worker API URL missing. Pass --api-url or select a saved deployment.',
       );
     }
 

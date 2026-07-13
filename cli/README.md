@@ -75,10 +75,23 @@ form_concierge update cloudflare
 ```
 
 Command-line values override saved values. Missing values are prompted for and
-the resulting settings are written back to `.form_concierge/deployment.json`.
+the resulting settings are written back to
+`~/.form_concierge/deployments/<name>.json`.
+
+Use `--deployment <name>` to select a deployment explicitly:
+
+```bash
+form_concierge setup cloudflare --deployment production
+form_concierge update cloudflare --deployment production
+```
+
+Without this option, the only saved deployment is selected automatically. If
+multiple deployments exist, an interactive command prompts for one; a
+non-interactive command requires `--deployment`. Initial setup uses `default`
+when no deployments exist.
 
 Use `--no-admin-pages` to skip the admin Cloudflare Pages project. This choice
-is saved in `.form_concierge/deployment.json` and reused by `update`. Use
+is saved in the selected deployment file and reused by `update`. Use
 `--admin-pages` on a later setup or update to enable it again.
 
 Build a local macOS admin app using the saved Worker URL:
@@ -105,9 +118,9 @@ Template options:
 
 - Local `worker/wrangler.jsonc` is gitignored and created from the example by
   setup. Downloaded templates are cached under the platform user cache.
-- Setup saves non-secret deployment settings in
-  `.form_concierge/deployment.json`. Update uses that file as its source of
-  truth and prompts for any missing settings.
+- Setup saves non-secret deployment settings under
+  `~/.form_concierge/deployments/`. Update uses the selected file as its source
+  of truth and prompts for any missing settings.
 - Backend setup shells out to Node.js / Wrangler / Flutter / Jaspr; the Dart CLI
   owns orchestration. Optional D1 helpers under `tool/cloudflare/*.mjs` are used
   for local project list/seed.
