@@ -1,6 +1,16 @@
 import type { AdminContext, AdminRow, Env } from './types';
-import { HttpError, countRows, isUniqueConstraintError, json, nowIso, readJson, requireEmail, requireString } from './utils';
-import { hashPassword } from './crypto';
+import {
+  HttpError,
+  bearerToken,
+  countRows,
+  isUniqueConstraintError,
+  json,
+  nowIso,
+  readJson,
+  requireEmail,
+  requireString,
+} from './utils';
+import { hashPassword, sha256Hex, verifyPassword } from './crypto';
 import { adminContextToJson, adminUserToJson } from './serializers';
 import { getAdminById } from './auth';
 import { scopesForRole } from './permissions';
@@ -27,12 +37,9 @@ export async function createUser(request: Request, env: Env): Promise<Response> 
     await env.DB.prepare(
       `INSERT INTO admins (id, email, password_hash, scope_names)
        VALUES (?, ?, ?, ?)`,
-    ).bind(
-      id,
-      email,
-      await hashPassword(password),
-      JSON.stringify(scopesForRole(role)),
-    ).run();
+    )
+      .bind(id, email, await hashPassword(password), JSON.stringify(scopesForRole(role)))
+      .run();
   } catch (error) {
     if (isUniqueConstraintError(error)) {
       throw new HttpError(409, 'A user with this email already exists');
@@ -43,16 +50,50 @@ export async function createUser(request: Request, env: Env): Promise<Response> 
   return json(adminContextToJson(user!), 201);
 }
 
+export async function changeOwnPassword(request: Request, env: Env, admin: AdminContext): Promise<Response> {
+  const body = await readJson(request);
+  const currentPassword = requireString(body.currentPassword, 'currentPassword');
+  const newPassword = requireString(body.newPassword, 'newPassword');
+  if (newPassword.length < MIN_PASSWORD_LENGTH) {
+    throw new HttpError(400, `newPassword must be at least ${MIN_PASSWORD_LENGTH} characters`);
+  }
+
+  const row = await env.DB.prepare(`SELECT password_hash FROM admins WHERE id = ?`)
+    .bind(admin.id)
+    .first<{ password_hash: string }>();
+  if (!row || !(await verifyPassword(currentPassword, row.password_hash))) {
+    throw new HttpError(401, 'Current password is incorrect');
+  }
+
+  const token = bearerToken(request);
+  if (!token) throw new HttpError(401, 'Admin authentication required');
+  const currentTokenHash = await sha256Hex(token);
+  await env.DB.batch([
+    env.DB.prepare(`UPDATE admins SET password_hash = ?, updated_at = ? WHERE id = ?`).bind(
+      await hashPassword(newPassword),
+      nowIso(),
+      admin.id,
+    ),
+    env.DB.prepare(`DELETE FROM admin_sessions WHERE admin_id = ? AND token_hash != ?`).bind(
+      admin.id,
+      currentTokenHash,
+    ),
+  ]);
+  return json({ ok: true });
+}
+
 export async function updateUserRole(request: Request, env: Env, userId: string): Promise<Response> {
   const body = await readJson(request);
   const role = requireString(body.role, 'role');
-  if (role !== 'admin' && await isLastActiveAdmin(env.DB, userId)) {
+  if (role !== 'admin' && (await isLastActiveAdmin(env.DB, userId))) {
     throw new HttpError(400, 'Cannot remove the last active admin');
   }
   const row = await env.DB.prepare(
     `UPDATE admins SET scope_names = ?, updated_at = ? WHERE id = ?
      RETURNING id, email, scope_names, created_at`,
-  ).bind(JSON.stringify(scopesForRole(role)), nowIso(), userId).first<AdminRow>();
+  )
+    .bind(JSON.stringify(scopesForRole(role)), nowIso(), userId)
+    .first<AdminRow>();
   if (!row) throw new HttpError(404, 'User not found');
   return json(adminUserToJson(row));
 }
@@ -66,9 +107,10 @@ export async function deleteUser(env: Env, admin: AdminContext, userId: string):
 }
 
 async function isLastActiveAdmin(db: D1Database, userId: string): Promise<boolean> {
-  const target = await db.prepare(
-    `SELECT scope_names FROM admins WHERE id = ?`,
-  ).bind(userId).first<{ scope_names: string }>();
+  const target = await db
+    .prepare(`SELECT scope_names FROM admins WHERE id = ?`)
+    .bind(userId)
+    .first<{ scope_names: string }>();
   if (!target || !target.scope_names.includes('"admin"')) return false;
   const count = await countRows(
     db,

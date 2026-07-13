@@ -6,6 +6,7 @@ import '../features/auth/presentation/pages/forgot_password_page.dart';
 import '../features/auth/presentation/pages/login_page.dart';
 import '../features/auth/presentation/pages/reset_password_page.dart';
 import '../features/auth/presentation/pages/verify_reset_code_page.dart';
+import '../features/account/presentation/pages/account_page.dart';
 import '../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../features/dashboard/presentation/pages/project_editor_page.dart';
 import '../features/responses/presentation/pages/responses_page.dart';
@@ -76,6 +77,11 @@ GoRouter appRouterCapsule(CapsuleHandle use) {
           pageBuilder: (context, state) =>
               const NoTransitionPage<void>(child: DashboardPage()),
           routes: [
+            GoRoute(
+              path: 'account',
+              pageBuilder: (context, state) =>
+                  const NoTransitionPage<void>(child: AccountPage()),
+            ),
             GoRoute(
               path: 'projects/new',
               pageBuilder: (context, state) =>

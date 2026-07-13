@@ -1,6 +1,13 @@
 import type { AdminContext, Env, ReplyRow } from './types';
-import { bootstrapAdmin, createAnonymousAccount, loginAdmin, logoutAdmin, requireAdmin, requireAnonymous } from './auth';
-import { createUser, deleteUser, listUsers, updateUserRole } from './admin_users';
+import {
+  bootstrapAdmin,
+  createAnonymousAccount,
+  loginAdmin,
+  logoutAdmin,
+  requireAdmin,
+  requireAnonymous,
+} from './auth';
+import { changeOwnPassword, createUser, deleteUser, listUsers, updateUserRole } from './admin_users';
 import {
   createSurvey,
   createSurveyWithQuestions,
@@ -10,13 +17,7 @@ import {
   updateSurvey,
   updateSurveyStatus,
 } from './admin_surveys';
-import {
-  createProject,
-  deleteProject,
-  getAdminProject,
-  listProjects,
-  updateProject,
-} from './admin_projects';
+import { createProject, deleteProject, getAdminProject, listProjects, updateProject } from './admin_projects';
 import {
   createChoice,
   createQuestion,
@@ -41,7 +42,13 @@ import {
   isTurnstileConfigured,
   updateAdminIntegrationSettings,
 } from './admin_settings';
-import { getPublicChoices, getPublicProject, getPublicProjectByDomain, getPublicQuestions, submitResponse } from './public_surveys';
+import {
+  getPublicChoices,
+  getPublicProject,
+  getPublicProjectByDomain,
+  getPublicQuestions,
+  submitResponse,
+} from './public_surveys';
 import { generateFollowUp, saveFollowUp } from './follow_up';
 import { getMedia, uploadMedia } from './media';
 import { listAdminVisibilityRules, listPublicVisibilityRules, replaceAdminVisibilityRules } from './visibility_rules';
@@ -93,9 +100,7 @@ async function route(request: Request, env: Env, ctx: ExecutionContext): Promise
       passwordResetEnabled: false,
       requireEmailVerification: false,
       aiGenerationEnabled: await isAiGenerationConfigured(env),
-      turnstileSiteKey: await isTurnstileConfigured(env)
-        ? await getTurnstileSiteKey(env)
-        : null,
+      turnstileSiteKey: (await isTurnstileConfigured(env)) ? await getTurnstileSiteKey(env) : null,
     });
   }
 
@@ -123,36 +128,42 @@ async function route(request: Request, env: Env, ctx: ExecutionContext): Promise
 
   if (path === '/api/anonymous/replies/latest' && method === 'GET') {
     const anonymous = await requireAnonymous(request, env);
-    const responseId = optionalIntegerParam(url.searchParams.get('responseId'), 'responseId', { min: 1 });
-    const statement = responseId == null
-      ? env.DB.prepare(
-          `SELECT MAX(created_at) AS latest_reply_at
+    const responseId = optionalIntegerParam(url.searchParams.get('responseId'), 'responseId', {
+      min: 1,
+    });
+    const statement =
+      responseId == null
+        ? env.DB.prepare(
+            `SELECT MAX(created_at) AS latest_reply_at
            FROM admin_replies
            WHERE anonymous_account_id = ?`,
-        ).bind(anonymous.id)
-      : env.DB.prepare(
-          `SELECT MAX(created_at) AS latest_reply_at
+          ).bind(anonymous.id)
+        : env.DB.prepare(
+            `SELECT MAX(created_at) AS latest_reply_at
            FROM admin_replies
            WHERE anonymous_account_id = ? AND survey_response_id = ?`,
-        ).bind(anonymous.id, responseId);
+          ).bind(anonymous.id, responseId);
     const row = await statement.first<{ latest_reply_at: string | null }>();
     return json({ latestReplyAt: row?.latest_reply_at ?? null });
   }
 
   if (path === '/api/anonymous/replies' && method === 'GET') {
     const anonymous = await requireAnonymous(request, env);
-    const responseId = optionalIntegerParam(url.searchParams.get('responseId'), 'responseId', { min: 1 });
-    const statement = responseId != null
-      ? env.DB.prepare(
-          `SELECT * FROM admin_replies
+    const responseId = optionalIntegerParam(url.searchParams.get('responseId'), 'responseId', {
+      min: 1,
+    });
+    const statement =
+      responseId != null
+        ? env.DB.prepare(
+            `SELECT * FROM admin_replies
            WHERE anonymous_account_id = ? AND survey_response_id = ?
            ORDER BY created_at DESC`,
-        ).bind(anonymous.id, responseId)
-      : env.DB.prepare(
-          `SELECT * FROM admin_replies
+          ).bind(anonymous.id, responseId)
+        : env.DB.prepare(
+            `SELECT * FROM admin_replies
            WHERE anonymous_account_id = ?
            ORDER BY created_at DESC`,
-        ).bind(anonymous.id);
+          ).bind(anonymous.id);
     const rows = await statement.all<ReplyRow>();
     return json(rows.results.map(replyToJson));
   }
@@ -193,12 +204,7 @@ async function route(request: Request, env: Env, ctx: ExecutionContext): Promise
     return submitResponse(request, env, requiredIntegerParam(parts[3], 'surveyId', { min: 1 }), anonymous, ctx);
   }
 
-  if (
-    parts[0] === 'api' &&
-    parts[1] === 'responses' &&
-    parts[2] &&
-    parts[3] === 'follow-up'
-  ) {
+  if (parts[0] === 'api' && parts[1] === 'responses' && parts[2] && parts[3] === 'follow-up') {
     const anonymous = await requireAnonymous(request, env);
     const responseId = requiredIntegerParam(parts[2], 'responseId', { min: 1 });
     if (method === 'POST' && parts[4] === 'generate' && parts.length === 5) {
@@ -232,13 +238,7 @@ async function route(request: Request, env: Env, ctx: ExecutionContext): Promise
     }
   }
 
-  if (
-    parts[0] === 'api' &&
-    parts[1] === 'questions' &&
-    parts[2] &&
-    parts[3] === 'choices' &&
-    method === 'GET'
-  ) {
+  if (parts[0] === 'api' && parts[1] === 'questions' && parts[2] && parts[3] === 'choices' && method === 'GET') {
     return getPublicChoices(env, requiredIntegerParam(parts[2], 'questionId', { min: 1 }));
   }
 
@@ -266,6 +266,10 @@ async function routeAdmin(
   url: URL,
 ): Promise<Response> {
   const method = request.method.toUpperCase();
+
+  if (parts[2] === 'account' && parts[3] === 'password' && parts.length === 4 && method === 'PUT') {
+    return changeOwnPassword(request, env, admin);
+  }
 
   if (parts[2] === 'users') {
     requireScope(admin, 'user:manage');

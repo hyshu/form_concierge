@@ -2,14 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_rearch/flutter_rearch.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hux/hux.dart';
 import 'package:rearch/rearch.dart';
 
-import '../../../../core/capsules/auth_state_capsule.dart';
 import '../../../../core/capsules/client_capsule.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/hux_admin_shell.dart';
-import '../../../../core/widgets/hux_icon_action_button.dart';
 import '../../../../core/widgets/hux_states.dart';
 import '../capsules/survey_list_capsule.dart';
 import '../widgets/project_form.dart';
@@ -22,7 +19,6 @@ class ProjectEditorPage extends RearchConsumer {
   @override
   Widget build(context, use) {
     final manager = use(surveyListCapsule);
-    final authManager = use(authStateCapsule);
     final client = use(clientCapsule);
     final role = client.auth.signedInUser?.role;
     final canManageUsers = role == AdminRole.admin;
@@ -83,14 +79,7 @@ class ProjectEditorPage extends RearchConsumer {
       showUsers: canManageUsers,
       showSettings: canManageUsers,
       onBack: () => context.go('/admin'),
-      actions: [
-        HuxIconActionButton(
-          onPressed: authManager.logout,
-          icon: LucideIcons.logOut,
-          tooltip: context.tr('Logout'),
-          size: HuxButtonSize.medium,
-        ),
-      ],
+      actions: [],
       child: SafeArea(child: child),
     );
   }

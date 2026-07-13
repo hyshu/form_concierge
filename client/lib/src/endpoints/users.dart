@@ -66,4 +66,19 @@ class UserAdminEndpoint {
     );
     return _bool(json['selfDeleted']);
   }
+
+  Future<void> changeOwnPassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    await _client.request(
+      'PUT',
+      '/api/admin/account/password',
+      body: {
+        'currentPassword': currentPassword,
+        'newPassword': newPassword,
+      },
+      authenticated: true,
+    );
+  }
 }

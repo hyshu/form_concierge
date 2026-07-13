@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_rearch/flutter_rearch.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hux/hux.dart';
 
+import '../capsules/auth_state_capsule.dart';
 import '../localization/app_localizations.dart';
 import 'hux_icon_action_button.dart';
 
-class HuxAdminShell extends StatelessWidget {
+class HuxAdminShell extends RearchConsumer {
   const HuxAdminShell({
     super.key,
     required this.title,
@@ -26,7 +28,8 @@ class HuxAdminShell extends StatelessWidget {
   final bool showSettings;
 
   @override
-  Widget build(context) {
+  Widget build(context, use) {
+    final authManager = use(authStateCapsule);
     final isWide = MediaQuery.of(context).size.width >= 900;
 
     return Scaffold(
@@ -38,6 +41,7 @@ class HuxAdminShell extends StatelessWidget {
                 selectedItemId: selectedItemId,
                 showUsers: showUsers,
                 showSettings: showSettings,
+                onLogout: authManager.logout,
               ),
             Expanded(
               child: Column(
@@ -50,6 +54,7 @@ class HuxAdminShell extends StatelessWidget {
                     selectedItemId: selectedItemId,
                     showUsers: showUsers,
                     showSettings: showSettings,
+                    onLogout: authManager.logout,
                   ),
                   Expanded(child: child),
                 ],
@@ -67,11 +72,13 @@ class _StaticSidebar extends StatelessWidget {
     required this.selectedItemId,
     required this.showUsers,
     required this.showSettings,
+    required this.onLogout,
   });
 
   final String? selectedItemId;
   final bool showUsers;
   final bool showSettings;
+  final VoidCallback onLogout;
 
   @override
   Widget build(context) {
@@ -125,6 +132,26 @@ class _StaticSidebar extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
               ],
+              const Spacer(),
+              _SidebarNavigationItem(
+                item: _NavigationItem(
+                  id: 'account',
+                  icon: LucideIcons.circleUserRound,
+                  label: context.tr('Account'),
+                ),
+                selected: selectedItemId == 'account',
+                onTap: () => context.go('/admin/account'),
+              ),
+              const SizedBox(height: 4),
+              _SidebarNavigationItem(
+                item: _NavigationItem(
+                  id: 'logout',
+                  icon: LucideIcons.logOut,
+                  label: context.tr('Logout'),
+                ),
+                selected: false,
+                onTap: onLogout,
+              ),
             ],
           ),
         ),
@@ -253,6 +280,9 @@ void _goToNavigationItem(BuildContext context, String itemId) {
     case 'settings':
       context.go('/admin/settings');
       return;
+    case 'account':
+      context.go('/admin/account');
+      return;
   }
 }
 
@@ -264,6 +294,7 @@ class _TopBar extends StatelessWidget {
     required this.selectedItemId,
     required this.showUsers,
     required this.showSettings,
+    required this.onLogout,
     this.onBack,
   });
 
@@ -273,6 +304,7 @@ class _TopBar extends StatelessWidget {
   final String? selectedItemId;
   final bool showUsers;
   final bool showSettings;
+  final VoidCallback onLogout;
   final VoidCallback? onBack;
 
   @override
@@ -313,8 +345,22 @@ class _TopBar extends StatelessWidget {
                         value: item.id,
                         child: Text(item.label),
                       ),
+                    HuxDropdownItem(
+                      value: 'account',
+                      child: Text(context.tr('Account')),
+                    ),
+                    HuxDropdownItem(
+                      value: 'logout',
+                      child: Text(context.tr('Logout')),
+                    ),
                   ],
-                  onChanged: (itemId) => _goToNavigationItem(context, itemId),
+                  onChanged: (itemId) {
+                    if (itemId == 'logout') {
+                      onLogout();
+                    } else {
+                      _goToNavigationItem(context, itemId);
+                    }
+                  },
                 ),
               ),
               const SizedBox(width: 12),
