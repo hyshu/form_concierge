@@ -1,7 +1,7 @@
 # form_concierge
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/hyshu/form_concierge/main/widget/logo.svg" alt="Form Concierge logo" width="180">
+  <img src="https://raw.githubusercontent.com/hyshu/form_concierge/main/widget/logo.svg" alt="Form Concierge logo" width="360">
 </p>
 
 Form Concierge is a self-hosted survey platform for Flutter, backed by Cloudflare Workers and D1. Embed surveys in your app, collect anonymous responses, receive administrator replies, and optionally run AI-powered adaptive follow-up interviews.
