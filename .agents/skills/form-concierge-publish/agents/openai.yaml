@@ -1,0 +1,4 @@
+interface:
+  display_name: "Form Concierge Publish"
+  short_description: "Publish Form Concierge releases safely"
+  default_prompt: "Use $form-concierge-publish to prepare and publish the next Form Concierge release safely."
