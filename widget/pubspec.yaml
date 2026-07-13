@@ -1,6 +1,6 @@
 name: form_concierge
 description: An embeddable Flutter survey package on Cloudflare, featuring an API, an admin dashboard, and web forms built with Jaspr.
-version: 0.1.1
+version: 0.2.0
 homepage: https://github.com/hyshu/form_concierge
 repository: https://github.com/hyshu/form_concierge/tree/main/widget
 issue_tracker: https://github.com/hyshu/form_concierge/issues
@@ -12,7 +12,7 @@ dependencies:
   flutter:
     sdk: flutter
   crypto: ^3.0.6
-  form_concierge_client: ^0.1.1
+  form_concierge_client: ^0.2.0
   image_picker: ^1.2.3
 
 dev_dependencies:

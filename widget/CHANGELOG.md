@@ -1,3 +1,8 @@
+## 0.2.0
+
+- Add `loadingBuilder` to customize survey loading states.
+- Move the default loading indicator near the top of the available body area.
+
 ## 0.1.1
 
 - Add `captchaTokenProvider` so hosts can supply a CAPTCHA token (for example

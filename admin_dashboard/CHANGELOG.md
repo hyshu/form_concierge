@@ -1,3 +1,12 @@
+## 0.2.0
+
+- Add an account page and allow the signed-in administrator to change their
+  password.
+- Add Groq AI provider configuration.
+- Improve project and survey action layouts and clear stale form values when
+  creating a new survey.
+- Add account-related translations for every supported locale.
+
 ## 0.1.1
 
 - Add a Turnstile challenge to administrator login after repeated failures.

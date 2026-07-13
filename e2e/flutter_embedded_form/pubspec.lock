@@ -147,14 +147,14 @@ packages:
       path: "../../widget"
       relative: true
     source: path
-    version: "0.1.0"
+    version: "0.2.0"
   form_concierge_client:
     dependency: "direct overridden"
     description:
       path: "../../client"
       relative: true
     source: path
-    version: "0.1.0"
+    version: "0.2.0"
   fuchsia_remote_debug_protocol:
     dependency: transitive
     description: flutter
