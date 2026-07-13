@@ -32,6 +32,9 @@ worker/wrangler.jsonc
 **/config/passwords.yaml
 **/config/firebase_service_account_key.json
 
+# Local Form Concierge deployment state
+.form_concierge/
+
 # Flutter web build output
 form_concierge_server/web/app/
 
