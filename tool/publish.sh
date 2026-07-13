@@ -151,6 +151,11 @@ if $publish_client; then
     cd client
     dart pub publish
   )
+
+  if $publish_widget; then
+    echo "==> Waiting 10 minutes for form_concierge_client to become available on pub.dev"
+    sleep 600
+  fi
 fi
 
 if $publish_widget; then
