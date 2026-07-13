@@ -9,7 +9,7 @@ import 'template_resolver.dart';
 
 class SetupCommand extends Command<int> {
   SetupCommand() {
-    addSubcommand(SetupCloudflareCommand());
+    addSubcommand(CloudflareDeploymentCommand(action: 'setup'));
   }
 
   @override
@@ -19,8 +19,20 @@ class SetupCommand extends Command<int> {
   String get description => 'Scaffold and provision Form Concierge backends.';
 }
 
-class SetupCloudflareCommand extends Command<int> {
-  SetupCloudflareCommand() {
+class UpdateCommand extends Command<int> {
+  UpdateCommand() {
+    addSubcommand(CloudflareDeploymentCommand(action: 'update'));
+  }
+
+  @override
+  String get name => 'update';
+
+  @override
+  String get description => 'Update deployed Form Concierge backends.';
+}
+
+class CloudflareDeploymentCommand extends Command<int> {
+  CloudflareDeploymentCommand({required this.action}) {
     argParser
       ..addFlag(
         'preflight-only',
@@ -97,12 +109,15 @@ class SetupCloudflareCommand extends Command<int> {
       );
   }
 
+  final String action;
+
   @override
   String get name => 'cloudflare';
 
   @override
-  String get description =>
-      'Create/configure D1, R2, Worker, and Pages (Dart implementation).';
+  String get description => action == 'update'
+      ? 'Update D1, R2, Worker, and Pages using saved deployment settings.'
+      : 'Create/configure D1, R2, Worker, and Pages.';
 
   @override
   Future<int> run() async {
@@ -154,6 +169,7 @@ class SetupCloudflareCommand extends Command<int> {
       localD1PersistTo: results['local-d1-persist-to'] as String?,
       remoteBindingsForLocalDev: remoteBindings,
       wranglerUpdateConfig: wranglerUpdate,
+      targetVersion: results['template-version'] as String,
     );
 
     final runner = CloudflareSetupRunner(

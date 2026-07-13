@@ -7,6 +7,7 @@ import '../cli_exception.dart';
 import '../monorepo.dart';
 import '../tools.dart';
 import 'jsonc.dart';
+import 'deployment_config.dart';
 import 'setup_options.dart';
 
 /// Orchestrates Cloudflare D1 / R2 / Worker / Pages provisioning.
@@ -24,6 +25,9 @@ class CloudflareSetupRunner {
   List<String> _jasprCmd = const ['jaspr'];
   String? _seedFile;
   String? _secretsStoreId;
+  late final CloudflareDeploymentStore _deploymentStore =
+      CloudflareDeploymentStore(invocationDir ?? Directory.current.path);
+  CloudflareDeploymentConfig _deployment = CloudflareDeploymentConfig();
 
   Future<int> run() async {
     if (options.explain) {
@@ -58,6 +62,8 @@ class CloudflareSetupRunner {
         stdout.writeln('Preflight OK.');
         return 0;
       }
+
+      await _loadDeployment();
 
       await _selectRemoteBindingsForLocalDev();
       await _selectResourceNames();
@@ -96,6 +102,7 @@ class CloudflareSetupRunner {
       await _ensureR2Bucket();
       await _waitForR2Bucket();
       await _ensureCfApiToken();
+      await _saveDeployment();
 
       stdout.writeln('==> Configure Worker');
       await _updateWrangler();
@@ -204,6 +211,9 @@ class CloudflareSetupRunner {
         '--commit-dirty=true',
       ], workingDirectory: paths.root);
 
+      _deployment.installedVersion = options.targetVersion;
+      await _saveDeployment();
+
       stdout.writeln('==> Done');
       stdout.writeln('API: ${options.apiUrl}');
       stdout.writeln('Admin: https://${options.adminProject}.pages.dev');
@@ -217,6 +227,48 @@ class CloudflareSetupRunner {
         } catch (_) {}
       }
     }
+  }
+
+  Future<void> _loadDeployment() async {
+    _deployment = await _deploymentStore.load() ?? CloudflareDeploymentConfig();
+    options.workerName ??= _deployment.workerName;
+    options.apiUrl ??= _deployment.workerUrl;
+    options.databaseName ??= _deployment.databaseName;
+    options.databaseId ??= _deployment.databaseId;
+    options.r2Binding = options.r2Binding == 'MEDIA_BUCKET'
+        ? _deployment.r2Binding
+        : options.r2Binding;
+    options.r2BucketName ??= _deployment.r2BucketName;
+    options.adminProject ??= _deployment.adminPagesProject;
+    options.webProject ??= _deployment.webPagesProject;
+    options.webAssetBaseUrl ??= _deployment.publicFormAssetBaseUrl;
+    options.remoteBindingsForLocalDev ??= _deployment.remoteBindingsForLocalDev;
+    _secretsStoreId = _deployment.secretsStoreId;
+  }
+
+  Future<void> _saveDeployment() async {
+    _deployment
+      ..accountId = await _accountId()
+      ..workerName = options.workerName
+      ..workerUrl = options.apiUrl
+      ..databaseBinding = 'DB'
+      ..databaseName = options.databaseName
+      ..databaseId = options.databaseId
+      ..r2Binding = options.r2Binding
+      ..r2BucketName = options.r2BucketName
+      ..secretsStoreName = CloudflareSetupOptions.defaultSecretsStoreName
+      ..secretsStoreId = _secretsStoreId
+      ..adminPagesProject = options.adminProject
+      ..adminPagesUrl = options.adminProject == null
+          ? null
+          : 'https://${options.adminProject}.pages.dev'
+      ..webPagesProject = options.webProject
+      ..webPagesUrl = options.webProject == null
+          ? null
+          : 'https://${options.webProject}.pages.dev'
+      ..publicFormAssetBaseUrl = options.webAssetBaseUrl
+      ..remoteBindingsForLocalDev = options.remoteBindingsForLocalDev;
+    await _deploymentStore.save(_deployment);
   }
 
   void _resolveLocalD1PersistPath() {

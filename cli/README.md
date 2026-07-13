@@ -37,6 +37,7 @@ executable. After global activate, the command is also available as
 |---------|-------------|
 | `form_concierge doctor` | Check dart / flutter / node / npm / wrangler and monorepo layout |
 | `form_concierge setup cloudflare` | Create/configure D1, R2, Worker, and Pages |
+| `form_concierge update cloudflare` | Reuse saved deployment settings, migrate, build, and deploy |
 
 `setup cloudflare` accepts flags such as `--preflight-only`,
 `--seed-project-id`, `--worker-name`, and others listed in
@@ -56,6 +57,9 @@ Template options:
 
 - Local `worker/wrangler.jsonc` is gitignored and created from the example by
   setup. Downloaded templates are cached under the platform user cache.
+- Setup saves non-secret deployment settings in
+  `.form_concierge/deployment.json`. Update uses that file as its source of
+  truth and prompts for any missing settings.
 - Backend setup shells out to Node.js / Wrangler / Flutter / Jaspr; the Dart CLI
   owns orchestration. Optional D1 helpers under `tool/cloudflare/*.mjs` are used
   for local project list/seed.

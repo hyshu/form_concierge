@@ -17,6 +17,7 @@ class CloudflareSetupOptions {
     this.localD1PersistTo,
     this.remoteBindingsForLocalDev,
     this.wranglerUpdateConfig,
+    this.targetVersion,
   });
 
   final bool preflightOnly;
@@ -39,6 +40,7 @@ class CloudflareSetupOptions {
 
   /// `null` = prompt / default yes; true/false explicit.
   bool? wranglerUpdateConfig;
+  String? targetVersion;
 
   static const defaultWorkerName = 'form-concierge-api';
   static const defaultD1DatabaseName = 'form_concierge';

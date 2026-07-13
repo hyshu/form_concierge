@@ -23,7 +23,8 @@ Future<int> runFormConciergeCli(List<String> args) async {
           'Form Concierge tooling (setup, doctor).',
         )
         ..addCommand(DoctorCommand())
-        ..addCommand(SetupCommand());
+        ..addCommand(SetupCommand())
+        ..addCommand(UpdateCommand());
 
   try {
     final result = await runner.run(args);
