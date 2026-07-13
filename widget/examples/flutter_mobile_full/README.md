@@ -6,7 +6,7 @@ It demonstrates:
 
 - `FormConciergeSurvey`
 - `FormConciergeReplyChecker`
-- adaptive GenUI follow-up interviews without closing after the main response
+- adaptive AI follow-up interviews without closing after the main response
 - image upload questions and the host-side `processImage` hook
 - anonymous token persistence with `flutter_secure_storage`
 - project, survey, locale, and response state persistence with `shared_preferences`

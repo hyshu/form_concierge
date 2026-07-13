@@ -269,17 +269,17 @@ void main() {
     });
 
     testWidgets(
-      'shows collapsed GenUI prompt only when follow-up interview is enabled',
+      'shows collapsed AI follow-up prompt only when enabled',
       (tester) async {
         await tester.pumpWidget(buildSubject(aiGenerationEnabled: true));
 
         expect(find.text('Flutter follow-up interview'), findsOneWidget);
-        expect(find.text('GenUI prompt (optional)'), findsNothing);
+        expect(find.text('AI follow-up prompt (optional)'), findsNothing);
 
         await tester.tap(find.text('Flutter follow-up interview'));
         await tester.pumpAndSettle();
 
-        expect(find.text('GenUI prompt (optional)'), findsOneWidget);
+        expect(find.text('AI follow-up prompt (optional)'), findsOneWidget);
         // ExpansionTile starts collapsed — textarea hint not visible until expanded.
         expect(
           find.text(
@@ -288,7 +288,7 @@ void main() {
           findsNothing,
         );
 
-        await tester.tap(find.text('GenUI prompt (optional)'));
+        await tester.tap(find.text('AI follow-up prompt (optional)'));
         await tester.pumpAndSettle();
         expect(
           find.text(

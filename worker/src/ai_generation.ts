@@ -97,7 +97,7 @@ export async function generateFollowUpFromAnswers(
     answersSummary: string;
     deviceContext: string;
     recentResponsesSummary: string;
-    /** Optional admin-authored GenUI guidance included in the user prompt. */
+    /** Optional admin-authored AI follow-up guidance in the user prompt. */
     followUpPrompt?: string | null;
   },
 ): Promise<FollowUpGenerationResult> {
@@ -120,7 +120,7 @@ export async function generateFollowUpFromAnswers(
   if (adminPrompt.length > 0) {
     userSections.push(
       '',
-      'Survey-specific GenUI / follow-up instructions from the administrator (incorporate these when deciding questions):',
+      'Survey-specific AI follow-up instructions from the administrator (incorporate these when deciding questions):',
       adminPrompt,
     );
   }

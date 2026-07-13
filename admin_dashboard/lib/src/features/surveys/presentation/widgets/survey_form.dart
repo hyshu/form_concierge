@@ -202,12 +202,12 @@ class SurveyFormWidgetState extends State<SurveyForm> {
                 tilePadding: EdgeInsets.zero,
                 childrenPadding: const EdgeInsets.only(bottom: 8),
                 title: Text(
-                  context.tr('GenUI prompt (optional)'),
+                  context.tr('AI follow-up prompt (optional)'),
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
                 subtitle: Text(
                   context.tr(
-                    'Extra instructions included when generating follow-up questions for Flutter (GenUI).',
+                    'Extra instructions included when generating AI follow-up questions for Flutter.',
                   ),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),

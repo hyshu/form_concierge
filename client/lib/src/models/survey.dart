@@ -263,7 +263,7 @@ class Survey {
   final bool webEnabled;
   final bool followUpEnabled;
 
-  /// Admin-authored instructions included in GenUI follow-up generation.
+  /// Admin-authored instructions included in AI follow-up generation.
   final String? followUpPrompt;
   final bool captchaEnabled;
   final String? createdByUserId;

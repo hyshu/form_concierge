@@ -51,7 +51,7 @@ CREATE TABLE surveys (
   status TEXT NOT NULL DEFAULT 'draft',
   web_enabled INTEGER NOT NULL DEFAULT 1,
   follow_up_enabled INTEGER NOT NULL DEFAULT 0,
-  -- Admin-authored GenUI / follow-up generation instructions (optional).
+  -- Admin-authored AI follow-up generation instructions (optional).
   follow_up_prompt TEXT,
   captcha_enabled INTEGER NOT NULL DEFAULT 1,
   auth_requirement TEXT NOT NULL DEFAULT 'anonymous',

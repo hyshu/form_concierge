@@ -15,7 +15,7 @@ The package exports both the Flutter widget and the Dart client API.
 - Single-choice, multiple-choice, text, and image-upload questions
 - Multilingual survey content
 - Administrator replies for anonymous respondents
-- Optional GenUI-powered adaptive follow-up interviews
+- Optional AI-powered adaptive follow-up interviews
 - Self-hosted Cloudflare backend and admin dashboard
 
 ## Quick Start
