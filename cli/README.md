@@ -41,13 +41,41 @@ executable. After global activate, the command is also available as
 | `form_concierge destroy cloudflare` | Delete resources recorded in deployment settings |
 | `form_concierge build admin-macos` | Build the macOS admin app and copy it to the current directory |
 
-Destroy keeps D1, R2, and Secrets Store by default. Use `--include-data` to
-delete D1 and an empty R2 bucket. A non-empty R2 bucket is retained with a
-warning. Secrets Store deletion requires `--delete-secrets-store`.
+Destroy keeps D1, R2, and Secrets Store by default:
+
+```bash
+form_concierge destroy cloudflare --dry-run
+form_concierge destroy cloudflare
+```
+
+| Option | Description |
+|--------|-------------|
+| `--dry-run` | Print the deletion plan without deleting resources |
+| `--include-data` | Also delete D1 and the R2 bucket when it is empty |
+| `--empty-r2` | Request R2 content deletion; currently stops with manual-emptying instructions |
+| `--delete-secrets-store` | Delete the Secrets Store and all its values |
+| `--yes`, `-y` | Skip the interactive confirmation |
+
+A non-empty R2 bucket is retained with a warning. Successful deletions are
+removed from the deployment file as they happen, so an interrupted or partial
+destroy can be run again for the remaining resources.
 
 `setup cloudflare` accepts flags such as `--preflight-only`,
 `--seed-project-id`, `--worker-name`, and others listed in
 `form_concierge setup cloudflare --help`.
+
+Setup creates Worker Secrets Store bindings for supported provider keys,
+including `groq_api_key`, alongside the OpenAI, Claude, Gemini, and Cerebras
+keys. Missing entries are created as placeholders for later configuration.
+
+Update an existing deployment from its saved settings:
+
+```bash
+form_concierge update cloudflare
+```
+
+Command-line values override saved values. Missing values are prompted for and
+the resulting settings are written back to `.form_concierge/deployment.json`.
 
 Use `--no-admin-pages` to skip the admin Cloudflare Pages project. This choice
 is saved in `.form_concierge/deployment.json` and reused by `update`. Use
@@ -59,8 +87,9 @@ Build a local macOS admin app using the saved Worker URL:
 form_concierge build admin-macos
 ```
 
-Use `--api-url` to override the Worker URL and `--output` to choose the copy
-destination.
+Use `--api-url` to override the Worker URL and `--output` / `-o` to choose the
+copy destination. This command only runs on macOS. Existing destination apps
+with the same name are replaced.
 
 Template options:
 
