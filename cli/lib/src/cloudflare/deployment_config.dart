@@ -26,6 +26,7 @@ class CloudflareDeploymentConfig {
     this.webPagesUrl,
     this.publicFormAssetBaseUrl,
     this.remoteBindingsForLocalDev,
+    this.deployAdminPages = true,
   });
 
   final int schemaVersion;
@@ -47,6 +48,7 @@ class CloudflareDeploymentConfig {
   String? webPagesUrl;
   String? publicFormAssetBaseUrl;
   bool? remoteBindingsForLocalDev;
+  bool deployAdminPages;
 
   bool get hasResources =>
       workerName != null ||
@@ -96,6 +98,7 @@ class CloudflareDeploymentConfig {
       publicFormAssetBaseUrl: _string(configuration['publicFormAssetBaseUrl']),
       remoteBindingsForLocalDev:
           configuration['remoteBindingsForLocalDev'] as bool?,
+      deployAdminPages: configuration['deployAdminPages'] as bool? ?? true,
     );
   }
 
@@ -138,6 +141,7 @@ class CloudflareDeploymentConfig {
         'publicFormAssetBaseUrl': publicFormAssetBaseUrl,
       if (remoteBindingsForLocalDev != null)
         'remoteBindingsForLocalDev': remoteBindingsForLocalDev,
+      'deployAdminPages': deployAdminPages,
     },
   };
 

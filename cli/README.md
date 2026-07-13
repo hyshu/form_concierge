@@ -39,6 +39,7 @@ executable. After global activate, the command is also available as
 | `form_concierge setup cloudflare` | Create/configure D1, R2, Worker, and Pages |
 | `form_concierge update cloudflare` | Reuse saved deployment settings, migrate, build, and deploy |
 | `form_concierge destroy cloudflare` | Delete resources recorded in deployment settings |
+| `form_concierge build admin-macos` | Build the macOS admin app and copy it to the current directory |
 
 Destroy keeps D1, R2, and Secrets Store by default. Use `--include-data` to
 delete D1 and an empty R2 bucket. A non-empty R2 bucket is retained with a
@@ -47,6 +48,19 @@ warning. Secrets Store deletion requires `--delete-secrets-store`.
 `setup cloudflare` accepts flags such as `--preflight-only`,
 `--seed-project-id`, `--worker-name`, and others listed in
 `form_concierge setup cloudflare --help`.
+
+Use `--no-admin-pages` to skip the admin Cloudflare Pages project. This choice
+is saved in `.form_concierge/deployment.json` and reused by `update`. Use
+`--admin-pages` on a later setup or update to enable it again.
+
+Build a local macOS admin app using the saved Worker URL:
+
+```bash
+form_concierge build admin-macos
+```
+
+Use `--api-url` to override the Worker URL and `--output` to choose the copy
+destination.
 
 Template options:
 

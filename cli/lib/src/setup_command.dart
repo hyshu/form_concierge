@@ -58,6 +58,16 @@ class CloudflareDeploymentCommand extends Command<int> {
       ..addOption('r2-binding', help: 'Worker R2 binding name.')
       ..addOption('api-url', help: 'Public Worker API URL.')
       ..addOption('admin-project', help: 'Pages project for admin.')
+      ..addFlag(
+        'admin-pages',
+        help: 'Deploy the admin dashboard to Cloudflare Pages.',
+        negatable: false,
+      )
+      ..addFlag(
+        'no-admin-pages',
+        help: 'Do not build or deploy the admin dashboard to Pages.',
+        negatable: false,
+      )
       ..addOption('web-project', help: 'Pages project for public assets.')
       ..addOption('web-asset-base-url', help: 'Asset base used by SSR HTML.')
       ..addOption(
@@ -152,6 +162,13 @@ class CloudflareDeploymentCommand extends Command<int> {
         results['seed-project-id'] as String? ??
         results['project-id'] as String?;
 
+    bool? deployAdminPages;
+    if (results['admin-pages'] == true) {
+      deployAdminPages = true;
+    } else if (results['no-admin-pages'] == true) {
+      deployAdminPages = false;
+    }
+
     final options = CloudflareSetupOptions(
       preflightOnly: results['preflight-only'] == true,
       explain: results['explain'] == true,
@@ -164,6 +181,7 @@ class CloudflareDeploymentCommand extends Command<int> {
       r2Binding: (results['r2-binding'] as String?) ?? 'MEDIA_BUCKET',
       apiUrl: results['api-url'] as String?,
       adminProject: results['admin-project'] as String?,
+      deployAdminPages: deployAdminPages,
       webProject: results['web-project'] as String?,
       webAssetBaseUrl: results['web-asset-base-url'] as String?,
       localD1PersistTo: results['local-d1-persist-to'] as String?,

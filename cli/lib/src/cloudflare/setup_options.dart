@@ -12,6 +12,7 @@ class CloudflareSetupOptions {
     this.r2Binding = 'MEDIA_BUCKET',
     this.apiUrl,
     this.adminProject,
+    this.deployAdminPages,
     this.webProject,
     this.webAssetBaseUrl,
     this.localD1PersistTo,
@@ -31,6 +32,9 @@ class CloudflareSetupOptions {
   String r2Binding;
   String? apiUrl;
   String? adminProject;
+
+  /// `null` = use saved setting / default true.
+  bool? deployAdminPages;
   String? webProject;
   String? webAssetBaseUrl;
   String? localD1PersistTo;

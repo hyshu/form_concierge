@@ -15,6 +15,7 @@ void main() {
       adminPagesProject: 'admin',
       webPagesProject: 'web',
       remoteBindingsForLocalDev: true,
+      deployAdminPages: false,
     );
 
     final decoded = CloudflareDeploymentConfig.fromJson(original.toJson());
@@ -24,6 +25,20 @@ void main() {
     expect(decoded.databaseId, 'database-id');
     expect(decoded.webPagesProject, 'web');
     expect(decoded.remoteBindingsForLocalDev, isTrue);
+    expect(decoded.deployAdminPages, isFalse);
+    expect(
+      decoded.toJson()['configuration'],
+      containsPair('deployAdminPages', false),
+    );
+  });
+
+  test('legacy deployment config defaults to deploying admin Pages', () {
+    final decoded = CloudflareDeploymentConfig.fromJson({
+      'schemaVersion': 1,
+      'provider': 'cloudflare',
+    });
+
+    expect(decoded.deployAdminPages, isTrue);
   });
 
   test('store writes and loads deployment config', () async {

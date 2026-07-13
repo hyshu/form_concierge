@@ -156,39 +156,43 @@ class CloudflareSetupRunner {
         await _deployWorker();
       }
 
-      stdout.writeln('==> Build admin');
-      await runInherit('flutter', [
-        'pub',
-        'get',
-      ], workingDirectory: paths.admin);
-      await runInherit('flutter', [
-        'build',
-        'web',
-        '--release',
-      ], workingDirectory: paths.admin);
-      final configPath = p.join(
-        paths.admin,
-        'build',
-        'web',
-        'assets',
-        'assets',
-        'config.json',
-      );
-      await Directory(p.dirname(configPath)).create(recursive: true);
-      await File(
-        configPath,
-      ).writeAsString(jsonEncode({'apiUrl': options.apiUrl}));
+      if (options.deployAdminPages == true) {
+        stdout.writeln('==> Build admin');
+        await runInherit('flutter', [
+          'pub',
+          'get',
+        ], workingDirectory: paths.admin);
+        await runInherit('flutter', [
+          'build',
+          'web',
+          '--release',
+        ], workingDirectory: paths.admin);
+        final configPath = p.join(
+          paths.admin,
+          'build',
+          'web',
+          'assets',
+          'assets',
+          'config.json',
+        );
+        await Directory(p.dirname(configPath)).create(recursive: true);
+        await File(
+          configPath,
+        ).writeAsString(jsonEncode({'apiUrl': options.apiUrl}));
 
-      stdout.writeln('==> Deploy admin Pages: ${options.adminProject}');
-      await _ensurePagesProject(options.adminProject!);
-      await runInherit(paths.wranglerBin, [
-        'pages',
-        'deploy',
-        p.join(paths.admin, 'build', 'web'),
-        '--project-name',
-        options.adminProject!,
-        '--commit-dirty=true',
-      ], workingDirectory: paths.root);
+        stdout.writeln('==> Deploy admin Pages: ${options.adminProject}');
+        await _ensurePagesProject(options.adminProject!);
+        await runInherit(paths.wranglerBin, [
+          'pages',
+          'deploy',
+          p.join(paths.admin, 'build', 'web'),
+          '--project-name',
+          options.adminProject!,
+          '--commit-dirty=true',
+        ], workingDirectory: paths.root);
+      } else {
+        stdout.writeln('==> Admin Pages: skipped');
+      }
 
       stdout.writeln('==> Build public form assets');
       await runInherit('dart', ['pub', 'get'], workingDirectory: paths.web);
@@ -216,7 +220,9 @@ class CloudflareSetupRunner {
 
       stdout.writeln('==> Done');
       stdout.writeln('API: ${options.apiUrl}');
-      stdout.writeln('Admin: https://${options.adminProject}.pages.dev');
+      if (options.deployAdminPages == true) {
+        stdout.writeln('Admin: https://${options.adminProject}.pages.dev');
+      }
       stdout.writeln('Public assets: https://${options.webProject}.pages.dev');
       stdout.writeln('R2 bucket: ${options.r2BucketName}');
       return 0;
@@ -240,6 +246,7 @@ class CloudflareSetupRunner {
         : options.r2Binding;
     options.r2BucketName ??= _deployment.r2BucketName;
     options.adminProject ??= _deployment.adminPagesProject;
+    options.deployAdminPages ??= _deployment.deployAdminPages;
     options.webProject ??= _deployment.webPagesProject;
     options.webAssetBaseUrl ??= _deployment.publicFormAssetBaseUrl;
     options.remoteBindingsForLocalDev ??= _deployment.remoteBindingsForLocalDev;
@@ -258,8 +265,12 @@ class CloudflareSetupRunner {
       ..r2BucketName = options.r2BucketName
       ..secretsStoreName = CloudflareSetupOptions.defaultSecretsStoreName
       ..secretsStoreId = _secretsStoreId
-      ..adminPagesProject = options.adminProject
-      ..adminPagesUrl = options.adminProject == null
+      ..deployAdminPages = options.deployAdminPages ?? true
+      ..adminPagesProject = options.deployAdminPages == true
+          ? options.adminProject
+          : null
+      ..adminPagesUrl =
+          options.deployAdminPages != true || options.adminProject == null
           ? null
           : 'https://${options.adminProject}.pages.dev'
       ..webPagesProject = options.webProject
@@ -430,11 +441,16 @@ Then re-run setup.
       'R2 bucket name',
       CloudflareSetupOptions.defaultR2BucketName,
     );
-    options.adminProject = await _resolveName(
-      options.adminProject,
-      'Admin Pages project',
-      CloudflareSetupOptions.defaultAdminProject,
-    );
+    options.deployAdminPages ??= true;
+    if (options.deployAdminPages == true) {
+      options.adminProject = await _resolveName(
+        options.adminProject,
+        'Admin Pages project',
+        CloudflareSetupOptions.defaultAdminProject,
+      );
+    } else {
+      options.adminProject = null;
+    }
     options.webProject = await _resolveName(
       options.webProject,
       'Public assets Pages project',
@@ -445,7 +461,7 @@ Then re-run setup.
       options.workerName,
       options.databaseName,
       options.r2BucketName,
-      options.adminProject,
+      if (options.deployAdminPages == true) options.adminProject,
       options.webProject,
     ].any((v) => v == null || v.isEmpty);
     if (missing) {
@@ -458,8 +474,7 @@ Run setup interactively, or pass:
     --worker-name <worker-name> \\
     --database-name <database-name> \\
     --r2-bucket-name <bucket-name> \\
-    --admin-project <pages-project> \\
-    --web-project <pages-project>
+    ${options.deployAdminPages == true ? '--admin-project <pages-project> \\\n    ' : ''}--web-project <pages-project>
 ''');
     }
   }

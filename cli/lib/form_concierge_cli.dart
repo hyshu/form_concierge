@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:args/command_runner.dart';
 
 import 'src/cli_exception.dart';
+import 'src/build_command.dart';
 import 'src/doctor_command.dart';
 import 'src/destroy_command.dart';
 import 'src/setup_command.dart';
@@ -23,6 +24,7 @@ Future<int> runFormConciergeCli(List<String> args) async {
           'form_concierge',
           'Form Concierge tooling (setup, doctor).',
         )
+        ..addCommand(BuildCommand())
         ..addCommand(DoctorCommand())
         ..addCommand(DestroyCommand())
         ..addCommand(SetupCommand())
