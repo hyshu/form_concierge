@@ -23,6 +23,11 @@ class FormConciergeSurvey extends StatefulWidget {
   final String projectSlug;
   final String? surveySlug;
   final int? surveyId;
+
+  /// Called after the main survey response is saved.
+  ///
+  /// Use [onResponseSubmitted] to also receive the saved response and answers.
+  @Deprecated('Use onResponseSubmitted instead.')
   final VoidCallback? onSubmitted;
 
   /// Called when the user taps the completion-screen "Done" button.
@@ -76,7 +81,7 @@ class FormConciergeSurvey extends StatefulWidget {
     required this.projectSlug,
     this.surveySlug,
     this.surveyId,
-    this.onSubmitted,
+    @Deprecated('Use onResponseSubmitted instead.') this.onSubmitted,
     this.onDone,
     this.onResponseSubmitted,
     this.onFollowUpSubmitted,
