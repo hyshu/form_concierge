@@ -1,6 +1,10 @@
 import type { Env } from './types';
 import type { AiProvider } from './admin_settings';
-import { apiKeyForProvider, getIntegrationSettingsRow, normalizeAiProvider } from './admin_settings';
+import {
+  apiKeyForProvider,
+  getIntegrationSettingsRow,
+  normalizeAiProvider,
+} from './admin_settings';
 import {
   HttpError,
   MEDIA_MAX_FILES,
@@ -17,6 +21,7 @@ const DEFAULT_MODELS: Record<AiProvider, string> = {
   gemini: 'gemini-3.5-flash',
   openai: 'gpt-5.5',
   claude: 'claude-sonnet-4-6',
+  groq: 'openai/gpt-oss-120b',
   cerebras: 'gpt-oss-120b',
 };
 const MAX_PROMPT_LENGTH = 4_000;
@@ -42,7 +47,7 @@ const TRANSLATION_FIELD_KINDS = [
   'placeholder',
   'choice',
 ] as const;
-type TranslationFieldKind = typeof TRANSLATION_FIELD_KINDS[number];
+type TranslationFieldKind = (typeof TRANSLATION_FIELD_KINDS)[number];
 
 export async function generateSurveyQuestions(request: Request, env: Env): Promise<Response> {
   const { provider, apiKey } = await requireAiProvider(env);
@@ -109,7 +114,7 @@ export async function generateFollowUpFromAnswers(
     'Current response answers:',
     input.answersSummary,
     '',
-    'This respondent\'s prior responses on this survey within the last 30 days (context only; do not re-ask these):',
+    "This respondent's prior responses on this survey within the last 30 days (context only; do not re-ask these):",
     input.recentResponsesSummary,
   ];
   if (adminPrompt.length > 0) {
@@ -256,7 +261,10 @@ function parseFollowUpGeneration(text: string, provider: AiProvider): FollowUpGe
       }
       const label = (choice as { label?: unknown }).label;
       if (typeof label !== 'string' || label.trim().length === 0) {
-        throw new HttpError(502, `${providerLabel(provider)} returned empty follow-up choice label`);
+        throw new HttpError(
+          502,
+          `${providerLabel(provider)} returned empty follow-up choice label`,
+        );
       }
       return {
         id: `c${choiceIndex + 1}`,
@@ -267,17 +275,20 @@ function parseFollowUpGeneration(text: string, provider: AiProvider): FollowUpGe
       throw new HttpError(502, `${providerLabel(provider)} returned invalid choice count`);
     }
     if ((isTextQuestionType(type) || isImageUploadQuestionType(type)) && choices.length > 0) {
-      throw new HttpError(502, `${providerLabel(provider)} returned non-choice follow-up with choices`);
+      throw new HttpError(
+        502,
+        `${providerLabel(provider)} returned non-choice follow-up with choices`,
+      );
     }
     let maxFiles: number | null = null;
     if (isImageUploadQuestionType(type)) {
       if (row.maxFiles == null) {
         maxFiles = 1;
       } else if (
-        typeof row.maxFiles === 'number'
-        && Number.isSafeInteger(row.maxFiles)
-        && row.maxFiles >= 1
-        && row.maxFiles <= MEDIA_MAX_FILES
+        typeof row.maxFiles === 'number' &&
+        Number.isSafeInteger(row.maxFiles) &&
+        row.maxFiles >= 1 &&
+        row.maxFiles <= MEDIA_MAX_FILES
       ) {
         maxFiles = row.maxFiles;
       } else {
@@ -329,7 +340,9 @@ export async function translateLocalizedText(request: Request, env: Env): Promis
       fieldKind ? `Field kind: ${fieldKind}` : null,
       'Source text:',
       sourceText,
-    ].filter(Boolean).join('\n'),
+    ]
+      .filter(Boolean)
+      .join('\n'),
     schemaName: 'localized_translations',
     schema: translationSchema(targetLocales),
     maxTokens: 2048,
@@ -354,6 +367,7 @@ function resolveModelId(env: Env, provider: AiProvider): string {
     gemini: 'AI_GEMINI_MODEL',
     openai: 'AI_OPENAI_MODEL',
     claude: 'AI_CLAUDE_MODEL',
+    groq: 'AI_GROQ_MODEL',
     cerebras: 'AI_CEREBRAS_MODEL',
   }[provider];
   const override = (env as unknown as Record<string, unknown>)[envKey];
@@ -383,6 +397,11 @@ async function generateStructuredJson(input: StructuredJsonRequest): Promise<str
       });
     case 'claude':
       return generateWithClaude(input);
+    case 'groq':
+      return generateWithOpenAiCompatible({
+        ...input,
+        endpoint: 'https://api.groq.com/openai/v1/chat/completions',
+      });
     case 'cerebras':
       return generateWithOpenAiCompatible({
         ...input,
@@ -434,7 +453,7 @@ async function generateWithOpenAiCompatible(
   const response = await fetch(input.endpoint, {
     method: 'POST',
     headers: {
-      'authorization': `Bearer ${input.apiKey}`,
+      authorization: `Bearer ${input.apiKey}`,
       'content-type': 'application/json',
     },
     body: JSON.stringify({
@@ -456,7 +475,8 @@ async function generateWithOpenAiCompatible(
   });
   const payload = await response.json().catch(() => null);
   if (!response.ok) {
-    const message = providerErrorMessage(payload) ?? `${providerLabel(input.provider)} request failed`;
+    const message =
+      providerErrorMessage(payload) ?? `${providerLabel(input.provider)} request failed`;
     throw new HttpError(response.status >= 500 ? 502 : 400, message);
   }
   return extractOpenAiCompatibleText(payload, input.provider);
@@ -475,9 +495,7 @@ async function generateWithClaude(input: StructuredJsonRequest): Promise<string>
       model: input.model,
       max_tokens: input.maxTokens,
       system: input.system,
-      messages: [
-        { role: 'user', content: input.user },
-      ],
+      messages: [{ role: 'user', content: input.user }],
       output_config: {
         effort: 'low',
         format: {
@@ -522,7 +540,9 @@ function translationSystemInstruction(
     'Preserve placeholders such as {count}, {title}, or {name} exactly.',
     'Do not add quotes, labels, or explanations.',
     'Return JSON only.',
-  ].filter(Boolean).join('\n');
+  ]
+    .filter(Boolean)
+    .join('\n');
 }
 
 function translationSchema(targetLocales: readonly string[]) {
@@ -536,7 +556,7 @@ function translationSchema(targetLocales: readonly string[]) {
 
 function requireLocaleCode(value: unknown, field: string): string {
   const locale = requireString(value, field);
-  if (!LOCALES.includes(locale as typeof LOCALES[number])) {
+  if (!LOCALES.includes(locale as (typeof LOCALES)[number])) {
     throw new HttpError(400, `${field} is not a supported locale`);
   }
   return locale;
@@ -553,7 +573,7 @@ function requireTargetLocales(value: unknown, sourceLocale: string): string[] {
     if (typeof item !== 'string') {
       throw new HttpError(400, `targetLocales[${index}] must be a string`);
     }
-    if (!LOCALES.includes(item as typeof LOCALES[number])) {
+    if (!LOCALES.includes(item as (typeof LOCALES)[number])) {
       throw new HttpError(400, `targetLocales[${index}] is not a supported locale`);
     }
     if (item === sourceLocale) {
@@ -633,13 +653,7 @@ function questionSchema() {
       textTranslations: localizedTextSchema,
       type: {
         type: 'string',
-        enum: [
-          'singleChoice',
-          'multipleChoice',
-          'textSingle',
-          'textMultiLine',
-          'imageUpload',
-        ],
+        enum: ['singleChoice', 'multipleChoice', 'textSingle', 'textMultiLine', 'imageUpload'],
       },
       isRequired: { type: 'boolean' },
       placeholderTranslations: localizedTextSchema,
@@ -685,6 +699,7 @@ export function toProviderSchema(provider: AiProvider, schema: unknown): unknown
       return toGeminiSchema(schema);
     case 'openai':
     case 'cerebras':
+    case 'groq':
     case 'claude':
       return toStrictJsonSchema(schema);
   }
@@ -746,8 +761,8 @@ function toStrictJsonSchema(schema: unknown): unknown {
 
   const properties = result.properties;
   const isObjectSchema =
-    result.type === 'object'
-    || (properties != null && typeof properties === 'object' && !Array.isArray(properties));
+    result.type === 'object' ||
+    (properties != null && typeof properties === 'object' && !Array.isArray(properties));
 
   if (isObjectSchema) {
     result.additionalProperties = false;
@@ -784,7 +799,8 @@ function extractGeminiText(payload: unknown): string {
 
 function extractOpenAiCompatibleText(payload: unknown, provider: AiProvider): string {
   const choices = (payload as { choices?: unknown })?.choices;
-  if (!Array.isArray(choices)) throw new HttpError(502, `${providerLabel(provider)} returned no choices`);
+  if (!Array.isArray(choices))
+    throw new HttpError(502, `${providerLabel(provider)} returned no choices`);
   const content = (choices[0] as { message?: { content?: unknown } })?.message?.content;
   if (typeof content !== 'string' || content.trim().length === 0) {
     throw new HttpError(502, `${providerLabel(provider)} returned empty content`);
@@ -822,10 +838,16 @@ function normalizeGeneratedQuestion(value: unknown, provider: AiProvider) {
   const type = normalizeQuestionType(input.type);
   const choices = normalizeChoiceTranslations(input.choiceTranslations, provider);
   if (isChoiceQuestionType(type) && choices.length === 0) {
-    throw new HttpError(502, `${providerLabel(provider)} returned a choice question without choices`);
+    throw new HttpError(
+      502,
+      `${providerLabel(provider)} returned a choice question without choices`,
+    );
   }
   if ((isTextQuestionType(type) || isImageUploadQuestionType(type)) && choices.length > 0) {
-    throw new HttpError(502, `${providerLabel(provider)} returned a non-choice question with choices`);
+    throw new HttpError(
+      502,
+      `${providerLabel(provider)} returned a non-choice question with choices`,
+    );
   }
   let minSelected = nullableInteger(input.minSelected, 'minSelected', provider);
   let maxSelected = nullableInteger(input.maxSelected, 'maxSelected', provider);
@@ -843,16 +865,26 @@ function normalizeGeneratedQuestion(value: unknown, provider: AiProvider) {
     type,
     isRequired: normalizeRequiredBoolean(input.isRequired, 'isRequired', provider),
     placeholderTranslations: normalizeLocalizedText(input.placeholderTranslations, provider),
-    minLength: isTextQuestionType(type) ? nullableInteger(input.minLength, 'minLength', provider) : null,
-    maxLength: isTextQuestionType(type) ? nullableInteger(input.maxLength, 'maxLength', provider) : null,
+    minLength: isTextQuestionType(type)
+      ? nullableInteger(input.minLength, 'minLength', provider)
+      : null,
+    maxLength: isTextQuestionType(type)
+      ? nullableInteger(input.maxLength, 'maxLength', provider)
+      : null,
     minSelected: isChoiceQuestionType(type) || isImageUploadQuestionType(type) ? minSelected : null,
     maxSelected: isChoiceQuestionType(type) || isImageUploadQuestionType(type) ? maxSelected : null,
-    visibilityConditionMode: normalizeVisibilityConditionMode(input.visibilityConditionMode, provider),
+    visibilityConditionMode: normalizeVisibilityConditionMode(
+      input.visibilityConditionMode,
+      provider,
+    ),
     choiceTranslations: choices,
   };
 }
 
-function normalizeChoiceTranslations(value: unknown, provider: AiProvider): Record<string, string>[] {
+function normalizeChoiceTranslations(
+  value: unknown,
+  provider: AiProvider,
+): Record<string, string>[] {
   if (!Array.isArray(value)) {
     throw new HttpError(502, `${providerLabel(provider)} returned invalid choice translations`);
   }
@@ -894,7 +926,10 @@ function nullableInteger(value: unknown, field: string, provider: AiProvider): n
 
 function localizedStringValue(value: unknown, locale: string, provider: AiProvider): string {
   if (typeof value !== 'string') {
-    throw new HttpError(502, `${providerLabel(provider)} returned missing localized text for ${locale}`);
+    throw new HttpError(
+      502,
+      `${providerLabel(provider)} returned missing localized text for ${locale}`,
+    );
   }
   return value.trim();
 }
@@ -909,5 +944,7 @@ function providerLabel(provider: AiProvider): string {
       return 'Claude';
     case 'cerebras':
       return 'Cerebras';
+    case 'groq':
+      return 'Groq';
   }
 }

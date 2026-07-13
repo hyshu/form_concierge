@@ -1,6 +1,6 @@
 part of form_concierge_client;
 
-enum AiProvider { gemini, openai, claude, cerebras }
+enum AiProvider { gemini, openai, claude, groq, cerebras }
 
 enum SmtpSecureMode { none, starttls, tls }
 
@@ -34,6 +34,7 @@ class AiIntegrationSettings {
   final AiProviderKeySettings gemini;
   final AiProviderKeySettings openai;
   final AiProviderKeySettings claude;
+  final AiProviderKeySettings groq;
   final AiProviderKeySettings cerebras;
 
   const AiIntegrationSettings({
@@ -41,6 +42,7 @@ class AiIntegrationSettings {
     required this.gemini,
     required this.openai,
     required this.claude,
+    required this.groq,
     required this.cerebras,
   });
 
@@ -50,6 +52,7 @@ class AiIntegrationSettings {
         gemini: _object(json['gemini'], AiProviderKeySettings.fromJson),
         openai: _object(json['openai'], AiProviderKeySettings.fromJson),
         claude: _object(json['claude'], AiProviderKeySettings.fromJson),
+        groq: _object(json['groq'], AiProviderKeySettings.fromJson),
         cerebras: _object(json['cerebras'], AiProviderKeySettings.fromJson),
       );
 }
@@ -131,6 +134,8 @@ class AdminIntegrationSettingsInput {
   final bool clearOpenaiApiKey;
   final String? claudeApiKey;
   final bool clearClaudeApiKey;
+  final String? groqApiKey;
+  final bool clearGroqApiKey;
   final String? cerebrasApiKey;
   final bool clearCerebrasApiKey;
   final String? smtpHost;
@@ -158,6 +163,8 @@ class AdminIntegrationSettingsInput {
     this.clearOpenaiApiKey = false,
     this.claudeApiKey,
     this.clearClaudeApiKey = false,
+    this.groqApiKey,
+    this.clearGroqApiKey = false,
     this.cerebrasApiKey,
     this.clearCerebrasApiKey = false,
     this.smtpHost,
@@ -186,6 +193,8 @@ class AdminIntegrationSettingsInput {
       'clearOpenaiApiKey': clearOpenaiApiKey,
       'claudeApiKey': claudeApiKey,
       'clearClaudeApiKey': clearClaudeApiKey,
+      'groqApiKey': groqApiKey,
+      'clearGroqApiKey': clearGroqApiKey,
       'cerebrasApiKey': cerebrasApiKey,
       'clearCerebrasApiKey': clearCerebrasApiKey,
     },

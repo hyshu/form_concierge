@@ -35,6 +35,7 @@ class _AdminSettingsFormState extends State<AdminSettingsForm> {
   final _geminiKeyController = TextEditingController();
   final _openaiKeyController = TextEditingController();
   final _claudeKeyController = TextEditingController();
+  final _groqKeyController = TextEditingController();
   final _cerebrasKeyController = TextEditingController();
   final _smtpHostController = TextEditingController();
   final _smtpPortController = TextEditingController();
@@ -50,6 +51,7 @@ class _AdminSettingsFormState extends State<AdminSettingsForm> {
   bool _clearGeminiKey = false;
   bool _clearOpenaiKey = false;
   bool _clearClaudeKey = false;
+  bool _clearGroqKey = false;
   bool _clearCerebrasKey = false;
   bool _clearSmtpPassword = false;
   bool _clearTurnstileSiteKey = false;
@@ -86,6 +88,7 @@ class _AdminSettingsFormState extends State<AdminSettingsForm> {
     _geminiKeyController,
     _openaiKeyController,
     _claudeKeyController,
+    _groqKeyController,
     _cerebrasKeyController,
     _smtpHostController,
     _smtpPortController,
@@ -101,6 +104,7 @@ class _AdminSettingsFormState extends State<AdminSettingsForm> {
     _geminiKeyController.clear();
     _openaiKeyController.clear();
     _claudeKeyController.clear();
+    _groqKeyController.clear();
     _cerebrasKeyController.clear();
     _smtpHostController.text = settings.smtp.host ?? '';
     _smtpPortController.text = settings.smtp.port?.toString() ?? '';
@@ -115,6 +119,7 @@ class _AdminSettingsFormState extends State<AdminSettingsForm> {
     _clearGeminiKey = false;
     _clearOpenaiKey = false;
     _clearClaudeKey = false;
+    _clearGroqKey = false;
     _clearCerebrasKey = false;
     _clearSmtpPassword = false;
     _clearTurnstileSiteKey = false;
@@ -148,6 +153,12 @@ class _AdminSettingsFormState extends State<AdminSettingsForm> {
     value: value,
     updateFlag: (next) => _clearCerebrasKey = next,
     controller: _cerebrasKeyController,
+  );
+
+  void _setClearGroqKey(bool value) => _setClearSecret(
+    value: value,
+    updateFlag: (next) => _clearGroqKey = next,
+    controller: _groqKeyController,
   );
 
   void _setClearSmtpPassword(bool value) => _setClearSecret(
@@ -189,6 +200,8 @@ class _AdminSettingsFormState extends State<AdminSettingsForm> {
         clearOpenaiApiKey: _clearOpenaiKey,
         claudeApiKey: _nullIfBlank(_claudeKeyController.text),
         clearClaudeApiKey: _clearClaudeKey,
+        groqApiKey: _nullIfBlank(_groqKeyController.text),
+        clearGroqApiKey: _clearGroqKey,
         cerebrasApiKey: _nullIfBlank(_cerebrasKeyController.text),
         clearCerebrasApiKey: _clearCerebrasKey,
         smtpHost: _nullIfBlank(_smtpHostController.text),
@@ -236,10 +249,12 @@ class _AdminSettingsFormState extends State<AdminSettingsForm> {
                     geminiKeyController: _geminiKeyController,
                     openaiKeyController: _openaiKeyController,
                     claudeKeyController: _claudeKeyController,
+                    groqKeyController: _groqKeyController,
                     cerebrasKeyController: _cerebrasKeyController,
                     clearGeminiKey: _clearGeminiKey,
                     clearOpenaiKey: _clearOpenaiKey,
                     clearClaudeKey: _clearClaudeKey,
+                    clearGroqKey: _clearGroqKey,
                     clearCerebrasKey: _clearCerebrasKey,
                     onProviderChanged: (provider) {
                       setState(() {
@@ -250,6 +265,7 @@ class _AdminSettingsFormState extends State<AdminSettingsForm> {
                     onClearGeminiChanged: _setClearGeminiKey,
                     onClearOpenaiChanged: _setClearOpenaiKey,
                     onClearClaudeChanged: _setClearClaudeKey,
+                    onClearGroqChanged: _setClearGroqKey,
                     onClearCerebrasChanged: _setClearCerebrasKey,
                   ),
                   const SizedBox(height: 16),

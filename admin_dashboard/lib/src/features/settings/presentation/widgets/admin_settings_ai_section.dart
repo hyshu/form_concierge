@@ -14,15 +14,18 @@ class AdminSettingsAiSection extends StatelessWidget {
     required this.geminiKeyController,
     required this.openaiKeyController,
     required this.claudeKeyController,
+    required this.groqKeyController,
     required this.cerebrasKeyController,
     required this.clearGeminiKey,
     required this.clearOpenaiKey,
     required this.clearClaudeKey,
+    required this.clearGroqKey,
     required this.clearCerebrasKey,
     required this.onProviderChanged,
     required this.onClearGeminiChanged,
     required this.onClearOpenaiChanged,
     required this.onClearClaudeChanged,
+    required this.onClearGroqChanged,
     required this.onClearCerebrasChanged,
   });
 
@@ -31,15 +34,18 @@ class AdminSettingsAiSection extends StatelessWidget {
   final TextEditingController geminiKeyController;
   final TextEditingController openaiKeyController;
   final TextEditingController claudeKeyController;
+  final TextEditingController groqKeyController;
   final TextEditingController cerebrasKeyController;
   final bool clearGeminiKey;
   final bool clearOpenaiKey;
   final bool clearClaudeKey;
+  final bool clearGroqKey;
   final bool clearCerebrasKey;
   final ValueChanged<AiProvider> onProviderChanged;
   final ValueChanged<bool> onClearGeminiChanged;
   final ValueChanged<bool> onClearOpenaiChanged;
   final ValueChanged<bool> onClearClaudeChanged;
+  final ValueChanged<bool> onClearGroqChanged;
   final ValueChanged<bool> onClearCerebrasChanged;
 
   @override
@@ -113,6 +119,15 @@ class AdminSettingsAiSection extends StatelessWidget {
         clearApiKey: clearClaudeKey,
         clearLabel: 'Clear saved Claude API key',
         onClearChanged: onClearClaudeChanged,
+      ),
+      AiProvider.groq => _SelectedAiProviderKey(
+        label: 'Groq API Key',
+        hint: 'gsk_...',
+        settings: settings.groq,
+        controller: groqKeyController,
+        clearApiKey: clearGroqKey,
+        clearLabel: 'Clear saved Groq API key',
+        onClearChanged: onClearGroqChanged,
       ),
       AiProvider.cerebras => _SelectedAiProviderKey(
         label: 'Cerebras API Key',
@@ -196,5 +211,6 @@ String _aiProviderLabel(AiProvider provider) => switch (provider) {
   AiProvider.gemini => 'Gemini',
   AiProvider.openai => 'OpenAI',
   AiProvider.claude => 'Claude',
+  AiProvider.groq => 'Groq',
   AiProvider.cerebras => 'Cerebras',
 };

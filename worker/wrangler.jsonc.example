@@ -54,6 +54,11 @@
       "secret_name": "claude_api_key"
     },
     {
+      "binding": "GROQ_API_KEY",
+      "store_id": "replace-secrets-store-id",
+      "secret_name": "groq_api_key"
+    },
+    {
       "binding": "CEREBRAS_API_KEY",
       "store_id": "replace-secrets-store-id",
       "secret_name": "cerebras_api_key"
@@ -92,6 +97,7 @@
     // "AI_GEMINI_MODEL": "gemini-3.5-flash",
     // "AI_OPENAI_MODEL": "gpt-5.5",
     // "AI_CLAUDE_MODEL": "claude-sonnet-4-6",
+    // "AI_GROQ_MODEL": "openai/gpt-oss-120b",
     // "AI_CEREBRAS_MODEL": "gpt-oss-120b"
   }
 }

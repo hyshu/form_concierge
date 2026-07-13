@@ -553,6 +553,7 @@ Run setup interactively, or pass:
     'gemini_api_key',
     'openai_api_key',
     'claude_api_key',
+    'groq_api_key',
     'cerebras_api_key',
     'smtp_password',
     'turnstile_site_key',

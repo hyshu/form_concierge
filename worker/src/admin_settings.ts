@@ -1,13 +1,21 @@
 import type { Env, IntegrationSettingsRow } from './types';
 import { tryGetSecret, upsertSecret, deleteSecret } from './secrets_store';
-import { HttpError, json, nowIso, optionalBoolean, optionalInteger, readJson, requireObject } from './utils';
+import {
+  HttpError,
+  json,
+  nowIso,
+  optionalBoolean,
+  optionalInteger,
+  readJson,
+  requireObject,
+} from './utils';
 
 export type SmtpSecureMode = 'none' | 'starttls' | 'tls';
-export type AiProvider = 'gemini' | 'openai' | 'claude' | 'cerebras';
+export type AiProvider = 'gemini' | 'openai' | 'claude' | 'groq' | 'cerebras';
 
 const SETTINGS_ID = 1;
 const SMTP_SECURE_MODES = new Set<SmtpSecureMode>(['none', 'starttls', 'tls']);
-const AI_PROVIDERS = new Set<AiProvider>(['gemini', 'openai', 'claude', 'cerebras']);
+const AI_PROVIDERS = new Set<AiProvider>(['gemini', 'openai', 'claude', 'groq', 'cerebras']);
 
 export async function getIntegrationSettingsRow(env: Env): Promise<IntegrationSettingsRow | null> {
   return env.DB.prepare(`SELECT * FROM integration_settings WHERE id = ?`)
@@ -20,14 +28,15 @@ export async function getAdminIntegrationSettings(env: Env): Promise<Response> {
   return json(await integrationSettingsToJson(env, row));
 }
 
-export async function updateAdminIntegrationSettings(request: Request, env: Env): Promise<Response> {
+export async function updateAdminIntegrationSettings(
+  request: Request,
+  env: Env,
+): Promise<Response> {
   const body = await readJson(request);
   const ai = requireObject(body.ai, 'ai');
   const smtp = requireObject(body.smtp, 'smtp');
   // Optional for backward-compatible clients; omit means leave Turnstile secrets unchanged.
-  const turnstile = body.turnstile == null
-    ? null
-    : requireObject(body.turnstile, 'turnstile');
+  const turnstile = body.turnstile == null ? null : requireObject(body.turnstile, 'turnstile');
   const aiProvider = requireAiProvider(ai.provider);
 
   // Optimistic concurrency: the whole row is replaced, so a concurrent save
@@ -37,22 +46,67 @@ export async function updateAdminIntegrationSettings(request: Request, env: Env)
       throw new HttpError(400, 'expectedUpdatedAt must be a string');
     }
     const current = await getIntegrationSettingsRow(env);
-    if (current?.updated_at != null
-      && Date.parse(current.updated_at) !== Date.parse(body.expectedUpdatedAt)) {
+    if (
+      current?.updated_at != null &&
+      Date.parse(current.updated_at) !== Date.parse(body.expectedUpdatedAt)
+    ) {
       throw new HttpError(409, 'Settings were changed by someone else. Reload and try again.');
     }
   }
 
   const secretOps = buildSecretOps([
-    { next: ai.geminiApiKey, clear: optionalBoolean(ai.clearGeminiApiKey, 'ai.clearGeminiApiKey') === true, field: 'ai.geminiApiKey', secretName: 'gemini_api_key' },
-    { next: ai.openaiApiKey, clear: optionalBoolean(ai.clearOpenaiApiKey, 'ai.clearOpenaiApiKey') === true, field: 'ai.openaiApiKey', secretName: 'openai_api_key' },
-    { next: ai.claudeApiKey, clear: optionalBoolean(ai.clearClaudeApiKey, 'ai.clearClaudeApiKey') === true, field: 'ai.claudeApiKey', secretName: 'claude_api_key' },
-    { next: ai.cerebrasApiKey, clear: optionalBoolean(ai.clearCerebrasApiKey, 'ai.clearCerebrasApiKey') === true, field: 'ai.cerebrasApiKey', secretName: 'cerebras_api_key' },
-    { next: smtp.password, clear: optionalBoolean(smtp.clearPassword, 'smtp.clearPassword') === true, field: 'smtp.password', secretName: 'smtp_password' },
-    ...(turnstile == null ? [] : [
-      { next: turnstile.siteKey, clear: optionalBoolean(turnstile.clearSiteKey, 'turnstile.clearSiteKey') === true, field: 'turnstile.siteKey', secretName: 'turnstile_site_key' },
-      { next: turnstile.secretKey, clear: optionalBoolean(turnstile.clearSecretKey, 'turnstile.clearSecretKey') === true, field: 'turnstile.secretKey', secretName: 'turnstile_secret_key' },
-    ]),
+    {
+      next: ai.geminiApiKey,
+      clear: optionalBoolean(ai.clearGeminiApiKey, 'ai.clearGeminiApiKey') === true,
+      field: 'ai.geminiApiKey',
+      secretName: 'gemini_api_key',
+    },
+    {
+      next: ai.openaiApiKey,
+      clear: optionalBoolean(ai.clearOpenaiApiKey, 'ai.clearOpenaiApiKey') === true,
+      field: 'ai.openaiApiKey',
+      secretName: 'openai_api_key',
+    },
+    {
+      next: ai.claudeApiKey,
+      clear: optionalBoolean(ai.clearClaudeApiKey, 'ai.clearClaudeApiKey') === true,
+      field: 'ai.claudeApiKey',
+      secretName: 'claude_api_key',
+    },
+    {
+      next: ai.groqApiKey,
+      clear: optionalBoolean(ai.clearGroqApiKey, 'ai.clearGroqApiKey') === true,
+      field: 'ai.groqApiKey',
+      secretName: 'groq_api_key',
+    },
+    {
+      next: ai.cerebrasApiKey,
+      clear: optionalBoolean(ai.clearCerebrasApiKey, 'ai.clearCerebrasApiKey') === true,
+      field: 'ai.cerebrasApiKey',
+      secretName: 'cerebras_api_key',
+    },
+    {
+      next: smtp.password,
+      clear: optionalBoolean(smtp.clearPassword, 'smtp.clearPassword') === true,
+      field: 'smtp.password',
+      secretName: 'smtp_password',
+    },
+    ...(turnstile == null
+      ? []
+      : [
+          {
+            next: turnstile.siteKey,
+            clear: optionalBoolean(turnstile.clearSiteKey, 'turnstile.clearSiteKey') === true,
+            field: 'turnstile.siteKey',
+            secretName: 'turnstile_site_key',
+          },
+          {
+            next: turnstile.secretKey,
+            clear: optionalBoolean(turnstile.clearSecretKey, 'turnstile.clearSecretKey') === true,
+            field: 'turnstile.secretKey',
+            secretName: 'turnstile_secret_key',
+          },
+        ]),
   ]);
 
   const smtpHost = optionalHost(smtp.host);
@@ -63,8 +117,12 @@ export async function updateAdminIntegrationSettings(request: Request, env: Env)
   const smtpSecureMode = requireSecureMode(smtp.secureMode);
 
   const smtpPasswordForValidation: string | null = secretOps.some(
-    op => op.secretName === 'smtp_password' && op.action === 'clear',
-  ) ? null : (typeof smtp.password === 'string' ? smtp.password : (await tryGetSecret(env.SMTP_PASSWORD)));
+    (op) => op.secretName === 'smtp_password' && op.action === 'clear',
+  )
+    ? null
+    : typeof smtp.password === 'string'
+      ? smtp.password
+      : await tryGetSecret(env.SMTP_PASSWORD);
   assertSmtpSettingsAreCoherent({
     host: smtpHost,
     port: smtpPort,
@@ -90,18 +148,20 @@ export async function updateAdminIntegrationSettings(request: Request, env: Env)
          smtp_secure_mode = excluded.smtp_secure_mode,
          updated_at = excluded.updated_at
        RETURNING *`,
-    ).bind(
-      SETTINGS_ID,
-      aiProvider,
-      smtpHost,
-      smtpPort,
-      smtpUsername,
-      smtpFromEmail,
-      smtpFromName,
-      smtpSecureMode,
-      nowIso(),
-    ).first<IntegrationSettingsRow>(),
-    ...secretOps.map(op =>
+    )
+      .bind(
+        SETTINGS_ID,
+        aiProvider,
+        smtpHost,
+        smtpPort,
+        smtpUsername,
+        smtpFromEmail,
+        smtpFromName,
+        smtpSecureMode,
+        nowIso(),
+      )
+      .first<IntegrationSettingsRow>(),
+    ...secretOps.map((op) =>
       op.action === 'upsert'
         ? upsertSecret(env, op.secretName, op.value!)
         : deleteSecret(env, op.secretName),
@@ -131,7 +191,11 @@ function buildSecretOps(
     if (typeof spec.next !== 'string') throw new HttpError(400, `${spec.field} must be a string`);
     const trimmed = spec.next.trim();
     if (trimmed.length > 0) {
-      ops.push({ secretName: spec.secretName, action: 'upsert', value: trimmed });
+      ops.push({
+        secretName: spec.secretName,
+        action: 'upsert',
+        value: trimmed,
+      });
     }
   }
   return ops;
@@ -178,7 +242,10 @@ export function isSmtpConfigured(row: IntegrationSettingsRow | null): boolean {
   return Boolean(row?.smtp_host && row.smtp_port && row.smtp_from_email);
 }
 
-export async function requireSmtpSettings(row: IntegrationSettingsRow | null, env: Env): Promise<RequiredSmtpSettings> {
+export async function requireSmtpSettings(
+  row: IntegrationSettingsRow | null,
+  env: Env,
+): Promise<RequiredSmtpSettings> {
   if (!isSmtpConfigured(row)) {
     throw new HttpError(400, 'SMTP settings are not configured');
   }
@@ -207,6 +274,7 @@ const API_KEY_BINDINGS = {
   gemini: 'GEMINI_API_KEY',
   openai: 'OPENAI_API_KEY',
   claude: 'CLAUDE_API_KEY',
+  groq: 'GROQ_API_KEY',
   cerebras: 'CEREBRAS_API_KEY',
 } as const;
 
@@ -217,11 +285,12 @@ export async function apiKeyForProvider(env: Env, provider: AiProvider): Promise
 
 async function integrationSettingsToJson(env: Env, row: IntegrationSettingsRow | null) {
   const provider = normalizeAiProvider(row?.ai_provider ?? 'gemini');
-  const [gemini, openai, claude, cerebras, smtpPwd, turnstileSite, turnstileSecret] =
+  const [gemini, openai, claude, groq, cerebras, smtpPwd, turnstileSite, turnstileSecret] =
     await Promise.all([
       tryGetSecret(env.GEMINI_API_KEY),
       tryGetSecret(env.OPENAI_API_KEY),
       tryGetSecret(env.CLAUDE_API_KEY),
+      tryGetSecret(env.GROQ_API_KEY),
       tryGetSecret(env.CEREBRAS_API_KEY),
       tryGetSecret(env.SMTP_PASSWORD),
       getTurnstileSiteKey(env),
@@ -233,6 +302,7 @@ async function integrationSettingsToJson(env: Env, row: IntegrationSettingsRow |
       gemini: aiProviderToJson(gemini, provider === 'gemini'),
       openai: aiProviderToJson(openai, provider === 'openai'),
       claude: aiProviderToJson(claude, provider === 'claude'),
+      groq: aiProviderToJson(groq, provider === 'groq'),
       cerebras: aiProviderToJson(cerebras, provider === 'cerebras'),
     },
     smtp: {
@@ -349,14 +419,13 @@ function assertSmtpSettingsAreCoherent(settings: {
   secureMode: SmtpSecureMode;
 }): void {
   if (settings.secureMode === 'none' && (settings.username || settings.password)) {
-    throw new HttpError(400, 'smtp.secureMode must be starttls or tls when SMTP authentication is configured');
+    throw new HttpError(
+      400,
+      'smtp.secureMode must be starttls or tls when SMTP authentication is configured',
+    );
   }
   const anySmtpValue = Boolean(
-    settings.host ||
-      settings.port ||
-      settings.fromEmail ||
-      settings.username ||
-      settings.password,
+    settings.host || settings.port || settings.fromEmail || settings.username || settings.password,
   );
   if (!anySmtpValue) return;
   if (!settings.host) throw new HttpError(400, 'smtp.host is required');
@@ -364,7 +433,11 @@ function assertSmtpSettingsAreCoherent(settings: {
   if (!settings.fromEmail) throw new HttpError(400, 'smtp.fromEmail is required');
 
   // Port/mode mismatch causes a silent hang then "SMTP read timed out" (e.g. Resend 465 + STARTTLS).
-  if (settings.port != null && IMPLICIT_TLS_PORTS.has(settings.port) && settings.secureMode !== 'tls') {
+  if (
+    settings.port != null &&
+    IMPLICIT_TLS_PORTS.has(settings.port) &&
+    settings.secureMode !== 'tls'
+  ) {
     throw new HttpError(
       400,
       `Port ${settings.port} requires Security = TLS (implicit SSL/TLS). STARTTLS is for ports 587/2587.`,

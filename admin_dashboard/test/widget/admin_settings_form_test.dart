@@ -137,6 +137,7 @@ AdminIntegrationSettings _settings({
   bool hasGeminiKey = false,
   bool hasOpenaiKey = false,
   bool hasClaudeKey = false,
+  bool hasGroqKey = false,
   bool hasCerebrasKey = false,
   bool hasSmtpPassword = false,
   String? smtpHost,
@@ -157,6 +158,10 @@ AdminIntegrationSettings _settings({
       claude: AiProviderKeySettings(
         enabled: aiProvider == AiProvider.claude && hasClaudeKey,
         hasApiKey: hasClaudeKey,
+      ),
+      groq: AiProviderKeySettings(
+        enabled: aiProvider == AiProvider.groq && hasGroqKey,
+        hasApiKey: hasGroqKey,
       ),
       cerebras: AiProviderKeySettings(
         enabled: aiProvider == AiProvider.cerebras && hasCerebrasKey,

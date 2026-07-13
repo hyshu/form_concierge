@@ -185,7 +185,7 @@ CREATE TABLE integration_settings (
   smtp_from_name TEXT,
   smtp_secure_mode TEXT NOT NULL DEFAULT 'starttls',
   updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
-  CHECK (ai_provider IN ('gemini', 'openai', 'claude', 'cerebras')),
+  CHECK (ai_provider IN ('gemini', 'openai', 'claude', 'groq', 'cerebras')),
   CHECK (smtp_secure_mode IN ('none', 'starttls', 'tls')),
   CHECK (smtp_port IS NULL OR (smtp_port BETWEEN 1 AND 65535))
 );
