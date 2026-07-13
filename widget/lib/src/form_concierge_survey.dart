@@ -52,6 +52,12 @@ class FormConciergeSurvey extends StatefulWidget {
   /// Shown below the submit button when the survey form is ready.
   final Widget? footer;
 
+  /// Builds the loading state, including its layout.
+  ///
+  /// When omitted, a centered progress indicator is shown 48 logical pixels
+  /// below the top of the available body area.
+  final WidgetBuilder? loadingBuilder;
+
   /// Supplies a CAPTCHA token when the survey has CAPTCHA enabled.
   ///
   /// The widget never embeds a CAPTCHA implementation: the host resolves a
@@ -83,6 +89,7 @@ class FormConciergeSurvey extends StatefulWidget {
     this.showLocalePicker = false,
     this.processImage,
     this.footer,
+    this.loadingBuilder,
     this.captchaTokenProvider,
     this.onSubmitError,
   });
@@ -539,8 +546,8 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
       _state.answers,
     );
     return switch (_state.viewState) {
-      SurveyViewState.loading ||
-      SurveyViewState.followUpLoading => const SurveyLoading(),
+      SurveyViewState.loading || SurveyViewState.followUpLoading =>
+        SurveyLoading(builder: widget.loadingBuilder),
       SurveyViewState.error => SurveyError(
         locale: locale,
         message:
