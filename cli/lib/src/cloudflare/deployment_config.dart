@@ -48,6 +48,14 @@ class CloudflareDeploymentConfig {
   String? publicFormAssetBaseUrl;
   bool? remoteBindingsForLocalDev;
 
+  bool get hasResources =>
+      workerName != null ||
+      databaseName != null ||
+      r2BucketName != null ||
+      secretsStoreId != null ||
+      adminPagesProject != null ||
+      webPagesProject != null;
+
   static CloudflareDeploymentConfig fromJson(Map<String, dynamic> json) {
     final schemaVersion = json['schemaVersion'];
     if (schemaVersion != 1) {
@@ -169,5 +177,14 @@ class CloudflareDeploymentStore {
     const encoder = JsonEncoder.withIndent('  ');
     await temporary.writeAsString('${encoder.convert(config.toJson())}\n');
     await temporary.rename(path);
+  }
+
+  Future<void> delete() async {
+    final file = File(path);
+    if (await file.exists()) await file.delete();
+    final directory = file.parent;
+    if (await directory.exists() && await directory.list().isEmpty) {
+      await directory.delete();
+    }
   }
 }

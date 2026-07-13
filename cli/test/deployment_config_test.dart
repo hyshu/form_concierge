@@ -37,4 +37,18 @@ void main() {
     expect(loaded?.workerName, 'worker');
     expect(File(store.path).existsSync(), isTrue);
   });
+
+  test('store deletes deployment file and empty directory', () async {
+    final root = await Directory.systemTemp.createTemp('deployment-delete-');
+    addTearDown(() async {
+      if (await root.exists()) await root.delete(recursive: true);
+    });
+    final store = CloudflareDeploymentStore(root.path);
+    await store.save(CloudflareDeploymentConfig(workerName: 'worker'));
+
+    await store.delete();
+
+    expect(File(store.path).existsSync(), isFalse);
+    expect(File(store.path).parent.existsSync(), isFalse);
+  });
 }

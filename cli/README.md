@@ -38,6 +38,11 @@ executable. After global activate, the command is also available as
 | `form_concierge doctor` | Check dart / flutter / node / npm / wrangler and monorepo layout |
 | `form_concierge setup cloudflare` | Create/configure D1, R2, Worker, and Pages |
 | `form_concierge update cloudflare` | Reuse saved deployment settings, migrate, build, and deploy |
+| `form_concierge destroy cloudflare` | Delete resources recorded in deployment settings |
+
+Destroy keeps D1, R2, and Secrets Store by default. Use `--include-data` to
+delete D1 and an empty R2 bucket. A non-empty R2 bucket is retained with a
+warning. Secrets Store deletion requires `--delete-secrets-store`.
 
 `setup cloudflare` accepts flags such as `--preflight-only`,
 `--seed-project-id`, `--worker-name`, and others listed in
