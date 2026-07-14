@@ -102,6 +102,11 @@ class CloudflareDeploymentCommand extends Command<int> {
         negatable: false,
       )
       ..addFlag(
+        'force',
+        help: 'Deploy every component regardless of installed version.',
+        negatable: false,
+      )
+      ..addFlag(
         'remote-bindings-for-local-dev',
         help: 'Use remote D1/R2 bindings during wrangler dev.',
         negatable: false,
@@ -192,6 +197,22 @@ class CloudflareDeploymentCommand extends Command<int> {
       remoteBindingsForLocalDev: remoteBindings,
       wranglerUpdateConfig: wranglerUpdate,
       targetVersion: results['template-version'] as String,
+      force: results['force'] == true,
+      hasConfigurationOverrides: const [
+        'database-id',
+        'database-name',
+        'worker-name',
+        'r2-bucket-name',
+        'r2-binding',
+        'api-url',
+        'admin-project',
+        'admin-pages',
+        'no-admin-pages',
+        'web-project',
+        'web-asset-base-url',
+        'remote-bindings-for-local-dev',
+        'local-bindings-for-local-dev',
+      ].any(results.wasParsed),
     );
 
     final runner = CloudflareSetupRunner(
