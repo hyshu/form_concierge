@@ -23,6 +23,9 @@ class ResponseList extends StatelessWidget {
   final Map<int, List<Answer>> answersByResponseId;
   final Set<int> loadingAnswerIds;
   final Map<int, String> answerErrorsByResponseId;
+  final Map<int, List<AdminReply>> repliesByResponseId;
+  final Set<int> loadingReplyIds;
+  final Map<int, String> replyErrorsByResponseId;
   final void Function(int page) onPageChange;
   final void Function(SurveyResponse response) onDelete;
   final void Function(SurveyResponse response) onReply;
@@ -43,6 +46,9 @@ class ResponseList extends StatelessWidget {
     this.answersByResponseId = const {},
     this.loadingAnswerIds = const {},
     this.answerErrorsByResponseId = const {},
+    this.repliesByResponseId = const {},
+    this.loadingReplyIds = const {},
+    this.replyErrorsByResponseId = const {},
     required this.onPageChange,
     required this.onDelete,
     required this.onReply,
@@ -98,6 +104,14 @@ class ResponseList extends StatelessWidget {
                 answersError: responseId == null
                     ? null
                     : answerErrorsByResponseId[responseId],
+                replies: responseId == null
+                    ? null
+                    : repliesByResponseId[responseId],
+                isLoadingReplies:
+                    responseId != null && loadingReplyIds.contains(responseId),
+                repliesError: responseId == null
+                    ? null
+                    : replyErrorsByResponseId[responseId],
                 onDelete: () => onDelete(response),
                 onReply: () => onReply(response),
                 onExpand: responseId == null
@@ -160,6 +174,9 @@ class _ResponseTile extends StatelessWidget {
   final List<Answer>? answers;
   final bool isLoadingAnswers;
   final String? answersError;
+  final List<AdminReply>? replies;
+  final bool isLoadingReplies;
+  final String? repliesError;
   final VoidCallback onDelete;
   final VoidCallback onReply;
   final VoidCallback? onExpand;
@@ -175,6 +192,9 @@ class _ResponseTile extends StatelessWidget {
     required this.answers,
     required this.isLoadingAnswers,
     required this.answersError,
+    required this.replies,
+    required this.isLoadingReplies,
+    required this.repliesError,
     required this.onDelete,
     required this.onReply,
     required this.onExpand,
@@ -220,9 +240,23 @@ class _ResponseTile extends StatelessWidget {
                     ),
                   ),
                 ),
-                title: Text(
-                  response.submittedAt.toIsoDateTimeString(),
-                  style: theme.textTheme.titleSmall,
+                title: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        response.submittedAt.toIsoDateTimeString(),
+                        style: theme.textTheme.titleSmall,
+                      ),
+                    ),
+                    if (response.replyCount > 0) ...[
+                      const SizedBox(width: 8),
+                      HuxBadge(
+                        label: context.tr('Replied'),
+                        variant: HuxBadgeVariant.success,
+                        size: HuxBadgeSize.small,
+                      ),
+                    ],
+                  ],
                 ),
                 subtitle: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -303,6 +337,9 @@ class _ResponseTile extends StatelessWidget {
                     followUp: response.followUp,
                     isLoading: isLoadingAnswers,
                     error: answersError,
+                    replies: replies,
+                    isLoadingReplies: isLoadingReplies,
+                    repliesError: repliesError,
                   ),
                 ],
               ),
@@ -372,6 +409,9 @@ class _AnswersBody extends StatelessWidget {
   final FollowUp? followUp;
   final bool isLoading;
   final String? error;
+  final List<AdminReply>? replies;
+  final bool isLoadingReplies;
+  final String? repliesError;
 
   const _AnswersBody({
     required this.client,
@@ -381,6 +421,9 @@ class _AnswersBody extends StatelessWidget {
     this.followUp,
     required this.isLoading,
     required this.error,
+    required this.replies,
+    required this.isLoadingReplies,
+    required this.repliesError,
   });
 
   @override
@@ -406,19 +449,33 @@ class _AnswersBody extends StatelessWidget {
     }
 
     if (error != null) {
-      return Padding(
-        padding: const EdgeInsets.all(12),
-        child: Text(
-          context.trMessage(error!),
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: Theme.of(context).colorScheme.error,
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Text(
+              context.trMessage(error!),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.error,
+              ),
+            ),
           ),
-        ),
+          _RepliesSection(
+            replies: replies,
+            isLoading: isLoadingReplies,
+            error: repliesError,
+          ),
+        ],
       );
     }
 
     if (answers == null) {
-      return const SizedBox.shrink();
+      return _RepliesSection(
+        replies: replies,
+        isLoading: isLoadingReplies,
+        error: repliesError,
+      );
     }
 
     final questionById = {
@@ -433,15 +490,25 @@ class _AnswersBody extends StatelessWidget {
       });
 
     if (sortedAnswers.isEmpty && followUp == null) {
-      return Padding(
-        padding: const EdgeInsets.all(12),
-        child: Text(
-          context.tr('No answers for this response'),
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: HuxTokens.textSecondary(context),
-            fontStyle: FontStyle.italic,
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Text(
+              context.tr('No answers for this response'),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: HuxTokens.textSecondary(context),
+                fontStyle: FontStyle.italic,
+              ),
+            ),
           ),
-        ),
+          _RepliesSection(
+            replies: replies,
+            isLoading: isLoadingReplies,
+            error: repliesError,
+          ),
+        ],
       );
     }
 
@@ -493,9 +560,117 @@ class _AnswersBody extends StatelessWidget {
               item: item,
             ),
         ],
+        _RepliesSection(
+          replies: replies,
+          isLoading: isLoadingReplies,
+          error: repliesError,
+        ),
       ],
     );
   }
+}
+
+class _RepliesSection extends StatelessWidget {
+  final List<AdminReply>? replies;
+  final bool isLoading;
+  final String? error;
+
+  const _RepliesSection({
+    required this.replies,
+    required this.isLoading,
+    required this.error,
+  });
+
+  @override
+  Widget build(context) {
+    if (isLoading) {
+      return Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: HuxTokens.primary(context),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(context.tr('Loading...')),
+          ],
+        ),
+      );
+    }
+
+    if (error != null) {
+      return Padding(
+        padding: const EdgeInsets.all(12),
+        child: Text(
+          context.trMessage(error!),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).colorScheme.error,
+          ),
+        ),
+      );
+    }
+
+    if (replies == null || replies!.isEmpty) return const SizedBox.shrink();
+
+    final sortedReplies = List<AdminReply>.from(replies!)
+      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+          child: Text(
+            context.tr('Replies'),
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+        ),
+        for (final reply in sortedReplies)
+          _ReplyRow(
+            key: ValueKey('reply-${reply.id}'),
+            reply: reply,
+          ),
+      ],
+    );
+  }
+}
+
+class _ReplyRow extends StatelessWidget {
+  final AdminReply reply;
+
+  const _ReplyRow({super.key, required this.reply});
+
+  @override
+  Widget build(context) => Container(
+    width: double.infinity,
+    margin: const EdgeInsets.only(bottom: 8),
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: HuxTokens.surfaceSecondary(context),
+      borderRadius: BorderRadius.circular(8),
+      border: Border.all(color: HuxTokens.borderSecondary(context)),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          reply.createdAt.toIsoDateTimeString(),
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            color: HuxTokens.textSecondary(context),
+          ),
+        ),
+        const SizedBox(height: 8),
+        SelectableText(
+          reply.body,
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+      ],
+    ),
+  );
 }
 
 class _FollowUpAnswerRow extends StatelessWidget {

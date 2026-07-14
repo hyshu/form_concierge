@@ -128,14 +128,18 @@ class ResponsesPage extends RearchConsumer {
                   loadingAnswerIds: responseState.loadingAnswerIds,
                   answerErrorsByResponseId:
                       responseState.answerErrorsByResponseId,
+                  repliesByResponseId: responseState.repliesByResponseId,
+                  loadingReplyIds: responseState.loadingReplyIds,
+                  replyErrorsByResponseId:
+                      responseState.replyErrorsByResponseId,
                   onPageChange: (page) =>
                       responseManager.loadResponses(surveyId, page: page),
                   onDelete: (response) =>
                       _confirmDelete(context, response, responseManager),
                   onReply: (response) =>
                       _showReplyDialog(context, response, responseManager),
-                  onExpandAnswers: (responseId) => responseManager
-                      .loadAnswersForResponse(surveyId, responseId),
+                  onExpandAnswers: (responseId) =>
+                      responseManager.loadResponseDetails(surveyId, responseId),
                 ),
               ),
               HuxTabItem(

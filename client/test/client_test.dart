@@ -290,6 +290,20 @@ void main() {
     expect(result.individualAnswers.single.selectedChoiceIds, [10]);
   });
 
+  test(
+    'survey response parses reply count with backward-compatible default',
+    () {
+      final json = {
+        'id': 5,
+        'surveyId': 1,
+        'submittedAt': '2026-07-10T12:00:00.000Z',
+      };
+
+      expect(SurveyResponse.fromJson(json).replyCount, 0);
+      expect(SurveyResponse.fromJson({...json, 'replyCount': 3}).replyCount, 3);
+    },
+  );
+
   test('text visibility rules reject coerced expected values', () {
     final questions = [
       _question(id: 1, type: QuestionType.textSingle, orderIndex: 0),

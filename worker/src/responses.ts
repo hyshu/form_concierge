@@ -21,13 +21,17 @@ export async function listResponses(env: Env, surveyId: number, url: URL): Promi
   const limit = integerParam(url.searchParams.get('limit'), 'limit', 50, { min: 1, max: 100 });
   const offset = integerParam(url.searchParams.get('offset'), 'offset', 0, { min: 0 });
   const rows = await env.DB.prepare(
-    `SELECT id, survey_id, anonymous_account_id, anonymous_id, submitted_at, user_agent,
-       device_id, device_label, device_platform, device_os, device_os_version,
-       device_browser, device_browser_version, device_locale, device_timezone,
-       screen_width, screen_height, device_pixel_ratio, device_info, metadata, follow_up
-     FROM survey_responses
-     WHERE survey_id = ?
-     ORDER BY submitted_at DESC
+    `SELECT r.id, r.survey_id, r.anonymous_account_id, r.anonymous_id,
+       r.submitted_at, r.user_agent, r.device_id, r.device_label,
+       r.device_platform, r.device_os, r.device_os_version, r.device_browser,
+       r.device_browser_version, r.device_locale, r.device_timezone,
+       r.screen_width, r.screen_height, r.device_pixel_ratio, r.device_info,
+       r.metadata, r.follow_up,
+       (SELECT COUNT(*) FROM admin_replies ar
+        WHERE ar.survey_response_id = r.id) AS reply_count
+     FROM survey_responses r
+     WHERE r.survey_id = ?
+     ORDER BY r.submitted_at DESC
      LIMIT ? OFFSET ?`,
   ).bind(surveyId, limit, offset).all<ResponseRow>();
   return json(rows.results.map(responseToJson));

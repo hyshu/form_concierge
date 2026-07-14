@@ -114,6 +114,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "User #{id}": "Benutzer #{id}",
     "Anonymous": "Anonym",
     "Reply": "Antworten",
+    "Replies": "Antworten",
+    "Replied": "Beantwortet",
     "Delete response": "Antwort löschen",
     "Email service is not configured. Contact your administrator to enable SMTP settings.":
         "Der E-Mail-Dienst ist nicht konfiguriert. Kontaktiere den Administrator, um SMTP zu aktivieren.",
@@ -358,6 +360,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Failed to delete response: ":
         "Antwort konnte nicht gelöscht werden: {error}",
     "Failed to send reply: ": "Antwort konnte nicht gesendet werden: {error}",
+    "Failed to load replies: ":
+        "Antworten konnten nicht geladen werden: {error}",
     "Failed to load notification settings: ":
         "Benachrichtigungseinstellungen konnten nicht geladen werden: {error}",
     "Failed to save settings: ":
@@ -585,6 +589,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "User #{id}": "User #{id}",
     "Anonymous": "Anonymous",
     "Reply": "Reply",
+    "Replies": "Replies",
+    "Replied": "Replied",
     "Delete response": "Delete response",
     "Email service is not configured. Contact your administrator to enable SMTP settings.":
         "Email service is not configured. Contact your administrator to enable SMTP settings.",
@@ -890,6 +896,7 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Failed to delete response: ": "Failed to delete response: {error}",
     "Failed to load answers: ": "Failed to load answers: {error}",
     "Failed to send reply: ": "Failed to send reply: {error}",
+    "Failed to load replies: ": "Failed to load replies: {error}",
     "Failed to load notification settings: ":
         "Failed to load notification settings: {error}",
     "Failed to load settings: ": "Failed to load settings: {error}",
@@ -1010,6 +1017,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "User #{id}": "Usuario #{id}",
     "Anonymous": "Anónimo",
     "Reply": "Responder",
+    "Replies": "Respuestas",
+    "Replied": "Respondido",
     "Delete response": "Eliminar respuesta",
     "Email service is not configured. Contact your administrator to enable SMTP settings.":
         "El servicio de correo no está configurado. Contacta al administrador para habilitar SMTP.",
@@ -1302,6 +1311,7 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Failed to export responses: ": "Error al exportar las respuestas: {error}",
     "Failed to delete response: ": "Error al eliminar la respuesta: {error}",
     "Failed to send reply: ": "Error al enviar la respuesta: {error}",
+    "Failed to load replies: ": "Error al cargar las respuestas: {error}",
     "Failed to load notification settings: ":
         "Error al cargar la configuración de notificaciones: {error}",
     "Failed to load settings: ": "Error al cargar la configuración: {error}",
@@ -1452,6 +1462,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "User #{id}": "Utilisateur #{id}",
     "Anonymous": "Anonyme",
     "Reply": "Répondre",
+    "Replies": "Réponses",
+    "Replied": "Répondu",
     "Delete response": "Supprimer la réponse",
     "Email service is not configured. Contact your administrator to enable SMTP settings.":
         "Le service d'e-mail n'est pas configuré. Contactez votre administrateur pour activer SMTP.",
@@ -1756,6 +1768,7 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Failed to delete response: ":
         "Échec de la suppression de la réponse : {error}",
     "Failed to send reply: ": "Échec de l'envoi de la réponse : {error}",
+    "Failed to load replies: ": "Échec du chargement des réponses : {error}",
     "Failed to load notification settings: ":
         "Échec du chargement des paramètres de notification : {error}",
     "Failed to load settings: ": "Échec du chargement des paramètres : {error}",
@@ -1911,6 +1924,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "User #{id}": "Utente #{id}",
     "Anonymous": "Anonimo",
     "Reply": "Rispondi",
+    "Replies": "Risposte",
+    "Replied": "Risposto",
     "Delete response": "Elimina risposta",
     "Email service is not configured. Contact your administrator to enable SMTP settings.":
         "Il servizio email non è configurato. Contatta l'amministratore per abilitare SMTP.",
@@ -2204,6 +2219,7 @@ const adminLocalizedValues = <String, Map<String, String>>{
         "Impossibile esportare le risposte: {error}",
     "Failed to delete response: ": "Impossibile eliminare la risposta: {error}",
     "Failed to send reply: ": "Impossibile inviare la risposta: {error}",
+    "Failed to load replies: ": "Impossibile caricare le risposte: {error}",
     "Failed to load notification settings: ":
         "Impossibile caricare le impostazioni di notifica: {error}",
     "Failed to load settings: ":
@@ -2356,6 +2372,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "User #{id}": "ユーザー #{id}",
     "Anonymous": "匿名",
     "Reply": "返信",
+    "Replies": "返信",
+    "Replied": "返信済み",
     "Delete response": "回答を削除",
     "Email service is not configured. Contact your administrator to enable SMTP settings.":
         "メールサービスが設定されていません。SMTP設定を有効にするには管理者に連絡してください。",
@@ -2640,6 +2658,7 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Failed to load answers: ": "回答の読み込みに失敗しました: {error}",
     "Failed to delete response: ": "回答の削除に失敗しました: {error}",
     "Failed to send reply: ": "返信の送信に失敗しました: {error}",
+    "Failed to load replies: ": "返信の読み込みに失敗しました: {error}",
     "Failed to load notification settings: ": "通知設定の読み込みに失敗しました: {error}",
     "Failed to load settings: ": "設定の読み込みに失敗しました: {error}",
     "Failed to save settings: ": "設定の保存に失敗しました: {error}",
@@ -2756,6 +2775,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "User #{id}": "사용자 #{id}",
     "Anonymous": "익명",
     "Reply": "답장",
+    "Replies": "답장",
+    "Replied": "답장 완료",
     "Delete response": "응답 삭제",
     "Email service is not configured. Contact your administrator to enable SMTP settings.":
         "이메일 서비스가 설정되지 않았습니다. SMTP 설정을 활성화하려면 관리자에게 문의하세요.",
@@ -2961,6 +2982,7 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Failed to export responses: ": "응답을 내보내지 못했습니다: {error}",
     "Failed to delete response: ": "응답을 삭제하지 못했습니다: {error}",
     "Failed to send reply: ": "답장을 보내지 못했습니다: {error}",
+    "Failed to load replies: ": "답장을 불러오지 못했습니다: {error}",
     "Failed to load notification settings: ": "알림 설정을 불러오지 못했습니다: {error}",
     "Failed to save settings: ": "설정을 저장하지 못했습니다: {error}",
     "Failed to toggle notifications: ": "알림을 전환하지 못했습니다: {error}",
@@ -3161,6 +3183,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "User #{id}": "ผู้ใช้ #{id}",
     "Anonymous": "ไม่ระบุชื่อ",
     "Reply": "ตอบกลับ",
+    "Replies": "การตอบกลับ",
+    "Replied": "ตอบกลับแล้ว",
     "Delete response": "ลบคำตอบ",
     "Email service is not configured. Contact your administrator to enable SMTP settings.":
         "บริการอีเมลยังไม่ได้ตั้งค่า ติดต่อผู้ดูแลระบบเพื่อเปิดใช้ SMTP",
@@ -3438,6 +3462,7 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Failed to export responses: ": "ส่งออกคำตอบล้มเหลว: {error}",
     "Failed to delete response: ": "ลบคำตอบล้มเหลว: {error}",
     "Failed to send reply: ": "ส่งการตอบกลับล้มเหลว: {error}",
+    "Failed to load replies: ": "โหลดการตอบกลับล้มเหลว: {error}",
     "Failed to load notification settings: ":
         "โหลดการตั้งค่าการแจ้งเตือนล้มเหลว: {error}",
     "Failed to load settings: ": "โหลดการตั้งค่าล้มเหลว: {error}",
@@ -3586,6 +3611,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "User #{id}": "Kullanıcı #{id}",
     "Anonymous": "Anonim",
     "Reply": "Yanıtla",
+    "Replies": "Yanıtlar",
+    "Replied": "Yanıtlandı",
     "Delete response": "Yanıtı sil",
     "Email service is not configured. Contact your administrator to enable SMTP settings.":
         "E-posta hizmeti yapılandırılmamış. SMTP ayarlarını etkinleştirmek için yöneticinizle iletişime geçin.",
@@ -3873,6 +3900,7 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Failed to export responses: ": "Yanıtlar dışa aktarılamadı: {error}",
     "Failed to delete response: ": "Yanıt silinemedi: {error}",
     "Failed to send reply: ": "Yanıt gönderilemedi: {error}",
+    "Failed to load replies: ": "Yanıtlar yüklenemedi: {error}",
     "Failed to load notification settings: ":
         "Bildirim ayarları yüklenemedi: {error}",
     "Failed to load settings: ": "Ayarlar yüklenemedi: {error}",
@@ -4019,6 +4047,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "User #{id}": "用户 #{id}",
     "Anonymous": "匿名",
     "Reply": "回复",
+    "Replies": "回复",
+    "Replied": "已回复",
     "Delete response": "删除回答",
     "Email service is not configured. Contact your administrator to enable SMTP settings.":
         "尚未配置邮件服务。请联系管理员启用 SMTP 设置。",
@@ -4215,6 +4245,7 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Failed to export responses: ": "导出回答失败：{error}",
     "Failed to delete response: ": "删除回答失败：{error}",
     "Failed to send reply: ": "发送回复失败：{error}",
+    "Failed to load replies: ": "加载回复失败：{error}",
     "Failed to load notification settings: ": "加载通知设置失败：{error}",
     "Failed to save settings: ": "保存设置失败：{error}",
     "Failed to toggle notifications: ": "切换通知失败：{error}",
@@ -4411,6 +4442,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "User #{id}": "使用者 #{id}",
     "Anonymous": "匿名",
     "Reply": "回覆",
+    "Replies": "回覆",
+    "Replied": "已回覆",
     "Delete response": "刪除回答",
     "Email service is not configured. Contact your administrator to enable SMTP settings.":
         "尚未設定郵件服務。請聯絡管理員啟用 SMTP 設定。",
@@ -4607,6 +4640,7 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Failed to export responses: ": "匯出回答失敗：{error}",
     "Failed to delete response: ": "刪除回答失敗：{error}",
     "Failed to send reply: ": "傳送回覆失敗：{error}",
+    "Failed to load replies: ": "載入回覆失敗：{error}",
     "Failed to load notification settings: ": "載入通知設定失敗：{error}",
     "Failed to save settings: ": "儲存設定失敗：{error}",
     "Failed to toggle notifications: ": "切換通知失敗：{error}",

@@ -20,6 +20,9 @@ class ResponseListState {
   final Map<int, List<Answer>> answersByResponseId;
   final Set<int> loadingAnswerIds;
   final Map<int, String> answerErrorsByResponseId;
+  final Map<int, List<AdminReply>> repliesByResponseId;
+  final Set<int> loadingReplyIds;
+  final Map<int, String> replyErrorsByResponseId;
 
   const ResponseListState({
     this.responses = const [],
@@ -34,6 +37,9 @@ class ResponseListState {
     this.answersByResponseId = const {},
     this.loadingAnswerIds = const {},
     this.answerErrorsByResponseId = const {},
+    this.repliesByResponseId = const {},
+    this.loadingReplyIds = const {},
+    this.replyErrorsByResponseId = const {},
   });
 
   factory ResponseListState.initial() => const ResponseListState();
@@ -51,6 +57,9 @@ class ResponseListState {
     Map<int, List<Answer>>? answersByResponseId,
     Set<int>? loadingAnswerIds,
     Map<int, String>? answerErrorsByResponseId,
+    Map<int, List<AdminReply>>? repliesByResponseId,
+    Set<int>? loadingReplyIds,
+    Map<int, String>? replyErrorsByResponseId,
   }) => ResponseListState(
     responses: responses ?? this.responses,
     totalCount: totalCount ?? this.totalCount,
@@ -65,6 +74,10 @@ class ResponseListState {
     loadingAnswerIds: loadingAnswerIds ?? this.loadingAnswerIds,
     answerErrorsByResponseId:
         answerErrorsByResponseId ?? this.answerErrorsByResponseId,
+    repliesByResponseId: repliesByResponseId ?? this.repliesByResponseId,
+    loadingReplyIds: loadingReplyIds ?? this.loadingReplyIds,
+    replyErrorsByResponseId:
+        replyErrorsByResponseId ?? this.replyErrorsByResponseId,
   );
 
   int get totalPages => (totalCount / pageSize).ceil();
@@ -202,6 +215,71 @@ class ResponseListManager {
     }
   }
 
+  /// Lazy-load admin replies for one response when its tile is opened.
+  Future<void> loadRepliesForResponse(int surveyId, int responseId) async {
+    final state = getState(surveyId);
+    final cachedReplies = state.repliesByResponseId[responseId];
+    int? expectedReplyCount;
+    for (final response in state.responses) {
+      if (response.id == responseId) {
+        expectedReplyCount = response.replyCount;
+        break;
+      }
+    }
+    final cacheIsCurrent =
+        cachedReplies != null &&
+        cachedReplies.length >= (expectedReplyCount ?? cachedReplies.length);
+    if (cacheIsCurrent || state.loadingReplyIds.contains(responseId)) {
+      return;
+    }
+
+    final loading = {...state.loadingReplyIds, responseId};
+    final errors = Map<int, String>.from(state.replyErrorsByResponseId)
+      ..remove(responseId);
+    _setState(
+      surveyId,
+      state.copyWith(
+        loadingReplyIds: loading,
+        replyErrorsByResponseId: errors,
+      ),
+    );
+
+    try {
+      final replies = await _client.responseAnalytics.getReplies(responseId);
+      final current = getState(surveyId);
+      final nextReplies = Map<int, List<AdminReply>>.from(
+        current.repliesByResponseId,
+      )..[responseId] = replies;
+      final nextLoading = {...current.loadingReplyIds}..remove(responseId);
+      _setState(
+        surveyId,
+        current.copyWith(
+          repliesByResponseId: nextReplies,
+          loadingReplyIds: nextLoading,
+        ),
+      );
+    } on Exception catch (e) {
+      final current = getState(surveyId);
+      final nextLoading = {...current.loadingReplyIds}..remove(responseId);
+      final nextErrors = Map<int, String>.from(current.replyErrorsByResponseId)
+        ..[responseId] = 'Failed to load replies: $e';
+      _setState(
+        surveyId,
+        current.copyWith(
+          loadingReplyIds: nextLoading,
+          replyErrorsByResponseId: nextErrors,
+        ),
+      );
+    }
+  }
+
+  Future<void> loadResponseDetails(int surveyId, int responseId) async {
+    await Future.wait([
+      loadAnswersForResponse(surveyId, responseId),
+      loadRepliesForResponse(surveyId, responseId),
+    ]);
+  }
+
   /// Delete a response.
   Future<bool> deleteResponse(int surveyId, int responseId) async {
     return _runAndReloadCurrentPage(
@@ -216,11 +294,29 @@ class ResponseListManager {
     int surveyId,
     int responseId,
     String body,
-  ) => _runAndReloadCurrentPage(
-    surveyId,
-    () => _client.responseAnalytics.createReply(responseId, body),
-    'Failed to send reply',
-  );
+  ) async {
+    final page = getState(surveyId).currentPage;
+    final reply = await runAndReload(
+      action: () => _client.responseAnalytics.createReply(responseId, body),
+      reload: () => loadResponses(surveyId, page: page),
+      setError: (error) => _setError(surveyId, error),
+      errorMessage: 'Failed to send reply',
+    );
+    if (reply == null) return false;
+
+    final current = getState(surveyId);
+    final cached = current.repliesByResponseId[responseId];
+    if (cached != null && !cached.any((item) => item.id == reply.id)) {
+      final nextReplies = Map<int, List<AdminReply>>.from(
+        current.repliesByResponseId,
+      )..[responseId] = [...cached, reply];
+      _setState(
+        surveyId,
+        current.copyWith(repliesByResponseId: nextReplies),
+      );
+    }
+    return true;
+  }
 
   Future<ResponseExportFile?> exportResponses(
     int surveyId,

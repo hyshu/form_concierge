@@ -185,6 +185,7 @@ class SurveyResponse {
   final DeviceInfo? deviceInfo;
   final Map<String, dynamic>? metadata;
   final FollowUp? followUp;
+  final int replyCount;
 
   const SurveyResponse({
     this.id,
@@ -196,6 +197,7 @@ class SurveyResponse {
     this.deviceInfo,
     this.metadata,
     this.followUp,
+    this.replyCount = 0,
   });
 
   factory SurveyResponse.fromJson(Map<String, dynamic> json) => SurveyResponse(
@@ -208,6 +210,7 @@ class SurveyResponse {
     deviceInfo: _optionalObject(json['deviceInfo'], DeviceInfo.fromJson),
     metadata: _map(json['metadata']),
     followUp: _optionalObject(json['followUp'], FollowUp.fromJson),
+    replyCount: json['replyCount'] == null ? 0 : _int(json['replyCount']),
   );
 
   Map<String, dynamic> toJson() => _withoutNulls({
@@ -220,6 +223,7 @@ class SurveyResponse {
     'deviceInfo': deviceInfo?.toJson(),
     'metadata': metadata,
     'followUp': followUp?.toJson(),
+    'replyCount': replyCount,
   });
 }
 

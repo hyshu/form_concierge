@@ -148,6 +148,7 @@ const _errorPrefixes = [
   'Failed to delete response: ',
   'Failed to load answers: ',
   'Failed to send reply: ',
+  'Failed to load replies: ',
   'Failed to load notification settings: ',
   'Failed to load settings: ',
   'Failed to save settings: ',

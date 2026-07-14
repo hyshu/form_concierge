@@ -78,6 +78,11 @@ test('serializers reject invalid stored JSON instead of defaulting', () => {
   );
 });
 
+test('response serializer exposes admin reply count', () => {
+  assert.equal(responseToJson(responseRow()).replyCount, 0);
+  assert.equal(responseToJson(responseRow({ reply_count: 3 })).replyCount, 3);
+});
+
 test('serializers reject stored JSON shape mismatches', () => {
   assert.equal(metadataToJson('{}'), null);
   assert.deepEqual(metadataToJson('{"source":"web"}'), { source: 'web' });

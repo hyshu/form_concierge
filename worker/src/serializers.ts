@@ -91,6 +91,7 @@ export function responseToJson(row: ResponseRow) {
     deviceInfo: deviceInfoToJson(row),
     metadata: metadataToJson(row.metadata),
     followUp: followUpToJson(row.follow_up),
+    replyCount: row.reply_count ?? 0,
   };
 }
 

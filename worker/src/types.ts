@@ -94,6 +94,7 @@ export type ResponseRow = {
   device_info: string | null;
   metadata: string | null;
   follow_up: string | null;
+  reply_count?: number;
 };
 
 export type AnswerRow = {
