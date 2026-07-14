@@ -226,3 +226,60 @@ test('translateLocalizedText rejects missing API key and invalid locales', async
     'AI generation provider is not configured',
   );
 });
+
+test('translateLocalizedText auto-detects language only for response text', async () => {
+  const { translateLocalizedText } = await import('./ai_generation');
+  const originalFetch = globalThis.fetch;
+  const upstreamBodies: Record<string, unknown>[] = [];
+  globalThis.fetch = (async (_input, init) => {
+    upstreamBodies.push(
+      JSON.parse(String(init?.body)) as Record<string, unknown>,
+    );
+    return new Response(JSON.stringify({
+      choices: [
+        {
+          message: {
+            content: JSON.stringify({ ja: '翻訳済み' }),
+          },
+        },
+      ],
+    }));
+  }) as typeof fetch;
+
+  try {
+    const response = await translateLocalizedText(
+      adminPostRequest('/api/admin/ai/translate-localized-text', {
+        sourceLocale: 'auto',
+        sourceText: '좋아요',
+        targetLocales: ['ja'],
+        fieldKind: 'response',
+      }),
+      envWithSettings(),
+    );
+    assert.deepEqual(await response.json(), {
+      translations: { ja: '翻訳済み' },
+    });
+    const messages = upstreamBodies[0]?.messages;
+    assert.ok(Array.isArray(messages));
+    assert.match(
+      String((messages[0] as { content?: unknown }).content),
+      /Detect the source language/,
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+
+  await assertHttpErrorAsync(
+    () => translateLocalizedText(
+      adminPostRequest('/api/admin/ai/translate-localized-text', {
+        sourceLocale: 'auto',
+        sourceText: 'Title',
+        targetLocales: ['ja'],
+        fieldKind: 'title',
+      }),
+      envWithSettings(),
+    ),
+    400,
+    'sourceLocale is not a supported locale',
+  );
+});

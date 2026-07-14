@@ -131,6 +131,7 @@
   "Title is required": "ต้องระบุชื่อ",
   "Other languages": "ภาษาอื่น",
   "Translate other languages": "แปลเป็นภาษาอื่น",
+  "Translate answer": "แปลคำตอบ",
   "Failed to translate: ": "แปลไม่สำเร็จ: {error}",
   "URL Slug": "สลัก URL",
   "Slug is required": "ต้องระบุสลัก",

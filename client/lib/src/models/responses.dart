@@ -232,6 +232,7 @@ class IndividualAnswer {
   final int responseId;
   final DateTime submittedAt;
   final String? anonymousId;
+  final String? responseLocale;
   final String? textValue;
   final List<int>? selectedChoiceIds;
   final List<String>? fileKeys;
@@ -240,6 +241,7 @@ class IndividualAnswer {
     required this.responseId,
     required this.submittedAt,
     this.anonymousId,
+    this.responseLocale,
     this.textValue,
     this.selectedChoiceIds,
     this.fileKeys,
@@ -250,6 +252,7 @@ class IndividualAnswer {
         responseId: _int(json['responseId']),
         submittedAt: _date(json['submittedAt']),
         anonymousId: _optionalString(json['anonymousId']),
+        responseLocale: _optionalString(json['responseLocale']),
         textValue: _optionalString(json['textValue']),
         selectedChoiceIds: _intList(json['selectedChoiceIds']),
         fileKeys: json['fileKeys'] == null

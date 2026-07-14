@@ -130,6 +130,7 @@
   "Title is required": "제목은 필수입니다",
   "Other languages": "다른 언어",
   "Translate other languages": "다른 언어로 번역",
+  "Translate answer": "답변 번역",
   "Failed to translate: ": "번역하지 못했습니다: {error}",
   "URL Slug": "URL 슬러그",
   "Slug is required": "슬러그는 필수입니다",

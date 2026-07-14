@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
+import 'package:form_concierge_flutter/src/features/responses/presentation/capsules/answer_translation_capsule.dart';
 import 'package:form_concierge_flutter/src/features/responses/presentation/widgets/response_list.dart';
 
 import '../support/localized_test_app.dart';
@@ -12,6 +13,20 @@ void main() {
     final client = Client('https://api.example.com');
     addTearDown(client.close);
     var expandedResponseId = 0;
+    final translationKey = mainAnswerTranslationKey(
+      responseId: 7,
+      questionId: 11,
+      targetLocale: 'ja',
+    );
+    final translationBindings = AnswerTranslationBindings(
+      enabled: true,
+      targetLocale: 'ja',
+      state: AnswerTranslationState(
+        translations: {translationKey: 'Shared translation'},
+      ),
+      translate: ({required key, required sourceText, sourceLocale}) async =>
+          true,
+    );
 
     await tester.pumpWidget(
       localizedTestApp(
@@ -24,6 +39,7 @@ void main() {
                 id: 7,
                 surveyId: 1,
                 submittedAt: DateTime.utc(2026, 7, 14, 9, 30),
+                metadata: const {'locale': 'ko'},
                 replyCount: 2,
               ),
             ],
@@ -70,6 +86,7 @@ void main() {
                 ),
               ],
             },
+            answerTranslations: translationBindings,
             onPageChange: (_) {},
             onDelete: (_) {},
             onReply: (_) {},
@@ -86,6 +103,7 @@ void main() {
 
     expect(expandedResponseId, 7);
     expect(find.text('Original answer'), findsOneWidget);
+    expect(find.text('Shared translation'), findsOneWidget);
     expect(find.text('First reply'), findsOneWidget);
     expect(find.text('Second reply'), findsOneWidget);
     expect(

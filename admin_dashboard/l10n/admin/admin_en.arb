@@ -155,6 +155,7 @@
   "Title is required": "Title is required",
   "Other languages": "Other languages",
   "Translate other languages": "Translate other languages",
+  "Translate answer": "Translate answer",
   "Failed to translate: ": "Failed to translate: {error}",
   "URL Slug": "URL Slug",
   "Slug is required": "Slug is required",

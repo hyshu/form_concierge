@@ -155,6 +155,7 @@
   "Title is required": "タイトルは必須です",
   "Other languages": "他の言語",
   "Translate other languages": "他の言語に翻訳",
+  "Translate answer": "回答を翻訳",
   "Failed to translate: ": "翻訳に失敗しました: {error}",
   "URL Slug": "URLスラッグ",
   "Slug is required": "スラッグは必須です",

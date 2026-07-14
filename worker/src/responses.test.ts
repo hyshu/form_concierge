@@ -2,7 +2,13 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { answerRow, questionRow } from '../test/fixtures';
-import { csvCell, formatAnswerForCsv, incrementChoiceCount, utcMidnight } from './responses';
+import {
+  csvCell,
+  formatAnswerForCsv,
+  incrementChoiceCount,
+  responseLocaleFrom,
+  utcMidnight,
+} from './responses';
 
 test('utcMidnight floors to UTC calendar day start', () => {
   const afternoon = new Date('2026-07-10T15:30:45.123Z');
@@ -48,6 +54,14 @@ test('csvCell neutralizes formula injection prefixes', () => {
   assert.equal(csvCell('@SUM(A1)'), "'@SUM(A1)");
   assert.equal(csvCell('plain'), 'plain');
   assert.equal(csvCell('say "hi"'), '"say ""hi"""');
+});
+
+test('responseLocaleFrom prefers metadata, then device locale', () => {
+  assert.equal(responseLocaleFrom('{"locale":"ko"}', 'ja'), 'ko');
+  assert.equal(responseLocaleFrom('{"source":"app"}', 'ja-JP'), 'ja');
+  assert.equal(responseLocaleFrom('{"locale":7}', 'zh_TW'), 'zh-Hant');
+  assert.equal(responseLocaleFrom('{', 'de-DE'), 'de');
+  assert.equal(responseLocaleFrom(null, null), null);
 });
 
 test('isUniqueConstraintError ignores generic FK constraint failures', async () => {

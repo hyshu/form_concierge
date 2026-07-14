@@ -46,6 +46,7 @@ const TRANSLATION_FIELD_KINDS = [
   'question',
   'placeholder',
   'choice',
+  'response',
 ] as const;
 type TranslationFieldKind = (typeof TRANSLATION_FIELD_KINDS)[number];
 
@@ -319,14 +320,16 @@ export async function translateLocalizedText(request: Request, env: Env): Promis
   const { provider, apiKey } = await requireAiProvider(env);
 
   const body = await readJson(request);
-  const sourceLocale = requireLocaleCode(body.sourceLocale, 'sourceLocale');
+  const fieldKind = optionalTranslationFieldKind(body.fieldKind);
+  const sourceLocale = fieldKind === 'response'
+    ? requireResponseSourceLocale(body.sourceLocale)
+    : requireLocaleCode(body.sourceLocale, 'sourceLocale');
   const sourceText = requireString(body.sourceText, 'sourceText').trim();
   if (sourceText.length === 0) throw new HttpError(400, 'sourceText is required');
   if (sourceText.length > MAX_SOURCE_TEXT_LENGTH) {
     throw new HttpError(400, `sourceText must be ${MAX_SOURCE_TEXT_LENGTH} characters or fewer`);
   }
   const targetLocales = requireTargetLocales(body.targetLocales, sourceLocale);
-  const fieldKind = optionalTranslationFieldKind(body.fieldKind);
 
   const model = resolveModelId(env, provider);
   const text = await generateStructuredJson({
@@ -531,10 +534,15 @@ function translationSystemInstruction(
   sourceLocale: string,
   fieldKind: TranslationFieldKind | null,
 ): string {
+  const isResponse = fieldKind === 'response';
   return [
-    'You translate Form Concierge survey copy.',
-    `Source language code: ${sourceLocale}.`,
-    fieldKind ? `This text is a survey ${fieldKind}.` : null,
+    isResponse
+      ? 'You translate a Form Concierge survey respondent answer.'
+      : 'You translate Form Concierge survey copy.',
+    sourceLocale === 'auto'
+      ? 'Detect the source language from the answer before translating.'
+      : `Source language code: ${sourceLocale}.`,
+    fieldKind && !isResponse ? `This text is a survey ${fieldKind}.` : null,
     'Translate into every requested target locale key.',
     'Keep meaning, tone, and length natural for that language.',
     'Preserve placeholders such as {count}, {title}, or {name} exactly.',
@@ -558,6 +566,15 @@ function requireLocaleCode(value: unknown, field: string): string {
   const locale = requireString(value, field);
   if (!LOCALES.includes(locale as (typeof LOCALES)[number])) {
     throw new HttpError(400, `${field} is not a supported locale`);
+  }
+  return locale;
+}
+
+function requireResponseSourceLocale(value: unknown): string {
+  const locale = requireString(value, 'sourceLocale').trim();
+  if (locale === 'auto') return locale;
+  if (!/^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/.test(locale)) {
+    throw new HttpError(400, 'sourceLocale is not a valid locale');
   }
   return locale;
 }

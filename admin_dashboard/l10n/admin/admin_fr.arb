@@ -131,6 +131,7 @@
   "Title is required": "Le titre est obligatoire",
   "Other languages": "Autres langues",
   "Translate other languages": "Traduire vers d’autres langues",
+  "Translate answer": "Traduire la réponse",
   "Failed to translate: ": "Échec de la traduction : {error}",
   "URL Slug": "Slug d'URL",
   "Slug is required": "Le slug est obligatoire",

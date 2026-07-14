@@ -4,6 +4,7 @@ import 'package:hux/hux.dart';
 
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/hux_states.dart';
+import '../capsules/answer_translation_capsule.dart';
 import 'question_result_card.dart';
 
 /// View showing aggregated survey results.
@@ -13,6 +14,7 @@ class AggregatedResultsView extends StatelessWidget {
   final Map<int, List<Choice>> choicesByQuestion;
   final bool isLoading;
   final String? error;
+  final AnswerTranslationBindings? answerTranslations;
   final VoidCallback onRefresh;
 
   const AggregatedResultsView({
@@ -22,6 +24,7 @@ class AggregatedResultsView extends StatelessWidget {
     required this.choicesByQuestion,
     required this.isLoading,
     this.error,
+    this.answerTranslations,
     required this.onRefresh,
   });
 
@@ -106,6 +109,7 @@ class AggregatedResultsView extends StatelessWidget {
               result: questionResult,
               choices: choicesByQuestion[questionResult.questionId] ?? [],
               totalResponses: results!.totalResponses,
+              answerTranslations: answerTranslations,
             );
           }),
         ],

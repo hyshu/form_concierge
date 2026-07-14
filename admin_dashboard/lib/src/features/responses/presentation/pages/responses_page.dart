@@ -6,11 +6,13 @@ import 'package:hux/hux.dart';
 import 'package:rearch/rearch.dart';
 
 import '../../../../core/capsules/client_capsule.dart';
+import '../../../../core/capsules/public_config_capsule.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/utils/download_file.dart';
 import '../../../../core/widgets/confirm_delete_dialog.dart';
 import '../../../../core/widgets/hux_admin_shell.dart';
 import '../capsules/aggregated_results_capsule.dart';
+import '../capsules/answer_translation_capsule.dart';
 import '../capsules/notification_settings_capsule.dart';
 import '../capsules/response_list_capsule.dart';
 import '../widgets/aggregated_results_view.dart';
@@ -28,6 +30,8 @@ class ResponsesPage extends RearchConsumer {
     final responseManager = use(responseListManagerCapsule);
     final resultsManager = use(aggregatedResultsManagerCapsule);
     final notificationManager = use(notificationSettingsManagerCapsule);
+    final translationManager = use(answerTranslationManagerCapsule);
+    final publicConfig = use(publicConfigCapsule);
     final client = use(clientCapsule);
     final role = client.auth.signedInUser?.role;
     final canManageResponses =
@@ -37,9 +41,28 @@ class ResponsesPage extends RearchConsumer {
     final responseState = responseManager.getState(surveyId);
     final resultsState = resultsManager.getState(surveyId);
     final notificationState = notificationManager.getState(surveyId);
+    final translationState = translationManager.getState(surveyId);
+    final targetLocale = answerTargetLocale(Localizations.localeOf(context));
+    final translationBindings = AnswerTranslationBindings(
+      enabled: publicConfig.state.aiGenerationEnabled,
+      targetLocale: targetLocale,
+      state: translationState,
+      translate:
+          ({
+            required key,
+            required sourceText,
+            sourceLocale,
+          }) => translationManager.translate(
+            surveyId: surveyId,
+            key: key,
+            sourceText: sourceText,
+            sourceLocale: sourceLocale,
+          ),
+    );
 
     // Load data on first build
     if (use.isFirstBuild()) {
+      publicConfig.loadConfig();
       responseManager.loadResponses(surveyId);
       resultsManager.loadResults(surveyId);
       notificationManager.loadSettings(surveyId);
@@ -107,6 +130,7 @@ class ResponsesPage extends RearchConsumer {
                   choicesByQuestion: resultsState.choicesByQuestion,
                   isLoading: resultsState.isLoading,
                   error: resultsState.error,
+                  answerTranslations: translationBindings,
                   onRefresh: () => resultsManager.loadResults(surveyId),
                 ),
               ),
@@ -132,6 +156,7 @@ class ResponsesPage extends RearchConsumer {
                   loadingReplyIds: responseState.loadingReplyIds,
                   replyErrorsByResponseId:
                       responseState.replyErrorsByResponseId,
+                  answerTranslations: translationBindings,
                   onPageChange: (page) =>
                       responseManager.loadResponses(surveyId, page: page),
                   onDelete: (response) =>

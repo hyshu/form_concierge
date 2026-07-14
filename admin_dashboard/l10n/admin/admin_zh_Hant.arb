@@ -130,6 +130,7 @@
   "Title is required": "標題為必填",
   "Other languages": "其他語言",
   "Translate other languages": "翻譯其他語言",
+  "Translate answer": "翻譯回答",
   "Failed to translate: ": "翻譯失敗：{error}",
   "URL Slug": "URL 識別碼",
   "Slug is required": "URL 識別碼為必填",

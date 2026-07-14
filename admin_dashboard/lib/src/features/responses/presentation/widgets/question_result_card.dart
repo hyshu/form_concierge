@@ -5,6 +5,8 @@ import 'package:hux/hux.dart';
 import '../../../../core/extensions/question_type_presentation.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/admin_media_gallery.dart';
+import '../capsules/answer_translation_capsule.dart';
+import 'answer_translation_text.dart';
 
 const int _kMaxTextResponsesPreview = 10;
 
@@ -14,6 +16,7 @@ class QuestionResultCard extends StatelessWidget {
   final QuestionResult result;
   final List<Choice> choices;
   final int totalResponses;
+  final AnswerTranslationBindings? answerTranslations;
 
   const QuestionResultCard({
     super.key,
@@ -21,6 +24,7 @@ class QuestionResultCard extends StatelessWidget {
     required this.result,
     required this.choices,
     required this.totalResponses,
+    this.answerTranslations,
   });
 
   @override
@@ -295,6 +299,8 @@ class QuestionResultCard extends StatelessWidget {
                     'text-${result.questionId}-${answer.responseId}',
                   ),
                   answer: answer,
+                  questionId: result.questionId,
+                  answerTranslations: answerTranslations,
                 ),
               )
         else
@@ -373,10 +379,14 @@ class _ChoiceIndividualExpansion extends StatelessWidget {
 
 class _TextIndividualExpansion extends StatelessWidget {
   final IndividualAnswer answer;
+  final int questionId;
+  final AnswerTranslationBindings? answerTranslations;
 
   const _TextIndividualExpansion({
     super.key,
     required this.answer,
+    required this.questionId,
+    required this.answerTranslations,
   });
 
   @override
@@ -386,6 +396,18 @@ class _TextIndividualExpansion extends StatelessWidget {
     final shortPreview = preview.length > 80
         ? '${preview.substring(0, 80)}…'
         : preview;
+    final translations = answerTranslations;
+    final key = translations == null
+        ? null
+        : mainAnswerTranslationKey(
+            responseId: answer.responseId,
+            questionId: questionId,
+            targetLocale: translations.targetLocale,
+          );
+    final sourceLocale = answerSourceLocale(
+      metadataLocale: answer.responseLocale,
+      deviceLocale: null,
+    );
 
     return Theme(
       data: theme.copyWith(
@@ -415,7 +437,21 @@ class _TextIndividualExpansion extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: HuxTokens.borderSecondary(context)),
             ),
-            child: SelectableText(preview),
+            child: key == null
+                ? SelectableText(preview)
+                : AnswerTranslationText(
+                    originalText: preview,
+                    translation: translations!.state.translations[key],
+                    isLoading: translations.state.loadingKeys.contains(key),
+                    error: translations.state.errors[key],
+                    onTranslate: translations.canTranslate(sourceLocale)
+                        ? () => translations.translate(
+                            key: key,
+                            sourceText: preview,
+                            sourceLocale: sourceLocale,
+                          )
+                        : null,
+                  ),
           ),
         ],
       ),

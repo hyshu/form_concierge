@@ -130,6 +130,7 @@
   "Title is required": "Titel ist erforderlich",
   "Other languages": "Andere Sprachen",
   "Translate other languages": "Andere Sprachen übersetzen",
+  "Translate answer": "Antwort übersetzen",
   "Failed to translate: ": "Übersetzung fehlgeschlagen: {error}",
   "URL Slug": "URL-Slug",
   "Slug is required": "Slug ist erforderlich",

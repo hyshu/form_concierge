@@ -7,6 +7,8 @@ import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/admin_media_gallery.dart';
 import '../../../../core/widgets/hux_icon_action_button.dart';
 import '../../../../core/widgets/hux_states.dart';
+import '../capsules/answer_translation_capsule.dart';
+import 'answer_translation_text.dart';
 
 /// Widget showing a paginated list of individual responses.
 class ResponseList extends StatelessWidget {
@@ -26,6 +28,7 @@ class ResponseList extends StatelessWidget {
   final Map<int, List<AdminReply>> repliesByResponseId;
   final Set<int> loadingReplyIds;
   final Map<int, String> replyErrorsByResponseId;
+  final AnswerTranslationBindings? answerTranslations;
   final void Function(int page) onPageChange;
   final void Function(SurveyResponse response) onDelete;
   final void Function(SurveyResponse response) onReply;
@@ -49,6 +52,7 @@ class ResponseList extends StatelessWidget {
     this.repliesByResponseId = const {},
     this.loadingReplyIds = const {},
     this.replyErrorsByResponseId = const {},
+    this.answerTranslations,
     required this.onPageChange,
     required this.onDelete,
     required this.onReply,
@@ -112,6 +116,7 @@ class ResponseList extends StatelessWidget {
                 repliesError: responseId == null
                     ? null
                     : replyErrorsByResponseId[responseId],
+                answerTranslations: answerTranslations,
                 onDelete: () => onDelete(response),
                 onReply: () => onReply(response),
                 onExpand: responseId == null
@@ -177,6 +182,7 @@ class _ResponseTile extends StatelessWidget {
   final List<AdminReply>? replies;
   final bool isLoadingReplies;
   final String? repliesError;
+  final AnswerTranslationBindings? answerTranslations;
   final VoidCallback onDelete;
   final VoidCallback onReply;
   final VoidCallback? onExpand;
@@ -195,6 +201,7 @@ class _ResponseTile extends StatelessWidget {
     required this.replies,
     required this.isLoadingReplies,
     required this.repliesError,
+    required this.answerTranslations,
     required this.onDelete,
     required this.onReply,
     required this.onExpand,
@@ -208,6 +215,10 @@ class _ResponseTile extends StatelessWidget {
     final deviceDetails = deviceInfo?.detailSummary;
     final userAgent = _displayableUserAgent(deviceInfo?.userAgent);
     final metadataSummary = _metadataSummary(response.metadata);
+    final sourceLocale = answerSourceLocale(
+      metadataLocale: response.metadata?['locale'],
+      deviceLocale: response.deviceInfo?.locale,
+    );
 
     return HuxCard(
       margin: const EdgeInsets.only(bottom: 8),
@@ -340,6 +351,9 @@ class _ResponseTile extends StatelessWidget {
                     replies: replies,
                     isLoadingReplies: isLoadingReplies,
                     repliesError: repliesError,
+                    responseId: response.id,
+                    sourceLocale: sourceLocale,
+                    answerTranslations: answerTranslations,
                   ),
                 ],
               ),
@@ -412,6 +426,9 @@ class _AnswersBody extends StatelessWidget {
   final List<AdminReply>? replies;
   final bool isLoadingReplies;
   final String? repliesError;
+  final int? responseId;
+  final String? sourceLocale;
+  final AnswerTranslationBindings? answerTranslations;
 
   const _AnswersBody({
     required this.client,
@@ -424,6 +441,9 @@ class _AnswersBody extends StatelessWidget {
     required this.replies,
     required this.isLoadingReplies,
     required this.repliesError,
+    required this.responseId,
+    required this.sourceLocale,
+    required this.answerTranslations,
   });
 
   @override
@@ -533,6 +553,8 @@ class _AnswersBody extends StatelessWidget {
             question: questionById[answer.questionId],
             answer: answer,
             choices: choicesByQuestion[answer.questionId] ?? const [],
+            sourceLocale: sourceLocale,
+            answerTranslations: answerTranslations,
           ),
         if (followUp != null) ...[
           Padding(
@@ -558,6 +580,9 @@ class _AnswersBody extends StatelessWidget {
               key: ValueKey('follow-up-${item.id}'),
               client: client,
               item: item,
+              responseId: responseId,
+              sourceLocale: sourceLocale,
+              answerTranslations: answerTranslations,
             ),
         ],
         _RepliesSection(
@@ -676,11 +701,17 @@ class _ReplyRow extends StatelessWidget {
 class _FollowUpAnswerRow extends StatelessWidget {
   final Client client;
   final FollowUpItem item;
+  final int? responseId;
+  final String? sourceLocale;
+  final AnswerTranslationBindings? answerTranslations;
 
   const _FollowUpAnswerRow({
     super.key,
     required this.client,
     required this.item,
+    required this.responseId,
+    required this.sourceLocale,
+    required this.answerTranslations,
   });
 
   @override
@@ -690,6 +721,15 @@ class _FollowUpAnswerRow extends StatelessWidget {
         item.type == QuestionType.imageUpload &&
         answer != null &&
         answer.fileKeys.isNotEmpty;
+    final text = answer?.textValue?.trim();
+    final translations = answerTranslations;
+    final key = translations == null || responseId == null
+        ? null
+        : followUpAnswerTranslationKey(
+            responseId: responseId!,
+            itemId: item.id,
+            targetLocale: translations.targetLocale,
+          );
 
     return Container(
       width: double.infinity,
@@ -712,6 +752,20 @@ class _FollowUpAnswerRow extends StatelessWidget {
           const SizedBox(height: 8),
           if (isImage)
             AdminMediaGallery(client: client, fileKeys: answer.fileKeys)
+          else if (text != null && text.isNotEmpty && key != null)
+            AnswerTranslationText(
+              originalText: text,
+              translation: translations!.state.translations[key],
+              isLoading: translations.state.loadingKeys.contains(key),
+              error: translations.state.errors[key],
+              onTranslate: translations.canTranslate(sourceLocale)
+                  ? () => translations.translate(
+                      key: key,
+                      sourceText: text,
+                      sourceLocale: sourceLocale,
+                    )
+                  : null,
+            )
           else
             SelectableText(
               _formatFollowUpAnswer(item),
@@ -742,6 +796,8 @@ class _AnswerRow extends StatelessWidget {
   final Question? question;
   final Answer answer;
   final List<Choice> choices;
+  final String? sourceLocale;
+  final AnswerTranslationBindings? answerTranslations;
 
   const _AnswerRow({
     super.key,
@@ -749,6 +805,8 @@ class _AnswerRow extends StatelessWidget {
     required this.question,
     required this.answer,
     required this.choices,
+    required this.sourceLocale,
+    required this.answerTranslations,
   });
 
   @override
@@ -760,6 +818,15 @@ class _AnswerRow extends StatelessWidget {
             (fileKeys != null && fileKeys.isNotEmpty)) &&
         fileKeys != null &&
         fileKeys.isNotEmpty;
+    final text = answer.textValue?.trim();
+    final translations = answerTranslations;
+    final key = translations == null
+        ? null
+        : mainAnswerTranslationKey(
+            responseId: answer.surveyResponseId,
+            questionId: answer.questionId,
+            targetLocale: translations.targetLocale,
+          );
 
     return Container(
       width: double.infinity,
@@ -782,6 +849,21 @@ class _AnswerRow extends StatelessWidget {
           const SizedBox(height: 8),
           if (isImage)
             AdminMediaGallery(client: client, fileKeys: fileKeys)
+          else if (text != null && text.isNotEmpty && key != null)
+            AnswerTranslationText(
+              originalText: text,
+              translation: translations!.state.translations[key],
+              isLoading: translations.state.loadingKeys.contains(key),
+              error: translations.state.errors[key],
+              onTranslate: translations.canTranslate(sourceLocale)
+                  ? () => translations.translate(
+                      key: key,
+                      sourceText: text,
+                      sourceLocale: sourceLocale,
+                    )
+                  : null,
+              textStyle: Theme.of(context).textTheme.bodyMedium,
+            )
           else
             SelectableText(
               _formatAnswerValue(answer, choices),

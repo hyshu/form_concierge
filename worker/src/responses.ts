@@ -14,7 +14,11 @@ import {
   requiredRow,
 } from './utils';
 import { answerToJson, choiceToJson, parseChoiceIds, projectToJson, questionToJson, replyToJson, responseToJson, surveyToJson } from './serializers';
-import { DEFAULT_FORM_CONTENT_LOCALE, localizedTextFor } from './localization';
+import {
+  DEFAULT_FORM_CONTENT_LOCALE,
+  localizedTextFor,
+  normalizeFormContentLocale,
+} from './localization';
 import { collectFileKeysFromResponse, deleteMediaKeys, parseStoredFileKeys } from './media';
 
 export async function listResponses(env: Env, surveyId: number, url: URL): Promise<Response> {
@@ -60,6 +64,8 @@ export async function responseAnswers(env: Env, responseId: number, url: URL): P
 type AnswerWithResponseMeta = AnswerRow & {
   submitted_at: string;
   anonymous_id: string | null;
+  device_locale: string | null;
+  metadata: string | null;
 };
 
 export async function aggregatedResults(env: Env, surveyId: number): Promise<Response> {
@@ -89,6 +95,10 @@ export async function aggregatedResults(env: Env, surveyId: number): Promise<Res
         responseId: answer.survey_response_id,
         submittedAt: answer.submitted_at,
         anonymousId: answer.anonymous_id,
+        responseLocale: responseLocaleFrom(
+          answer.metadata,
+          answer.device_locale,
+        ),
         textValue: fileKeys ? null : answer.text_value,
         selectedChoiceIds: parseChoiceIds(answer.selected_choice_ids),
         fileKeys,
@@ -149,13 +159,43 @@ async function loadAnswersForQuestions(
   if (questionIds.length === 0) return [];
   return queryInChunks<AnswerWithResponseMeta>(
     db,
-    (ph) => `SELECT a.*, r.submitted_at, r.anonymous_id
+    (ph) => `SELECT a.*, r.submitted_at, r.anonymous_id,
+       r.device_locale, r.metadata
      FROM answers a
      JOIN survey_responses r ON r.id = a.survey_response_id
      WHERE a.question_id IN (${ph})
      ORDER BY r.submitted_at DESC, a.id`,
     questionIds,
   );
+}
+
+export function responseLocaleFrom(
+  metadataJson: string | null,
+  deviceLocale: string | null,
+): string | null {
+  let metadataLocale: unknown;
+  if (metadataJson) {
+    try {
+      const metadata: unknown = JSON.parse(metadataJson);
+      if (metadata && typeof metadata === 'object' && !Array.isArray(metadata)) {
+        metadataLocale = (metadata as Record<string, unknown>).locale;
+      }
+    } catch {
+      // Response serialization reports malformed metadata separately. Locale
+      // detection should still fall back to device info instead of hiding data.
+    }
+  }
+
+  for (const candidate of [metadataLocale, deviceLocale]) {
+    if (typeof candidate !== 'string' || candidate.trim().length === 0) {
+      continue;
+    }
+    const normalized = normalizeFormContentLocale(candidate.trim());
+    if (/^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/.test(normalized)) {
+      return normalized;
+    }
+  }
+  return null;
 }
 
 async function loadChoicesForQuestions(db: D1Database, questionIds: number[]): Promise<ChoiceRow[]> {
