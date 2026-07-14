@@ -113,6 +113,19 @@ class ResponsesPage extends RearchConsumer {
                   _exportResponses(context, responseManager, format),
             ),
           ),
+        HuxButton(
+          onPressed: () => Future.wait([
+            responseManager.loadResponses(
+              surveyId,
+              page: responseState.currentPage,
+            ),
+            resultsManager.loadResults(surveyId),
+            notificationManager.loadSettings(surveyId),
+          ]),
+          variant: HuxButtonVariant.secondary,
+          icon: LucideIcons.refreshCw,
+          child: Text(context.tr('Refresh')),
+        ),
       ],
       child: SafeArea(
         child: Padding(
