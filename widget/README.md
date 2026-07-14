@@ -43,6 +43,12 @@ During setup, the CLI asks for a Cloudflare API token used by the deployed Worke
 
 Paste the API token when prompted. The CLI stores it as the Worker secret `CF_API_TOKEN`; do not paste a Secrets Store ID.
 
+To upgrade an existing deployment, run:
+
+```bash
+form_concierge update cloudflare
+```
+
 ### Create a Survey
 
 Create a project and survey in the deployed admin dashboard, then pass their slugs to the widget:
