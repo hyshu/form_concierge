@@ -67,9 +67,11 @@ import { HttpError, countRows, json, jsonHeaders, logError, optionalIntegerParam
 import { anonymousAccountToJson, replyToJson } from './serializers';
 import { requireScope } from './permissions';
 import { isPublicFormHtmlRequest, renderPublicForm } from './public_form_renderer';
+import { scheduleRuntimeMigrations } from './runtime_migrations';
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    scheduleRuntimeMigrations(env, ctx);
     if (request.method === 'OPTIONS') {
       return new Response(null, { status: 204, headers: jsonHeaders });
     }

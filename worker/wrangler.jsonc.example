@@ -41,43 +41,43 @@
     {
       "binding": "GEMINI_API_KEY",
       "store_id": "replace-secrets-store-id",
-      "secret_name": "gemini_api_key"
+      "secret_name": "form_concierge_gemini_api_key"
     },
     {
       "binding": "OPENAI_API_KEY",
       "store_id": "replace-secrets-store-id",
-      "secret_name": "openai_api_key"
+      "secret_name": "form_concierge_openai_api_key"
     },
     {
       "binding": "CLAUDE_API_KEY",
       "store_id": "replace-secrets-store-id",
-      "secret_name": "claude_api_key"
+      "secret_name": "form_concierge_claude_api_key"
     },
     {
       "binding": "GROQ_API_KEY",
       "store_id": "replace-secrets-store-id",
-      "secret_name": "groq_api_key"
+      "secret_name": "form_concierge_groq_api_key"
     },
     {
       "binding": "CEREBRAS_API_KEY",
       "store_id": "replace-secrets-store-id",
-      "secret_name": "cerebras_api_key"
+      "secret_name": "form_concierge_cerebras_api_key"
     },
     {
       "binding": "SMTP_PASSWORD",
       "store_id": "replace-secrets-store-id",
-      "secret_name": "smtp_password"
+      "secret_name": "form_concierge_smtp_password"
     },
     {
       // Public site key still stored in Secrets Store so admin can set both keys together.
       "binding": "TURNSTILE_SITE_KEY",
       "store_id": "replace-secrets-store-id",
-      "secret_name": "turnstile_site_key"
+      "secret_name": "form_concierge_turnstile_site_key"
     },
     {
       "binding": "TURNSTILE_SECRET_KEY",
       "store_id": "replace-secrets-store-id",
-      "secret_name": "turnstile_secret_key"
+      "secret_name": "form_concierge_turnstile_secret_key"
     }
   ],
   "r2_buckets": [

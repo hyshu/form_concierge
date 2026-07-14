@@ -5,6 +5,7 @@ import 'package:args/command_runner.dart';
 
 import 'cli_exception.dart';
 import 'cloudflare/deployment_config.dart';
+import 'cloudflare/secret_names.dart';
 import 'monorepo.dart';
 import 'template_resolver.dart';
 import 'tools.dart';
@@ -45,7 +46,7 @@ class DestroyCloudflareCommand extends Command<int> {
       )
       ..addFlag(
         'delete-secrets-store',
-        help: 'Also delete the Secrets Store and all secret values.',
+        help: 'Also delete only Form Concierge-owned secret values.',
         negatable: false,
       )
       ..addFlag(
@@ -124,7 +125,7 @@ class DestroyCloudflareCommand extends Command<int> {
       await _deleteR2(deployment, store, workerDirectory);
     }
     if (deleteSecretsStore) {
-      await _deleteSecretsStore(deployment, store, workerDirectory);
+      await _deleteFormConciergeSecrets(deployment, store, workerDirectory);
     }
 
     if (deployment.hasResources) {
@@ -172,7 +173,7 @@ class DestroyCloudflareCommand extends Command<int> {
     if (deployment.secretsStoreId != null) {
       stdout.writeln(
         deleteSecretsStore
-            ? '  Secrets Store: ${deployment.secretsStoreName ?? deployment.secretsStoreId} (all secrets)'
+            ? '  Secrets: Form Concierge-owned values only'
             : '  Secrets Store: kept (use --delete-secrets-store)',
       );
     }
@@ -296,18 +297,71 @@ class DestroyCloudflareCommand extends Command<int> {
     await store.save(deployment);
   }
 
-  Future<void> _deleteSecretsStore(
+  Future<void> _deleteFormConciergeSecrets(
     CloudflareDeploymentConfig deployment,
     CloudflareDeploymentStore store,
     String cwd,
   ) async {
     final id = deployment.secretsStoreId;
     if (id == null) return;
-    await _runDelete(
-      ['wrangler', 'secrets-store', 'store', 'delete', id, '--remote'],
-      cwd,
-      'Secrets Store ${deployment.secretsStoreName ?? id}',
+    final listResult = await runCapture(
+      'npx',
+      [
+        'wrangler',
+        'secrets-store',
+        'secret',
+        'list',
+        id,
+        '--per-page',
+        '100',
+        '--remote',
+      ],
+      workingDirectory: cwd,
+      throwOnError: false,
     );
+    if (listResult.exitCode != 0) {
+      final detail = '${listResult.stdout}\n${listResult.stderr}';
+      if (!detail.toLowerCase().contains('no secrets')) {
+        throw CliException('Failed to list Secrets Store secrets.');
+      }
+    }
+    final output = '${listResult.stdout}\n${listResult.stderr}';
+    final ownedNames = formConciergeSecretNames
+        .map(formConciergeSecretName)
+        .toSet();
+    final ownedSecrets = <String, String>{};
+    for (final line in output.split('\n')) {
+      final cells = line
+          .split('│')
+          .map((cell) => cell.trim())
+          .where((cell) => cell.isNotEmpty)
+          .toList();
+      if (cells.length >= 2 && ownedNames.contains(cells[0])) {
+        ownedSecrets[cells[0]] = cells[1];
+      }
+    }
+    for (final entry in ownedSecrets.entries) {
+      final result = await runCapture(
+        'npx',
+        [
+          'wrangler',
+          'secrets-store',
+          'secret',
+          'delete',
+          id,
+          '--secret-id',
+          entry.value,
+          '--remote',
+        ],
+        workingDirectory: cwd,
+        throwOnError: false,
+      );
+      if (result.exitCode == 0) {
+        stdout.writeln('[deleted] Secret ${entry.key}');
+        continue;
+      }
+      throw CliException('Failed to delete Secret ${entry.key}.');
+    }
     deployment
       ..secretsStoreName = null
       ..secretsStoreId = null;

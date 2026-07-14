@@ -1,5 +1,6 @@
 import type { Env, IntegrationSettingsRow } from './types';
 import { tryGetSecret, upsertSecret, deleteSecret } from './secrets_store';
+import { SECRET_NAMES } from './secret_names';
 import {
   HttpError,
   json,
@@ -59,37 +60,37 @@ export async function updateAdminIntegrationSettings(
       next: ai.geminiApiKey,
       clear: optionalBoolean(ai.clearGeminiApiKey, 'ai.clearGeminiApiKey') === true,
       field: 'ai.geminiApiKey',
-      secretName: 'gemini_api_key',
+      secretName: SECRET_NAMES.gemini,
     },
     {
       next: ai.openaiApiKey,
       clear: optionalBoolean(ai.clearOpenaiApiKey, 'ai.clearOpenaiApiKey') === true,
       field: 'ai.openaiApiKey',
-      secretName: 'openai_api_key',
+      secretName: SECRET_NAMES.openai,
     },
     {
       next: ai.claudeApiKey,
       clear: optionalBoolean(ai.clearClaudeApiKey, 'ai.clearClaudeApiKey') === true,
       field: 'ai.claudeApiKey',
-      secretName: 'claude_api_key',
+      secretName: SECRET_NAMES.claude,
     },
     {
       next: ai.groqApiKey,
       clear: optionalBoolean(ai.clearGroqApiKey, 'ai.clearGroqApiKey') === true,
       field: 'ai.groqApiKey',
-      secretName: 'groq_api_key',
+      secretName: SECRET_NAMES.groq,
     },
     {
       next: ai.cerebrasApiKey,
       clear: optionalBoolean(ai.clearCerebrasApiKey, 'ai.clearCerebrasApiKey') === true,
       field: 'ai.cerebrasApiKey',
-      secretName: 'cerebras_api_key',
+      secretName: SECRET_NAMES.cerebras,
     },
     {
       next: smtp.password,
       clear: optionalBoolean(smtp.clearPassword, 'smtp.clearPassword') === true,
       field: 'smtp.password',
-      secretName: 'smtp_password',
+      secretName: SECRET_NAMES.smtpPassword,
     },
     ...(turnstile == null
       ? []
@@ -98,13 +99,13 @@ export async function updateAdminIntegrationSettings(
             next: turnstile.siteKey,
             clear: optionalBoolean(turnstile.clearSiteKey, 'turnstile.clearSiteKey') === true,
             field: 'turnstile.siteKey',
-            secretName: 'turnstile_site_key',
+            secretName: SECRET_NAMES.turnstileSiteKey,
           },
           {
             next: turnstile.secretKey,
             clear: optionalBoolean(turnstile.clearSecretKey, 'turnstile.clearSecretKey') === true,
             field: 'turnstile.secretKey',
-            secretName: 'turnstile_secret_key',
+            secretName: SECRET_NAMES.turnstileSecretKey,
           },
         ]),
   ]);
@@ -117,7 +118,7 @@ export async function updateAdminIntegrationSettings(
   const smtpSecureMode = requireSecureMode(smtp.secureMode);
 
   const smtpPasswordForValidation: string | null = secretOps.some(
-    (op) => op.secretName === 'smtp_password' && op.action === 'clear',
+    (op) => op.secretName === SECRET_NAMES.smtpPassword && op.action === 'clear',
   )
     ? null
     : typeof smtp.password === 'string'
@@ -280,7 +281,7 @@ const API_KEY_BINDINGS = {
 
 export async function apiKeyForProvider(env: Env, provider: AiProvider): Promise<string | null> {
   const binding = env[API_KEY_BINDINGS[provider]];
-  return tryGetSecret(binding);
+  return usableSecretValue(await tryGetSecret(binding));
 }
 
 async function integrationSettingsToJson(env: Env, row: IntegrationSettingsRow | null) {

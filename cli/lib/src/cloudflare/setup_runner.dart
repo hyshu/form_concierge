@@ -9,6 +9,7 @@ import '../tools.dart';
 import 'deployment_plan.dart';
 import 'jsonc.dart';
 import 'deployment_config.dart';
+import 'secret_names.dart';
 import 'setup_options.dart';
 
 /// Orchestrates Cloudflare D1 / R2 / Worker / Pages provisioning.
@@ -30,6 +31,7 @@ class CloudflareSetupRunner {
   List<String> _jasprCmd = const ['jaspr'];
   String? _seedFile;
   String? _secretsStoreId;
+  final Set<String> _legacySecretNames = {};
   late CloudflareDeploymentStore _deploymentStore;
   CloudflareDeploymentConfig _deployment = CloudflareDeploymentConfig();
 
@@ -121,8 +123,12 @@ class CloudflareSetupRunner {
       final recoveryComponents = <CloudflareDeploymentComponent>{
         if (secretsStoreCreated || storeSecretsRestored || workerSecretRestored)
           CloudflareDeploymentComponent.secrets,
-        if (d1Created) CloudflareDeploymentComponent.d1Migrations,
-        if (secretsStoreCreated || d1Created || r2Created)
+        if (d1Created || storeSecretsRestored)
+          CloudflareDeploymentComponent.d1Migrations,
+        if (secretsStoreCreated ||
+            storeSecretsRestored ||
+            d1Created ||
+            r2Created)
           CloudflareDeploymentComponent.worker,
       };
       deploymentPlan = deploymentPlan.withAdditionalComponents(
@@ -700,18 +706,6 @@ Run setup interactively, or pass:
     return '';
   }
 
-  /// Secret names bound on the Worker (must exist in the store before deploy).
-  static const _secretNames = [
-    'gemini_api_key',
-    'openai_api_key',
-    'claude_api_key',
-    'groq_api_key',
-    'cerebras_api_key',
-    'smtp_password',
-    'turnstile_site_key',
-    'turnstile_secret_key',
-  ];
-
   Future<bool> _ensureSecretsStore() async {
     _secretsStoreId = await _findSecretsStoreId();
     if (_secretsStoreId != null && _secretsStoreId!.isNotEmpty) {
@@ -755,10 +749,18 @@ Run setup interactively, or pass:
     }
 
     final existing = await _listSecretsStoreSecretNames(storeId);
-    final missing = _secretNames.where((n) => !existing.contains(n)).toList();
+    if (!allowCreateDeployment && _isLegacySecretMigrationVersion()) {
+      _legacySecretNames.addAll(
+        formConciergeSecretNames.where(existing.contains),
+      );
+    }
+    final names = formConciergeSecretNames
+        .map(formConciergeSecretName)
+        .toList();
+    final missing = names.where((n) => !existing.contains(n)).toList();
     if (missing.isEmpty) {
       stdout.writeln('==> Secrets Store secrets: all present');
-      return false;
+      return _legacySecretNames.isNotEmpty;
     }
 
     stdout.writeln(
@@ -820,18 +822,40 @@ Run setup interactively, or pass:
   Future<Set<String>> _listSecretsStoreSecretNames(String storeId) async {
     final result = await runCapture(
       'npx',
-      ['wrangler', 'secrets-store', 'secret', 'list', storeId, '--remote'],
+      [
+        'wrangler',
+        'secrets-store',
+        'secret',
+        'list',
+        storeId,
+        '--per-page',
+        '100',
+        '--remote',
+      ],
       workingDirectory: paths.worker,
       throwOnError: false,
     );
     final text = '${result.stdout}\n${result.stderr}';
     final found = <String>{};
-    for (final name in _secretNames) {
+    final knownNames = {
+      ...formConciergeSecretNames,
+      ...formConciergeSecretNames.map(formConciergeSecretName),
+    };
+    for (final name in knownNames) {
       if (RegExp('\\b${RegExp.escape(name)}\\b').hasMatch(text)) {
         found.add(name);
       }
     }
     return found;
+  }
+
+  bool _isLegacySecretMigrationVersion() {
+    final version = _deployment.installedVersion;
+    if (version == null) return true;
+    final parts = version.split('.').map(int.tryParse).toList();
+    if (parts.length != 3 || parts.any((part) => part == null)) return true;
+    final [major, minor, patch] = parts.cast<int>();
+    return major == 0 && (minor < 2 || (minor == 2 && patch <= 1));
   }
 
   Future<bool> _ensureR2Bucket() async {
@@ -948,9 +972,15 @@ Run setup interactively, or pass:
 
     if (secretsStoreId.isNotEmpty) {
       config['secrets_store_secrets'] = [
-        for (final name in _secretNames)
+        for (final name in formConciergeSecretNames)
           {
-            'binding': name.toUpperCase(),
+            'binding': formConciergeSecretBinding(name),
+            'store_id': secretsStoreId,
+            'secret_name': formConciergeSecretName(name),
+          },
+        for (final name in _legacySecretNames)
+          {
+            'binding': formConciergeLegacySecretBinding(name),
             'store_id': secretsStoreId,
             'secret_name': name,
           },

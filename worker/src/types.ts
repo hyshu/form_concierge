@@ -1,5 +1,13 @@
 export type Env = WorkerEnv & {
   CF_API_TOKEN: string;
+  LEGACY_GEMINI_API_KEY?: SecretsStoreSecret;
+  LEGACY_OPENAI_API_KEY?: SecretsStoreSecret;
+  LEGACY_CLAUDE_API_KEY?: SecretsStoreSecret;
+  LEGACY_GROQ_API_KEY?: SecretsStoreSecret;
+  LEGACY_CEREBRAS_API_KEY?: SecretsStoreSecret;
+  LEGACY_SMTP_PASSWORD?: SecretsStoreSecret;
+  LEGACY_TURNSTILE_SITE_KEY?: SecretsStoreSecret;
+  LEGACY_TURNSTILE_SECRET_KEY?: SecretsStoreSecret;
 };
 
 export type AdminContext = {
