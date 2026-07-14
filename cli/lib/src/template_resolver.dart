@@ -7,7 +7,7 @@ import 'package:path/path.dart' as p;
 
 import 'cli_exception.dart';
 
-const formConciergeCliVersion = '0.2.0';
+const formConciergeCliVersion = '0.2.1';
 const _githubRepository = 'hyshu/form_concierge';
 const _maximumTemplateBytes = 250 * 1024 * 1024;
 

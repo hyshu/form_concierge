@@ -42,4 +42,11 @@ const cloudflareReleaseChanges = [
   }),
   // Groq/account support: groq_api_key, migration 0003, and Worker/Admin/Web.
   CloudflareReleaseChange('0.2.0', allCloudflareDeploymentComponents),
+  // Response replies and translation: migration metadata wording, Worker APIs,
+  // and Admin response management. Secrets and Web Pages are unchanged.
+  CloudflareReleaseChange('0.2.1', {
+    CloudflareDeploymentComponent.d1Migrations,
+    CloudflareDeploymentComponent.worker,
+    CloudflareDeploymentComponent.adminPages,
+  }),
 ];

@@ -1,3 +1,11 @@
+## 0.2.1
+
+- Show reply counts and existing reply history alongside survey responses.
+- Translate individual text answers while preserving their detected source
+  locales across response refreshes.
+- Add a manual refresh action to the responses page.
+- Rename GenUI follow-up wording to AI follow-ups in every supported locale.
+
 ## 0.2.0
 
 - Add an account page and allow the signed-in administrator to change their

@@ -1,3 +1,10 @@
+## 0.2.1
+
+- Deploy only the Cloudflare components changed between the installed and
+  target template versions during updates.
+- Add version-aware deployment plans with safe full-deployment fallbacks and a
+  `--force` override.
+
 ## 0.2.0
 
 - Add `update cloudflare` to redeploy from saved deployment settings.

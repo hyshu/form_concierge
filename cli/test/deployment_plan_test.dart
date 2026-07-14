@@ -23,6 +23,11 @@ void main() {
       CloudflareDeploymentComponent.adminPages,
     });
     expect(changes['0.2.0'], allCloudflareDeploymentComponents);
+    expect(changes['0.2.1'], {
+      CloudflareDeploymentComponent.d1Migrations,
+      CloudflareDeploymentComponent.worker,
+      CloudflareDeploymentComponent.adminPages,
+    });
   });
 
   test('initial setup deploys every component', () {

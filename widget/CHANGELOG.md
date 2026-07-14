@@ -1,3 +1,10 @@
+## 0.2.1
+
+- Deprecate `onSubmitted` in favor of `onResponseSubmitted`, which provides the
+  saved response and answers.
+- Rename GenUI follow-up wording to AI follow-ups in API documentation and
+  examples.
+
 ## 0.2.0
 
 - Add `loadingBuilder` to customize survey loading states.

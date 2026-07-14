@@ -1,6 +1,6 @@
 name: form_concierge_cli
 description: CLI for Form Concierge setup and tooling.
-version: 0.2.0
+version: 0.2.1
 homepage: https://github.com/hyshu/form_concierge
 repository: https://github.com/hyshu/form_concierge/tree/main/cli
 issue_tracker: https://github.com/hyshu/form_concierge/issues

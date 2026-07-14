@@ -264,3 +264,10 @@ lib/src/cloudflare/cloudflare_release_manifest.dart
 ```
 
 This includes releases that do not require any deployment changes.
+
+| Version | Secrets | D1 migrations | Worker | Admin Pages | Web Pages |
+|---|---:|---:|---:|---:|---:|
+| 0.1.0 | Yes | Yes | Yes | Yes | Yes |
+| 0.1.1 | No | Yes | Yes | Yes | No |
+| 0.2.0 | Yes | Yes | Yes | Yes | Yes |
+| 0.2.1 | No | Yes | Yes | Yes | No |
