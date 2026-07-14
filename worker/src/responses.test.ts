@@ -58,9 +58,9 @@ test('csvCell neutralizes formula injection prefixes', () => {
 
 test('responseLocaleFrom prefers metadata, then device locale', () => {
   assert.equal(responseLocaleFrom('{"locale":"ko"}', 'ja'), 'ko');
-  assert.equal(responseLocaleFrom('{"source":"app"}', 'ja-JP'), 'ja');
-  assert.equal(responseLocaleFrom('{"locale":7}', 'zh_TW'), 'zh-Hant');
-  assert.equal(responseLocaleFrom('{', 'de-DE'), 'de');
+  assert.equal(responseLocaleFrom('{"source":"app"}', 'ja-JP'), 'ja-JP');
+  assert.equal(responseLocaleFrom('{"locale":7}', 'zh_TW'), 'zh_TW');
+  assert.equal(responseLocaleFrom('{', 'de-DE'), 'de-DE');
   assert.equal(responseLocaleFrom(null, null), null);
 });
 

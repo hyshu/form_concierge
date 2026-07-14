@@ -31,12 +31,7 @@ AnswerTranslationKey followUpAnswerTranslationKey({
   targetLocale: targetLocale,
 );
 
-String answerTargetLocale(Locale locale) {
-  final normalized = normalizeFormContentLocale(locale.toLanguageTag());
-  return formContentLocaleCodes.contains(normalized)
-      ? normalized
-      : defaultFormContentLocale;
-}
+String answerTargetLocale(Locale locale) => locale.toLanguageTag();
 
 String? answerSourceLocale({
   Object? metadataLocale,
@@ -44,11 +39,11 @@ String? answerSourceLocale({
 }) {
   for (final candidate in [metadataLocale, deviceLocale]) {
     if (candidate is! String || candidate.trim().isEmpty) continue;
-    final normalized = normalizeFormContentLocale(candidate.trim());
+    final value = candidate.trim();
     if (RegExp(
-      r'^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$',
-    ).hasMatch(normalized)) {
-      return normalized;
+      r'^[A-Za-z]{2,3}(?:[-_][A-Za-z0-9]{2,8})*$',
+    ).hasMatch(value)) {
+      return value;
     }
   }
   return null;

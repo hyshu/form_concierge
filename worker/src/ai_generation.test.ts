@@ -239,7 +239,7 @@ test('translateLocalizedText auto-detects language only for response text', asyn
       choices: [
         {
           message: {
-            content: JSON.stringify({ ja: '翻訳済み' }),
+            content: JSON.stringify({ 'ko-KR': '번역됨' }),
           },
         },
       ],
@@ -251,13 +251,13 @@ test('translateLocalizedText auto-detects language only for response text', asyn
       adminPostRequest('/api/admin/ai/translate-localized-text', {
         sourceLocale: 'auto',
         sourceText: '좋아요',
-        targetLocales: ['ja'],
+        targetLocales: ['ko-KR'],
         fieldKind: 'response',
       }),
       envWithSettings(),
     );
     assert.deepEqual(await response.json(), {
-      translations: { ja: '翻訳済み' },
+      translations: { 'ko-KR': '번역됨' },
     });
     const messages = upstreamBodies[0]?.messages;
     assert.ok(Array.isArray(messages));

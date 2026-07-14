@@ -329,7 +329,11 @@ export async function translateLocalizedText(request: Request, env: Env): Promis
   if (sourceText.length > MAX_SOURCE_TEXT_LENGTH) {
     throw new HttpError(400, `sourceText must be ${MAX_SOURCE_TEXT_LENGTH} characters or fewer`);
   }
-  const targetLocales = requireTargetLocales(body.targetLocales, sourceLocale);
+  const targetLocales = requireTargetLocales(
+    body.targetLocales,
+    sourceLocale,
+    fieldKind === 'response',
+  );
 
   const model = resolveModelId(env, provider);
   const text = await generateStructuredJson({
@@ -573,13 +577,17 @@ function requireLocaleCode(value: unknown, field: string): string {
 function requireResponseSourceLocale(value: unknown): string {
   const locale = requireString(value, 'sourceLocale').trim();
   if (locale === 'auto') return locale;
-  if (!/^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/.test(locale)) {
+  if (!/^[A-Za-z]{2,3}(?:[-_][A-Za-z0-9]{2,8})*$/.test(locale)) {
     throw new HttpError(400, 'sourceLocale is not a valid locale');
   }
   return locale;
 }
 
-function requireTargetLocales(value: unknown, sourceLocale: string): string[] {
+function requireTargetLocales(
+  value: unknown,
+  sourceLocale: string,
+  allowAnyLocale = false,
+): string[] {
   if (!Array.isArray(value)) throw new HttpError(400, 'targetLocales must be an array');
   if (value.length === 0) throw new HttpError(400, 'targetLocales must not be empty');
   if (value.length > LOCALES.length) {
@@ -590,8 +598,14 @@ function requireTargetLocales(value: unknown, sourceLocale: string): string[] {
     if (typeof item !== 'string') {
       throw new HttpError(400, `targetLocales[${index}] must be a string`);
     }
-    if (!LOCALES.includes(item as (typeof LOCALES)[number])) {
-      throw new HttpError(400, `targetLocales[${index}] is not a supported locale`);
+    const isSupported = LOCALES.includes(item as (typeof LOCALES)[number]);
+    const isValidResponseLocale =
+      allowAnyLocale && /^[A-Za-z]{2,3}(?:[-_][A-Za-z0-9]{2,8})*$/.test(item);
+    if (!isSupported && !isValidResponseLocale) {
+      throw new HttpError(
+        400,
+        `targetLocales[${index}] is not a valid locale`,
+      );
     }
     if (item === sourceLocale) {
       throw new HttpError(400, 'targetLocales must not include sourceLocale');

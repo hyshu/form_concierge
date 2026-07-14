@@ -17,7 +17,6 @@ import { answerToJson, choiceToJson, parseChoiceIds, projectToJson, questionToJs
 import {
   DEFAULT_FORM_CONTENT_LOCALE,
   localizedTextFor,
-  normalizeFormContentLocale,
 } from './localization';
 import { collectFileKeysFromResponse, deleteMediaKeys, parseStoredFileKeys } from './media';
 
@@ -190,9 +189,9 @@ export function responseLocaleFrom(
     if (typeof candidate !== 'string' || candidate.trim().length === 0) {
       continue;
     }
-    const normalized = normalizeFormContentLocale(candidate.trim());
-    if (/^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/.test(normalized)) {
-      return normalized;
+    const value = candidate.trim();
+    if (/^[A-Za-z]{2,3}(?:[-_][A-Za-z0-9]{2,8})*$/.test(value)) {
+      return value;
     }
   }
   return null;

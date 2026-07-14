@@ -42,7 +42,9 @@ class ResponsesPage extends RearchConsumer {
     final resultsState = resultsManager.getState(surveyId);
     final notificationState = notificationManager.getState(surveyId);
     final translationState = translationManager.getState(surveyId);
-    final targetLocale = answerTargetLocale(Localizations.localeOf(context));
+    final targetLocale = answerTargetLocale(
+      View.of(context).platformDispatcher.locale,
+    );
     final translationBindings = AnswerTranslationBindings(
       enabled: publicConfig.state.aiGenerationEnabled,
       targetLocale: targetLocale,

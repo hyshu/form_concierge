@@ -15,11 +15,11 @@ void main() {
     );
     expect(
       answerSourceLocale(metadataLocale: null, deviceLocale: 'ja-JP'),
-      'ja',
+      'ja-JP',
     );
     expect(
       answerSourceLocale(metadataLocale: 7, deviceLocale: 'zh_TW'),
-      'zh-Hant',
+      'zh_TW',
     );
     expect(
       answerSourceLocale(metadataLocale: 'not a locale!', deviceLocale: null),
@@ -27,15 +27,15 @@ void main() {
     );
   });
 
-  test('answer target follows supported browser locale', () {
-    expect(answerTargetLocale(const Locale('ko', 'KR')), 'ko');
+  test('answer target keeps the browser locale unchanged', () {
+    expect(answerTargetLocale(const Locale('ko', 'KR')), 'ko-KR');
     expect(
       answerTargetLocale(
         const Locale.fromSubtags(languageCode: 'zh', countryCode: 'TW'),
       ),
-      'zh-Hant',
+      'zh-TW',
     );
-    expect(answerTargetLocale(const Locale('pt', 'BR')), 'en');
+    expect(answerTargetLocale(const Locale('pt', 'BR')), 'pt-BR');
   });
 
   test(
