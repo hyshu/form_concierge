@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 import '../cli_exception.dart';
 import '../monorepo.dart';
 import '../tools.dart';
+import 'deployment_plan.dart';
 import 'jsonc.dart';
 import 'deployment_config.dart';
 import 'setup_options.dart';
@@ -68,6 +69,16 @@ class CloudflareSetupRunner {
 
       await _loadDeployment();
 
+      var deploymentPlan = CloudflareDeploymentPlan.resolve(
+        installedVersion: _deployment.installedVersion,
+        targetVersion: options.targetVersion!,
+        initialSetup: allowCreateDeployment,
+        force: options.force,
+        hasConfigurationOverrides:
+            options.hasConfigurationOverrides ||
+            _deploymentConfigurationIsIncomplete(),
+      );
+
       await _selectRemoteBindingsForLocalDev();
       await _selectResourceNames();
 
@@ -99,37 +110,65 @@ class CloudflareSetupRunner {
       // Secrets Store first: accounts often allow only one store, and create can
       // fail after D1/R2 were already provisioned. Resolve/reuse before those.
       // Worker deploy requires each secrets_store_secrets binding to already exist.
-      await _ensureSecretsStore();
-      await _ensureSecretsStoreSecrets();
-      await _ensureD1Database();
-      await _ensureR2Bucket();
+      final secretsStoreCreated = await _ensureSecretsStore();
+      final storeSecretsRestored = await _ensureSecretsStoreSecrets();
+      final d1Created = await _ensureD1Database();
+      final r2Created = await _ensureR2Bucket();
       await _waitForR2Bucket();
-      await _ensureCfApiToken();
       await _saveDeployment();
+      final workerSecretRestored = await _ensureCfApiToken();
 
-      stdout.writeln('==> Configure Worker');
-      await _updateWrangler();
-
-      stdout.writeln('==> Worker typecheck');
-      await runInherit('npm', [
-        'run',
-        'typecheck',
-      ], workingDirectory: paths.worker);
-
-      stdout.writeln('==> Apply D1 migrations');
-      await runInherit(
-        'npx',
-        [
-          'wrangler',
-          'd1',
-          'migrations',
-          'apply',
-          options.databaseName!,
-          '--remote',
-        ],
-        workingDirectory: paths.worker,
-        environment: {...Platform.environment, 'CI': '1'},
+      final recoveryComponents = <CloudflareDeploymentComponent>{
+        if (secretsStoreCreated || storeSecretsRestored || workerSecretRestored)
+          CloudflareDeploymentComponent.secrets,
+        if (d1Created) CloudflareDeploymentComponent.d1Migrations,
+        if (secretsStoreCreated || d1Created || r2Created)
+          CloudflareDeploymentComponent.worker,
+      };
+      deploymentPlan = deploymentPlan.withAdditionalComponents(
+        recoveryComponents,
+        'required Cloudflare resource recreated',
       );
+      _printDeploymentPlan(deploymentPlan);
+
+      final deployWorker = deploymentPlan.includes(
+        CloudflareDeploymentComponent.worker,
+      );
+      final applyD1Migrations =
+          options.seedProjectId != null ||
+          deploymentPlan.includes(CloudflareDeploymentComponent.d1Migrations);
+
+      if (deployWorker) {
+        stdout.writeln('==> Configure Worker');
+        await _updateWrangler();
+
+        stdout.writeln('==> Worker typecheck');
+        await runInherit('npm', [
+          'run',
+          'typecheck',
+        ], workingDirectory: paths.worker);
+      } else {
+        stdout.writeln('==> Worker: unchanged, deploy skipped');
+      }
+
+      if (applyD1Migrations) {
+        stdout.writeln('==> Apply D1 migrations');
+        await runInherit(
+          'npx',
+          [
+            'wrangler',
+            'd1',
+            'migrations',
+            'apply',
+            options.databaseName!,
+            '--remote',
+          ],
+          workingDirectory: paths.worker,
+          environment: {...Platform.environment, 'CI': '1'},
+        );
+      } else {
+        stdout.writeln('==> D1 migrations: unchanged, skipped');
+      }
 
       if (options.seedProjectId != null && _seedFile != null) {
         stdout.writeln('==> Seed remote D1 project: ${options.seedProjectId}');
@@ -145,21 +184,26 @@ class CloudflareSetupRunner {
         ], workingDirectory: paths.worker);
       }
 
-      stdout.writeln('==> Deploy Worker');
-      final deployedApiUrl = await _deployWorker();
-      if (options.apiUrl == null || _isPlaceholderApiUrl(options.apiUrl)) {
-        if (deployedApiUrl == null || deployedApiUrl.isEmpty) {
-          throw CliException(
-            'Could not infer Worker URL. Re-run with --api-url.',
-          );
+      if (deployWorker) {
+        stdout.writeln('==> Deploy Worker');
+        final deployedApiUrl = await _deployWorker();
+        if (options.apiUrl == null || _isPlaceholderApiUrl(options.apiUrl)) {
+          if (deployedApiUrl == null || deployedApiUrl.isEmpty) {
+            throw CliException(
+              'Could not infer Worker URL. Re-run with --api-url.',
+            );
+          }
+          options.apiUrl = deployedApiUrl;
+          stdout.writeln('==> Update Worker public URL: ${options.apiUrl}');
+          await _updateWrangler();
+          await _deployWorker();
         }
-        options.apiUrl = deployedApiUrl;
-        stdout.writeln('==> Update Worker public URL: ${options.apiUrl}');
-        await _updateWrangler();
-        await _deployWorker();
       }
 
-      if (options.deployAdminPages == true) {
+      final deployAdmin = deploymentPlan.includes(
+        CloudflareDeploymentComponent.adminPages,
+      );
+      if (deployAdmin && options.deployAdminPages == true) {
         stdout.writeln('==> Build admin');
         await runInherit('flutter', [
           'pub',
@@ -193,30 +237,39 @@ class CloudflareSetupRunner {
           options.adminProject!,
           '--commit-dirty=true',
         ], workingDirectory: paths.root);
-      } else {
+      } else if (options.deployAdminPages != true) {
         stdout.writeln('==> Admin Pages: skipped');
+      } else {
+        stdout.writeln('==> Admin Pages: unchanged, deploy skipped');
       }
 
-      stdout.writeln('==> Build public form assets');
-      await runInherit('dart', ['pub', 'get'], workingDirectory: paths.web);
-      await runInherit(_jasprCmd.first, [
-        ..._jasprCmd.skip(1),
-        'build',
-      ], workingDirectory: paths.web);
-      await _injectWebIndexApiUrl();
-
-      stdout.writeln(
-        '==> Deploy public form assets Pages: ${options.webProject}',
+      final deployWeb = deploymentPlan.includes(
+        CloudflareDeploymentComponent.webPages,
       );
-      await _ensurePagesProject(options.webProject!);
-      await runInherit(paths.wranglerBin, [
-        'pages',
-        'deploy',
-        p.join(paths.web, 'build', 'jaspr'),
-        '--project-name',
-        options.webProject!,
-        '--commit-dirty=true',
-      ], workingDirectory: paths.root);
+      if (deployWeb) {
+        stdout.writeln('==> Build public form assets');
+        await runInherit('dart', ['pub', 'get'], workingDirectory: paths.web);
+        await runInherit(_jasprCmd.first, [
+          ..._jasprCmd.skip(1),
+          'build',
+        ], workingDirectory: paths.web);
+        await _injectWebIndexApiUrl();
+
+        stdout.writeln(
+          '==> Deploy public form assets Pages: ${options.webProject}',
+        );
+        await _ensurePagesProject(options.webProject!);
+        await runInherit(paths.wranglerBin, [
+          'pages',
+          'deploy',
+          p.join(paths.web, 'build', 'jaspr'),
+          '--project-name',
+          options.webProject!,
+          '--commit-dirty=true',
+        ], workingDirectory: paths.root);
+      } else {
+        stdout.writeln('==> Public assets Pages: unchanged, deploy skipped');
+      }
 
       _deployment.installedVersion = options.targetVersion;
       await _saveDeployment();
@@ -236,6 +289,27 @@ class CloudflareSetupRunner {
         } catch (_) {}
       }
     }
+  }
+
+  void _printDeploymentPlan(CloudflareDeploymentPlan plan) {
+    stdout.writeln('==> Deployment plan: ${plan.reason}');
+    if (plan.components.isEmpty) {
+      stdout.writeln('    No version-driven deployments required.');
+      return;
+    }
+    stdout.writeln(
+      '    ${plan.components.map((component) => component.label).join(', ')}',
+    );
+  }
+
+  bool _deploymentConfigurationIsIncomplete() {
+    return _deployment.workerName == null ||
+        _deployment.workerUrl == null ||
+        _deployment.databaseName == null ||
+        _deployment.databaseId == null ||
+        _deployment.r2BucketName == null ||
+        _deployment.webPagesProject == null ||
+        (_deployment.deployAdminPages && _deployment.adminPagesProject == null);
   }
 
   Future<void> _loadDeployment() async {
@@ -541,7 +615,11 @@ Run setup interactively, or pass:
       workingDirectory: paths.worker,
       throwOnError: false,
     );
-    if (result.exitCode != 0) return '';
+    if (result.exitCode != 0) {
+      throw CliException(
+        'Could not list D1 databases. Refusing to create a possible duplicate.',
+      );
+    }
     final raw = (result.stdout as String).trim();
     if (raw.isEmpty) return '';
     final parsed = jsonDecode(raw);
@@ -564,12 +642,9 @@ Run setup interactively, or pass:
     return '';
   }
 
-  Future<void> _ensureD1Database() async {
-    var id = options.databaseId;
-    if (id == null || id.isEmpty || id.startsWith('replace-')) {
-      id = await _findD1DatabaseId();
-      options.databaseId = id;
-    }
+  Future<bool> _ensureD1Database() async {
+    var id = await _findD1DatabaseId();
+    options.databaseId = id;
     if (id.isEmpty) {
       // Never let wrangler append bindings: an existing DB entry becomes a
       // duplicate "DB" binding and breaks whoami/deploy. _updateWrangler owns config.
@@ -582,12 +657,14 @@ Run setup interactively, or pass:
         '--update-config=false',
       ], workingDirectory: paths.worker);
       options.databaseId = await _findD1DatabaseId();
+      id = options.databaseId!;
     }
     if (options.databaseId == null || options.databaseId!.isEmpty) {
       throw CliException(
         'Could not resolve D1 database ID for ${options.databaseName}.',
       );
     }
+    return id.isNotEmpty && id != _deployment.databaseId;
   }
 
   Future<String> _findSecretsStoreId() async {
@@ -635,11 +712,11 @@ Run setup interactively, or pass:
     'turnstile_secret_key',
   ];
 
-  Future<void> _ensureSecretsStore() async {
+  Future<bool> _ensureSecretsStore() async {
     _secretsStoreId = await _findSecretsStoreId();
     if (_secretsStoreId != null && _secretsStoreId!.isNotEmpty) {
       stdout.writeln('==> Secrets Store: using existing');
-      return;
+      return _secretsStoreId != _deployment.secretsStoreId;
     }
 
     final name = CloudflareSetupOptions.defaultSecretsStoreName;
@@ -652,7 +729,7 @@ Run setup interactively, or pass:
     );
     _secretsStoreId = await _findSecretsStoreId();
     if (_secretsStoreId != null && _secretsStoreId!.isNotEmpty) {
-      return;
+      return true;
     }
 
     final detail = [
@@ -671,7 +748,7 @@ Run setup interactively, or pass:
   }
 
   /// Deploy fails if secrets_store_secrets bindings point at missing secrets.
-  Future<void> _ensureSecretsStoreSecrets() async {
+  Future<bool> _ensureSecretsStoreSecrets() async {
     final storeId = _secretsStoreId;
     if (storeId == null || storeId.isEmpty) {
       throw CliException('Secrets Store id is missing.');
@@ -681,7 +758,7 @@ Run setup interactively, or pass:
     final missing = _secretNames.where((n) => !existing.contains(n)).toList();
     if (missing.isEmpty) {
       stdout.writeln('==> Secrets Store secrets: all present');
-      return;
+      return false;
     }
 
     stdout.writeln(
@@ -737,6 +814,7 @@ Run setup interactively, or pass:
         '--name $name --scopes workers --remote',
       );
     }
+    return true;
   }
 
   Future<Set<String>> _listSecretsStoreSecretNames(String storeId) async {
@@ -756,14 +834,14 @@ Run setup interactively, or pass:
     return found;
   }
 
-  Future<void> _ensureR2Bucket() async {
+  Future<bool> _ensureR2Bucket() async {
     final info = await runCapture(
       'npx',
       ['wrangler', 'r2', 'bucket', 'info', options.r2BucketName!],
       workingDirectory: paths.worker,
       throwOnError: false,
     );
-    if (info.exitCode == 0) return;
+    if (info.exitCode == 0) return false;
 
     stdout.writeln('==> Create R2 bucket: ${options.r2BucketName}');
     // Same as D1: do not append bindings; _updateWrangler rewrites config.
@@ -775,6 +853,7 @@ Run setup interactively, or pass:
       options.r2BucketName!,
       '--update-config=false',
     ], workingDirectory: paths.worker);
+    return true;
   }
 
   Future<void> _waitForR2Bucket() async {
@@ -952,10 +1031,18 @@ Run setup interactively, or pass:
     );
   }
 
-  Future<void> _ensureCfApiToken() async {
+  Future<bool> _ensureCfApiToken() async {
     final list = await runCapture(
       'npx',
-      ['wrangler', 'secret', 'list', '--json'],
+      [
+        'wrangler',
+        'secret',
+        'list',
+        '--format',
+        'json',
+        '--name',
+        options.workerName!,
+      ],
       workingDirectory: paths.worker,
       throwOnError: false,
     );
@@ -964,7 +1051,7 @@ Run setup interactively, or pass:
         final secrets = jsonDecode((list.stdout as String).trim());
         if (secrets is List &&
             secrets.any((s) => s is Map && s['name'] == 'CF_API_TOKEN')) {
-          return;
+          return false;
         }
       } catch (_) {}
     }
@@ -986,7 +1073,10 @@ Run setup interactively, or pass:
       'secret',
       'put',
       'CF_API_TOKEN',
+      '--name',
+      options.workerName!,
     ], workingDirectory: paths.worker);
+    return true;
   }
 
   Future<void> _injectWebIndexApiUrl() async {
