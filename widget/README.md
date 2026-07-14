@@ -11,7 +11,7 @@ The package exports both the Flutter widget and the Dart client API.
 ## Features
 
 - Native Flutter survey UI
-- [Jaspr](https://pub.dev/packages/jaspr)-powered web survey forms
+- Web survey forms powered by [Jaspr](https://pub.dev/packages/jaspr)
 - Anonymous responses without email or login
 - Single-choice, multiple-choice, text, and image-upload questions
 - Multilingual survey content

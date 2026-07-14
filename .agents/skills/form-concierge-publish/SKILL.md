@@ -32,7 +32,9 @@ CLI before its template exists, or changing Git history without approval.
    and repository. Ask only if the version or scope is genuinely unknown; never
    infer patch versus minor.
 3. Inventory changes since the previous tag for every component, including the
-   admin dashboard. Compare changelog style with the other packages.
+   admin dashboard. Classify Cloudflare template changes as Secrets, D1
+   migrations, Worker, Admin Pages, or Web Pages. Compare changelog style with
+   the other packages.
 4. Present a release-preparation plan before editing. Explicitly separate:
    - historical changelog backfills through the previous release;
    - unrelated housekeeping such as `.gitignore` changes;
@@ -51,6 +53,8 @@ Update all applicable version references consistently:
   `widget/pubspec.yaml`
 - `cli/pubspec.yaml`
 - `formConciergeCliVersion` in `cli/lib/src/template_resolver.dart`
+- the target version entry in
+  `cli/lib/src/cloudflare/cloudflare_release_manifest.dart`
 - `admin_dashboard/pubspec.yaml`, preserving its build-number convention
 - the root `README.md` package table and versioned tag/release examples
 - `client/CHANGELOG.md`
@@ -64,25 +68,46 @@ release-process bullets such as “Use the VERSION GitHub Release template for
 standalone installs” on every release; fold meaningful behavior into the
 relevant feature entry.
 
+Build the Cloudflare release-manifest entry from the actual diff between the
+previous release tag and the release commit. Each entry describes work
+introduced by that version, not a cumulative full-deploy list:
+
+- `secrets`: required secret names, Secrets Store bindings, or Worker secret
+  requirements changed;
+- `d1Migrations`: files under `worker/migrations/` changed;
+- `worker`: Worker source, runtime bindings, or deploy-time Worker config
+  changed;
+- `adminPages`: deployable Admin dashboard code or assets changed;
+- `webPages`: deployable public web code or assets changed.
+
+Include every published CLI/template version in the manifest, even when its
+component set is empty. Use all components for the first public template. When
+a change crosses component boundaries or classification is uncertain, include
+every affected component rather than risk an incomplete update. Keep the
+human-readable table in `cli/README.md` synchronized with the manifest.
+
 Run package resolution where required and inspect every resulting lockfile
 change. Format changed Dart files with `dart format` before validation.
 
 ## Validate and obtain release-commit approval
 
 1. Run `bash tool/ci/static_checks.sh`.
-2. Run publish dry-runs for `client`, `widget`, and `cli`, reviewing every file
+2. Confirm `cli/test/deployment_plan_test.dart` passes and verifies that the
+   current CLI version has a manifest entry. Review the previous-tag diff
+   against the manifest entry before accepting the result.
+3. Run publish dry-runs for `client`, `widget`, and `cli`, reviewing every file
    in each package. For the widget dry-run, temporarily shelve the tracked
    `widget/pubspec_overrides.yaml` exactly as `tool/publish.sh` does, restore it
    even on failure, then refresh local dependencies.
-3. Run `tool/publish.sh --plan client widget` and
+4. Run `tool/publish.sh --plan client widget` and
    `tool/publish.sh --plan cli` to confirm the intended order.
-4. Re-run `git status --short` and inspect the full diff. Confirm there are no
+5. Re-run `git status --short` and inspect the full diff. Confirm there are no
    generated, shelved, or credential files left behind.
-5. Present the proposed commit grouping and messages. Wait for explicit
+6. Present the proposed commit grouping and messages. Wait for explicit
    approval before committing.
-6. After committing, show the commit SHA and clean status. Wait for explicit
+7. After committing, show the commit SHA and clean status. Wait for explicit
    approval before pushing unless that push was already unambiguously approved.
-7. Wait for CI on the exact release commit. If CI passes and no files changed
+8. Wait for CI on the exact release commit. If CI passes and no files changed
    afterward, do not repeat the full local suite merely for reassurance.
 
 ## Publish client and widget
