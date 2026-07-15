@@ -21,17 +21,17 @@ let package = Package(
   targets: [
     .target(
       name: "FormConciergeSwiftUI",
-      path: "swiftui/Sources/FormConciergeSwiftUI"
+      path: "apple/Sources/FormConciergeSwiftUI"
     ),
     .target(
       name: "FormConciergeUIKit",
       dependencies: ["FormConciergeSwiftUI"],
-      path: "swiftui/Sources/FormConciergeUIKit"
+      path: "apple/Sources/FormConciergeUIKit"
     ),
     .testTarget(
       name: "FormConciergeSwiftUITests",
       dependencies: ["FormConciergeSwiftUI"],
-      path: "swiftui/Tests/FormConciergeSwiftUITests"
+      path: "apple/Tests/FormConciergeSwiftUITests"
     ),
   ]
 )

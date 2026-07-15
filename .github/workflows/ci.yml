@@ -53,6 +53,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Test SwiftUI package
-        working-directory: swiftui
+      - name: Test Apple Swift package
+        working-directory: apple
         run: swift test

@@ -2,7 +2,7 @@
 
 Swift Package for embedding Form Concierge surveys in SwiftUI and UIKit apps.
 
-See [`Examples/FormConciergeExample`](Examples/FormConciergeExample) and
+See [`Examples/FormConciergeSwiftUIExample`](Examples/FormConciergeSwiftUIExample) and
 [`Examples/FormConciergeUIKitExample`](Examples/FormConciergeUIKitExample) for
 complete iOS examples with the same navigation flow as the Flutter mobile
 example, adaptive follow-up, image upload, and Turnstile.

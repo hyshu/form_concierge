@@ -1,4 +1,4 @@
-# FormConciergeExample
+# FormConciergeSwiftUIExample
 
 Minimal iOS Form Concierge example, matching the flow of `widget/examples/flutter_mobile_simple`.
 
@@ -10,7 +10,7 @@ The default configuration targets a local Worker and placeholder slugs:
 - Project slug: `example-project`
 - Survey slug: `example-survey`
 
-Open `FormConciergeExample.xcodeproj`, select a simulator, and run the `FormConciergeExample` scheme.
+Open `FormConciergeSwiftUIExample.xcodeproj`, select a simulator, and run the `FormConciergeSwiftUIExample` scheme.
 
 Override configuration with scheme environment variables:
 

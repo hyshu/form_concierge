@@ -61,7 +61,7 @@ Update all applicable version references consistently:
 - `widget/CHANGELOG.md`
 - `cli/CHANGELOG.md`
 - `admin_dashboard/CHANGELOG.md`
-- `swiftui/README.md` and Swift package release notes when SwiftUI, UIKit, or
+- `apple/README.md` and Swift package release notes when SwiftUI, UIKit, or
   SwiftPM behavior changed
 - tracked lockfiles changed by dependency resolution
 
@@ -114,8 +114,8 @@ unavailable through SwiftPM even if the package exists on a later branch.
    swift package dump-package
    swift test
    xcodebuild \
-     -project swiftui/Examples/FormConciergeExample/FormConciergeExample.xcodeproj \
-     -scheme FormConciergeExample \
+     -project apple/Examples/FormConciergeSwiftUIExample/FormConciergeSwiftUIExample.xcodeproj \
+     -scheme FormConciergeSwiftUIExample \
      -destination 'generic/platform=iOS Simulator' \
      CODE_SIGNING_ALLOWED=NO \
      build
@@ -123,7 +123,7 @@ unavailable through SwiftPM even if the package exists on a later branch.
 
    ```bash
    xcodebuild \
-     -project swiftui/Examples/FormConciergeUIKitExample/FormConciergeUIKitExample.xcodeproj \
+     -project apple/Examples/FormConciergeUIKitExample/FormConciergeUIKitExample.xcodeproj \
      -scheme FormConciergeUIKitExample \
      -destination 'generic/platform=iOS Simulator' \
      CODE_SIGNING_ALLOWED=NO \

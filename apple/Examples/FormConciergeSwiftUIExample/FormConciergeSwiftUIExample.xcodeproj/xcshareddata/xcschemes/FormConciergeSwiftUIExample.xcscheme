@@ -16,9 +16,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "8C0A4D753007685E0065AFA9"
-               BuildableName = "FormConciergeExample.app"
-               BlueprintName = "FormConciergeExample"
-               ReferencedContainer = "container:FormConciergeExample.xcodeproj">
+               BuildableName = "FormConciergeSwiftUIExample.app"
+               BlueprintName = "FormConciergeSwiftUIExample"
+               ReferencedContainer = "container:FormConciergeSwiftUIExample.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -43,9 +43,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "8C0A4D753007685E0065AFA9"
-            BuildableName = "FormConciergeExample.app"
-            BlueprintName = "FormConciergeExample"
-            ReferencedContainer = "container:FormConciergeExample.xcodeproj">
+            BuildableName = "FormConciergeSwiftUIExample.app"
+            BlueprintName = "FormConciergeSwiftUIExample"
+            ReferencedContainer = "container:FormConciergeSwiftUIExample.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -59,9 +59,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "8C0A4D753007685E0065AFA9"
-            BuildableName = "FormConciergeExample.app"
-            BlueprintName = "FormConciergeExample"
-            ReferencedContainer = "container:FormConciergeExample.xcodeproj">
+            BuildableName = "FormConciergeSwiftUIExample.app"
+            BlueprintName = "FormConciergeSwiftUIExample"
+            ReferencedContainer = "container:FormConciergeSwiftUIExample.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

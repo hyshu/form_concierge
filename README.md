@@ -11,7 +11,7 @@ Survey forms backed by Cloudflare Workers and D1. Respondents use generated anon
 | `widget/` | `form_concierge` `0.2.1` | Published Flutter package for embedding surveys |
 | `cli/` | `form_concierge_cli` `0.2.1` | Published setup / doctor CLI (`form_concierge setup cloudflare`) |
 | `admin_dashboard/` | app `0.2.1` | Flutter admin dashboard |
-| `swiftui/` | SPM | Swift Package for embedding surveys in SwiftUI and UIKit apps |
+| `apple/` | SPM | Swift Package for embedding surveys in SwiftUI and UIKit apps |
 | `web/` | app | Jaspr web survey form |
 | `widget/examples/` | apps | Full example apps demonstrating widget package usage |
 
@@ -128,7 +128,7 @@ cd widget && flutter analyze
 cd cli && dart analyze && dart test
 cd web && dart analyze && jaspr build
 cd admin_dashboard && flutter analyze && flutter test
-cd swiftui && swift build
+cd apple && swift build
 xcodebuild -scheme FormConciergeUIKit \
   -destination 'generic/platform=iOS Simulator' \
   CODE_SIGNING_ALLOWED=NO build

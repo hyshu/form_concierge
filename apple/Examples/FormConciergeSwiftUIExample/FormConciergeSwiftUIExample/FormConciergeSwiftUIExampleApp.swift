@@ -2,7 +2,7 @@ import FormConciergeSwiftUI
 import SwiftUI
 
 @main
-struct FormConciergeExampleApp: App {
+struct FormConciergeSwiftUIExampleApp: App {
   private let client = FormConciergeClient(baseURL: ExampleConfiguration.apiURL)
 
   var body: some Scene {

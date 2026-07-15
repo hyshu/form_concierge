@@ -93,11 +93,11 @@ cd widget/examples/flutter_mobile_simple
 flutter run
 ```
 
-## SwiftUI Package
+## Apple Swift Package
 
 Build:
 
 ```bash
-cd swiftui
+cd apple
 swift build
 ```

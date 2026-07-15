@@ -7,17 +7,17 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		FC0000010000000000000001 /* FormConciergeSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = FC0000030000000000000003 /* FormConciergeSwiftUI */; };
+		FC0000010000000000000001 /* FormConciergeUIKit in Frameworks */ = {isa = PBXBuildFile; productRef = FC0000030000000000000003 /* FormConciergeUIKit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		8C0A4D763007685E0065AFA9 /* FormConciergeExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FormConciergeExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8C0A4D763007685E0065AFA9 /* FormConciergeUIKitExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FormConciergeUIKitExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		8C0A4D783007685E0065AFA9 /* FormConciergeExample */ = {
+		8C0A4D783007685E0065AFA9 /* FormConciergeUIKitExample */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = FormConciergeExample;
+			path = FormConciergeUIKitExample;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -27,7 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				FC0000010000000000000001 /* FormConciergeSwiftUI in Frameworks */,
+				FC0000010000000000000001 /* FormConciergeUIKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -37,7 +37,7 @@
 		8C0A4D6D3007685E0065AFA9 = {
 			isa = PBXGroup;
 			children = (
-				8C0A4D783007685E0065AFA9 /* FormConciergeExample */,
+				8C0A4D783007685E0065AFA9 /* FormConciergeUIKitExample */,
 				8C0A4D773007685E0065AFA9 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -45,7 +45,7 @@
 		8C0A4D773007685E0065AFA9 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				8C0A4D763007685E0065AFA9 /* FormConciergeExample.app */,
+				8C0A4D763007685E0065AFA9 /* FormConciergeUIKitExample.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -53,9 +53,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		8C0A4D753007685E0065AFA9 /* FormConciergeExample */ = {
+		8C0A4D753007685E0065AFA9 /* FormConciergeUIKitExample */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 8C0A4D813007685F0065AFA9 /* Build configuration list for PBXNativeTarget "FormConciergeExample" */;
+			buildConfigurationList = 8C0A4D813007685F0065AFA9 /* Build configuration list for PBXNativeTarget "FormConciergeUIKitExample" */;
 			buildPhases = (
 				8C0A4D723007685E0065AFA9 /* Sources */,
 				8C0A4D733007685E0065AFA9 /* Frameworks */,
@@ -66,14 +66,14 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				8C0A4D783007685E0065AFA9 /* FormConciergeExample */,
+				8C0A4D783007685E0065AFA9 /* FormConciergeUIKitExample */,
 			);
-			name = FormConciergeExample;
+			name = FormConciergeUIKitExample;
 			packageProductDependencies = (
-				FC0000030000000000000003 /* FormConciergeSwiftUI */,
+				FC0000030000000000000003 /* FormConciergeUIKit */,
 			);
-			productName = FormConciergeExample;
-			productReference = 8C0A4D763007685E0065AFA9 /* FormConciergeExample.app */;
+			productName = FormConciergeUIKitExample;
+			productReference = 8C0A4D763007685E0065AFA9 /* FormConciergeUIKitExample.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -91,7 +91,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 8C0A4D713007685E0065AFA9 /* Build configuration list for PBXProject "FormConciergeExample" */;
+			buildConfigurationList = 8C0A4D713007685E0065AFA9 /* Build configuration list for PBXProject "FormConciergeUIKitExample" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -108,7 +108,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				8C0A4D753007685E0065AFA9 /* FormConciergeExample */,
+				8C0A4D753007685E0065AFA9 /* FormConciergeUIKitExample */,
 			);
 		};
 /* End PBXProject section */
@@ -272,7 +272,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = dev.formconcierge.example;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.formconcierge.uikit.example;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -303,7 +303,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = dev.formconcierge.example;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.formconcierge.uikit.example;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -318,7 +318,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		8C0A4D713007685E0065AFA9 /* Build configuration list for PBXProject "FormConciergeExample" */ = {
+		8C0A4D713007685E0065AFA9 /* Build configuration list for PBXProject "FormConciergeUIKitExample" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				8C0A4D7F3007685F0065AFA9 /* Debug */,
@@ -327,7 +327,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		8C0A4D813007685F0065AFA9 /* Build configuration list for PBXNativeTarget "FormConciergeExample" */ = {
+		8C0A4D813007685F0065AFA9 /* Build configuration list for PBXNativeTarget "FormConciergeUIKitExample" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				8C0A4D823007685F0065AFA9 /* Debug */,
@@ -346,10 +346,10 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		FC0000030000000000000003 /* FormConciergeSwiftUI */ = {
+		FC0000030000000000000003 /* FormConciergeUIKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = FC0000020000000000000002 /* XCLocalSwiftPackageReference "../../.." */;
-			productName = FormConciergeSwiftUI;
+			productName = FormConciergeUIKit;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
