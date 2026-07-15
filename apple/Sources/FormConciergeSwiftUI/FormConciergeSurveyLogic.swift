@@ -72,7 +72,10 @@ public enum FormConciergeSurveyLogic {
       case .text, nil:
         selectedCount = 0
       }
-      if question.type == .multipleChoice || question.type == .imageUpload {
+      if question.type == .singleChoice
+        || question.type == .multipleChoice
+        || question.type == .imageUpload
+      {
         if let minSelected = question.minSelected, selectedCount < minSelected {
           return FormContentMessages.minChoices(
             locale, question: questionText, count: minSelected)

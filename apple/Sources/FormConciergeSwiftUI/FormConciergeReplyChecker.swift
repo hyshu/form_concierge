@@ -74,19 +74,22 @@ public final class FormConciergeReplyChecker {
   private let responseId: Int?
   private let store: FormConciergeReplySeenStore
   private let storageKey: String
-  /// Worker timestamps include fractional seconds (toISOString / SQLite %f).
-  /// Default ISO8601DateFormatter truncates them on encode, so latestReplyAt
-  /// would always stay "newer" than lastSeen and the badge never clears.
-  private static let fractionalFormatter: ISO8601DateFormatter = {
+  /// Preserve Worker timestamp fractional seconds so latestReplyAt does not
+  /// remain newer than lastSeen and keep the badge from clearing.
+  private static func parseISO8601(_ value: String) -> Date? {
+    let fractionalFormatter = ISO8601DateFormatter()
+    fractionalFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    if let date = fractionalFormatter.date(from: value) {
+      return date
+    }
+    return ISO8601DateFormatter().date(from: value)
+  }
+
+  private static func formatISO8601(_ date: Date) -> String {
     let formatter = ISO8601DateFormatter()
     formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-    return formatter
-  }()
-  private static let plainFormatter: ISO8601DateFormatter = {
-    let formatter = ISO8601DateFormatter()
-    formatter.formatOptions = [.withInternetDateTime]
-    return formatter
-  }()
+    return formatter.string(from: date)
+  }
 
   public init(
     client: FormConciergeClient,
@@ -99,10 +102,12 @@ public final class FormConciergeReplyChecker {
     self.anonymousToken = anonymousToken
     self.store = store
     self.responseId = responseId
-    self.storageKey = storageKey ?? Self.defaultStorageKey(
-      anonymousToken: anonymousToken,
-      responseId: responseId
-    )
+    self.storageKey =
+      storageKey
+      ?? Self.defaultStorageKey(
+        anonymousToken: anonymousToken,
+        responseId: responseId
+      )
   }
 
   public static func defaultStorageKey(
@@ -133,12 +138,11 @@ public final class FormConciergeReplyChecker {
     guard let value = store.read(storageKey) else {
       return nil
     }
-    return Self.fractionalFormatter.date(from: value)
-      ?? Self.plainFormatter.date(from: value)
+    return Self.parseISO8601(value)
   }
 
   public func markSeen(at date: Date = Date()) {
-    store.write(storageKey, Self.fractionalFormatter.string(from: date))
+    store.write(storageKey, Self.formatISO8601(date))
   }
 
   public func markLatestSeen() async throws {

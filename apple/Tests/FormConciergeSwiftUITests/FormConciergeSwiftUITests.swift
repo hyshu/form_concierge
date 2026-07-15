@@ -516,6 +516,27 @@ final class FormConciergeSwiftUITests: XCTestCase {
     XCTAssertEqual(payload.first?.textValue, "hello")
   }
 
+  func testSurveyLogicValidatesSingleChoiceMinimumSelection() {
+    let question = makeQuestion(
+      id: 1,
+      type: .singleChoice,
+      minSelected: 1
+    )
+
+    XCTAssertNotNil(
+      FormConciergeSurveyLogic.validationError(
+        questions: [question],
+        answers: [:],
+        locale: "en"
+      ))
+    XCTAssertNil(
+      FormConciergeSurveyLogic.validationError(
+        questions: [question],
+        answers: [1: .single(10)],
+        locale: "en"
+      ))
+  }
+
   private func makeClient(
     handler: @escaping (URLRequest) throws -> (HTTPURLResponse, Data)
   ) -> FormConciergeClient {
@@ -533,7 +554,8 @@ final class FormConciergeSwiftUITests: XCTestCase {
     id: Int,
     type: QuestionType,
     isRequired: Bool = false,
-    minLength: Int? = nil
+    minLength: Int? = nil,
+    minSelected: Int? = nil
   ) -> Question {
     Question(
       id: id,
@@ -545,7 +567,7 @@ final class FormConciergeSwiftUITests: XCTestCase {
       placeholderTranslations: LocalizedText(["en": ""]),
       minLength: minLength,
       maxLength: nil,
-      minSelected: nil,
+      minSelected: minSelected,
       maxSelected: nil,
       visibilityConditionMode: .all
     )

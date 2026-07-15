@@ -7,17 +7,14 @@ public actor FormConciergeClient {
   private let decoder: JSONDecoder
   private let encoder: JSONEncoder
 
-  private static let fractionalISO8601: ISO8601DateFormatter = {
-    let formatter = ISO8601DateFormatter()
-    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-    return formatter
-  }()
-
-  private static let plainISO8601: ISO8601DateFormatter = {
-    let formatter = ISO8601DateFormatter()
-    formatter.formatOptions = [.withInternetDateTime]
-    return formatter
-  }()
+  private static func parseISO8601(_ value: String) -> Date? {
+    let fractionalFormatter = ISO8601DateFormatter()
+    fractionalFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    if let date = fractionalFormatter.date(from: value) {
+      return date
+    }
+    return ISO8601DateFormatter().date(from: value)
+  }
 
   public init(baseURL: URL, session: URLSession = .shared) {
     self.baseURL = baseURL
@@ -29,9 +26,7 @@ public actor FormConciergeClient {
     self.decoder.dateDecodingStrategy = .custom { decoder in
       let container = try decoder.singleValueContainer()
       let value = try container.decode(String.self)
-      if let date = Self.fractionalISO8601.date(from: value)
-        ?? Self.plainISO8601.date(from: value)
-      {
+      if let date = Self.parseISO8601(value) {
         return date
       }
       throw DecodingError.dataCorruptedError(
