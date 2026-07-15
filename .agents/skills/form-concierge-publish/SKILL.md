@@ -1,6 +1,6 @@
 ---
 name: form-concierge-publish
-description: Prepare, validate, publish, and verify Form Concierge releases across pub.dev and GitHub. Use for version bumps, release commits, publishing client/widget/CLI packages, creating version tags and GitHub Release assets, or recovering from a partial publish. Enforces review gates and the required client-to-widget propagation wait.
+description: Prepare, validate, publish, and verify Form Concierge releases across pub.dev, SwiftPM, and GitHub. Use for version bumps, release commits, publishing client/widget/CLI packages, validating the Swift package, creating version tags and GitHub Release assets, or recovering from a partial publish. Enforces review gates and the required client-to-widget propagation wait.
 ---
 
 # Publish Form Concierge
@@ -32,9 +32,9 @@ CLI before its template exists, or changing Git history without approval.
    and repository. Ask only if the version or scope is genuinely unknown; never
    infer patch versus minor.
 3. Inventory changes since the previous tag for every component, including the
-   admin dashboard. Classify Cloudflare template changes as Secrets, D1
-   migrations, Worker, Admin Pages, or Web Pages. Compare changelog style with
-   the other packages.
+   admin dashboard and SwiftUI package. Classify Cloudflare template changes as
+   Secrets, D1 migrations, Worker, Admin Pages, or Web Pages. Compare changelog
+   style with the other packages.
 4. Present a release-preparation plan before editing. Explicitly separate:
    - historical changelog backfills through the previous release;
    - unrelated housekeeping such as `.gitignore` changes;
@@ -61,6 +61,8 @@ Update all applicable version references consistently:
 - `widget/CHANGELOG.md`
 - `cli/CHANGELOG.md`
 - `admin_dashboard/CHANGELOG.md`
+- `swiftui/README.md` and Swift package release notes when SwiftUI or SwiftPM
+  behavior changed
 - tracked lockfiles changed by dependency resolution
 
 Describe actual user-visible changes in each changelog. Do not add repetitive
@@ -89,6 +91,11 @@ human-readable table in `cli/README.md` synchronized with the manifest.
 Run package resolution where required and inspect every resulting lockfile
 change. Format changed Dart files with `dart format` before validation.
 
+SwiftPM versions come from Git tags; do not add a version to `Package.swift`.
+When preparing the first release whose tag contains the root `Package.swift`,
+describe it as the first version-resolvable SwiftPM release. Older tags remain
+unavailable through SwiftPM even if the package exists on a later branch.
+
 ## Validate and obtain release-commit approval
 
 1. Run `bash tool/ci/static_checks.sh`.
@@ -101,13 +108,28 @@ change. Format changed Dart files with `dart format` before validation.
    even on failure, then refresh local dependencies.
 4. Run `tool/publish.sh --plan client widget` and
    `tool/publish.sh --plan cli` to confirm the intended order.
-5. Re-run `git status --short` and inspect the full diff. Confirm there are no
+5. If the root `Package.swift` exists, validate the package and example:
+
+   ```bash
+   swift package dump-package
+   swift test
+   xcodebuild \
+     -project swiftui/Examples/FormConciergeExample/FormConciergeExample.xcodeproj \
+     -scheme FormConciergeExample \
+     -destination 'generic/platform=iOS Simulator' \
+     CODE_SIGNING_ALLOWED=NO \
+     build
+   ```
+
+   Confirm the library product is `FormConciergeSwiftUI`, root-manifest target
+   paths resolve, and validation leaves no tracked build artifacts.
+6. Re-run `git status --short` and inspect the full diff. Confirm there are no
    generated, shelved, or credential files left behind.
-6. Present the proposed commit grouping and messages. Wait for explicit
+7. Present the proposed commit grouping and messages. Wait for explicit
    approval before committing.
-7. After committing, show the commit SHA and clean status. Wait for explicit
+8. After committing, show the commit SHA and clean status. Wait for explicit
    approval before pushing unless that push was already unambiguously approved.
-8. Wait for CI on the exact release commit. If CI passes and no files changed
+9. Wait for CI on the exact release commit. If CI passes and no files changed
    afterward, do not repeat the full local suite merely for reassurance.
 
 ## Publish client and widget
@@ -146,15 +168,22 @@ Only after client and widget are live:
 
 1. Confirm `HEAD` is the approved release commit, matches `origin/main`, and the
    worktree is clean.
-2. Create the lightweight `vVERSION` tag used by this repository and show its
-   target before pushing it.
+2. If the root `Package.swift` exists, confirm it is included in the approved
+   release commit. Create the lightweight `vVERSION` tag used by this repository,
+   show its target, and verify `git show vVERSION:Package.swift` matches the
+   manifest at `HEAD` before pushing it.
 3. Obtain approval, then push only that tag.
-4. Wait for `.github/workflows/release-template.yml` on the tag to finish
+4. Verify the remote tag with
+   `git ls-remote --tags origin refs/tags/vVERSION`. In a temporary consumer
+   package, declare the repository URL with `exact: "VERSION"`, run
+   `swift package resolve`, and confirm the `FormConciergeSwiftUI` product is
+   available. Remove the temporary package afterward.
+5. Wait for `.github/workflows/release-template.yml` on the tag to finish
    successfully.
-5. Inspect the GitHub Release and require both uploaded assets:
+6. Inspect the GitHub Release and require both uploaded assets:
    - `form-concierge-template-VERSION.tar.gz`
    - `form-concierge-template-VERSION.tar.gz.sha256`
-6. Confirm the assets are downloadable and have non-empty metadata/digests.
+7. Confirm the assets are downloadable and have non-empty metadata/digests.
 
 Do not publish the CLI before these assets exist. Standalone CLI installs
 download the version-matched release template and checksum.
@@ -196,4 +225,6 @@ Provide:
 - names of both release assets;
 - confirmation that `main == origin/main`, `vVERSION == HEAD`, and the worktree
   is clean;
+- SwiftPM exact-version resolution and `FormConciergeSwiftUI` product
+  verification when the root manifest exists;
 - any deliberately deferred or partially published component.
