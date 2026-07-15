@@ -1,7 +1,7 @@
 import Foundation
 
-enum FormContentMessages {
-  static func text(_ locale: String, _ key: String) -> String {
+public enum FormContentMessages {
+  public static func text(_ locale: String, _ key: String) -> String {
     let localized =
       messages[normalizeFormContentLocale(locale)]
       ?? messages[defaultFormContentLocale]
@@ -10,35 +10,35 @@ enum FormContentMessages {
       ?? key
   }
 
-  static func requiredQuestion(_ locale: String, question: String) -> String {
+  public static func requiredQuestion(_ locale: String, question: String) -> String {
     text(locale, "requiredQuestion").replacingOccurrences(of: "{question}", with: question)
   }
 
-  static func minCharacters(_ locale: String, question: String, count: Int) -> String {
+  public static func minCharacters(_ locale: String, question: String, count: Int) -> String {
     text(locale, "minCharacters")
       .replacingOccurrences(of: "{question}", with: question)
       .replacingOccurrences(of: "{count}", with: "\(count)")
   }
 
-  static func maxCharacters(_ locale: String, question: String, count: Int) -> String {
+  public static func maxCharacters(_ locale: String, question: String, count: Int) -> String {
     text(locale, "maxCharacters")
       .replacingOccurrences(of: "{question}", with: question)
       .replacingOccurrences(of: "{count}", with: "\(count)")
   }
 
-  static func minChoices(_ locale: String, question: String, count: Int) -> String {
+  public static func minChoices(_ locale: String, question: String, count: Int) -> String {
     text(locale, "minChoices")
       .replacingOccurrences(of: "{question}", with: question)
       .replacingOccurrences(of: "{count}", with: "\(count)")
   }
 
-  static func maxChoices(_ locale: String, question: String, count: Int) -> String {
+  public static func maxChoices(_ locale: String, question: String, count: Int) -> String {
     text(locale, "maxChoices")
       .replacingOccurrences(of: "{question}", with: question)
       .replacingOccurrences(of: "{count}", with: "\(count)")
   }
 
-  static func submittedWithTitle(_ locale: String, title: String) -> String {
+  public static func submittedWithTitle(_ locale: String, title: String) -> String {
     text(locale, "submittedWithTitle").replacingOccurrences(of: "{title}", with: title)
   }
 }

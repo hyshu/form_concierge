@@ -462,6 +462,60 @@ final class FormConciergeSwiftUITests: XCTestCase {
     XCTAssertFalse(key.contains("secret-token"))
   }
 
+  func testSurveyLogicSharesVisibilityBehaviorAcrossAppleUIs() {
+    let source = makeQuestion(id: 1, type: .singleChoice)
+    let target = makeQuestion(id: 2, type: .textSingle)
+    let rule = QuestionVisibilityRule(
+      id: 10,
+      surveyId: 1,
+      targetQuestionId: 2,
+      sourceQuestionId: 1,
+      operator: .equals,
+      value: .int(7),
+      createdAt: nil,
+      updatedAt: nil
+    )
+
+    XCTAssertEqual(
+      FormConciergeSurveyLogic.visibleQuestions(
+        questions: [source, target],
+        rules: [rule],
+        answers: [:]
+      ).map(\.id),
+      [1]
+    )
+    XCTAssertEqual(
+      FormConciergeSurveyLogic.visibleQuestions(
+        questions: [source, target],
+        rules: [rule],
+        answers: [1: .single(7)]
+      ).map(\.id),
+      [1, 2]
+    )
+  }
+
+  func testSurveyLogicSharesValidationAndPayloadAcrossAppleUIs() {
+    let question = makeQuestion(
+      id: 1,
+      type: .textSingle,
+      isRequired: true,
+      minLength: 3
+    )
+
+    XCTAssertNotNil(
+      FormConciergeSurveyLogic.validationError(
+        questions: [question],
+        answers: [1: .text("ab")],
+        locale: "en"
+      ))
+    let payload = FormConciergeSurveyLogic.answerPayload(
+      questions: [question],
+      answers: [1: .text("  hello  ")]
+    )
+    XCTAssertEqual(payload.count, 1)
+    XCTAssertEqual(payload.first?.textValue, "hello")
+  }
+
   private func makeClient(
     handler: @escaping (URLRequest) throws -> (HTTPURLResponse, Data)
   ) -> FormConciergeClient {
@@ -472,6 +526,28 @@ final class FormConciergeSwiftUITests: XCTestCase {
     return FormConciergeClient(
       baseURL: URL(string: "https://api.example.com")!,
       session: session
+    )
+  }
+
+  private func makeQuestion(
+    id: Int,
+    type: QuestionType,
+    isRequired: Bool = false,
+    minLength: Int? = nil
+  ) -> Question {
+    Question(
+      id: id,
+      surveyId: 1,
+      textTranslations: LocalizedText(["en": "Question \(id)"]),
+      type: type,
+      orderIndex: id,
+      isRequired: isRequired,
+      placeholderTranslations: LocalizedText(["en": ""]),
+      minLength: minLength,
+      maxLength: nil,
+      minSelected: nil,
+      maxSelected: nil,
+      visibilityConditionMode: .all
     )
   }
 

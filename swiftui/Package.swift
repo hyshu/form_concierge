@@ -3,22 +3,30 @@
 import PackageDescription
 
 let package = Package(
-    name: "FormConciergeSwiftUI",
-    platforms: [
-        .iOS(.v16),
-        .macOS(.v13)
-    ],
-    products: [
-        .library(
-            name: "FormConciergeSwiftUI",
-            targets: ["FormConciergeSwiftUI"]
-        )
-    ],
-    targets: [
-        .target(name: "FormConciergeSwiftUI"),
-        .testTarget(
-            name: "FormConciergeSwiftUITests",
-            dependencies: ["FormConciergeSwiftUI"]
-        )
-    ]
+  name: "FormConcierge",
+  platforms: [
+    .iOS(.v16),
+    .macOS(.v13),
+  ],
+  products: [
+    .library(
+      name: "FormConciergeSwiftUI",
+      targets: ["FormConciergeSwiftUI"]
+    ),
+    .library(
+      name: "FormConciergeUIKit",
+      targets: ["FormConciergeUIKit"]
+    ),
+  ],
+  targets: [
+    .target(name: "FormConciergeSwiftUI"),
+    .target(
+      name: "FormConciergeUIKit",
+      dependencies: ["FormConciergeSwiftUI"]
+    ),
+    .testTarget(
+      name: "FormConciergeSwiftUITests",
+      dependencies: ["FormConciergeSwiftUI"]
+    ),
+  ]
 )

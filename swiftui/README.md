@@ -1,8 +1,11 @@
-# FormConciergeSwiftUI
+# Form Concierge for Apple Platforms
 
-Swift Package for embedding Form Concierge surveys in SwiftUI apps.
+Swift Package for embedding Form Concierge surveys in SwiftUI and UIKit apps.
 
-See [`Examples/FormConciergeExample`](Examples/FormConciergeExample) for a complete iOS example with the same navigation flow as the Flutter mobile example, adaptive follow-up, and Turnstile.
+See [`Examples/FormConciergeExample`](Examples/FormConciergeExample) and
+[`Examples/FormConciergeUIKitExample`](Examples/FormConciergeUIKitExample) for
+complete iOS examples with the same navigation flow as the Flutter mobile
+example, adaptive follow-up, image upload, and Turnstile.
 
 ## Installation
 
@@ -13,7 +16,8 @@ https://github.com/hyshu/form_concierge.git
 ```
 
 Until the next release is tagged, select the `main` branch. Then add the
-`FormConciergeSwiftUI` product to your app target. Existing tags through
+`FormConciergeSwiftUI` or `FormConciergeUIKit` product to your app target.
+Existing tags through
 `v0.2.1` predate the root package manifest.
 
 For a `Package.swift` dependency:
@@ -25,8 +29,11 @@ For a `Package.swift` dependency:
 )
 ```
 
-Then add `FormConciergeSwiftUI` to the target dependencies. After the next
-release, prefer a version-based requirement using that tag.
+Then add `FormConciergeSwiftUI` or `FormConciergeUIKit` to the target
+dependencies. After the next release, prefer a version-based requirement using
+that tag.
+
+## SwiftUI
 
 ```swift
 let client = FormConciergeClient(baseURL: URL(string: "https://your-worker.example.com")!)
@@ -56,11 +63,44 @@ FormConciergeSurveyView(
 )
 ```
 
+## UIKit
+
+Add the `FormConciergeUIKit` product, import it, then push or present the survey
+view controller. The UIKit product re-exports the shared client and model API.
+
+```swift
+import FormConciergeUIKit
+
+let client = FormConciergeClient(
+    baseURL: URL(string: "https://your-worker.example.com")!
+)
+let survey = FormConciergeSurveyViewController(
+    client: client,
+    projectSlug: "demo-project",
+    surveySlug: "customer-feedback",
+    locale: "ja_JP",
+    onAnonymousSession: { session in
+        saveAnonymousToken(session.token)
+    },
+    onDone: { [weak navigationController] in
+        navigationController?.popViewController(animated: true)
+    },
+    captchaTokenProvider: {
+        await turnstileTokenProvider.token()
+    }
+)
+navigationController?.pushViewController(survey, animated: true)
+```
+
+UIKit supports the same question types, visibility rules, validation, image
+uploads, CAPTCHA callback, anonymous sessions, adaptive follow-up, submission
+callbacks, and completion state as the SwiftUI view.
+
 When `followUpEnabled` is enabled for the survey, the view automatically generates and displays optional adaptive follow-up questions after the main response is saved. Use `onFollowUpSubmitted` when the host needs the completed response payload.
 
-Pass `locale` to render survey content and SwiftUI package messages in that language. Locale identifiers are normalized, so `ja`, `ja_JP`, and `ja-JP` render Japanese. Region identifiers such as `en_US`, `ko_KR`, `de_DE`, `es_ES`, `fr_FR`, `it_IT`, `th_TH`, `tr_TR`, `zh_CN`, and `zh_TW` are also normalized to the supported survey locales (`en`, `ja`, `zh-Hans`, `zh-Hant`, `ko`, `de`, `es`, `fr`, `it`, `th`, `tr`).
+Pass `locale` to render survey content and package messages in that language. Locale identifiers are normalized, so `ja`, `ja_JP`, and `ja-JP` render Japanese. Region identifiers such as `en_US`, `ko_KR`, `de_DE`, `es_ES`, `fr_FR`, `it_IT`, `th_TH`, `tr_TR`, `zh_CN`, and `zh_TW` are also normalized to the supported survey locales (`en`, `ja`, `zh-Hans`, `zh-Hant`, `ko`, `de`, `es`, `fr`, `it`, `th`, `tr`).
 
-Pass `deviceInfo` from your app when you need stable device IDs, app versions, OS versions, model names, or values collected outside this package. Use `metadata` for app/user/session context such as authenticated `uid`, display name, tenant, plan, or feature flags. If omitted, the SwiftUI package sends basic current device, locale, timezone, and screen values.
+Pass `deviceInfo` from your app when you need stable device IDs, app versions, OS versions, model names, or values collected outside this package. Use `metadata` for app/user/session context such as authenticated `uid`, display name, tenant, plan, or feature flags. If omitted, the package sends basic current device, locale, timezone, and screen values.
 
 Use the saved anonymous token to receive admin replies. Submitted answers are retained on the server for admins, but anonymous users cannot fetch their answer history from the API.
 

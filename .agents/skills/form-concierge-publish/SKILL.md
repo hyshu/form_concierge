@@ -1,6 +1,6 @@
 ---
 name: form-concierge-publish
-description: Prepare, validate, publish, and verify Form Concierge releases across pub.dev, SwiftPM, and GitHub. Use for version bumps, release commits, publishing client/widget/CLI packages, validating the Swift package, creating version tags and GitHub Release assets, or recovering from a partial publish. Enforces review gates and the required client-to-widget propagation wait.
+description: Prepare, validate, publish, and verify Form Concierge releases across pub.dev, SwiftPM, and GitHub. Use for version bumps, release commits, publishing client/widget/CLI packages, validating the Apple Swift package, creating version tags and GitHub Release assets, or recovering from a partial publish. Enforces review gates and the required client-to-widget propagation wait.
 ---
 
 # Publish Form Concierge
@@ -32,7 +32,7 @@ CLI before its template exists, or changing Git history without approval.
    and repository. Ask only if the version or scope is genuinely unknown; never
    infer patch versus minor.
 3. Inventory changes since the previous tag for every component, including the
-   admin dashboard and SwiftUI package. Classify Cloudflare template changes as
+   admin dashboard and Apple Swift package. Classify Cloudflare template changes as
    Secrets, D1 migrations, Worker, Admin Pages, or Web Pages. Compare changelog
    style with the other packages.
 4. Present a release-preparation plan before editing. Explicitly separate:
@@ -61,8 +61,8 @@ Update all applicable version references consistently:
 - `widget/CHANGELOG.md`
 - `cli/CHANGELOG.md`
 - `admin_dashboard/CHANGELOG.md`
-- `swiftui/README.md` and Swift package release notes when SwiftUI or SwiftPM
-  behavior changed
+- `swiftui/README.md` and Swift package release notes when SwiftUI, UIKit, or
+  SwiftPM behavior changed
 - tracked lockfiles changed by dependency resolution
 
 Describe actual user-visible changes in each changelog. Do not add repetitive
@@ -121,8 +121,18 @@ unavailable through SwiftPM even if the package exists on a later branch.
      build
    ```
 
-   Confirm the library product is `FormConciergeSwiftUI`, root-manifest target
-   paths resolve, and validation leaves no tracked build artifacts.
+   ```bash
+   xcodebuild \
+     -project swiftui/Examples/FormConciergeUIKitExample/FormConciergeUIKitExample.xcodeproj \
+     -scheme FormConciergeUIKitExample \
+     -destination 'generic/platform=iOS Simulator' \
+     CODE_SIGNING_ALLOWED=NO \
+     build
+   ```
+
+   Confirm the library products are `FormConciergeSwiftUI` and
+   `FormConciergeUIKit`, root-manifest target paths resolve, and validation
+   leaves no tracked build artifacts.
 6. Re-run `git status --short` and inspect the full diff. Confirm there are no
    generated, shelved, or credential files left behind.
 7. Present the proposed commit grouping and messages. Wait for explicit
@@ -176,8 +186,9 @@ Only after client and widget are live:
 4. Verify the remote tag with
    `git ls-remote --tags origin refs/tags/vVERSION`. In a temporary consumer
    package, declare the repository URL with `exact: "VERSION"`, run
-   `swift package resolve`, and confirm the `FormConciergeSwiftUI` product is
-   available. Remove the temporary package afterward.
+   `swift package resolve`, and confirm the `FormConciergeSwiftUI` and
+   `FormConciergeUIKit` products are available. Remove the temporary package
+   afterward.
 5. Wait for `.github/workflows/release-template.yml` on the tag to finish
    successfully.
 6. Inspect the GitHub Release and require both uploaded assets:
@@ -225,6 +236,6 @@ Provide:
 - names of both release assets;
 - confirmation that `main == origin/main`, `vVERSION == HEAD`, and the worktree
   is clean;
-- SwiftPM exact-version resolution and `FormConciergeSwiftUI` product
-  verification when the root manifest exists;
+- SwiftPM exact-version resolution and both Apple library product verifications
+  when the root manifest exists;
 - any deliberately deferred or partially published component.

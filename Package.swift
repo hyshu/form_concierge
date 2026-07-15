@@ -3,7 +3,7 @@
 import PackageDescription
 
 let package = Package(
-  name: "FormConciergeSwiftUI",
+  name: "FormConcierge",
   platforms: [
     .iOS(.v16),
     .macOS(.v13),
@@ -12,12 +12,21 @@ let package = Package(
     .library(
       name: "FormConciergeSwiftUI",
       targets: ["FormConciergeSwiftUI"]
-    )
+    ),
+    .library(
+      name: "FormConciergeUIKit",
+      targets: ["FormConciergeUIKit"]
+    ),
   ],
   targets: [
     .target(
       name: "FormConciergeSwiftUI",
       path: "swiftui/Sources/FormConciergeSwiftUI"
+    ),
+    .target(
+      name: "FormConciergeUIKit",
+      dependencies: ["FormConciergeSwiftUI"],
+      path: "swiftui/Sources/FormConciergeUIKit"
     ),
     .testTarget(
       name: "FormConciergeSwiftUITests",
