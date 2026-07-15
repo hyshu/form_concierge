@@ -1,4 +1,15 @@
-import type { AnonymousContext, AnswerInput, AnswerRow, ChoiceRow, Env, ProjectRow, QuestionRow, ResponseRow, SurveyRow, VisibilityRuleRow } from './types';
+import type {
+  AnonymousContext,
+  AnswerInput,
+  AnswerRow,
+  ChoiceRow,
+  Env,
+  ProjectRow,
+  QuestionRow,
+  ResponseRow,
+  SurveyRow,
+  VisibilityRuleRow,
+} from './types';
 import {
   HttpError,
   MEDIA_MAX_FILES,
@@ -17,23 +28,26 @@ import {
   requiredInteger,
 } from './utils';
 import { normalizeDeviceInfo, normalizeMetadata } from './metadata';
-import { choiceToJson, parseChoiceIds, projectToJson, publicSurveyToJson, questionToJson, responseToJson } from './serializers';
+import {
+  choiceToJson,
+  parseChoiceIds,
+  projectToJson,
+  publicSurveyToJson,
+  questionToJson,
+  responseToJson,
+} from './serializers';
 import { getVisibilityRules, visibleQuestionIds } from './visibility_rules';
 import { DEFAULT_FORM_CONTENT_LOCALE, localizedTextFor } from './localization';
 import { sendResponseNotification } from './notification_settings';
-import {
-  assertMediaObjectsExist,
-  assertOwnedMediaKeys,
-  encodeFileKeysForStorage,
-} from './media';
+import { assertMediaObjectsExist, assertOwnedMediaKeys, encodeFileKeysForStorage, markMediaAttached } from './media';
 import { getTurnstileSecretKey, isTurnstileConfigured } from './admin_settings';
 import { verifyTurnstileToken } from './turnstile';
 import { captchaRequiredForSurvey, isCaptchaRequiredForSurvey } from './captcha';
+import { clientIp } from './rate_limit';
+import { DEFAULT_QUOTA_LIMITS, ipQuotaSubject, quotaLimit, refundQuota, reserveQuotas, utcDay } from './usage_quota';
 
 export async function getPublicProject(env: Env, slug: string): Promise<Response> {
-  const project = await env.DB.prepare(
-    `SELECT * FROM projects WHERE slug = ?`,
-  ).bind(slug).first<ProjectRow>();
+  const project = await env.DB.prepare(`SELECT * FROM projects WHERE slug = ?`).bind(slug).first<ProjectRow>();
   if (!project) throw new HttpError(404, 'Project not found');
   return json(await publicProjectPayload(env, project));
 }
@@ -47,9 +61,9 @@ export async function getPublicProjectByDomain(env: Env, domainValue: string | n
     throw error;
   }
   if (!customDomain) throw new HttpError(404, 'Project not found');
-  const project = await env.DB.prepare(
-    `SELECT * FROM projects WHERE custom_domain = ?`,
-  ).bind(customDomain).first<ProjectRow>();
+  const project = await env.DB.prepare(`SELECT * FROM projects WHERE custom_domain = ?`)
+    .bind(customDomain)
+    .first<ProjectRow>();
   if (!project) throw new HttpError(404, 'Project not found');
   return json(await publicProjectPayload(env, project));
 }
@@ -60,30 +74,31 @@ async function publicProjectPayload(env: Env, project: ProjectRow) {
       `SELECT * FROM surveys
      WHERE project_id = ? AND status = 'published' AND web_enabled = 1
      ORDER BY updated_at DESC`,
-    ).bind(project.id).all<SurveyRow>(),
+    )
+      .bind(project.id)
+      .all<SurveyRow>(),
     isTurnstileConfigured(env),
   ]);
   return {
     project: projectToJson(project),
     surveys: rows.results
       .filter(isAccepting)
-      .map((survey) => publicSurveyToJson(
-        survey,
-        captchaRequiredForSurvey(survey, turnstileConfigured),
-      )),
+      .map((survey) => publicSurveyToJson(survey, captchaRequiredForSurvey(survey, turnstileConfigured))),
   };
 }
 
 export async function getPublicQuestions(env: Env, surveyId: number): Promise<Response> {
-  const survey = await env.DB.prepare(
-    `SELECT * FROM surveys WHERE id = ? AND status = 'published' AND web_enabled = 1`,
-  ).bind(surveyId).first<SurveyRow>();
+  const survey = await env.DB.prepare(`SELECT * FROM surveys WHERE id = ? AND status = 'published' AND web_enabled = 1`)
+    .bind(surveyId)
+    .first<SurveyRow>();
   if (!survey || !isAccepting(survey)) return json([]);
   const rows = await env.DB.prepare(
     `SELECT * FROM questions
      WHERE survey_id = ? AND is_deleted = 0
      ORDER BY order_index`,
-  ).bind(surveyId).all<QuestionRow>();
+  )
+    .bind(surveyId)
+    .all<QuestionRow>();
   return json(rows.results.map(questionToJson));
 }
 
@@ -92,11 +107,13 @@ export async function getPublicChoices(env: Env, questionId: number): Promise<Re
     `SELECT q.* FROM questions q
      JOIN surveys s ON s.id = q.survey_id
      WHERE q.id = ? AND q.is_deleted = 0 AND s.status = 'published' AND s.web_enabled = 1`,
-  ).bind(questionId).first<QuestionRow>();
+  )
+    .bind(questionId)
+    .first<QuestionRow>();
   if (!question) return json([]);
-  const rows = await env.DB.prepare(
-    `SELECT * FROM choices WHERE question_id = ? ORDER BY order_index`,
-  ).bind(questionId).all<ChoiceRow>();
+  const rows = await env.DB.prepare(`SELECT * FROM choices WHERE question_id = ? ORDER BY order_index`)
+    .bind(questionId)
+    .all<ChoiceRow>();
   return json(rows.results.map(choiceToJson));
 }
 
@@ -107,9 +124,7 @@ export async function submitResponse(
   anonymous: AnonymousContext,
   ctx?: ExecutionContext,
 ): Promise<Response> {
-  const survey = await env.DB.prepare(`SELECT * FROM surveys WHERE id = ?`)
-    .bind(surveyId)
-    .first<SurveyRow>();
+  const survey = await env.DB.prepare(`SELECT * FROM surveys WHERE id = ?`).bind(surveyId).first<SurveyRow>();
   if (!survey || survey.status !== 'published' || survey.web_enabled !== 1 || !isAccepting(survey)) {
     throw new HttpError(400, 'Survey is not accepting responses');
   }
@@ -122,29 +137,63 @@ export async function submitResponse(
     if (!turnstileSecret) throw new HttpError(500, 'CAPTCHA configuration changed');
     const captchaToken = typeof body.captchaToken === 'string' ? body.captchaToken : '';
     if (!captchaToken) throw new HttpError(400, 'CAPTCHA token is required');
-    await verifyTurnstileToken(
-      captchaToken,
-      turnstileSecret,
-      request.headers.get('cf-connecting-ip'),
-    );
+    await verifyTurnstileToken(captchaToken, turnstileSecret, request.headers.get('cf-connecting-ip'));
   }
-  const answers = Array.isArray(body.answers)
-    ? body.answers.map(requireAnswerInput)
-    : [];
+  const answers = Array.isArray(body.answers) ? body.answers.map(requireAnswerInput) : [];
   const questions = await env.DB.prepare(
     `SELECT * FROM questions WHERE survey_id = ? AND is_deleted = 0 ORDER BY order_index`,
-  ).bind(surveyId).all<QuestionRow>();
+  )
+    .bind(surveyId)
+    .all<QuestionRow>();
   const visibilityRules = await getVisibilityRules(env.DB, surveyId);
   await validateAnswers(env, questions.results, visibilityRules, answers, anonymous.id);
+  const mediaFileKeys = answers.flatMap((answer) =>
+    Array.isArray(answer.fileKeys) ? (answer.fileKeys as string[]) : [],
+  );
 
   const idempotencyKey = optionalLimitedString(body.idempotencyKey, 'idempotencyKey', 64);
 
   if (idempotencyKey) {
     const existing = await env.DB.prepare(
-      `SELECT * FROM survey_responses WHERE idempotency_key = ?`,
-    ).bind(idempotencyKey).first<ResponseRow>();
-    if (existing) return json(responseToJson(existing), 200);
+      `SELECT * FROM survey_responses
+       WHERE anonymous_account_id = ? AND idempotency_key = ?`,
+    )
+      .bind(anonymous.id, idempotencyKey)
+      .first<ResponseRow>();
+    if (existing) {
+      await markMediaAttached(env, mediaFileKeys, anonymous.id, existing.id);
+      return json(responseToJson(existing), 200);
+    }
   }
+
+  const period = utcDay();
+  const responseReservations = [
+    {
+      subject: `account:${anonymous.id}`,
+      resource: 'responses',
+      period,
+      amount: 1,
+      limit: quotaLimit(env, 'QUOTA_RESPONSES_PER_ACCOUNT_DAY', DEFAULT_QUOTA_LIMITS.responsesPerAccountDay),
+      message: 'Daily response limit reached.',
+    },
+    {
+      subject: await ipQuotaSubject(clientIp(request)),
+      resource: 'responses',
+      period,
+      amount: 1,
+      limit: quotaLimit(env, 'QUOTA_RESPONSES_PER_IP_DAY', DEFAULT_QUOTA_LIMITS.responsesPerIpDay),
+      message: 'Daily response limit reached for this network.',
+    },
+    {
+      subject: `survey:${surveyId}`,
+      resource: 'responses',
+      period,
+      amount: 1,
+      limit: quotaLimit(env, 'QUOTA_RESPONSES_PER_SURVEY_DAY', DEFAULT_QUOTA_LIMITS.responsesPerSurveyDay),
+      message: 'Survey daily response limit reached.',
+    },
+  ];
+  await reserveQuotas(env.DB, responseReservations);
 
   const now = nowIso();
   const userAgent = request.headers.get('user-agent');
@@ -187,14 +236,13 @@ export async function submitResponse(
       idempotencyKey,
     ),
   ];
-
   if (answers.length > 0) {
     const answerPayload = answers.map((answer) => {
-      const fileKeys = Array.isArray(answer.fileKeys)
-        ? (answer.fileKeys as string[])
-        : null;
+      const fileKeys = Array.isArray(answer.fileKeys) ? (answer.fileKeys as string[]) : null;
       return {
-        questionId: requiredInteger(answer.questionId, 'questionId', { min: 1 }),
+        questionId: requiredInteger(answer.questionId, 'questionId', {
+          min: 1,
+        }),
         textValue: fileKeys
           ? encodeFileKeysForStorage(fileKeys)
           : typeof answer.textValue === 'string'
@@ -202,9 +250,7 @@ export async function submitResponse(
             : null,
         selectedChoiceIds: Array.isArray(answer.selectedChoiceIds)
           ? JSON.stringify(
-              answer.selectedChoiceIds.map((choiceId) =>
-                requiredInteger(choiceId, 'selectedChoiceIds', { min: 1 }),
-              ),
+              answer.selectedChoiceIds.map((choiceId) => requiredInteger(choiceId, 'selectedChoiceIds', { min: 1 })),
             )
           : null,
       };
@@ -232,12 +278,22 @@ export async function submitResponse(
   } catch (error) {
     if (idempotencyKey && isUniqueConstraintError(error)) {
       const existing = await env.DB.prepare(
-        `SELECT ${returningCols} FROM survey_responses WHERE idempotency_key = ?`,
-      ).bind(idempotencyKey).first<ResponseRow>();
-      if (existing) return json(responseToJson(existing), 200);
+        `SELECT ${returningCols} FROM survey_responses
+         WHERE anonymous_account_id = ? AND idempotency_key = ?`,
+      )
+        .bind(anonymous.id, idempotencyKey)
+        .first<ResponseRow>();
+      if (existing) {
+        await Promise.all(responseReservations.map((reservation) => refundQuota(env.DB, reservation)));
+        await markMediaAttached(env, mediaFileKeys, anonymous.id, existing.id);
+        return json(responseToJson(existing), 200);
+      }
     }
+    await Promise.all(responseReservations.map((reservation) => refundQuota(env.DB, reservation)));
     throw error;
   }
+
+  await markMediaAttached(env, mediaFileKeys, anonymous.id, response.id);
 
   const notificationTask = sendResponseNotification(env, survey, response).catch((error) => {
     logError('response_notification_failed', error, {
@@ -263,7 +319,9 @@ async function validateAnswers(
 ): Promise<void> {
   const byQuestion = new Map<number, AnswerInput>();
   for (const answer of answers) {
-    const questionId = requiredInteger(answer?.questionId, 'questionId', { min: 1 });
+    const questionId = requiredInteger(answer?.questionId, 'questionId', {
+      min: 1,
+    });
     if (byQuestion.has(questionId)) throw new HttpError(400, 'Duplicate answer');
     answer.questionId = questionId;
     byQuestion.set(questionId, answer);
@@ -292,9 +350,7 @@ async function validateAnswers(
       if (question.min_selected != null && question.min_selected > 0) {
         throw new HttpError(
           400,
-          `Question "${questionText}" requires at least ${question.min_selected} ${
-            isImageUploadQuestionType(question.type) ? 'images' : 'choices'
-          }`,
+          `Question "${questionText}" requires at least ${question.min_selected} ${isImageUploadQuestionType(question.type) ? 'images' : 'choices'}`,
         );
       }
       continue;
@@ -384,10 +440,7 @@ function normalizeFileKeys(value: unknown): string[] {
   return keys;
 }
 
-async function loadValidChoiceIdsByQuestion(
-  db: D1Database,
-  questionIds: number[],
-): Promise<Map<number, Set<number>>> {
+async function loadValidChoiceIdsByQuestion(db: D1Database, questionIds: number[]): Promise<Map<number, Set<number>>> {
   const map = new Map<number, Set<number>>();
   if (questionIds.length === 0) return map;
   const rows = await queryInChunks<{ id: number; question_id: number }>(

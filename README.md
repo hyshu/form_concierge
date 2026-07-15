@@ -99,6 +99,12 @@ dart run form_concierge_cli setup cloudflare --preflight-only
 
 After deployment, open the admin Pages URL, create the first admin, and create projects in the deployed dashboard.
 
+### Public cost controls
+
+Setup configures daily D1 quotas for responses (account/IP/survey), image upload and retained R2 bytes, AI follow-up generation (account/survey), and notification email (survey). AI generation uses an atomic lease so concurrent requests for one response cannot fan out into multiple provider calls. Unattached uploads expire after 24 hours; the Worker cron removes them every 15 minutes.
+
+The defaults are written to `worker/wrangler.jsonc` as `QUOTA_*` variables and may be lowered before deployment. Quota changes take effect on the next Worker deployment.
+
 Seeding an existing local project is optional:
 
 ```bash

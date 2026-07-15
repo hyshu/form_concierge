@@ -50,7 +50,7 @@ import {
   submitResponse,
 } from './public_surveys';
 import { generateFollowUp, saveFollowUp } from './follow_up';
-import { getMedia, uploadMedia } from './media';
+import { cleanupExpiredMedia, getMedia, uploadMedia } from './media';
 import { listAdminVisibilityRules, listPublicVisibilityRules, replaceAdminVisibilityRules } from './visibility_rules';
 import {
   aggregatedResults,
@@ -68,6 +68,8 @@ import { anonymousAccountToJson, replyToJson } from './serializers';
 import { requireScope } from './permissions';
 import { isPublicFormHtmlRequest, renderPublicForm } from './public_form_renderer';
 import { scheduleRuntimeMigrations } from './runtime_migrations';
+import { cleanupOldQuotaPeriods } from './usage_quota';
+import { checkRateLimit, clientIp } from './rate_limit';
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -89,6 +91,15 @@ export default {
       return json({ error: 'Internal server error' }, 500);
     }
   },
+  async scheduled(_controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
+    ctx.waitUntil(
+      Promise.all([cleanupExpiredMedia(env), cleanupOldQuotaPeriods(env.DB)])
+        .then(() => undefined)
+        .catch((error) => {
+          logError('scheduled_cleanup_failed', error);
+        }),
+    );
+  },
 } satisfies ExportedHandler<Env>;
 
 async function route(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -96,6 +107,10 @@ async function route(request: Request, env: Env, ctx: ExecutionContext): Promise
   const path = url.pathname.replace(/\/+$/, '') || '/';
   const method = request.method.toUpperCase();
   const parts = path.split('/').filter(Boolean);
+
+  if (env.PUBLIC_WRITE_RATE_LIMITER && isCostlyPublicWrite(parts, method)) {
+    await checkRateLimit(env.PUBLIC_WRITE_RATE_LIMITER, `public-write:${clientIp(request)}`);
+  }
 
   if (method === 'GET' && path === '/api/config') {
     return json({
@@ -260,6 +275,13 @@ async function route(request: Request, env: Env, ctx: ExecutionContext): Promise
   return json({ error: 'Not found' }, 404);
 }
 
+function isCostlyPublicWrite(parts: string[], method: string): boolean {
+  if (parts[0] !== 'api') return false;
+  if (parts[1] === 'media') return method === 'POST';
+  if (parts[1] === 'surveys' && parts[2] === 'id' && parts[4] === 'responses') return method === 'POST';
+  return parts[1] === 'responses' && parts[3] === 'follow-up' && (method === 'POST' || method === 'PUT');
+}
+
 async function routeAdmin(
   request: Request,
   env: Env,
@@ -295,7 +317,9 @@ async function routeAdmin(
     if (method !== 'GET') requireScope(admin, 'survey:write');
     if (method === 'GET' && parts.length === 3) return listProjects(env, url);
     if (method === 'POST' && parts.length === 3) return createProject(request, env, admin);
-    const projectId = optionalIntegerParam(parts[3] ?? null, 'projectId', { min: 1 });
+    const projectId = optionalIntegerParam(parts[3] ?? null, 'projectId', {
+      min: 1,
+    });
     if (projectId != null) {
       if (method === 'GET' && parts.length === 4) return getAdminProject(env, projectId);
       if (method === 'PUT' && parts.length === 4) return updateProject(request, env, projectId);
@@ -310,7 +334,9 @@ async function routeAdmin(
     if (method === 'GET' && parts.length === 3) {
       return listSurveys(
         env,
-        optionalIntegerParam(url.searchParams.get('projectId'), 'projectId', { min: 1 }) ?? undefined,
+        optionalIntegerParam(url.searchParams.get('projectId'), 'projectId', {
+          min: 1,
+        }) ?? undefined,
         url,
       );
     }
@@ -319,7 +345,9 @@ async function routeAdmin(
       return createSurveyWithQuestions(request, env, admin);
     }
 
-    const surveyId = optionalIntegerParam(parts[3] ?? null, 'surveyId', { min: 1 });
+    const surveyId = optionalIntegerParam(parts[3] ?? null, 'surveyId', {
+      min: 1,
+    });
     if (surveyId != null) {
       if (method === 'GET' && parts.length === 4) return getAdminSurvey(env, surveyId);
       if (method === 'PUT' && parts.length === 4) return updateSurvey(request, env, surveyId);
@@ -373,7 +401,9 @@ async function routeAdmin(
     if (method === 'GET') requireScope(admin, 'survey:read');
     if (method !== 'GET') requireScope(admin, 'survey:write');
     if (method === 'POST' && parts.length === 3) return createQuestion(request, env);
-    const questionId = optionalIntegerParam(parts[3] ?? null, 'questionId', { min: 1 });
+    const questionId = optionalIntegerParam(parts[3] ?? null, 'questionId', {
+      min: 1,
+    });
     if (questionId != null) {
       if (method === 'GET' && parts.length === 4) return getQuestion(env, questionId);
       if (method === 'PUT' && parts.length === 4) return updateQuestion(request, env, questionId);
@@ -389,7 +419,9 @@ async function routeAdmin(
     if (method === 'GET') requireScope(admin, 'survey:read');
     if (method !== 'GET') requireScope(admin, 'survey:write');
     if (method === 'POST' && parts.length === 3) return createChoice(request, env);
-    const choiceId = optionalIntegerParam(parts[3] ?? null, 'choiceId', { min: 1 });
+    const choiceId = optionalIntegerParam(parts[3] ?? null, 'choiceId', {
+      min: 1,
+    });
     if (choiceId != null) {
       if (method === 'GET' && parts.length === 4) return getChoice(env, choiceId);
       if (method === 'PUT' && parts.length === 4) return updateChoice(request, env, choiceId);
@@ -398,7 +430,9 @@ async function routeAdmin(
   }
 
   if (parts[2] === 'responses') {
-    const responseId = optionalIntegerParam(parts[3] ?? null, 'responseId', { min: 1 });
+    const responseId = optionalIntegerParam(parts[3] ?? null, 'responseId', {
+      min: 1,
+    });
     if (responseId != null) {
       if (method === 'GET') requireScope(admin, 'response:read');
       if (method !== 'GET') requireScope(admin, 'response:write');

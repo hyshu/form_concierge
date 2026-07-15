@@ -978,6 +978,23 @@ Run setup interactively, or pass:
         'remote': remote,
       },
     ];
+    config['ratelimits'] = [
+      {
+        'name': 'LOGIN_RATE_LIMITER',
+        'namespace_id': '1001',
+        'simple': {'limit': 20, 'period': 60},
+      },
+      {
+        'name': 'ANON_CREATE_RATE_LIMITER',
+        'namespace_id': '1002',
+        'simple': {'limit': 30, 'period': 60},
+      },
+      {
+        'name': 'PUBLIC_WRITE_RATE_LIMITER',
+        'namespace_id': '1003',
+        'simple': {'limit': 120, 'period': 60},
+      },
+    ];
 
     if (secretsStoreId.isNotEmpty) {
       config['secrets_store_secrets'] = [
@@ -1003,6 +1020,9 @@ Run setup interactively, or pass:
         'remote': remote,
       },
     ];
+    config['triggers'] = {
+      'crons': ['*/15 * * * *'],
+    };
 
     final vars = Map<String, dynamic>.from(
       (config['vars'] as Map?)?.cast<String, dynamic>() ?? {},
@@ -1018,6 +1038,19 @@ Run setup interactively, or pass:
     }
     if (secretsStoreId.isNotEmpty) {
       vars['CF_SECRETS_STORE_ID'] = secretsStoreId;
+    }
+    const quotaDefaults = {
+      'QUOTA_RESPONSES_PER_ACCOUNT_DAY': '100',
+      'QUOTA_RESPONSES_PER_IP_DAY': '500',
+      'QUOTA_RESPONSES_PER_SURVEY_DAY': '10000',
+      'QUOTA_UPLOAD_BYTES_PER_ACCOUNT_DAY': '104857600',
+      'QUOTA_STORED_BYTES_PER_ACCOUNT': '262144000',
+      'QUOTA_AI_GENERATIONS_PER_ACCOUNT_DAY': '20',
+      'QUOTA_AI_GENERATIONS_PER_SURVEY_DAY': '500',
+      'QUOTA_EMAILS_PER_SURVEY_DAY': '1000',
+    };
+    for (final entry in quotaDefaults.entries) {
+      vars.putIfAbsent(entry.key, () => entry.value);
     }
     // Turnstile keys live in Secrets Store (admin-managed), not plain vars.
     vars.remove('TURNSTILE_SITE_KEY');

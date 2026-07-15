@@ -2,13 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { questionRow, responseRow, surveyRow } from '../test/fixtures';
-import {
-  assertHttpErrorAsync,
-  d1Database,
-  d1Result,
-  stubRateLimiter,
-  stubSecretsStoreEnv,
-} from '../test/helpers';
+import { assertHttpErrorAsync, d1Database, d1Result, stubRateLimiter, stubSecretsStoreEnv } from '../test/helpers';
 import { submitResponse } from './public_surveys';
 import type { AnonymousContext, Env, QuestionRow, ResponseRow, SurveyRow } from './types';
 
@@ -21,23 +15,19 @@ test('submitResponse rejects surveys that are not accepting responses', async ()
   ];
   for (const overrides of closedVariants) {
     await assertHttpErrorAsync(
-      () => submitResponse(
-        submitRequest({ answers: [] }),
-        submitEnv({ survey: surveyRow(overrides) }),
-        1,
-        anonymousContext(),
-      ),
+      () =>
+        submitResponse(
+          submitRequest({ answers: [] }),
+          submitEnv({ survey: surveyRow(overrides) }),
+          1,
+          anonymousContext(),
+        ),
       400,
       'Survey is not accepting responses',
     );
   }
   await assertHttpErrorAsync(
-    () => submitResponse(
-      submitRequest({ answers: [] }),
-      submitEnv({ survey: null }),
-      1,
-      anonymousContext(),
-    ),
+    () => submitResponse(submitRequest({ answers: [] }), submitEnv({ survey: null }), 1, anonymousContext()),
     400,
     'Survey is not accepting responses',
   );
@@ -45,22 +35,24 @@ test('submitResponse rejects surveys that are not accepting responses', async ()
 
 test('submitResponse requires a CAPTCHA token when the survey enables CAPTCHA', async () => {
   await assertHttpErrorAsync(
-    () => submitResponse(
-      submitRequest({ answers: [] }),
-      submitEnv({ survey: acceptingSurvey({ captcha_enabled: 1 }) }),
-      1,
-      anonymousContext(),
-    ),
+    () =>
+      submitResponse(
+        submitRequest({ answers: [] }),
+        submitEnv({ survey: acceptingSurvey({ captcha_enabled: 1 }) }),
+        1,
+        anonymousContext(),
+      ),
     400,
     'CAPTCHA token is required',
   );
   await assertHttpErrorAsync(
-    () => submitResponse(
-      submitRequest({ answers: [], captchaToken: 42 }),
-      submitEnv({ survey: acceptingSurvey({ captcha_enabled: 1 }) }),
-      1,
-      anonymousContext(),
-    ),
+    () =>
+      submitResponse(
+        submitRequest({ answers: [], captchaToken: 42 }),
+        submitEnv({ survey: acceptingSurvey({ captcha_enabled: 1 }) }),
+        1,
+        anonymousContext(),
+      ),
     400,
     'CAPTCHA token is required',
   );
@@ -147,12 +139,13 @@ test('submitResponse validates required and constrained answers', async () => {
   ];
   for (const { questions, body, message } of cases) {
     await assertHttpErrorAsync(
-      () => submitResponse(
-        submitRequest(body),
-        submitEnv({ survey: acceptingSurvey(), questions, choiceIds: [10] }),
-        1,
-        anonymousContext(),
-      ),
+      () =>
+        submitResponse(
+          submitRequest(body),
+          submitEnv({ survey: acceptingSurvey(), questions, choiceIds: [10] }),
+          1,
+          anonymousContext(),
+        ),
       400,
       message,
     );
@@ -173,18 +166,19 @@ test('submitResponse returns the existing response for a known idempotency key',
     anonymousContext(),
   );
   assert.equal(response.status, 200);
-  const payload = await response.json() as { id: number };
+  const payload = (await response.json()) as { id: number };
   assert.equal(payload.id, 42);
 });
 
 test('submitResponse rejects oversized idempotency keys', async () => {
   await assertHttpErrorAsync(
-    () => submitResponse(
-      submitRequest({ answers: [], idempotencyKey: 'x'.repeat(65) }),
-      submitEnv({ survey: acceptingSurvey(), questions: [] }),
-      1,
-      anonymousContext(),
-    ),
+    () =>
+      submitResponse(
+        submitRequest({ answers: [], idempotencyKey: 'x'.repeat(65) }),
+        submitEnv({ survey: acceptingSurvey(), questions: [] }),
+        1,
+        anonymousContext(),
+      ),
     400,
     'idempotencyKey must be 64 characters or fewer',
   );
@@ -203,7 +197,7 @@ test('submitResponse persists a valid submission and returns 201', async () => {
     executionContext(),
   );
   assert.equal(response.status, 201);
-  const payload = await response.json() as { id: number; surveyId: number };
+  const payload = (await response.json()) as { id: number; surveyId: number };
   assert.equal(payload.surveyId, 1);
 });
 
@@ -239,9 +233,7 @@ function submitEnv(options: SubmitEnvOptions): Env {
   const db = d1Database((sql: string) => statementFor(sql, options));
   db.batch = async <T>(statements: D1PreparedStatement[]) => {
     const inserted = responseRow({ id: 7 });
-    return statements.map((_, index) =>
-      d1Result<T>(index === 0 ? [inserted as T] : []),
-    );
+    return statements.map((_, index) => d1Result<T>(index === 0 ? [inserted as T] : []));
   };
   return {
     DB: db,
@@ -251,9 +243,7 @@ function submitEnv(options: SubmitEnvOptions): Env {
     LOGIN_RATE_LIMITER: stubRateLimiter(),
     ANON_CREATE_RATE_LIMITER: stubRateLimiter(),
     ...stubSecretsStoreEnv(
-      options.turnstileConfigured === false
-        ? { turnstileSiteKey: null, turnstileSecretKey: null }
-        : undefined,
+      options.turnstileConfigured === false ? { turnstileSiteKey: null, turnstileSecretKey: null } : undefined,
     ),
   };
 }
@@ -265,6 +255,7 @@ function statementFor(sql: string, options: SubmitEnvOptions): D1PreparedStateme
     },
     async first<T>() {
       if (sql.includes('FROM surveys')) return options.survey as T | null;
+      if (sql.includes('INSERT INTO usage_quotas')) return { used: 1 } as T;
       if (sql.includes('idempotency_key')) {
         return (options.existingResponseByIdempotencyKey ?? null) as T | null;
       }
@@ -277,9 +268,7 @@ function statementFor(sql: string, options: SubmitEnvOptions): D1PreparedStateme
       }
       if (sql.includes('FROM question_visibility_rules')) return d1Result<T>([]);
       if (sql.includes('FROM choices')) {
-        return d1Result(
-          (options.choiceIds ?? []).map((id) => ({ id, question_id: 1 })) as T[],
-        );
+        return d1Result((options.choiceIds ?? []).map((id) => ({ id, question_id: 1 })) as T[]);
       }
       throw new Error(`Unexpected all() query in submitResponse test: ${sql}`);
     },

@@ -13,6 +13,9 @@
       "head_sampling_rate": 0.01
     }
   },
+  "triggers": {
+    "crons": ["*/15 * * * *"]
+  },
   "d1_databases": [
     {
       "binding": "DB",
@@ -34,6 +37,11 @@
       "name": "ANON_CREATE_RATE_LIMITER",
       "namespace_id": "1002",
       "simple": { "limit": 30, "period": 60 }
+    },
+    {
+      "name": "PUBLIC_WRITE_RATE_LIMITER",
+      "namespace_id": "1003",
+      "simple": { "limit": 120, "period": 60 }
     }
   ],
   // store_id filled by setup cloudflare (or set manually after creating a store).
@@ -82,7 +90,6 @@
   ],
   "r2_buckets": [
     {
-      // Reserved for future media uploads; not yet referenced by application code.
       "binding": "MEDIA_BUCKET",
       "bucket_name": "form-concierge-media"
     }
@@ -92,7 +99,15 @@
     "PUBLIC_FORM_ASSET_BASE_URL": "http://localhost:8081",
     // Filled by setup cloudflare
     "CF_ACCOUNT_ID": "replace-account-id",
-    "CF_SECRETS_STORE_ID": "replace-secrets-store-id"
+    "CF_SECRETS_STORE_ID": "replace-secrets-store-id",
+    "QUOTA_RESPONSES_PER_ACCOUNT_DAY": "100",
+    "QUOTA_RESPONSES_PER_IP_DAY": "500",
+    "QUOTA_RESPONSES_PER_SURVEY_DAY": "10000",
+    "QUOTA_UPLOAD_BYTES_PER_ACCOUNT_DAY": "104857600",
+    "QUOTA_STORED_BYTES_PER_ACCOUNT": "262144000",
+    "QUOTA_AI_GENERATIONS_PER_ACCOUNT_DAY": "20",
+    "QUOTA_AI_GENERATIONS_PER_SURVEY_DAY": "500",
+    "QUOTA_EMAILS_PER_SURVEY_DAY": "1000"
     // Optional AI model overrides (defaults live in ai_generation.ts):
     // "AI_GEMINI_MODEL": "gemini-3.5-flash",
     // "AI_OPENAI_MODEL": "gpt-5.5",

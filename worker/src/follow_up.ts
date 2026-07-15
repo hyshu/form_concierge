@@ -1,4 +1,13 @@
-import type { AnonymousContext, AnswerRow, ChoiceRow, Env, QuestionRow, ReplyRow, ResponseRow, SurveyRow } from './types';
+import type {
+  AnonymousContext,
+  AnswerRow,
+  ChoiceRow,
+  Env,
+  QuestionRow,
+  ReplyRow,
+  ResponseRow,
+  SurveyRow,
+} from './types';
 import { generateFollowUpFromAnswers } from './ai_generation';
 import { isAiGenerationConfigured } from './admin_settings';
 import {
@@ -16,11 +25,8 @@ import {
 } from './utils';
 import { followUpToJson, parseChoiceIds, responseToJson } from './serializers';
 import { DEFAULT_FORM_CONTENT_LOCALE, localizedTextFor } from './localization';
-import {
-  assertMediaObjectsExist,
-  assertOwnedMediaKeys,
-  parseStoredFileKeys,
-} from './media';
+import { assertMediaObjectsExist, assertOwnedMediaKeys, markMediaAttached, parseStoredFileKeys } from './media';
+import { DEFAULT_QUOTA_LIMITS, quotaLimit, reserveQuotas, utcDay } from './usage_quota';
 
 const MAX_FOLLOW_UP_JSON_BYTES = 64 * 1024;
 const FOLLOW_UP_STATUSES = new Set(['skipped', 'pending', 'completed']);
@@ -78,16 +84,12 @@ export async function generateFollowUp(
   const existing = parseStoredFollowUp(response.follow_up);
   if (existing) {
     return json({
-      needed: existing.status === 'pending' || existing.status === 'completed'
-        ? existing.items.length > 0
-        : false,
+      needed: existing.status === 'pending' || existing.status === 'completed' ? existing.items.length > 0 : false,
       followUp: existing,
     });
   }
 
-  const survey = await env.DB.prepare(`SELECT * FROM surveys WHERE id = ?`)
-    .bind(response.survey_id)
-    .first<SurveyRow>();
+  const survey = await env.DB.prepare(`SELECT * FROM surveys WHERE id = ?`).bind(response.survey_id).first<SurveyRow>();
   if (!survey) throw new HttpError(404, 'Survey not found');
 
   if (survey.follow_up_enabled !== 1) {
@@ -104,6 +106,34 @@ export async function generateFollowUp(
 
   const body = await readJson(request, true);
   const locale = optionalLocale(body.locale) ?? DEFAULT_FORM_CONTENT_LOCALE;
+  const leaseToken = crypto.randomUUID();
+  if (!(await claimFollowUpJob(env, responseId, leaseToken))) {
+    throw new HttpError(409, 'Follow-up generation is already in progress');
+  }
+
+  try {
+    await reserveQuotas(env.DB, [
+      {
+        subject: `account:${anonymous.id}`,
+        resource: 'ai_generations',
+        period: utcDay(),
+        amount: 1,
+        limit: quotaLimit(env, 'QUOTA_AI_GENERATIONS_PER_ACCOUNT_DAY', DEFAULT_QUOTA_LIMITS.aiGenerationsPerAccountDay),
+        message: 'Daily AI follow-up limit reached.',
+      },
+      {
+        subject: `survey:${survey.id}`,
+        resource: 'ai_generations',
+        period: utcDay(),
+        amount: 1,
+        limit: quotaLimit(env, 'QUOTA_AI_GENERATIONS_PER_SURVEY_DAY', DEFAULT_QUOTA_LIMITS.aiGenerationsPerSurveyDay),
+        message: 'Survey daily AI follow-up limit reached.',
+      },
+    ]);
+  } catch (error) {
+    await finishFollowUpJob(env, responseId, leaseToken, 'failed', error);
+    throw error;
+  }
 
   try {
     const [answersSummary, recentResponsesSummary] = await Promise.all([
@@ -122,6 +152,7 @@ export async function generateFollowUp(
     if (!generated.needed || generated.items.length === 0) {
       const skipped = skippedFollowUp(locale);
       await claimFollowUp(env, responseId, skipped);
+      await finishFollowUpJob(env, responseId, leaseToken, 'completed');
       return json({ needed: false, followUp: skipped });
     }
 
@@ -145,18 +176,60 @@ export async function generateFollowUp(
     const claimed = await claimFollowUp(env, responseId, pending);
     if (!claimed) {
       const current = await loadOwnedResponse(env, responseId, anonymous.id);
-      return json({ needed: false, followUp: parseStoredFollowUp(current.follow_up) });
+      await finishFollowUpJob(env, responseId, leaseToken, 'completed');
+      return json({
+        needed: false,
+        followUp: parseStoredFollowUp(current.follow_up),
+      });
     }
+    await finishFollowUpJob(env, responseId, leaseToken, 'completed');
     return json({ needed: true, followUp: pending });
   } catch (error) {
     const skipped = skippedFollowUp(locale);
     await claimFollowUp(env, responseId, skipped);
+    await finishFollowUpJob(env, responseId, leaseToken, 'completed', error);
     return json({
       needed: false,
       followUp: skipped,
       error: error instanceof HttpError ? error.message : 'Follow-up generation failed',
     });
   }
+}
+
+async function claimFollowUpJob(env: Env, responseId: number, leaseToken: string): Promise<boolean> {
+  const leaseExpiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+  const row = await env.DB.prepare(
+    `INSERT INTO follow_up_jobs
+       (response_id, status, lease_token, lease_expires_at)
+     VALUES (?, 'running', ?, ?)
+     ON CONFLICT(response_id) DO UPDATE SET
+       status = 'running', lease_token = excluded.lease_token,
+       lease_expires_at = excluded.lease_expires_at, last_error = NULL,
+       updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+     WHERE follow_up_jobs.status = 'failed'
+        OR (follow_up_jobs.status = 'running' AND follow_up_jobs.lease_expires_at <= strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+     RETURNING response_id`,
+  )
+    .bind(responseId, leaseToken, leaseExpiresAt)
+    .first<{ response_id: number }>();
+  return row != null;
+}
+
+async function finishFollowUpJob(
+  env: Env,
+  responseId: number,
+  leaseToken: string,
+  status: 'completed' | 'failed',
+  error?: unknown,
+): Promise<void> {
+  const message = error == null ? null : (error instanceof Error ? error.message : String(error)).slice(0, 1000);
+  await env.DB.prepare(
+    `UPDATE follow_up_jobs
+     SET status = ?, last_error = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+     WHERE response_id = ? AND lease_token = ?`,
+  )
+    .bind(status, message, responseId, leaseToken)
+    .run();
 }
 
 /** Save answers for a pending follow-up interview. */
@@ -211,12 +284,11 @@ export async function saveFollowUp(
     items,
   };
   const updated = await updateFollowUp(env, responseId, completed);
+  await markMediaAttached(env, allFileKeys, anonymous.id, responseId);
 
   // Notify with main answers + follow-up once the interview is finished.
   // Dynamic import avoids a circular dependency with notification_settings.
-  const survey = await env.DB.prepare(`SELECT * FROM surveys WHERE id = ?`)
-    .bind(updated.survey_id)
-    .first<SurveyRow>();
+  const survey = await env.DB.prepare(`SELECT * FROM surveys WHERE id = ?`).bind(updated.survey_id).first<SurveyRow>();
   if (survey) {
     const { sendResponseNotification } = await import('./notification_settings');
     const notificationTask = sendResponseNotification(env, survey, updated, {
@@ -237,14 +309,8 @@ export async function saveFollowUp(
   return json(responseToJson(updated));
 }
 
-async function loadOwnedResponse(
-  env: Env,
-  responseId: number,
-  anonymousAccountId: string,
-): Promise<ResponseRow> {
-  const row = await env.DB.prepare(`SELECT * FROM survey_responses WHERE id = ?`)
-    .bind(responseId)
-    .first<ResponseRow>();
+async function loadOwnedResponse(env: Env, responseId: number, anonymousAccountId: string): Promise<ResponseRow> {
+  const row = await env.DB.prepare(`SELECT * FROM survey_responses WHERE id = ?`).bind(responseId).first<ResponseRow>();
   if (!row) throw new HttpError(404, 'Response not found');
   if (row.anonymous_account_id !== anonymousAccountId) {
     throw new HttpError(403, 'Forbidden');
@@ -252,32 +318,24 @@ async function loadOwnedResponse(
   return row;
 }
 
-async function claimFollowUp(
-  env: Env,
-  responseId: number,
-  followUp: FollowUpPayload,
-): Promise<ResponseRow | null> {
+async function claimFollowUp(env: Env, responseId: number, followUp: FollowUpPayload): Promise<ResponseRow | null> {
   const encoded = JSON.stringify(followUp);
   if (encoded.length > MAX_FOLLOW_UP_JSON_BYTES) {
     throw new HttpError(400, 'followUp payload is too large');
   }
-  return env.DB.prepare(
-    `UPDATE survey_responses SET follow_up = ? WHERE id = ? AND follow_up IS NULL RETURNING *`,
-  ).bind(encoded, responseId).first<ResponseRow>();
+  return env.DB.prepare(`UPDATE survey_responses SET follow_up = ? WHERE id = ? AND follow_up IS NULL RETURNING *`)
+    .bind(encoded, responseId)
+    .first<ResponseRow>();
 }
 
-async function updateFollowUp(
-  env: Env,
-  responseId: number,
-  followUp: FollowUpPayload,
-): Promise<ResponseRow> {
+async function updateFollowUp(env: Env, responseId: number, followUp: FollowUpPayload): Promise<ResponseRow> {
   const encoded = JSON.stringify(followUp);
   if (encoded.length > MAX_FOLLOW_UP_JSON_BYTES) {
     throw new HttpError(400, 'followUp payload is too large');
   }
-  const row = await env.DB.prepare(
-    `UPDATE survey_responses SET follow_up = ? WHERE id = ? RETURNING *`,
-  ).bind(encoded, responseId).first<ResponseRow>();
+  const row = await env.DB.prepare(`UPDATE survey_responses SET follow_up = ? WHERE id = ? RETURNING *`)
+    .bind(encoded, responseId)
+    .first<ResponseRow>();
   if (!row) throw new HttpError(500, 'Failed to save follow-up');
   return row;
 }
@@ -330,12 +388,7 @@ function normalizeStoredItem(value: unknown, index: number): FollowUpItem {
     throw new HttpError(500, `Invalid followUp item at ${index}`);
   }
   if (typeof item.required !== 'boolean') throw new HttpError(500, `Invalid followUp required at ${index}`);
-  const placeholder =
-    item.placeholder == null
-      ? null
-      : typeof item.placeholder === 'string'
-        ? item.placeholder
-        : null;
+  const placeholder = item.placeholder == null ? null : typeof item.placeholder === 'string' ? item.placeholder : null;
   if (!Array.isArray(item.choices)) throw new HttpError(500, `Invalid followUp choices at ${index}`);
   const choices = item.choices.map((choice, choiceIndex) => {
     if (!choice || typeof choice !== 'object' || Array.isArray(choice)) {
@@ -372,12 +425,7 @@ function normalizeStoredAnswer(value: unknown): FollowUpAnswer | null {
     throw new HttpError(500, 'Invalid followUp answer');
   }
   const answer = value as Record<string, unknown>;
-  const textValue =
-    answer.textValue == null
-      ? null
-      : typeof answer.textValue === 'string'
-        ? answer.textValue
-        : null;
+  const textValue = answer.textValue == null ? null : typeof answer.textValue === 'string' ? answer.textValue : null;
   const selectedChoiceIds = Array.isArray(answer.selectedChoiceIds)
     ? answer.selectedChoiceIds.filter((id): id is string => typeof id === 'string')
     : [];
@@ -408,10 +456,7 @@ function parseAnswerMap(value: unknown): Map<string, FollowUpAnswer> {
     const selectedChoiceIds = Array.isArray(row.selectedChoiceIds)
       ? row.selectedChoiceIds.map((choiceId, choiceIndex) => {
           if (typeof choiceId !== 'string' || choiceId.trim().length === 0) {
-            throw new HttpError(
-              400,
-              `answers[${index}].selectedChoiceIds[${choiceIndex}] must be a non-empty string`,
-            );
+            throw new HttpError(400, `answers[${index}].selectedChoiceIds[${choiceIndex}] must be a non-empty string`);
           }
           return choiceId.trim();
         })
@@ -419,10 +464,7 @@ function parseAnswerMap(value: unknown): Map<string, FollowUpAnswer> {
     const fileKeys = Array.isArray(row.fileKeys)
       ? row.fileKeys.map((fileKey, fileIndex) => {
           if (typeof fileKey !== 'string' || fileKey.trim().length === 0) {
-            throw new HttpError(
-              400,
-              `answers[${index}].fileKeys[${fileIndex}] must be a non-empty string`,
-            );
+            throw new HttpError(400, `answers[${index}].fileKeys[${fileIndex}] must be a non-empty string`);
           }
           return fileKey.trim();
         })
@@ -478,10 +520,12 @@ export async function buildAnswersSummary(
 ): Promise<string> {
   const questions = await env.DB.prepare(
     `SELECT * FROM questions WHERE survey_id = ? AND is_deleted = 0 ORDER BY order_index`,
-  ).bind(survey.id).all<QuestionRow>();
-  const answers = await env.DB.prepare(
-    `SELECT * FROM answers WHERE survey_response_id = ?`,
-  ).bind(responseId).all<AnswerRow>();
+  )
+    .bind(survey.id)
+    .all<QuestionRow>();
+  const answers = await env.DB.prepare(`SELECT * FROM answers WHERE survey_response_id = ?`)
+    .bind(responseId)
+    .all<AnswerRow>();
   const answerByQuestion = new Map(answers.results.map((answer) => [answer.question_id, answer]));
   const questionIds = questions.results.map((question) => question.id);
   const choicesByQuestion = await loadChoicesByQuestion(env, questionIds);
@@ -505,11 +549,13 @@ async function buildRecentResponsesSummary(
        AND submitted_at >= ?
      ORDER BY submitted_at DESC
      LIMIT ?`,
-  ).bind(survey.id, currentResponseId, anonymousAccountId, cutoff, MAX_RECENT_RESPONSES).all<{
-    id: number;
-    submitted_at: string;
-    follow_up: string | null;
-  }>();
+  )
+    .bind(survey.id, currentResponseId, anonymousAccountId, cutoff, MAX_RECENT_RESPONSES)
+    .all<{
+      id: number;
+      submitted_at: string;
+      follow_up: string | null;
+    }>();
 
   if (recent.results.length === 0) {
     return '(no prior responses from this respondent in the last 30 days)';
@@ -517,17 +563,15 @@ async function buildRecentResponsesSummary(
 
   const questions = await env.DB.prepare(
     `SELECT * FROM questions WHERE survey_id = ? AND is_deleted = 0 ORDER BY order_index`,
-  ).bind(survey.id).all<QuestionRow>();
+  )
+    .bind(survey.id)
+    .all<QuestionRow>();
   const questionIds = questions.results.map((question) => question.id);
   const choicesByQuestion = await loadChoicesByQuestion(env, questionIds);
 
   const responseIds = recent.results.map((row) => row.id);
   const [allAnswers, allReplies] = await Promise.all([
-    queryInChunks<AnswerRow>(
-      env.DB,
-      (ph) => `SELECT * FROM answers WHERE survey_response_id IN (${ph})`,
-      responseIds,
-    ),
+    queryInChunks<AnswerRow>(env.DB, (ph) => `SELECT * FROM answers WHERE survey_response_id IN (${ph})`, responseIds),
     queryInChunks<ReplyRow>(
       env.DB,
       (ph) => `SELECT * FROM admin_replies WHERE survey_response_id IN (${ph}) ORDER BY created_at ASC`,
@@ -550,17 +594,11 @@ async function buildRecentResponsesSummary(
   const blocks: string[] = [];
   for (const row of recent.results) {
     const answerByQuestion = answersByResponse.get(row.id) ?? new Map();
-    const qa = formatQaLines(
-      questions.results,
-      answerByQuestion,
-      choicesByQuestion,
-      locale,
-      { truncateText: true },
-    );
+    const qa = formatQaLines(questions.results, answerByQuestion, choicesByQuestion, locale, { truncateText: true });
     const followUpNote = formatCompletedFollowUpSummary(row.follow_up);
     const replies = repliesByResponse.get(row.id) ?? [];
-    const replyLines = replies.map((r) =>
-      `- [${r.created_at}] ${truncateText(r.body.trim(), MAX_HISTORY_ANSWER_CHARS)}`,
+    const replyLines = replies.map(
+      (r) => `- [${r.created_at}] ${truncateText(r.body.trim(), MAX_HISTORY_ANSWER_CHARS)}`,
     );
     blocks.push(
       [
@@ -568,7 +606,9 @@ async function buildRecentResponsesSummary(
         qa,
         followUpNote ? `Follow-up answers:\n${followUpNote}` : null,
         replyLines.length > 0 ? `Admin replies:\n${replyLines.join('\n')}` : null,
-      ].filter(Boolean).join('\n'),
+      ]
+        .filter(Boolean)
+        .join('\n'),
     );
   }
   return blocks.join('\n\n');
@@ -598,11 +638,7 @@ function formatQaLines(
     }
     if (isImageUploadQuestionType(question.type)) {
       const fileKeys = parseStoredFileKeys(answer.text_value) ?? [];
-      lines.push(
-        `- ${questionText}: ${
-          fileKeys.length > 0 ? `${fileKeys.length} image(s) attached` : '(no images)'
-        }`,
-      );
+      lines.push(`- ${questionText}: ${fileKeys.length > 0 ? `${fileKeys.length} image(s) attached` : '(no images)'}`);
       continue;
     }
     const choiceIds = parseChoiceIds(answer.selected_choice_ids);
@@ -647,9 +683,7 @@ function formatDeviceContext(response: ResponseRow): string {
   const lines = pairs
     .filter(([, value]) => typeof value === 'string' && value.trim().length > 0)
     .map(([key, value]) => `- ${key}: ${(value as string).trim()}`);
-  return lines.length > 0
-    ? lines.join('\n')
-    : '(no device metadata recorded for this submission)';
+  return lines.length > 0 ? lines.join('\n') : '(no device metadata recorded for this submission)';
 }
 
 function parseDeviceInfoJson(value: string | null): Record<string, string | null> {
@@ -693,7 +727,11 @@ export function formatCompletedFollowUpSummary(
       status?: string;
       items?: Array<{
         text?: string;
-        answer?: { textValue?: string | null; selectedChoiceIds?: string[]; fileKeys?: string[] };
+        answer?: {
+          textValue?: string | null;
+          selectedChoiceIds?: string[];
+          fileKeys?: string[];
+        };
         choices?: Array<{ id: string; label: string }>;
       }>;
     };
@@ -738,10 +776,7 @@ function truncateText(value: string, maxChars: number): string {
   return `${value.slice(0, maxChars - 1)}…`;
 }
 
-async function loadChoicesByQuestion(
-  env: Env,
-  questionIds: number[],
-): Promise<Map<number, ChoiceRow[]>> {
+async function loadChoicesByQuestion(env: Env, questionIds: number[]): Promise<Map<number, ChoiceRow[]>> {
   const map = new Map<number, ChoiceRow[]>();
   if (questionIds.length === 0) return map;
   const rows = await queryInChunks<ChoiceRow>(

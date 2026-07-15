@@ -8,6 +8,7 @@ import {
   logError,
   queryInChunks,
 } from './utils';
+import { DEFAULT_QUOTA_LIMITS, quotaLimit, refundQuota, reserveQuota, utcDay } from './usage_quota';
 
 const KEY_PATTERN = /^uploads\/[a-zA-Z0-9_-]+\/[a-zA-Z0-9-]+\.(jpe?g|png|webp|gif)$/i;
 
@@ -19,9 +20,12 @@ export type MediaObjectMeta = {
 
 const IMAGE_SIGNATURES: ReadonlyArray<{ type: string; bytes: number[] }> = [
   { type: 'image/jpeg', bytes: [0xff, 0xd8, 0xff] },
-  { type: 'image/png', bytes: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a] },
+  {
+    type: 'image/png',
+    bytes: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a],
+  },
   { type: 'image/webp', bytes: [0x52, 0x49, 0x46, 0x46] }, // "RIFF"; WEBP at offset 8 checked below
-  { type: 'image/gif', bytes: [0x47, 0x49, 0x46, 0x38] },  // "GIF8"
+  { type: 'image/gif', bytes: [0x47, 0x49, 0x46, 0x38] }, // "GIF8"
 ];
 
 function matchesSignature(header: Uint8Array, contentType: string): boolean {
@@ -64,11 +68,7 @@ async function readBodyWithLimit(body: ReadableStream<Uint8Array>, limit: number
 }
 
 /** Upload a single image for an anonymous respondent. */
-export async function uploadMedia(
-  request: Request,
-  env: Env,
-  anonymous: AnonymousContext,
-): Promise<Response> {
+export async function uploadMedia(request: Request, env: Env, anonymous: AnonymousContext): Promise<Response> {
   const contentType = normalizeContentType(request.headers.get('content-type'));
   if (!MEDIA_ALLOWED_CONTENT_TYPES.has(contentType)) {
     throw new HttpError(400, 'Unsupported image type. Use JPEG, PNG, WebP, or GIF');
@@ -87,20 +87,68 @@ export async function uploadMedia(
     throw new HttpError(400, 'File content does not match declared image type');
   }
 
-  const key = buildUploadKey(anonymous.id, contentType);
-  await env.MEDIA_BUCKET.put(key, bytes, {
-    httpMetadata: { contentType },
-    customMetadata: {
-      anonymousAccountId: anonymous.id,
-      uploadedAt: new Date().toISOString(),
-    },
+  const dailyReservation = {
+    subject: `account:${anonymous.id}`,
+    resource: 'upload_bytes',
+    period: utcDay(),
+    amount: bytes.byteLength,
+  };
+  const storedReservation = {
+    subject: `account:${anonymous.id}`,
+    resource: 'stored_media_bytes',
+    period: 'all',
+    amount: bytes.byteLength,
+  };
+  await reserveQuota(env.DB, {
+    ...dailyReservation,
+    limit: quotaLimit(env, 'QUOTA_UPLOAD_BYTES_PER_ACCOUNT_DAY', DEFAULT_QUOTA_LIMITS.uploadBytesPerAccountDay),
+    message: 'Daily image upload limit reached.',
   });
+  try {
+    await reserveQuota(env.DB, {
+      ...storedReservation,
+      limit: quotaLimit(env, 'QUOTA_STORED_BYTES_PER_ACCOUNT', DEFAULT_QUOTA_LIMITS.storedBytesPerAccount),
+      message: 'Image storage limit reached.',
+    });
+  } catch (error) {
+    await refundQuota(env.DB, dailyReservation);
+    throw error;
+  }
 
-  return json({
-    key,
-    contentType,
-    size: bytes.byteLength,
-  } satisfies MediaObjectMeta, 201);
+  const key = buildUploadKey(anonymous.id, contentType);
+  try {
+    const uploadedAt = new Date();
+    await env.MEDIA_BUCKET.put(key, bytes, {
+      httpMetadata: { contentType },
+      customMetadata: {
+        anonymousAccountId: anonymous.id,
+        uploadedAt: uploadedAt.toISOString(),
+      },
+    });
+    await env.DB.prepare(
+      `INSERT INTO media_objects
+         (key, anonymous_account_id, size_bytes, status, expires_at)
+       VALUES (?, ?, ?, 'temporary', ?)`,
+    )
+      .bind(key, anonymous.id, bytes.byteLength, new Date(uploadedAt.getTime() + 24 * 60 * 60 * 1000).toISOString())
+      .run();
+  } catch (error) {
+    await Promise.all([
+      env.MEDIA_BUCKET.delete(key).catch(() => undefined),
+      refundQuota(env.DB, dailyReservation),
+      refundQuota(env.DB, storedReservation),
+    ]);
+    throw error;
+  }
+
+  return json(
+    {
+      key,
+      contentType,
+      size: bytes.byteLength,
+    } satisfies MediaObjectMeta,
+    201,
+  );
 }
 
 /** Fetch image bytes. Anonymous may only read their own uploads; admins may read any. */
@@ -139,10 +187,7 @@ export function assertValidMediaKey(key: string): void {
   }
 }
 
-export function assertOwnedMediaKeys(
-  keys: readonly string[],
-  anonymousAccountId: string,
-): void {
+export function assertOwnedMediaKeys(keys: readonly string[], anonymousAccountId: string): void {
   const prefix = `uploads/${anonymousAccountId}/`;
   for (const key of keys) {
     assertValidMediaKey(key);
@@ -152,14 +197,53 @@ export function assertOwnedMediaKeys(
   }
 }
 
-export async function assertMediaObjectsExist(
-  env: Env,
-  keys: readonly string[],
-): Promise<void> {
+export async function assertMediaObjectsExist(env: Env, keys: readonly string[]): Promise<void> {
   for (const key of keys) {
     const head = await env.MEDIA_BUCKET.head(key);
     if (!head) throw new HttpError(400, `Media not found: ${key}`);
   }
+}
+
+export async function markMediaAttached(
+  env: Env,
+  keys: readonly string[],
+  anonymousAccountId: string,
+  responseId: number,
+): Promise<void> {
+  if (keys.length === 0) return;
+  const uniqueKeys = [...new Set(keys)];
+  await env.DB.batch(
+    uniqueKeys.map((key) =>
+      env.DB.prepare(
+        `UPDATE media_objects
+         SET status = 'attached', response_id = ?, attached_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+         WHERE key = ? AND anonymous_account_id = ? AND status = 'temporary'`,
+      ).bind(responseId, key, anonymousAccountId),
+    ),
+  );
+}
+
+export async function cleanupExpiredMedia(env: Env, limit = 100): Promise<number> {
+  const rows = await env.DB.prepare(
+    `SELECT key, anonymous_account_id, size_bytes
+     FROM media_objects
+     WHERE status = 'temporary' AND expires_at <= strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+     ORDER BY expires_at
+     LIMIT ?`,
+  )
+    .bind(limit)
+    .all<{ key: string }>();
+  let deleted = 0;
+  for (const row of rows.results) {
+    try {
+      await env.MEDIA_BUCKET.delete(row.key);
+      await env.DB.prepare(`DELETE FROM media_objects WHERE key = ? AND status = 'temporary'`).bind(row.key).run();
+      deleted += 1;
+    } catch (error) {
+      logError('expired_media_cleanup_failed', error, { key: row.key });
+    }
+  }
+  return deleted;
 }
 
 export function encodeFileKeysForStorage(fileKeys: readonly string[]): string {
@@ -239,16 +323,15 @@ export function collectFileKeysFromResponse(
           }
         }
       }
-    } catch { /* malformed JSON — nothing to clean */ }
+    } catch {
+      /* malformed JSON — nothing to clean */
+    }
   }
   return keys;
 }
 
 /** Collect all R2 keys referenced by responses to the given survey IDs. */
-export async function collectFileKeysForSurveys(
-  db: D1Database,
-  surveyIds: readonly number[],
-): Promise<string[]> {
+export async function collectFileKeysForSurveys(db: D1Database, surveyIds: readonly number[]): Promise<string[]> {
   if (surveyIds.length === 0) return [];
   const [answerRows, responseRows] = await Promise.all([
     queryInChunks<{ text_value: string | null }>(
