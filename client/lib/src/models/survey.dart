@@ -265,7 +265,15 @@ class Survey {
 
   /// Admin-authored instructions included in AI follow-up generation.
   final String? followUpPrompt;
-  final bool captchaEnabled;
+
+  /// Persisted admin setting. Use [captchaRequired] for submission behavior.
+  final bool captchaConfigurationEnabled;
+
+  @Deprecated('Use captchaRequired for submission behavior.')
+  bool get captchaEnabled => captchaConfigurationEnabled;
+
+  /// Whether this client must supply a CAPTCHA token for this survey.
+  final bool captchaRequired;
   final String? createdByUserId;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -282,13 +290,19 @@ class Survey {
     this.webEnabled = true,
     this.followUpEnabled = false,
     this.followUpPrompt,
-    this.captchaEnabled = true,
+    bool captchaConfigurationEnabled = true,
+    @Deprecated('Use captchaRequired for submission behavior.')
+    bool? captchaEnabled,
+    bool? captchaRequired,
     this.createdByUserId,
     required this.createdAt,
     required this.updatedAt,
     this.startsAt,
     this.endsAt,
-  });
+  }) : captchaConfigurationEnabled =
+           captchaEnabled ?? captchaConfigurationEnabled,
+       captchaRequired =
+           captchaRequired ?? captchaEnabled ?? captchaConfigurationEnabled;
 
   factory Survey.fromJson(Map<String, dynamic> json) => Survey(
     id: json['id'] == null ? null : _int(json['id']),
@@ -302,7 +316,11 @@ class Survey {
     webEnabled: _bool(json['webEnabled']),
     followUpEnabled: _bool(json['followUpEnabled'] ?? false),
     followUpPrompt: _optionalString(json['followUpPrompt']),
-    captchaEnabled: _bool(json['captchaEnabled'] ?? true),
+    captchaConfigurationEnabled: _bool(json['captchaEnabled'] ?? true),
+    // TODO(form-concierge-1.0.0): Remove the captchaEnabled fallback.
+    captchaRequired: _bool(
+      json['captchaRequired'] ?? json['captchaEnabled'] ?? true,
+    ),
     createdByUserId: _optionalString(json['createdByUserId']),
     createdAt: _date(json['createdAt']),
     updatedAt: _date(json['updatedAt']),
@@ -320,7 +338,7 @@ class Survey {
       'status': _enumName(status),
       'webEnabled': webEnabled,
       'followUpEnabled': followUpEnabled,
-      'captchaEnabled': captchaEnabled,
+      'captchaEnabled': captchaConfigurationEnabled,
       'createdByUserId': createdByUserId,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
@@ -342,7 +360,10 @@ class Survey {
     bool? followUpEnabled,
     String? followUpPrompt,
     bool clearFollowUpPrompt = false,
+    bool? captchaConfigurationEnabled,
+    @Deprecated('Use captchaRequired for submission behavior.')
     bool? captchaEnabled,
+    bool? captchaRequired,
     String? createdByUserId,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -361,7 +382,11 @@ class Survey {
     followUpPrompt: clearFollowUpPrompt
         ? null
         : (followUpPrompt ?? this.followUpPrompt),
-    captchaEnabled: captchaEnabled ?? this.captchaEnabled,
+    captchaConfigurationEnabled:
+        captchaEnabled ??
+        captchaConfigurationEnabled ??
+        this.captchaConfigurationEnabled,
+    captchaRequired: captchaRequired ?? this.captchaRequired,
     createdByUserId: createdByUserId ?? this.createdByUserId,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,

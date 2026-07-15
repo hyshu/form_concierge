@@ -205,7 +205,7 @@ class SurveyClientState extends State<SurveyClient> {
       final choicesByQuestion = await _client.survey.getChoicesByQuestion(
         questions,
       );
-      final turnstileSiteKey = survey.captchaEnabled
+      final turnstileSiteKey = survey.captchaRequired
           ? await _loadTurnstileSiteKey()
           : null;
 
@@ -388,7 +388,7 @@ class SurveyClientState extends State<SurveyClient> {
     // Require CAPTCHA before entering "submitting" so a missing check never
     // leaves the button stuck on a spinner.
     final captchaRequired =
-        survey.captchaEnabled &&
+        survey.captchaRequired &&
         _turnstileSiteKey != null &&
         _turnstileSiteKey!.isNotEmpty;
     final captchaToken = captchaRequired ? getTurnstileResponse() : null;
@@ -499,7 +499,7 @@ class SurveyClientState extends State<SurveyClient> {
                   errorMessage: _errorMessage,
                   locale: _locale,
                   isSubmitting: _viewState == SurveyViewState.submitting,
-                  turnstileSiteKey: survey.captchaEnabled
+                  turnstileSiteKey: survey.captchaRequired
                       ? _turnstileSiteKey
                       : null,
                   onAnswerChanged: _updateAnswer,

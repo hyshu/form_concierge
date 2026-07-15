@@ -1,6 +1,6 @@
 import type { ChoiceRow, Env, ProjectRow, QuestionRow, SurveyRow } from './types';
 import { getTurnstileSiteKey, isTurnstileConfigured } from './admin_settings';
-import { choiceToJson, projectToJson, questionToJson, surveyToJson, visibilityRuleToJson } from './serializers';
+import { choiceToJson, projectToJson, publicSurveyToJson, questionToJson, visibilityRuleToJson } from './serializers';
 import { HttpError, optionalCustomDomain, queryInChunks } from './utils';
 import {
   DEFAULT_FORM_CONTENT_LOCALE,
@@ -8,10 +8,11 @@ import {
   resolveFormContentLocale,
 } from './localization';
 import { getVisibilityRules } from './visibility_rules';
+import { captchaRequiredForSurvey } from './captcha';
 
 type PublicFormData = {
   project: ReturnType<typeof projectToJson>;
-  survey: ReturnType<typeof surveyToJson>;
+  survey: ReturnType<typeof publicSurveyToJson>;
   questions: ReturnType<typeof questionToJson>[];
   visibilityRules: ReturnType<typeof visibilityRuleToJson>[];
   choicesByQuestion: Record<string, ReturnType<typeof choiceToJson>[]>;
@@ -51,7 +52,7 @@ export async function renderPublicForm(request: Request, env: Env): Promise<Resp
   );
   // Only expose the site key when both keys are configured so CAPTCHA UI and
   // server-side verification stay in sync.
-  const turnstileSiteKey = data.survey.captchaEnabled && await isTurnstileConfigured(env)
+  const turnstileSiteKey = data.survey.captchaRequired
     ? await getTurnstileSiteKey(env)
     : null;
   return html(request, renderSurveyHtml(env, url, data, locale, turnstileSiteKey));
@@ -125,17 +126,23 @@ function selectSurveyByKey(
 }
 
 async function loadPublicFormData(env: Env, project: ProjectRow, survey: SurveyRow): Promise<PublicFormData> {
-  const questions = await env.DB.prepare(
-    `SELECT * FROM questions
+  const [questions, turnstileConfigured] = await Promise.all([
+    env.DB.prepare(
+      `SELECT * FROM questions
      WHERE survey_id = ? AND is_deleted = 0
      ORDER BY order_index`,
-  ).bind(survey.id).all<QuestionRow>();
+    ).bind(survey.id).all<QuestionRow>(),
+    isTurnstileConfigured(env),
+  ]);
   const visibilityRules = await getVisibilityRules(env.DB, survey.id);
   const choicesByQuestion = await loadChoicesByQuestion(env, questions.results);
 
   return {
     project: projectToJson(project),
-    survey: surveyToJson(survey),
+    survey: publicSurveyToJson(
+      survey,
+      captchaRequiredForSurvey(survey, turnstileConfigured),
+    ),
     questions: questions.results.map(questionToJson),
     visibilityRules: visibilityRules.map(visibilityRuleToJson),
     choicesByQuestion,

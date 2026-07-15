@@ -17,7 +17,7 @@ import {
   requiredInteger,
 } from './utils';
 import { normalizeDeviceInfo, normalizeMetadata } from './metadata';
-import { choiceToJson, parseChoiceIds, projectToJson, questionToJson, responseToJson, surveyToJson } from './serializers';
+import { choiceToJson, parseChoiceIds, projectToJson, publicSurveyToJson, questionToJson, responseToJson } from './serializers';
 import { getVisibilityRules, visibleQuestionIds } from './visibility_rules';
 import { DEFAULT_FORM_CONTENT_LOCALE, localizedTextFor } from './localization';
 import { sendResponseNotification } from './notification_settings';
@@ -26,8 +26,9 @@ import {
   assertOwnedMediaKeys,
   encodeFileKeysForStorage,
 } from './media';
-import { getTurnstileSecretKey } from './admin_settings';
+import { getTurnstileSecretKey, isTurnstileConfigured } from './admin_settings';
 import { verifyTurnstileToken } from './turnstile';
+import { captchaRequiredForSurvey, isCaptchaRequiredForSurvey } from './captcha';
 
 export async function getPublicProject(env: Env, slug: string): Promise<Response> {
   const project = await env.DB.prepare(
@@ -54,14 +55,22 @@ export async function getPublicProjectByDomain(env: Env, domainValue: string | n
 }
 
 async function publicProjectPayload(env: Env, project: ProjectRow) {
-  const rows = await env.DB.prepare(
-    `SELECT * FROM surveys
+  const [rows, turnstileConfigured] = await Promise.all([
+    env.DB.prepare(
+      `SELECT * FROM surveys
      WHERE project_id = ? AND status = 'published' AND web_enabled = 1
      ORDER BY updated_at DESC`,
-  ).bind(project.id).all<SurveyRow>();
+    ).bind(project.id).all<SurveyRow>(),
+    isTurnstileConfigured(env),
+  ]);
   return {
     project: projectToJson(project),
-    surveys: rows.results.filter(isAccepting).map(surveyToJson),
+    surveys: rows.results
+      .filter(isAccepting)
+      .map((survey) => publicSurveyToJson(
+        survey,
+        captchaRequiredForSurvey(survey, turnstileConfigured),
+      )),
   };
 }
 
@@ -107,17 +116,17 @@ export async function submitResponse(
 
   const body = await readJson(request);
 
-  if (survey.captcha_enabled === 1) {
+  if (await isCaptchaRequiredForSurvey(env, survey)) {
     const turnstileSecret = await getTurnstileSecretKey(env);
-    if (turnstileSecret) {
-      const captchaToken = typeof body.captchaToken === 'string' ? body.captchaToken : '';
-      if (!captchaToken) throw new HttpError(400, 'CAPTCHA token is required');
-      await verifyTurnstileToken(
-        captchaToken,
-        turnstileSecret,
-        request.headers.get('cf-connecting-ip'),
-      );
-    }
+    // isCaptchaRequiredForSurvey guarantees both Turnstile keys exist.
+    if (!turnstileSecret) throw new HttpError(500, 'CAPTCHA configuration changed');
+    const captchaToken = typeof body.captchaToken === 'string' ? body.captchaToken : '';
+    if (!captchaToken) throw new HttpError(400, 'CAPTCHA token is required');
+    await verifyTurnstileToken(
+      captchaToken,
+      turnstileSecret,
+      request.headers.get('cf-connecting-ip'),
+    );
   }
   const answers = Array.isArray(body.answers)
     ? body.answers.map(requireAnswerInput)

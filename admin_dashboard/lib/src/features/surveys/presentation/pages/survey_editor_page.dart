@@ -362,7 +362,7 @@ class SurveyEditorPage extends RearchConsumer {
     aiTranslateEnabled: aiTranslateEnabled,
     aiGenerationEnabled: aiTranslateEnabled,
     followUpEnabled: survey?.followUpEnabled ?? false,
-    captchaEnabled: survey?.captchaEnabled ?? true,
+    captchaEnabled: survey?.captchaConfigurationEnabled ?? true,
     onTranslate: aiTranslateEnabled ? _translateWithClient(client) : null,
     onSave:
         ({
@@ -397,7 +397,7 @@ class SurveyEditorPage extends RearchConsumer {
               followUpEnabled: followUpEnabled,
               followUpPrompt: followUpPrompt,
               clearFollowUpPrompt: followUpPrompt == null,
-              captchaEnabled: captchaEnabled,
+              captchaConfigurationEnabled: captchaEnabled,
               updatedAt: DateTime.now(),
             );
             await formManager.updateSurvey(updated);

@@ -241,7 +241,7 @@ public struct FormConciergeSurveyView: View {
         }
       }
       var captchaToken: String?
-      if survey.captchaEnabled {
+      if survey.captchaRequired {
         captchaToken = await captchaTokenProvider?()
         guard let token = captchaToken, !token.isEmpty else {
           errorMessage = FormContentMessages.text(activeLocale, "captchaRequired")

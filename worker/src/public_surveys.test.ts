@@ -77,6 +77,21 @@ test('submitResponse skips CAPTCHA when the survey disables it', async () => {
   assert.equal(response.status, 201);
 });
 
+test('submitResponse skips CAPTCHA when survey enables it but Turnstile is not configured', async () => {
+  const response = await submitResponse(
+    submitRequest({ answers: [] }),
+    submitEnv({
+      survey: acceptingSurvey({ captcha_enabled: 1 }),
+      questions: [],
+      turnstileConfigured: false,
+    }),
+    1,
+    anonymousContext(),
+    executionContext(),
+  );
+  assert.equal(response.status, 201);
+});
+
 test('submitResponse validates required and constrained answers', async () => {
   const cases: { questions: QuestionRow[]; body: unknown; message: string }[] = [
     {
@@ -217,6 +232,7 @@ type SubmitEnvOptions = {
   questions?: QuestionRow[];
   choiceIds?: number[];
   existingResponseByIdempotencyKey?: ResponseRow | null;
+  turnstileConfigured?: boolean;
 };
 
 function submitEnv(options: SubmitEnvOptions): Env {
@@ -234,7 +250,11 @@ function submitEnv(options: SubmitEnvOptions): Env {
     PUBLIC_FORM_ASSET_BASE_URL: 'https://assets.example.com',
     LOGIN_RATE_LIMITER: stubRateLimiter(),
     ANON_CREATE_RATE_LIMITER: stubRateLimiter(),
-    ...stubSecretsStoreEnv(),
+    ...stubSecretsStoreEnv(
+      options.turnstileConfigured === false
+        ? { turnstileSiteKey: null, turnstileSecretKey: null }
+        : undefined,
+    ),
   };
 }
 

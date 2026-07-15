@@ -115,11 +115,20 @@ public struct Survey: Codable, Identifiable, Sendable {
   public let status: SurveyStatus
   public let webEnabled: Bool
   public let followUpEnabled: Bool
-  public let captchaEnabled: Bool
+  private let captchaConfigurationEnabled: Bool
+  @available(*, deprecated, message: "Use captchaRequired for submission behavior.")
+  public var captchaEnabled: Bool { captchaConfigurationEnabled }
+  public let captchaRequired: Bool
   public let startsAt: Date?
   public let endsAt: Date?
   public let createdAt: Date
   public let updatedAt: Date
+
+  private enum CodingKeys: String, CodingKey {
+    case id, projectId, slug, titleTranslations, descriptionTranslations, status
+    case webEnabled, followUpEnabled, captchaEnabled, captchaRequired
+    case startsAt, endsAt, createdAt, updatedAt
+  }
 
   public init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -127,16 +136,39 @@ public struct Survey: Codable, Identifiable, Sendable {
     projectId = try container.decode(Int.self, forKey: .projectId)
     slug = try container.decode(String.self, forKey: .slug)
     titleTranslations = try container.decode(LocalizedText.self, forKey: .titleTranslations)
-    descriptionTranslations = try container.decode(LocalizedText.self, forKey: .descriptionTranslations)
+    descriptionTranslations = try container.decode(
+      LocalizedText.self, forKey: .descriptionTranslations)
     status = try container.decode(SurveyStatus.self, forKey: .status)
     webEnabled = try container.decode(Bool.self, forKey: .webEnabled)
     // Tolerate older workers that do not send these fields yet.
     followUpEnabled = try container.decodeIfPresent(Bool.self, forKey: .followUpEnabled) ?? false
-    captchaEnabled = try container.decodeIfPresent(Bool.self, forKey: .captchaEnabled) ?? true
+    let captchaEnabled = try container.decodeIfPresent(Bool.self, forKey: .captchaEnabled) ?? true
+    captchaConfigurationEnabled = captchaEnabled
+    // TODO(form-concierge-1.0.0): Remove the captchaEnabled fallback.
+    captchaRequired =
+      try container.decodeIfPresent(Bool.self, forKey: .captchaRequired) ?? captchaEnabled
     startsAt = try container.decodeIfPresent(Date.self, forKey: .startsAt)
     endsAt = try container.decodeIfPresent(Date.self, forKey: .endsAt)
     createdAt = try container.decode(Date.self, forKey: .createdAt)
     updatedAt = try container.decode(Date.self, forKey: .updatedAt)
+  }
+
+  public func encode(to encoder: Encoder) throws {
+    var container = encoder.container(keyedBy: CodingKeys.self)
+    try container.encode(id, forKey: .id)
+    try container.encode(projectId, forKey: .projectId)
+    try container.encode(slug, forKey: .slug)
+    try container.encode(titleTranslations, forKey: .titleTranslations)
+    try container.encode(descriptionTranslations, forKey: .descriptionTranslations)
+    try container.encode(status, forKey: .status)
+    try container.encode(webEnabled, forKey: .webEnabled)
+    try container.encode(followUpEnabled, forKey: .followUpEnabled)
+    try container.encode(captchaConfigurationEnabled, forKey: .captchaEnabled)
+    try container.encode(captchaRequired, forKey: .captchaRequired)
+    try container.encodeIfPresent(startsAt, forKey: .startsAt)
+    try container.encodeIfPresent(endsAt, forKey: .endsAt)
+    try container.encode(createdAt, forKey: .createdAt)
+    try container.encode(updatedAt, forKey: .updatedAt)
   }
 
   public func title(for locale: String) -> String {

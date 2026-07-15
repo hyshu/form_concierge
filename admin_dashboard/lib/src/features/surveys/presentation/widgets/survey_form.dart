@@ -78,7 +78,8 @@ class SurveyFormWidgetState extends State<SurveyForm> {
         widget.followUpEnabled ||
         (widget.existingSurvey?.followUpEnabled ?? false);
     _captchaEnabled =
-        widget.existingSurvey?.captchaEnabled ?? widget.captchaEnabled;
+        widget.existingSurvey?.captchaConfigurationEnabled ??
+        widget.captchaEnabled;
     if (widget.existingSurvey != null) {
       widget.controllers.populateFrom(widget.existingSurvey!);
     }
@@ -92,7 +93,7 @@ class SurveyFormWidgetState extends State<SurveyForm> {
         widget.existingSurvey != null) {
       widget.controllers.populateFrom(widget.existingSurvey!);
       _followUpEnabled = widget.existingSurvey!.followUpEnabled;
-      _captchaEnabled = widget.existingSurvey!.captchaEnabled;
+      _captchaEnabled = widget.existingSurvey!.captchaConfigurationEnabled;
     } else if (oldWidget.followUpEnabled != widget.followUpEnabled) {
       _followUpEnabled = widget.followUpEnabled;
     }

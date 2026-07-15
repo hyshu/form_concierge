@@ -332,7 +332,7 @@ class SurveyFormManager {
       status: SurveyStatus.draft,
       followUpEnabled: followUpEnabled,
       followUpPrompt: followUpPrompt,
-      captchaEnabled: captchaEnabled,
+      captchaConfigurationEnabled: captchaEnabled,
       createdAt: now,
       updatedAt: now,
     );

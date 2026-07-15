@@ -39,6 +39,13 @@ export function surveyToJson(row: SurveyRow) {
   };
 }
 
+export function publicSurveyToJson(row: SurveyRow, captchaRequired: boolean) {
+  return {
+    ...surveyToJson(row),
+    captchaRequired,
+  };
+}
+
 export function questionToJson(row: QuestionRow) {
   return {
     id: row.id,

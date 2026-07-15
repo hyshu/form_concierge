@@ -258,7 +258,7 @@ Configure the AI provider and its credentials in the admin dashboard before enab
 
 Turnstile runs JavaScript in a browser environment, so it cannot be implemented using only the Flutter UI. Supporting it directly would require an additional browser integration, such as a WebView package or native platform code. To avoid imposing that dependency and implementation choice on every application, this package does not include CAPTCHA UI.
 
-When CAPTCHA is enabled, the widget instead requests a verification token from the host application through `captchaTokenProvider`.
+When the API reports `captchaRequired: true`, the widget requests a verification token from the host application through `captchaTokenProvider`. The older `captchaEnabled` model property is deprecated for submission decisions because it represents the saved survey setting, not whether Turnstile is currently configured.
 
 ```dart
 FormConciergeSurvey(

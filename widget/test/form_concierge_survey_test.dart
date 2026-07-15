@@ -188,7 +188,9 @@ void main() {
     final client = _client((request) {
       return switch ((request.method, request.url.path)) {
         ('GET', '/api/projects/customer-feedback') => _json(
-          _projectJson(surveys: [_surveyJson(captchaEnabled: true)]),
+          _projectJson(
+            surveys: [_surveyJson(captchaEnabled: true, captchaRequired: true)],
+          ),
         ),
         ('GET', '/api/surveys/id/1/questions') => _json([]),
         ('GET', '/api/surveys/id/1/visibility-rules') => _json([]),
@@ -218,6 +220,48 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(submittedCaptchaToken, 'captcha-token');
+    expect(find.text('Thank you!'), findsOneWidget);
+  });
+
+  testWidgets('does not request CAPTCHA when it is enabled but not required', (
+    tester,
+  ) async {
+    var providerCalled = false;
+    final client = _client((request) {
+      return switch ((request.method, request.url.path)) {
+        ('GET', '/api/projects/customer-feedback') => _json(
+          _projectJson(
+            surveys: [
+              _surveyJson(captchaEnabled: true, captchaRequired: false),
+            ],
+          ),
+        ),
+        ('GET', '/api/surveys/id/1/questions') => _json([]),
+        ('GET', '/api/surveys/id/1/visibility-rules') => _json([]),
+        ('POST', '/api/anonymous/accounts') => _json(_anonymousSessionJson()),
+        ('POST', '/api/surveys/id/1/responses') => _json(_responseJson()),
+        _ => http.Response('Unexpected ${request.method} ${request.url}', 404),
+      };
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: FormConciergeSurvey(
+          client: client,
+          projectSlug: 'customer-feedback',
+          captchaTokenProvider: () async {
+            providerCalled = true;
+            return 'captcha-token';
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Submit'));
+    await tester.pumpAndSettle();
+
+    expect(providerCalled, isFalse);
     expect(find.text('Thank you!'), findsOneWidget);
   });
 
@@ -312,6 +356,7 @@ Map<String, Object?> _surveyJson({
   String slug = 'customer-feedback',
   bool followUpEnabled = false,
   bool captchaEnabled = false,
+  bool? captchaRequired,
 }) => {
   'id': id,
   'projectId': 1,
@@ -322,6 +367,7 @@ Map<String, Object?> _surveyJson({
   'webEnabled': true,
   'followUpEnabled': followUpEnabled,
   'captchaEnabled': captchaEnabled,
+  if (captchaRequired != null) 'captchaRequired': captchaRequired,
   'createdAt': '2026-06-22T10:00:00.000Z',
   'updatedAt': '2026-06-22T10:00:00.000Z',
   'startsAt': null,

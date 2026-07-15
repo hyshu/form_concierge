@@ -229,6 +229,17 @@ void main() {
     );
   });
 
+  test('captchaRequired overrides the persisted CAPTCHA setting', () {
+    final survey = Survey.fromJson({
+      ..._surveyJson(),
+      'captchaEnabled': true,
+      'captchaRequired': false,
+    });
+
+    expect(survey.captchaConfigurationEnabled, isTrue);
+    expect(survey.captchaRequired, isFalse);
+  });
+
   test('localized text falls back when a locale is not stored', () {
     const text = LocalizedText({'ja': '質問'});
 

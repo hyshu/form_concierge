@@ -112,6 +112,19 @@ final class FormConciergeSwiftUITests: XCTestCase {
     XCTAssertEqual(project.surveys.first?.projectId, 1)
   }
 
+  func testCaptchaRequiredOverridesPersistedCaptchaSetting() async throws {
+    var payload = projectJson()
+    var survey = surveyJson()
+    survey["captchaEnabled"] = true
+    survey["captchaRequired"] = false
+    payload["surveys"] = [survey]
+    let client = makeClient { _ in self.jsonResponse(payload) }
+
+    let project = try await client.project(slug: "customer-feedback")
+
+    XCTAssertFalse(try XCTUnwrap(project.surveys.first).captchaRequired)
+  }
+
   func testRepliesUsesBearerTokenAndResponseQuery() async throws {
     let client = makeClient { request in
       XCTAssertEqual(request.httpMethod, "GET")

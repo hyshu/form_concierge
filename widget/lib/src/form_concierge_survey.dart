@@ -285,7 +285,7 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
 
       final idempotencyKey = generateIdempotencyKey();
       Future<SurveyResponse?> submit() async {
-        final captchaRequired = _state.survey?.captchaEnabled == true;
+        final captchaRequired = _state.survey?.captchaRequired == true;
         final captchaToken = captchaRequired
             ? await widget.captchaTokenProvider?.call()
             : null;

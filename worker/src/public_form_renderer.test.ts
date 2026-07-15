@@ -112,6 +112,7 @@ test('renderPublicForm embeds Turnstile when CAPTCHA is enabled', async () => {
   assert.match(html, /data-theme="light"/);
   assert.match(html, /challenges\.cloudflare\.com\/turnstile/);
   assert.match(html, /"turnstileSiteKey":"[^"]+"/);
+  assert.match(html, /"captchaRequired":true/);
 });
 
 test('renderPublicForm omits Turnstile when CAPTCHA is disabled', async () => {
@@ -127,6 +128,7 @@ test('renderPublicForm omits Turnstile when CAPTCHA is disabled', async () => {
   assert.doesNotMatch(html, /cf-turnstile/);
   assert.doesNotMatch(html, /challenges\.cloudflare\.com\/turnstile/);
   assert.match(html, /"turnstileSiteKey":null/);
+  assert.match(html, /"captchaRequired":false/);
 });
 
 function htmlRequest(url: string, extraHeaders: Record<string, string> = {}): Request {
