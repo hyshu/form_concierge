@@ -9,6 +9,7 @@
     "types:worker": "wrangler types src/worker-env.d.ts --env-interface WorkerEnv --include-runtime false --strict-vars false",
     "check:worker-types": "wrangler types src/worker-env.d.ts --env-interface WorkerEnv --include-runtime false --strict-vars false --check",
     "typecheck": "npm run check:worker-types && tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
+    "typecheck:deployment": "node scripts/check-deployment-types.mjs",
     "test:typecheck": "tsc --noEmit -p tsconfig.test.json",
     "test": "tsx --test \"src/**/*.test.ts\" && tsx --test \"test/**/*.integration.test.ts\"",
     "d1:migrate:local": "wrangler d1 migrations apply form_concierge --local",

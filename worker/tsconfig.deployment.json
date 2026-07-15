@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/**/*.ts",
+    "../.tmp/worker-env.deployment.d.ts"
+  ],
+  "exclude": [
+    "src/**/*.test.ts",
+    "src/worker-env.d.ts"
+  ]
+}

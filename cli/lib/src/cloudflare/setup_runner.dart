@@ -149,18 +149,16 @@ class CloudflareSetupRunner {
         await _updateWrangler();
 
         stdout.writeln('==> Worker typecheck');
-        // wrangler.jsonc is deployment-specific and can temporarily contain
-        // legacy migration bindings, so its generated WorkerEnv intentionally
-        // differs from the checked-in template type file.
-        await runInherit('npx', [
-          'tsc',
-          '--noEmit',
+        // Validate source against bindings generated from this deployment's
+        // wrangler.jsonc. The checked-in WorkerEnv intentionally excludes
+        // temporary legacy migration bindings.
+        await runInherit('npm', [
+          'run',
+          'typecheck:deployment',
         ], workingDirectory: paths.worker);
-        await runInherit('npx', [
-          'tsc',
-          '--noEmit',
-          '-p',
-          'tsconfig.test.json',
+        await runInherit('npm', [
+          'run',
+          'test:typecheck',
         ], workingDirectory: paths.worker);
       } else {
         stdout.writeln('==> Worker: unchanged, deploy skipped');
