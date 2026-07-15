@@ -2,6 +2,32 @@
 
 Swift Package for embedding Form Concierge surveys in SwiftUI apps.
 
+See [`Examples/FormConciergeExample`](Examples/FormConciergeExample) for a complete iOS example with the same navigation flow as the Flutter mobile example, adaptive follow-up, and Turnstile.
+
+## Installation
+
+In Xcode, choose **File > Add Package Dependencies** and enter:
+
+```text
+https://github.com/hyshu/form_concierge.git
+```
+
+Until the next release is tagged, select the `main` branch. Then add the
+`FormConciergeSwiftUI` product to your app target. Existing tags through
+`v0.2.1` predate the root package manifest.
+
+For a `Package.swift` dependency:
+
+```swift
+.package(
+    url: "https://github.com/hyshu/form_concierge.git",
+    branch: "main"
+)
+```
+
+Then add `FormConciergeSwiftUI` to the target dependencies. After the next
+release, prefer a version-based requirement using that tag.
+
 ```swift
 let client = FormConciergeClient(baseURL: URL(string: "https://your-worker.example.com")!)
 
@@ -29,6 +55,8 @@ FormConciergeSurveyView(
     }
 )
 ```
+
+When `followUpEnabled` is enabled for the survey, the view automatically generates and displays optional adaptive follow-up questions after the main response is saved. Use `onFollowUpSubmitted` when the host needs the completed response payload.
 
 Pass `locale` to render survey content and SwiftUI package messages in that language. Locale identifiers are normalized, so `ja`, `ja_JP`, and `ja-JP` render Japanese. Region identifiers such as `en_US`, `ko_KR`, `de_DE`, `es_ES`, `fr_FR`, `it_IT`, `th_TH`, `tr_TR`, `zh_CN`, and `zh_TW` are also normalized to the supported survey locales (`en`, `ja`, `zh-Hans`, `zh-Hant`, `ko`, `de`, `es`, `fr`, `it`, `th`, `tr`).
 

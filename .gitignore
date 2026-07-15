@@ -27,6 +27,9 @@ worker/wrangler.jsonc
 
 # SwiftPM
 .build/
+.swiftpm/
+xcuserdata/
+*.xcuserstate
 
 # Local secrets
 **/config/passwords.yaml

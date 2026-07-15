@@ -2,7 +2,8 @@ import Foundation
 
 enum FormContentMessages {
   static func text(_ locale: String, _ key: String) -> String {
-    let localized = messages[normalizeFormContentLocale(locale)]
+    let localized =
+      messages[normalizeFormContentLocale(locale)]
       ?? messages[defaultFormContentLocale]
     return localized?[key]
       ?? messages[defaultFormContentLocale]?[key]
@@ -47,6 +48,12 @@ private let messages: [String: [String: String]] = [
     "loadingSurvey": "Loading survey...",
     "submit": "Submit",
     "submitting": "Submitting...",
+    "followUpLoading": "Preparing a few more questions...",
+    "followUpTitle": "A few more questions",
+    "followUpSubtitle":
+      "Based on your answers, we have a few optional follow-up questions. You can skip all of them and finish.",
+    "followUpContinue": "Finish",
+    "followUpSubmitting": "Finishing...",
     "captchaRequired": "Please complete the CAPTCHA before submitting.",
     "select": "Select",
     "thankYou": "Thank you!",
@@ -64,12 +71,17 @@ private let messages: [String: [String: String]] = [
     "photoUploadFailed": "Failed to upload image. Please try again.",
     "maxPhotosReached": "Maximum {count} photos",
     "removePhoto": "Remove",
-    "imageUploadUnsupported": "Image upload is available in the Flutter app."
+    "imageUploadUnsupported": "Image upload is available in the Flutter app.",
   ],
   "ja": [
     "loadingSurvey": "フォームを読み込んでいます...",
     "submit": "送信",
     "submitting": "送信中...",
+    "followUpLoading": "追加の質問を準備しています...",
+    "followUpTitle": "追加の質問",
+    "followUpSubtitle": "回答内容に基づいて、いくつか追加でお聞きします。すべて任意です。答えずにそのまま完了しても構いません。",
+    "followUpContinue": "完了する",
+    "followUpSubmitting": "完了処理中...",
     "captchaRequired": "送信する前に CAPTCHA を完了してください。",
     "select": "選択",
     "thankYou": "ありがとうございます",
@@ -87,7 +99,7 @@ private let messages: [String: [String: String]] = [
     "photoUploadFailed": "画像のアップロードに失敗しました。もう一度お試しください。",
     "maxPhotosReached": "最大 {count} 枚まで",
     "removePhoto": "削除",
-    "imageUploadUnsupported": "画像アップロードは Flutter アプリで利用できます。"
+    "imageUploadUnsupported": "画像アップロードは Flutter アプリで利用できます。",
   ],
   "zh-Hans": [
     "loadingSurvey": "正在加载表单...",
@@ -110,7 +122,7 @@ private let messages: [String: [String: String]] = [
     "photoUploadFailed": "图片上传失败，请重试。",
     "maxPhotosReached": "最多 {count} 张照片",
     "removePhoto": "移除",
-    "imageUploadUnsupported": "图片上传功能可在 Flutter 应用中使用。"
+    "imageUploadUnsupported": "图片上传功能可在 Flutter 应用中使用。",
   ],
   "zh-Hant": [
     "loadingSurvey": "正在載入表單...",
@@ -133,7 +145,7 @@ private let messages: [String: [String: String]] = [
     "photoUploadFailed": "圖片上傳失敗，請重試。",
     "maxPhotosReached": "最多 {count} 張照片",
     "removePhoto": "移除",
-    "imageUploadUnsupported": "圖片上傳功能可在 Flutter 應用程式中使用。"
+    "imageUploadUnsupported": "圖片上傳功能可在 Flutter 應用程式中使用。",
   ],
   "ko": [
     "loadingSurvey": "양식을 불러오는 중...",
@@ -156,7 +168,7 @@ private let messages: [String: [String: String]] = [
     "photoUploadFailed": "이미지 업로드에 실패했습니다. 다시 시도해 주세요.",
     "maxPhotosReached": "최대 {count}장까지",
     "removePhoto": "삭제",
-    "imageUploadUnsupported": "이미지 업로드는 Flutter 앱에서 사용할 수 있습니다."
+    "imageUploadUnsupported": "이미지 업로드는 Flutter 앱에서 사용할 수 있습니다.",
   ],
   "de": [
     "loadingSurvey": "Formular wird geladen...",
@@ -179,7 +191,7 @@ private let messages: [String: [String: String]] = [
     "photoUploadFailed": "Bild konnte nicht hochgeladen werden. Bitte versuchen Sie es erneut.",
     "maxPhotosReached": "Maximal {count} Fotos",
     "removePhoto": "Entfernen",
-    "imageUploadUnsupported": "Der Bild-Upload ist in der Flutter-App verfügbar."
+    "imageUploadUnsupported": "Der Bild-Upload ist in der Flutter-App verfügbar.",
   ],
   "es": [
     "loadingSurvey": "Cargando formulario...",
@@ -202,7 +214,7 @@ private let messages: [String: [String: String]] = [
     "photoUploadFailed": "No se pudo subir la imagen. Inténtelo de nuevo.",
     "maxPhotosReached": "Máximo {count} fotos",
     "removePhoto": "Eliminar",
-    "imageUploadUnsupported": "La subida de imágenes está disponible en la aplicación Flutter."
+    "imageUploadUnsupported": "La subida de imágenes está disponible en la aplicación Flutter.",
   ],
   "fr": [
     "loadingSurvey": "Chargement du formulaire...",
@@ -225,7 +237,7 @@ private let messages: [String: [String: String]] = [
     "photoUploadFailed": "Échec de l'envoi de l'image. Veuillez réessayer.",
     "maxPhotosReached": "Maximum {count} photos",
     "removePhoto": "Supprimer",
-    "imageUploadUnsupported": "L'envoi d'images est disponible dans l'application Flutter."
+    "imageUploadUnsupported": "L'envoi d'images est disponible dans l'application Flutter.",
   ],
   "it": [
     "loadingSurvey": "Caricamento del modulo...",
@@ -248,7 +260,7 @@ private let messages: [String: [String: String]] = [
     "photoUploadFailed": "Impossibile caricare l'immagine. Riprova.",
     "maxPhotosReached": "Massimo {count} foto",
     "removePhoto": "Rimuovi",
-    "imageUploadUnsupported": "Il caricamento delle immagini è disponibile nell'app Flutter."
+    "imageUploadUnsupported": "Il caricamento delle immagini è disponibile nell'app Flutter.",
   ],
   "th": [
     "loadingSurvey": "กำลังโหลดแบบฟอร์ม...",
@@ -271,7 +283,7 @@ private let messages: [String: [String: String]] = [
     "photoUploadFailed": "อัปโหลดรูปภาพไม่สำเร็จ โปรดลองอีกครั้ง",
     "maxPhotosReached": "สูงสุด {count} รูป",
     "removePhoto": "ลบ",
-    "imageUploadUnsupported": "การอัปโหลดรูปภาพใช้ได้ในแอป Flutter"
+    "imageUploadUnsupported": "การอัปโหลดรูปภาพใช้ได้ในแอป Flutter",
   ],
   "tr": [
     "loadingSurvey": "Form yükleniyor...",
@@ -294,6 +306,6 @@ private let messages: [String: [String: String]] = [
     "photoUploadFailed": "Görsel yüklenemedi. Lütfen tekrar deneyin.",
     "maxPhotosReached": "En fazla {count} fotoğraf",
     "removePhoto": "Kaldır",
-    "imageUploadUnsupported": "Görsel yükleme Flutter uygulamasında kullanılabilir."
-  ]
+    "imageUploadUnsupported": "Görsel yükleme Flutter uygulamasında kullanılabilir.",
+  ],
 ]

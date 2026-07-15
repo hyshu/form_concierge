@@ -106,6 +106,13 @@ public struct PublicProject: Codable, Sendable {
   public let surveys: [Survey]
 }
 
+public struct PublicConfig: Codable, Sendable {
+  public let passwordResetEnabled: Bool
+  public let requireEmailVerification: Bool
+  public let aiGenerationEnabled: Bool
+  public let turnstileSiteKey: String?
+}
+
 public struct Survey: Codable, Identifiable, Sendable {
   public let id: Int
   public let projectId: Int
@@ -310,6 +317,78 @@ public struct MediaUpload: Codable, Sendable {
   public let size: Int
 }
 
+public enum FollowUpStatus: String, Codable, Sendable {
+  case skipped
+  case pending
+  case completed
+}
+
+public struct FollowUpChoice: Codable, Identifiable, Sendable {
+  public let id: String
+  public let label: String
+}
+
+public struct FollowUpAnswer: Codable, Sendable {
+  public let textValue: String?
+  public let selectedChoiceIds: [String]
+  public let fileKeys: [String]
+
+  public init(
+    textValue: String? = nil,
+    selectedChoiceIds: [String] = [],
+    fileKeys: [String] = []
+  ) {
+    self.textValue = textValue
+    self.selectedChoiceIds = selectedChoiceIds
+    self.fileKeys = fileKeys
+  }
+}
+
+public struct FollowUpSubmissionAnswer: Codable, Sendable {
+  public let id: String
+  public let textValue: String?
+  public let selectedChoiceIds: [String]
+  public let fileKeys: [String]
+
+  public init(
+    id: String,
+    textValue: String? = nil,
+    selectedChoiceIds: [String] = [],
+    fileKeys: [String] = []
+  ) {
+    self.id = id
+    self.textValue = textValue
+    self.selectedChoiceIds = selectedChoiceIds
+    self.fileKeys = fileKeys
+  }
+}
+
+public struct FollowUpItem: Codable, Identifiable, Sendable {
+  public let id: String
+  public let type: QuestionType
+  public let text: String
+  public let required: Bool
+  public let placeholder: String?
+  public let maxFiles: Int?
+  public let choices: [FollowUpChoice]
+  public let answer: FollowUpAnswer?
+}
+
+public struct FollowUp: Codable, Sendable {
+  public let version: Int
+  public let status: FollowUpStatus
+  public let generatedAt: Date
+  public let completedAt: Date?
+  public let locale: String
+  public let items: [FollowUpItem]
+}
+
+public struct FollowUpGenerateResult: Codable, Sendable {
+  public let needed: Bool
+  public let followUp: FollowUp
+  public let error: String?
+}
+
 /// Image payload for host-side processing before upload.
 public struct SurveyImagePayload: Sendable {
   public let data: Data
@@ -336,6 +415,27 @@ public struct SurveyResponse: Codable, Identifiable, Sendable {
   public let submittedAt: Date
   public let deviceInfo: DeviceInfo?
   public let metadata: [String: FormConciergeMetadataValue]?
+  public let followUp: FollowUp?
+  public let replyCount: Int
+
+  private enum CodingKeys: String, CodingKey {
+    case id, surveyId, anonymousId, anonymousAccountId, submittedAt
+    case deviceInfo, metadata, followUp, replyCount
+  }
+
+  public init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    id = try container.decode(Int.self, forKey: .id)
+    surveyId = try container.decode(Int.self, forKey: .surveyId)
+    anonymousId = try container.decodeIfPresent(String.self, forKey: .anonymousId)
+    anonymousAccountId = try container.decodeIfPresent(String.self, forKey: .anonymousAccountId)
+    submittedAt = try container.decode(Date.self, forKey: .submittedAt)
+    deviceInfo = try container.decodeIfPresent(DeviceInfo.self, forKey: .deviceInfo)
+    metadata = try container.decodeIfPresent(
+      [String: FormConciergeMetadataValue].self, forKey: .metadata)
+    followUp = try container.decodeIfPresent(FollowUp.self, forKey: .followUp)
+    replyCount = try container.decodeIfPresent(Int.self, forKey: .replyCount) ?? 0
+  }
 }
 
 public struct AnonymousAccount: Codable, Identifiable, Sendable {

@@ -18,6 +18,10 @@ Survey forms backed by Cloudflare Workers and D1. Respondents use generated anon
 The Dart client, Flutter widget, and setup CLI are pub.dev packages. Apps and
 deployment templates remain source distributions.
 
+The SwiftUI package can be added with Swift Package Manager from
+`https://github.com/hyshu/form_concierge.git`. The root `Package.swift` exposes
+the `FormConciergeSwiftUI` library product.
+
 ## Package Release
 
 Publish the client before the widget because `form_concierge` depends on

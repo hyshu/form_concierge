@@ -71,6 +71,10 @@ public actor FormConciergeClient {
     }
   }
 
+  public func publicConfig() async throws -> PublicConfig {
+    try await request("GET", "/api/config")
+  }
+
   public func project(domain: String) async throws -> PublicProject {
     let encodedDomain =
       domain.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? domain
@@ -117,6 +121,30 @@ public actor FormConciergeClient {
     )
   }
 
+  public func generateFollowUp(
+    responseId: Int,
+    locale: String? = nil
+  ) async throws -> FollowUpGenerateResult {
+    try await request(
+      "POST",
+      "/api/responses/\(responseId)/follow-up/generate",
+      body: FollowUpGeneratePayload(locale: locale),
+      bearerToken: anonymousToken
+    )
+  }
+
+  public func saveFollowUp(
+    responseId: Int,
+    answers: [FollowUpSubmissionAnswer]
+  ) async throws -> SurveyResponse {
+    try await request(
+      "PUT",
+      "/api/responses/\(responseId)/follow-up",
+      body: SaveFollowUpPayload(answers: answers),
+      bearerToken: anonymousToken
+    )
+  }
+
   /// Upload an image for the current anonymous account (creates one if needed).
   public func uploadMedia(data: Data, contentType: String) async throws -> MediaUpload {
     if anonymousToken == nil {
@@ -137,7 +165,7 @@ public actor FormConciergeClient {
     }
     if !(200..<300).contains(http.statusCode) {
       if let payload = try? decoder.decode(APIErrorPayload.self, from: responseData),
-         !payload.error.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        !payload.error.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
       {
         throw FormConciergeError.api(status: http.statusCode, message: payload.error)
       }
@@ -191,7 +219,7 @@ public actor FormConciergeClient {
       // Proxy HTML 502s and other non-JSON bodies must not become DecodingError
       // (which drops status/message). Match the Dart client's ApiException fallback.
       if let payload = try? decoder.decode(APIErrorPayload.self, from: data),
-         !payload.error.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        !payload.error.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
       {
         throw FormConciergeError.api(
           status: http.statusCode,
@@ -232,6 +260,14 @@ private struct SubmitResponsePayload: Encodable {
   let metadata: [String: FormConciergeMetadataValue]?
   let idempotencyKey: String
   let captchaToken: String?
+}
+
+private struct FollowUpGeneratePayload: Encodable {
+  let locale: String?
+}
+
+private struct SaveFollowUpPayload: Encodable {
+  let answers: [FollowUpSubmissionAnswer]
 }
 
 private struct LatestReplyPayload: Decodable {

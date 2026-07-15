@@ -112,6 +112,24 @@ final class FormConciergeSwiftUITests: XCTestCase {
     XCTAssertEqual(project.surveys.first?.projectId, 1)
   }
 
+  func testPublicConfigLoadsTurnstileSiteKey() async throws {
+    let client = makeClient { request in
+      XCTAssertEqual(request.httpMethod, "GET")
+      XCTAssertEqual(request.url?.path, "/api/config")
+      return self.jsonResponse([
+        "passwordResetEnabled": false,
+        "requireEmailVerification": false,
+        "aiGenerationEnabled": true,
+        "turnstileSiteKey": "site-key",
+      ])
+    }
+
+    let config = try await client.publicConfig()
+
+    XCTAssertTrue(config.aiGenerationEnabled)
+    XCTAssertEqual(config.turnstileSiteKey, "site-key")
+  }
+
   func testCaptchaRequiredOverridesPersistedCaptchaSetting() async throws {
     var payload = projectJson()
     var survey = surveyJson()
@@ -237,6 +255,51 @@ final class FormConciergeSwiftUITests: XCTestCase {
         "POST /api/anonymous/accounts",
         "POST /api/media",
       ])
+  }
+
+  func testGenerateFollowUpPostsLocaleAndDecodesItems() async throws {
+    let client = makeClient { request in
+      XCTAssertEqual(request.httpMethod, "POST")
+      XCTAssertEqual(request.url?.path, "/api/responses/99/follow-up/generate")
+      XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer anon-token")
+      XCTAssertEqual(try XCTUnwrap(self.jsonBody(request))["locale"] as? String, "ja")
+      return self.jsonResponse([
+        "needed": true,
+        "followUp": self.followUpJson(status: "pending"),
+        "error": nil,
+      ])
+    }
+    await client.setAnonymousToken("anon-token")
+
+    let result = try await client.generateFollowUp(responseId: 99, locale: "ja")
+
+    XCTAssertTrue(result.needed)
+    XCTAssertEqual(result.followUp.status, .pending)
+    XCTAssertEqual(result.followUp.items.first?.text, "もう少し詳しく教えてください")
+  }
+
+  func testSaveFollowUpEncodesAnswersAndDecodesCompletedResponse() async throws {
+    let client = makeClient { request in
+      XCTAssertEqual(request.httpMethod, "PUT")
+      XCTAssertEqual(request.url?.path, "/api/responses/99/follow-up")
+      XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer anon-token")
+      let body = try XCTUnwrap(self.jsonBody(request))
+      let answers = try XCTUnwrap(body["answers"] as? [[String: Any]])
+      XCTAssertEqual(answers.first?["id"] as? String, "detail")
+      XCTAssertEqual(answers.first?["textValue"] as? String, "詳しい内容")
+      var response = self.responseJson()
+      response["followUp"] = self.followUpJson(status: "completed")
+      return self.jsonResponse(response)
+    }
+    await client.setAnonymousToken("anon-token")
+
+    let response = try await client.saveFollowUp(
+      responseId: 99,
+      answers: [FollowUpSubmissionAnswer(id: "detail", textValue: "詳しい内容")]
+    )
+
+    XCTAssertEqual(response.followUp?.status, .completed)
+    XCTAssertEqual(response.replyCount, 0)
   }
 
   func testSubmitResponseEncodesImageFileKeys() async throws {
@@ -516,6 +579,30 @@ final class FormConciergeSwiftUITests: XCTestCase {
       "submittedAt": "2026-06-22T10:02:00Z",
       "deviceInfo": NSNull(),
       "metadata": NSNull(),
+    ]
+  }
+
+  private func followUpJson(status: String) -> [String: Any?] {
+    [
+      "version": 1,
+      "status": status,
+      "generatedAt": "2026-06-22T10:03:00Z",
+      "completedAt": status == "completed" ? "2026-06-22T10:04:00Z" : nil,
+      "locale": "ja",
+      "items": [
+        [
+          "id": "detail",
+          "type": "textMultiLine",
+          "text": "もう少し詳しく教えてください",
+          "required": false,
+          "placeholder": "詳細",
+          "maxFiles": nil,
+          "choices": [],
+          "answer": status == "completed"
+            ? ["textValue": "詳しい内容", "selectedChoiceIds": [], "fileKeys": []]
+            : nil,
+        ]
+      ],
     ]
   }
 }

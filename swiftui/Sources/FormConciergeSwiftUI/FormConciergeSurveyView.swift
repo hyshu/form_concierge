@@ -3,9 +3,9 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 #if canImport(UIKit)
-import UIKit
+  import UIKit
 #elseif canImport(AppKit)
-import AppKit
+  import AppKit
 #endif
 
 public struct FormConciergeSurveyView: View {
@@ -19,6 +19,7 @@ public struct FormConciergeSurveyView: View {
   private let metadata: [String: FormConciergeMetadataValue]?
   private let onAnonymousSession: ((AnonymousSession) -> Void)?
   private let onResponseSubmitted: ((SurveyResponse) -> Void)?
+  private let onFollowUpSubmitted: ((SurveyResponse) -> Void)?
   private let onSubmitted: (() -> Void)?
   /// Called when the user taps the completion-screen "Done" button.
   private let onDone: (() -> Void)?
@@ -43,8 +44,12 @@ public struct FormConciergeSurveyView: View {
   @State private var answers: [Int: SurveyAnswerValue] = [:]
   @State private var isLoading = true
   @State private var isSubmitting = false
+  @State private var isGeneratingFollowUp = false
   @State private var errorMessage: String?
   @State private var completed = false
+  @State private var submittedResponse: SurveyResponse?
+  @State private var followUp: FollowUp?
+  @State private var followUpAnswers: [String: FollowUpAnswerValue] = [:]
 
   public init(
     client: FormConciergeClient,
@@ -57,6 +62,7 @@ public struct FormConciergeSurveyView: View {
     metadata: [String: FormConciergeMetadataValue]? = nil,
     onAnonymousSession: ((AnonymousSession) -> Void)? = nil,
     onResponseSubmitted: ((SurveyResponse) -> Void)? = nil,
+    onFollowUpSubmitted: ((SurveyResponse) -> Void)? = nil,
     onSubmitted: (() -> Void)? = nil,
     onDone: (() -> Void)? = nil,
     processImage: ProcessSurveyImage? = nil,
@@ -72,6 +78,7 @@ public struct FormConciergeSurveyView: View {
     self.metadata = metadata
     self.onAnonymousSession = onAnonymousSession
     self.onResponseSubmitted = onResponseSubmitted
+    self.onFollowUpSubmitted = onFollowUpSubmitted
     self.onSubmitted = onSubmitted
     self.onDone = onDone
     self.processImage = processImage
@@ -82,6 +89,21 @@ public struct FormConciergeSurveyView: View {
     Group {
       if isLoading {
         ProgressView(FormContentMessages.text(activeLocale, "loadingSurvey"))
+      } else if isGeneratingFollowUp {
+        ProgressView(FormContentMessages.text(activeLocale, "followUpLoading"))
+      } else if let followUp {
+        FollowUpView(
+          client: client,
+          followUp: followUp,
+          answers: followUpAnswers,
+          locale: activeLocale,
+          isSubmitting: isSubmitting,
+          errorMessage: errorMessage,
+          ensureAuthenticated: ensureAuthenticated,
+          processImage: processImage,
+          onChange: { followUpAnswers[$0] = $1 },
+          onSubmit: { Task { await submitFollowUp() } }
+        )
       } else if completed, let survey {
         VStack(spacing: 16) {
           Image(systemName: "checkmark.circle.fill")
@@ -137,12 +159,14 @@ public struct FormConciergeSurveyView: View {
             Button {
               Task { await submit() }
             } label: {
-              if isSubmitting {
-                ProgressView(FormContentMessages.text(activeLocale, "submitting"))
-              } else {
+              ZStack {
                 Text(FormContentMessages.text(activeLocale, "submit"))
-                  .frame(maxWidth: .infinity)
+                  .opacity(isSubmitting ? 0 : 1)
+                if isSubmitting {
+                  ProgressView(FormContentMessages.text(activeLocale, "submitting"))
+                }
               }
+              .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
             .disabled(isSubmitting)
@@ -255,9 +279,68 @@ public struct FormConciergeSurveyView: View {
         metadata: metadata,
         captchaToken: captchaToken
       )
-      completed = true
+      submittedResponse = response
       onResponseSubmitted?(response)
       onSubmitted?()
+      if survey.followUpEnabled {
+        await startFollowUp(responseId: response.id)
+      } else {
+        completed = true
+      }
+    } catch {
+      errorMessage = error.localizedDescription
+    }
+  }
+
+  private func startFollowUp(responseId: Int) async {
+    isGeneratingFollowUp = true
+    defer { isGeneratingFollowUp = false }
+    do {
+      let result = try await client.generateFollowUp(responseId: responseId, locale: activeLocale)
+      if result.needed, result.followUp.status == .pending, !result.followUp.items.isEmpty {
+        followUp = result.followUp
+        followUpAnswers = [:]
+      } else {
+        completed = true
+      }
+    } catch {
+      completed = true
+    }
+  }
+
+  private func submitFollowUp() async {
+    guard let responseId = submittedResponse?.id, let followUp else {
+      completed = true
+      return
+    }
+    isSubmitting = true
+    errorMessage = nil
+    defer { isSubmitting = false }
+
+    let payload = followUp.items.map { item in
+      switch followUpAnswers[item.id] {
+      case .text(let text):
+        FollowUpSubmissionAnswer(
+          id: item.id,
+          textValue: text.trimmingCharacters(in: .whitespacesAndNewlines)
+        )
+      case .single(let choiceId):
+        FollowUpSubmissionAnswer(id: item.id, selectedChoiceIds: [choiceId])
+      case .multiple(let choiceIds):
+        FollowUpSubmissionAnswer(id: item.id, selectedChoiceIds: Array(choiceIds))
+      case .images(let fileKeys):
+        FollowUpSubmissionAnswer(id: item.id, fileKeys: fileKeys)
+      case nil:
+        FollowUpSubmissionAnswer(id: item.id)
+      }
+    }
+
+    do {
+      let response = try await client.saveFollowUp(responseId: responseId, answers: payload)
+      submittedResponse = response
+      self.followUp = nil
+      completed = true
+      onFollowUpSubmitted?(response)
     } catch {
       errorMessage = error.localizedDescription
     }
@@ -361,6 +444,13 @@ public enum SurveyAnswerValue: Equatable, Sendable {
   }
 }
 
+private enum FollowUpAnswerValue: Equatable, Sendable {
+  case text(String)
+  case single(String)
+  case multiple(Set<String>)
+  case images([String])
+}
+
 private func resolveVisibleQuestions(
   questions: [Question],
   rules: [QuestionVisibilityRule],
@@ -455,6 +545,156 @@ private func matchesRule(
     }
   case .imageUpload:
     return hasAnswer
+  }
+}
+
+private struct FollowUpView: View {
+  let client: FormConciergeClient
+  let followUp: FollowUp
+  let answers: [String: FollowUpAnswerValue]
+  let locale: String
+  let isSubmitting: Bool
+  let errorMessage: String?
+  let ensureAuthenticated: () async throws -> Void
+  let processImage: ProcessSurveyImage?
+  let onChange: (String, FollowUpAnswerValue) -> Void
+  let onSubmit: () -> Void
+
+  var body: some View {
+    ScrollView {
+      VStack(alignment: .leading, spacing: 24) {
+        VStack(alignment: .leading, spacing: 8) {
+          Text(FormContentMessages.text(locale, "followUpTitle"))
+            .font(.title2.bold())
+          Text(FormContentMessages.text(locale, "followUpSubtitle"))
+            .foregroundStyle(.secondary)
+        }
+
+        ForEach(followUp.items) { item in
+          FollowUpItemView(
+            client: client,
+            item: item,
+            value: answers[item.id],
+            locale: locale,
+            ensureAuthenticated: ensureAuthenticated,
+            processImage: processImage,
+            onChange: { onChange(item.id, $0) }
+          )
+        }
+
+        if let errorMessage {
+          Text(errorMessage)
+            .foregroundStyle(.red)
+        }
+
+        Button(action: onSubmit) {
+          ZStack {
+            Text(FormContentMessages.text(locale, "followUpContinue"))
+              .opacity(isSubmitting ? 0 : 1)
+            if isSubmitting {
+              ProgressView(FormContentMessages.text(locale, "followUpSubmitting"))
+            }
+          }
+          .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.borderedProminent)
+        .disabled(isSubmitting)
+      }
+      .padding()
+    }
+  }
+}
+
+private struct FollowUpItemView: View {
+  let client: FormConciergeClient
+  let item: FollowUpItem
+  let value: FollowUpAnswerValue?
+  let locale: String
+  let ensureAuthenticated: () async throws -> Void
+  let processImage: ProcessSurveyImage?
+  let onChange: (FollowUpAnswerValue) -> Void
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 12) {
+      Text(item.text)
+        .font(.headline)
+
+      switch item.type {
+      case .textSingle:
+        TextField(item.placeholder ?? "", text: textBinding)
+          .textFieldStyle(.roundedBorder)
+      case .textMultiLine:
+        TextEditor(text: textBinding)
+          .frame(minHeight: 120)
+          .overlay(RoundedRectangle(cornerRadius: 8).stroke(.quaternary))
+      case .singleChoice:
+        ForEach(item.choices) { choice in
+          Button {
+            onChange(.single(choice.id))
+          } label: {
+            HStack {
+              Image(systemName: singleValue == choice.id ? "circle.inset.filled" : "circle")
+              Text(choice.label)
+              Spacer()
+            }
+          }
+          .buttonStyle(.plain)
+        }
+      case .multipleChoice:
+        ForEach(item.choices) { choice in
+          Toggle(
+            choice.label,
+            isOn: Binding(
+              get: { multipleValue.contains(choice.id) },
+              set: { selected in
+                var next = multipleValue
+                if selected {
+                  next.insert(choice.id)
+                } else {
+                  next.remove(choice.id)
+                }
+                onChange(.multiple(next))
+              }
+            )
+          )
+        }
+      case .imageUpload:
+        ImageUploadQuestionView(
+          client: client,
+          maxFiles: item.maxFiles ?? 1,
+          fileKeys: imageKeys,
+          locale: locale,
+          ensureAuthenticated: ensureAuthenticated,
+          processImage: processImage,
+          onChange: { onChange(.images($0)) }
+        )
+      }
+    }
+  }
+
+  private var textBinding: Binding<String> {
+    Binding(
+      get: {
+        if case .text(let text) = value { return text }
+        return ""
+      },
+      set: { onChange(.text($0)) }
+    )
+  }
+
+  private var singleValue: String? {
+    if case .single(let choiceId) = value { return choiceId }
+    return nil
+  }
+
+  private var multipleValue: Set<String> {
+    if case .multiple(let choiceIds) = value { return choiceIds }
+    return []
+  }
+
+  private var imageKeys: [String] {
+    if case .images(let keys) = value { return keys }
+    return []
   }
 }
 
@@ -726,31 +966,31 @@ private struct ImageUploadQuestionView: View {
     if allowed.contains(contentType) {
       return (data, contentType)
     }
-#if canImport(UIKit)
-    if let image = UIImage(data: data), let jpeg = image.jpegData(compressionQuality: 0.85) {
-      return (jpeg, "image/jpeg")
-    }
-#elseif canImport(AppKit)
-    if let image = NSImage(data: data),
-       let tiff = image.tiffRepresentation,
-       let rep = NSBitmapImageRep(data: tiff),
-       let jpeg = rep.representation(using: .jpeg, properties: [.compressionFactor: 0.85])
-    {
-      return (jpeg, "image/jpeg")
-    }
-#endif
+    #if canImport(UIKit)
+      if let image = UIImage(data: data), let jpeg = image.jpegData(compressionQuality: 0.85) {
+        return (jpeg, "image/jpeg")
+      }
+    #elseif canImport(AppKit)
+      if let image = NSImage(data: data),
+        let tiff = image.tiffRepresentation,
+        let rep = NSBitmapImageRep(data: tiff),
+        let jpeg = rep.representation(using: .jpeg, properties: [.compressionFactor: 0.85])
+      {
+        return (jpeg, "image/jpeg")
+      }
+    #endif
     return (data, "image/jpeg")
   }
 
   private func platformImage(from data: Data) -> Image? {
-#if canImport(UIKit)
-    guard let uiImage = UIImage(data: data) else { return nil }
-    return Image(uiImage: uiImage)
-#elseif canImport(AppKit)
-    guard let nsImage = NSImage(data: data) else { return nil }
-    return Image(nsImage: nsImage)
-#else
-    return nil
-#endif
+    #if canImport(UIKit)
+      guard let uiImage = UIImage(data: data) else { return nil }
+      return Image(uiImage: uiImage)
+    #elseif canImport(AppKit)
+      guard let nsImage = NSImage(data: data) else { return nil }
+      return Image(nsImage: nsImage)
+    #else
+      return nil
+    #endif
   }
 }
