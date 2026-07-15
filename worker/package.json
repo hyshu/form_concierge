@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "node scripts/check-deploy.mjs && wrangler deploy",
-    "types:worker": "wrangler types src/worker-env.d.ts --env-interface WorkerEnv --include-runtime false --strict-vars false",
-    "check:worker-types": "wrangler types src/worker-env.d.ts --env-interface WorkerEnv --include-runtime false --strict-vars false --check",
+    "types:worker": "node scripts/check-worker-types.mjs --write",
+    "check:worker-types": "node scripts/check-worker-types.mjs",
     "typecheck": "npm run check:worker-types && tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
     "typecheck:deployment": "node scripts/check-deployment-types.mjs",
     "test:typecheck": "tsc --noEmit -p tsconfig.test.json",
