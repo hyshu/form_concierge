@@ -9,7 +9,6 @@ class CloudflareSetupOptions {
     this.databaseName,
     this.workerName,
     this.r2BucketName,
-    this.r2Binding = 'MEDIA_BUCKET',
     this.apiUrl,
     this.adminProject,
     this.deployAdminPages,
@@ -31,7 +30,6 @@ class CloudflareSetupOptions {
   String? databaseName;
   String? workerName;
   String? r2BucketName;
-  String r2Binding;
   String? apiUrl;
   String? adminProject;
 

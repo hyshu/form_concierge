@@ -59,7 +59,6 @@ class CloudflareDeploymentCommand extends Command<int> {
       ..addOption('database-name', help: 'D1 database name.')
       ..addOption('worker-name', help: 'Worker name.')
       ..addOption('r2-bucket-name', help: 'R2 bucket for media uploads.')
-      ..addOption('r2-binding', help: 'Worker R2 binding name.')
       ..addOption('api-url', help: 'Public Worker API URL.')
       ..addOption('admin-project', help: 'Pages project for admin.')
       ..addFlag(
@@ -187,7 +186,6 @@ class CloudflareDeploymentCommand extends Command<int> {
       databaseName: results['database-name'] as String?,
       workerName: results['worker-name'] as String?,
       r2BucketName: results['r2-bucket-name'] as String?,
-      r2Binding: (results['r2-binding'] as String?) ?? 'MEDIA_BUCKET',
       apiUrl: results['api-url'] as String?,
       adminProject: results['admin-project'] as String?,
       deployAdminPages: deployAdminPages,
@@ -203,7 +201,6 @@ class CloudflareDeploymentCommand extends Command<int> {
         'database-name',
         'worker-name',
         'r2-bucket-name',
-        'r2-binding',
         'api-url',
         'admin-project',
         'admin-pages',

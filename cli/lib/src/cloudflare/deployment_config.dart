@@ -16,7 +16,6 @@ class CloudflareDeploymentConfig {
     this.databaseBinding = 'DB',
     this.databaseName,
     this.databaseId,
-    this.r2Binding = 'MEDIA_BUCKET',
     this.r2BucketName,
     this.secretsStoreName,
     this.secretsStoreId,
@@ -38,7 +37,6 @@ class CloudflareDeploymentConfig {
   String databaseBinding;
   String? databaseName;
   String? databaseId;
-  String r2Binding;
   String? r2BucketName;
   String? secretsStoreName;
   String? secretsStoreId;
@@ -87,7 +85,6 @@ class CloudflareDeploymentConfig {
       databaseBinding: _string(d1['binding']) ?? 'DB',
       databaseName: _string(d1['databaseName']),
       databaseId: _string(d1['databaseId']),
-      r2Binding: _string(r2['binding']) ?? 'MEDIA_BUCKET',
       r2BucketName: _string(r2['bucketName']),
       secretsStoreName: _string(secretsStore['name']),
       secretsStoreId: _string(secretsStore['storeId']),
@@ -118,7 +115,7 @@ class CloudflareDeploymentConfig {
         if (databaseId != null) 'databaseId': databaseId,
       },
       'r2': {
-        'binding': r2Binding,
+        'binding': 'MEDIA_BUCKET',
         if (r2BucketName != null) 'bucketName': r2BucketName,
       },
       'secretsStore': {

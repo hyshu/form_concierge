@@ -336,9 +336,6 @@ class CloudflareSetupRunner {
     options.apiUrl ??= _deployment.workerUrl;
     options.databaseName ??= _deployment.databaseName;
     options.databaseId ??= _deployment.databaseId;
-    options.r2Binding = options.r2Binding == 'MEDIA_BUCKET'
-        ? _deployment.r2Binding
-        : options.r2Binding;
     options.r2BucketName ??= _deployment.r2BucketName;
     options.adminProject ??= _deployment.adminPagesProject;
     options.deployAdminPages ??= _deployment.deployAdminPages;
@@ -356,7 +353,6 @@ class CloudflareSetupRunner {
       ..databaseBinding = 'DB'
       ..databaseName = options.databaseName
       ..databaseId = options.databaseId
-      ..r2Binding = options.r2Binding
       ..r2BucketName = options.r2BucketName
       ..secretsStoreName = CloudflareSetupOptions.defaultSecretsStoreName
       ..secretsStoreId = _secretsStoreId
@@ -1013,7 +1009,7 @@ Run setup interactively, or pass:
 
     config['r2_buckets'] = [
       {
-        'binding': options.r2Binding,
+        'binding': 'MEDIA_BUCKET',
         'bucket_name': options.r2BucketName,
         'remote': remote,
       },

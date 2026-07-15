@@ -42,6 +42,21 @@ void main() {
     expect(decoded.deployAdminPages, isTrue);
   });
 
+  test('legacy custom R2 binding is normalized to MEDIA_BUCKET', () {
+    final decoded = CloudflareDeploymentConfig.fromJson({
+      'schemaVersion': 1,
+      'provider': 'cloudflare',
+      'cloudflare': {
+        'r2': {'binding': 'CUSTOM_BUCKET', 'bucketName': 'uploads'},
+      },
+    });
+
+    expect((decoded.toJson()['cloudflare'] as Map)['r2'], {
+      'binding': 'MEDIA_BUCKET',
+      'bucketName': 'uploads',
+    });
+  });
+
   test('store writes and loads deployment config', () async {
     final root = await Directory.systemTemp.createTemp('deployment-store-');
     addTearDown(() => root.delete(recursive: true));
