@@ -339,6 +339,7 @@ class Survey {
       'webEnabled': webEnabled,
       'followUpEnabled': followUpEnabled,
       'captchaEnabled': captchaConfigurationEnabled,
+      'captchaRequired': captchaRequired,
       'createdByUserId': createdByUserId,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),

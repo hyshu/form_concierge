@@ -238,6 +238,10 @@ void main() {
 
     expect(survey.captchaConfigurationEnabled, isTrue);
     expect(survey.captchaRequired, isFalse);
+
+    final roundTripped = Survey.fromJson(survey.toJson());
+    expect(roundTripped.captchaConfigurationEnabled, isTrue);
+    expect(roundTripped.captchaRequired, isFalse);
   });
 
   test('localized text falls back when a locale is not stored', () {
