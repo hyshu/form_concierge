@@ -14,6 +14,9 @@ const VISIBILITY_OPERATORS = new Set([
 
 const VALUELESS_OPERATORS = new Set(['isAnswered', 'isNotAnswered']);
 
+export const UPDATE_QUESTION_CONDITION_MODE_SQL =
+  `UPDATE questions SET visibility_condition_mode = ? WHERE id = ?`;
+
 export type NormalizedVisibilityRule = {
   targetQuestionId: number;
   sourceQuestionId: number;
@@ -81,9 +84,7 @@ export async function replaceAdminVisibilityRules(
     ),
     // Applied in the same batch so mode + rules cannot partially persist.
     ...[...conditionModes].map(([questionId, mode]) =>
-      env.DB.prepare(
-        `UPDATE questions SET visibility_condition_mode = ?, updated_at = ? WHERE id = ?`,
-      ).bind(mode, now, questionId),
+      env.DB.prepare(UPDATE_QUESTION_CONDITION_MODE_SQL).bind(mode, questionId),
     ),
   ];
   await env.DB.batch(statements);
