@@ -183,7 +183,7 @@ packages:
       path: "../client"
       relative: true
     source: path
-    version: "0.2.1"
+    version: "0.3.0"
   glob:
     dependency: transitive
     description:

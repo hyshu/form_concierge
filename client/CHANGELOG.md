@@ -1,3 +1,13 @@
+## 0.3.0
+
+- Add `Survey.captchaRequired`, which reports whether a submission must include
+  a CAPTCHA token based on both the saved survey setting and the deployed
+  Turnstile configuration.
+- Add `Survey.captchaConfigurationEnabled` for the saved administrator setting.
+  Deprecate `Survey.captchaEnabled` for submission decisions; legacy API
+  payloads remain supported. The deprecated property is scheduled for removal
+  in 1.0.0.
+
 ## 0.2.1
 
 - Expose reply counts on survey responses so admin clients can identify

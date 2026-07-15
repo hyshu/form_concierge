@@ -1,3 +1,8 @@
+## 0.3.0
+
+- Preserve the saved CAPTCHA setting when surveys are loaded, edited, and
+  updated independently of the deployment's runtime CAPTCHA availability.
+
 ## 0.2.1
 
 - Show reply counts and existing reply history alongside survey responses.

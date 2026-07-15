@@ -15,23 +15,31 @@ In Xcode, choose **File > Add Package Dependencies** and enter:
 https://github.com/hyshu/form_concierge.git
 ```
 
-Until the next release is tagged, select the `main` branch. Then add the
-`FormConciergeSwiftUI` or `FormConciergeUIKit` product to your app target.
-Existing tags through
-`v0.2.1` predate the root package manifest.
+Select version `0.3.0` or later, then add the `FormConciergeSwiftUI` or
+`FormConciergeUIKit` product to your app target. Version `0.3.0` is the first
+tag resolvable through Swift Package Manager; tags through `v0.2.1` predate the
+root package manifest.
 
 For a `Package.swift` dependency:
 
 ```swift
 .package(
     url: "https://github.com/hyshu/form_concierge.git",
-    branch: "main"
+    exact: "0.3.0"
 )
 ```
 
 Then add `FormConciergeSwiftUI` or `FormConciergeUIKit` to the target
-dependencies. After the next release, prefer a version-based requirement using
-that tag.
+dependencies.
+
+## 0.3.0 release notes
+
+- First version-resolvable Swift Package Manager release from the repository
+  root manifest.
+- Add a UIKit survey product with question rendering, visibility rules, image
+  uploads, CAPTCHA, adaptive follow-up, and completion callbacks.
+- Expand SwiftUI support with adaptive follow-up, reply checking, localized
+  content, metadata, image uploads, and complete example applications.
 
 ## SwiftUI
 

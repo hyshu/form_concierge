@@ -49,4 +49,7 @@ const cloudflareReleaseChanges = [
     CloudflareDeploymentComponent.worker,
     CloudflareDeploymentComponent.adminPages,
   }),
+  // Namespaced secrets, migrations 0004-0005, public cost controls, deployment
+  // configuration, and CAPTCHA state fixes affect every deployed component.
+  CloudflareReleaseChange('0.3.0', allCloudflareDeploymentComponents),
 ];

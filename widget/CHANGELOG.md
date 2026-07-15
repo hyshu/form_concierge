@@ -1,3 +1,10 @@
+## 0.3.0
+
+- Request a token from `captchaTokenProvider` only when the API reports that
+  CAPTCHA is required, avoiding unnecessary challenges when the saved CAPTCHA
+  setting is enabled but Turnstile is not configured.
+- Add a pub.dev package screenshot and improve CAPTCHA API documentation.
+
 ## 0.2.1
 
 - Deprecate `onSubmitted` in favor of `onResponseSubmitted`, which provides the

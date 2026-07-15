@@ -1,3 +1,20 @@
+## 0.3.0
+
+- Prefix Secrets Store entry names with `form_concierge_` to avoid collisions
+  with other applications using the same store. Updates from 0.2.1 or earlier
+  copy usable values from the previous unprefixed entries without overwriting
+  values already configured under the new names.
+- Before deploying the Worker, generate types from that deployment's
+  `wrangler.jsonc` and type-check the Worker against its actual D1, R2, rate
+  limiter, and Secrets Store bindings.
+- Remove the `--r2-binding` option and always use the `MEDIA_BUCKET` binding
+  required by the Worker source. The R2 bucket name remains configurable.
+- Configure deployment quotas for responses, image uploads and retained
+  storage, AI follow-up generation, and notification email. The generated
+  `QUOTA_*` Worker variables can be adjusted before deployment.
+- Improve resumable Cloudflare resource cleanup while retaining data stores by
+  default.
+
 ## 0.2.1
 
 - Deploy only the Cloudflare components changed between the installed and
