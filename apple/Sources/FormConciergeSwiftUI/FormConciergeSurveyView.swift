@@ -1,6 +1,4 @@
-import PhotosUI
 import SwiftUI
-import UniformTypeIdentifiers
 
 #if canImport(UIKit)
   import UIKit
@@ -672,7 +670,6 @@ private struct ImageUploadQuestionView: View {
   let processImage: ProcessSurveyImage?
   let onChange: ([String]) -> Void
 
-  @State private var pickerItems: [PhotosPickerItem] = []
   @State private var isUploading = false
   @State private var localError: String?
   @State private var previews: [String: Data] = [:]
@@ -716,25 +713,18 @@ private struct ImageUploadQuestionView: View {
       .font(.footnote)
       .foregroundStyle(.secondary)
 
-      PhotosPicker(
-        selection: $pickerItems,
-        maxSelectionCount: max(maxFiles - fileKeys.count, 0),
-        matching: .images,
-        photoLibrary: .shared()
-      ) {
-        Label(
-          FormContentMessages.text(
-            locale,
-            isUploading ? "uploadingPhotos" : "addPhotos"
-          ),
-          systemImage: "photo.badge.plus"
-        )
-      }
-      .disabled(isUploading || fileKeys.count >= maxFiles)
-      .onChange(of: pickerItems) { items in
-        guard !items.isEmpty else { return }
-        Task { await upload(items: items) }
-      }
+      SurveyImagePickerButton(
+        selectionLimit: max(maxFiles - fileKeys.count, 0),
+        isDisabled: isUploading || fileKeys.count >= maxFiles,
+        label: FormContentMessages.text(
+          locale,
+          isUploading ? "uploadingPhotos" : "addPhotos"
+        ),
+        onPick: { images in
+          guard !images.isEmpty else { return }
+          Task { await upload(images: images) }
+        }
+      )
 
       if let localError {
         Text(localError)
@@ -766,25 +756,18 @@ private struct ImageUploadQuestionView: View {
     onChange(next)
   }
 
-  private func upload(items: [PhotosPickerItem]) async {
+  private func upload(images: [SurveyImagePayload]) async {
     isUploading = true
     localError = nil
-    defer {
-      isUploading = false
-      pickerItems = []
-    }
+    defer { isUploading = false }
 
     do {
       try await ensureAuthenticated()
       var keys = fileKeys
-      for item in items {
+      for image in images {
         if keys.count >= maxFiles { break }
-        guard let data = try await item.loadTransferable(type: Data.self), !data.isEmpty
-        else { continue }
-        let contentType = contentType(for: item) ?? "image/jpeg"
-        let prepared = try await prepareForUpload(
-          SurveyImagePayload(data: data, contentType: contentType)
-        )
+        guard !image.data.isEmpty else { continue }
+        let prepared = try await prepareForUpload(image)
         guard let prepared, !prepared.data.isEmpty else { continue }
         let uploaded = try await client.uploadMedia(
           data: prepared.data,
@@ -806,15 +789,6 @@ private struct ImageUploadQuestionView: View {
     }
     let fallback = try jpegDataIfNeeded(image.data, contentType: image.contentType)
     return SurveyImagePayload(data: fallback.data, contentType: fallback.contentType)
-  }
-
-  private func contentType(for item: PhotosPickerItem) -> String? {
-    guard let type = item.supportedContentTypes.first else { return nil }
-    if type.conforms(to: .png) { return "image/png" }
-    if type.conforms(to: .gif) { return "image/gif" }
-    if type.conforms(to: .webP) { return "image/webp" }
-    if type.conforms(to: .jpeg) { return "image/jpeg" }
-    return type.preferredMIMEType
   }
 
   /// Prefer JPEG for HEIC/unknown formats so the Worker accepts the body.
