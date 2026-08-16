@@ -7,6 +7,11 @@ Thumbs.db
 .vscode/
 *.iml
 
+# Android / Gradle
+.gradle/
+.kotlin/
+local.properties
+
 # Dart/Flutter
 .dart_tool/
 .packages

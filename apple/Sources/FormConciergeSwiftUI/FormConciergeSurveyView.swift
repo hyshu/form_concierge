@@ -19,6 +19,7 @@ public struct FormConciergeSurveyView: View {
   private let metadata: [String: FormConciergeMetadataValue]?
   private let onAnonymousSession: ((AnonymousSession) -> Void)?
   private let onResponseSubmitted: ((SurveyResponse) -> Void)?
+  private let onResponseSubmittedWithAnswers: ((SurveyResponse, [Answer]) -> Void)?
   private let onFollowUpSubmitted: ((SurveyResponse) -> Void)?
   private let onSubmitted: (() -> Void)?
   /// Called when the user taps the completion-screen "Done" button.
@@ -62,6 +63,7 @@ public struct FormConciergeSurveyView: View {
     metadata: [String: FormConciergeMetadataValue]? = nil,
     onAnonymousSession: ((AnonymousSession) -> Void)? = nil,
     onResponseSubmitted: ((SurveyResponse) -> Void)? = nil,
+    onResponseSubmittedWithAnswers: ((SurveyResponse, [Answer]) -> Void)? = nil,
     onFollowUpSubmitted: ((SurveyResponse) -> Void)? = nil,
     onSubmitted: (() -> Void)? = nil,
     onDone: (() -> Void)? = nil,
@@ -78,6 +80,7 @@ public struct FormConciergeSurveyView: View {
     self.metadata = metadata
     self.onAnonymousSession = onAnonymousSession
     self.onResponseSubmitted = onResponseSubmitted
+    self.onResponseSubmittedWithAnswers = onResponseSubmittedWithAnswers
     self.onFollowUpSubmitted = onFollowUpSubmitted
     self.onSubmitted = onSubmitted
     self.onDone = onDone
@@ -269,6 +272,7 @@ public struct FormConciergeSurveyView: View {
       )
       submittedResponse = response
       onResponseSubmitted?(response)
+      onResponseSubmittedWithAnswers?(response, payload)
       onSubmitted?()
       if survey.followUpEnabled {
         await startFollowUp(responseId: response.id)

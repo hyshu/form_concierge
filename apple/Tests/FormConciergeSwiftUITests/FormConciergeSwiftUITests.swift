@@ -4,6 +4,19 @@ import XCTest
 @testable import FormConciergeSwiftUI
 
 final class FormConciergeSwiftUITests: XCTestCase {
+  func testSurveyViewAcceptsResponseCallbackWithSubmittedAnswers() {
+    let client = FormConciergeClient(baseURL: URL(string: "https://api.example.com")!)
+
+    _ = FormConciergeSurveyView(
+      client: client,
+      projectSlug: "example",
+      onResponseSubmittedWithAnswers: { response, answers in
+        _ = response.id
+        _ = answers.count
+      }
+    )
+  }
+
   func testNormalizeFormContentLocaleHandlesCommonRegionTags() {
     XCTAssertEqual(normalizeFormContentLocale("ja_JP"), "ja")
     XCTAssertEqual(normalizeFormContentLocale("zh_CN"), "zh-Hans")

@@ -101,3 +101,15 @@ Build:
 cd apple
 swift build
 ```
+
+## Android Jetpack Compose Package
+
+Format, test, and build:
+
+```bash
+ktlint -F android/form-concierge-compose/src/main/kotlin \
+  android/form-concierge-compose/src/test/kotlin
+gradle -p android :form-concierge-compose:testDebugUnitTest \
+  :form-concierge-compose:lintRelease \
+  :form-concierge-compose:assembleRelease
+```

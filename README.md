@@ -12,6 +12,7 @@ Survey forms backed by Cloudflare Workers and D1. Respondents use generated anon
 | `cli/` | `form_concierge_cli` `0.3.0` | Published setup / doctor CLI (`form_concierge setup cloudflare`) |
 | `admin_dashboard/` | app `0.3.0` | Flutter admin dashboard |
 | `apple/` | SPM | Swift Package for embedding surveys in SwiftUI and UIKit apps |
+| `android/` | Gradle / Compose | Android library for surveys, inquiry history, and admin replies |
 | `web/` | app | Jaspr web survey form |
 | `widget/examples/` | apps | Full example apps demonstrating widget package usage |
 
@@ -21,6 +22,11 @@ deployment templates remain source distributions.
 The Apple package can be added with Swift Package Manager from
 `https://github.com/hyshu/form_concierge.git`. The root `Package.swift` exposes
 the `FormConciergeSwiftUI` and `FormConciergeUIKit` library products.
+
+The Jetpack Compose package lives in [`android/`](android/). It provides the
+low-level REST client and survey UI plus a complete inquiry flow with encrypted
+local history and admin replies. See [`android/README.md`](android/README.md)
+for local composite-build installation and integration examples.
 
 ## Package Release
 
@@ -129,6 +135,9 @@ cd cli && dart analyze && dart test
 cd web && dart analyze && jaspr build
 cd admin_dashboard && flutter analyze && flutter test
 cd apple && swift build
+gradle -p android :form-concierge-compose:testDebugUnitTest \
+  :form-concierge-compose:lintRelease \
+  :form-concierge-compose:assembleRelease
 xcodebuild -scheme FormConciergeUIKit \
   -destination 'generic/platform=iOS Simulator' \
   CODE_SIGNING_ALLOWED=NO build

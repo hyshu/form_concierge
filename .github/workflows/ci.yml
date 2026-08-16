@@ -56,3 +56,32 @@ jobs:
       - name: Test Apple Swift package
         working-directory: apple
         run: swift test
+
+  android:
+    name: Android Compose tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK platform
+        run: sdkmanager "platforms;android-36"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.1.0"
+
+      - name: Test and build Compose library
+        run: >-
+          gradle -p android
+          :form-concierge-compose:testDebugUnitTest
+          :form-concierge-compose:lintRelease
+          :form-concierge-compose:assembleRelease
