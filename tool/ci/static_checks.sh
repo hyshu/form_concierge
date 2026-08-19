@@ -7,7 +7,7 @@ cd "$ROOT_DIR"
 export PATH="$HOME/.pub-cache/bin:$PATH"
 
 if ! command -v jaspr >/dev/null 2>&1; then
-  dart pub global activate jaspr_cli 0.23.1
+  dart pub global activate jaspr_cli 0.23.4
 fi
 
 (

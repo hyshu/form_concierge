@@ -25,6 +25,6 @@ RUN apt-get update \
   && apt-get install -y --no-install-recommends nodejs \
   && rm -rf /var/lib/apt/lists/*
 
-RUN dart pub global activate jaspr_cli 0.23.1
+RUN dart pub global activate jaspr_cli 0.23.4
 
 WORKDIR /workspace

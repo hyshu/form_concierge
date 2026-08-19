@@ -42,7 +42,7 @@ wait_for() {
 }
 
 if ! command -v jaspr >/dev/null 2>&1; then
-  dart pub global activate jaspr_cli 0.23.1
+  dart pub global activate jaspr_cli 0.23.4
 fi
 
 mkdir -p .tmp e2e/.artifacts

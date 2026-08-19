@@ -63,7 +63,7 @@ versions cannot be deleted; fixes require a new version.
 - Dart SDK / Flutter
 - Node.js
 - Wrangler CLI via `npm install` in `worker/`
-- Jaspr CLI: `dart pub global activate jaspr_cli 0.23.1`
+- Jaspr CLI: `dart pub global activate jaspr_cli 0.23.4`
 
 ### Setup
 
