@@ -18,6 +18,9 @@ type PublicFormData = {
   choicesByQuestion: Record<string, ReturnType<typeof choiceToJson>[]>;
 };
 
+/**
+ * Returns whether a request should be handled as a public form HTML page.
+ */
 export function isPublicFormHtmlRequest(request: Request, path: string): boolean {
   const method = request.method.toUpperCase();
   if (method !== 'GET' && method !== 'HEAD') return false;
@@ -30,10 +33,13 @@ export function isPublicFormHtmlRequest(request: Request, path: string): boolean
   return accept.length === 0 || accept.includes('text/html') || accept.includes('*/*');
 }
 
+/**
+ * Renders a public survey page with the data needed for interactive hydration.
+ */
 export async function renderPublicForm(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const pathParts = pathPartsFromPath(url.pathname);
-  const surveyKey = isApiHost(env, url) ? pathParts[1] ?? null : pathParts[0] ?? null;
+  const surveyKey = isApiHost(env, url) ? (pathParts[1] ?? null) : (pathParts[0] ?? null);
   const data = isApiHost(env, url)
     ? await loadProjectBySlug(env, pathParts[0] ?? null, surveyKey)
     : await loadProjectByDomain(env, url.hostname, surveyKey);
@@ -52,9 +58,7 @@ export async function renderPublicForm(request: Request, env: Env): Promise<Resp
   );
   // Only expose the site key when both keys are configured so CAPTCHA UI and
   // server-side verification stay in sync.
-  const turnstileSiteKey = data.survey.captchaRequired
-    ? await getTurnstileSiteKey(env)
-    : null;
+  const turnstileSiteKey = data.survey.captchaRequired ? await getTurnstileSiteKey(env) : null;
   return html(request, renderSurveyHtml(env, url, data, locale, turnstileSiteKey));
 }
 
@@ -64,18 +68,12 @@ async function loadProjectBySlug(
   surveyKey: string | null,
 ): Promise<PublicFormData | null> {
   if (!slug) return null;
-  const project = await env.DB.prepare(
-    `SELECT * FROM projects WHERE slug = ?`,
-  ).bind(slug).first<ProjectRow>();
+  const project = await env.DB.prepare(`SELECT * FROM projects WHERE slug = ?`).bind(slug).first<ProjectRow>();
   if (!project) return null;
   return loadProjectData(env, project, surveyKey);
 }
 
-async function loadProjectByDomain(
-  env: Env,
-  host: string,
-  surveyKey: string | null,
-): Promise<PublicFormData | null> {
+async function loadProjectByDomain(env: Env, host: string, surveyKey: string | null): Promise<PublicFormData | null> {
   let customDomain: string | null = null;
   try {
     customDomain = optionalCustomDomain(host);
@@ -84,9 +82,9 @@ async function loadProjectByDomain(
   }
   if (!customDomain) return null;
 
-  const project = await env.DB.prepare(
-    `SELECT * FROM projects WHERE custom_domain = ?`,
-  ).bind(customDomain).first<ProjectRow>();
+  const project = await env.DB.prepare(`SELECT * FROM projects WHERE custom_domain = ?`)
+    .bind(customDomain)
+    .first<ProjectRow>();
   if (!project) return null;
   return loadProjectData(env, project, surveyKey);
 }
@@ -100,27 +98,23 @@ async function loadProjectData(
     `SELECT * FROM surveys
      WHERE project_id = ? AND status = 'published' AND web_enabled = 1
      ORDER BY updated_at DESC`,
-  ).bind(project.id).all<SurveyRow>();
+  )
+    .bind(project.id)
+    .all<SurveyRow>();
   const surveys = rows.results.filter(isAccepting);
   if (surveys.length === 0) return null;
 
-  const selectedSurvey = surveyKey == null
-    ? surveys.length === 1 ? surveys[0] : null
-    : selectSurveyByKey(surveys, surveyKey);
+  const selectedSurvey =
+    surveyKey == null ? (surveys.length === 1 ? surveys[0] : null) : selectSurveyByKey(surveys, surveyKey);
   if (!selectedSurvey) return null;
 
   return loadPublicFormData(env, project, selectedSurvey);
 }
 
-function selectSurveyByKey(
-  surveys: SurveyRow[],
-  key: string,
-): SurveyRow | null {
+function selectSurveyByKey(surveys: SurveyRow[], key: string): SurveyRow | null {
   if (/^\d+$/.test(key)) {
     const id = Number(key);
-    return Number.isSafeInteger(id)
-      ? surveys.find((survey) => survey.id === id) ?? null
-      : null;
+    return Number.isSafeInteger(id) ? (surveys.find((survey) => survey.id === id) ?? null) : null;
   }
   return surveys.find((survey) => survey.slug === key) ?? null;
 }
@@ -131,7 +125,9 @@ async function loadPublicFormData(env: Env, project: ProjectRow, survey: SurveyR
       `SELECT * FROM questions
      WHERE survey_id = ? AND is_deleted = 0
      ORDER BY order_index`,
-    ).bind(survey.id).all<QuestionRow>(),
+    )
+      .bind(survey.id)
+      .all<QuestionRow>(),
     isTurnstileConfigured(env),
   ]);
   const visibilityRules = await getVisibilityRules(env.DB, survey.id);
@@ -139,10 +135,7 @@ async function loadPublicFormData(env: Env, project: ProjectRow, survey: SurveyR
 
   return {
     project: projectToJson(project),
-    survey: publicSurveyToJson(
-      survey,
-      captchaRequiredForSurvey(survey, turnstileConfigured),
-    ),
+    survey: publicSurveyToJson(survey, captchaRequiredForSurvey(survey, turnstileConfigured)),
     questions: questions.results.map(questionToJson),
     visibilityRules: visibilityRules.map(visibilityRuleToJson),
     choicesByQuestion,
@@ -339,12 +332,16 @@ function renderQuestionInput(
     const inputType = question.type === 'singleChoice' ? 'radio' : 'checkbox';
     return `
       <div class="space-y-2">
-        ${choices.map((choice) => `
+        ${choices
+          .map(
+            (choice) => `
           <label class="flex items-center gap-3 rounded-lg border border-slate-200 p-3">
             <input type="${inputType}" disabled>
             <span>${escapeHtml(textFor(choice.textTranslations, locale))}</span>
           </label>
-        `).join('')}
+        `,
+          )
+          .join('')}
       </div>
     `;
   }
@@ -427,17 +424,21 @@ function escapeAttribute(value: string): string {
 }
 
 function localeLabel(locale: string): string {
-  return ({
-    en: 'English',
-    ja: '日本語',
-    'zh-Hans': '简体中文',
-    'zh-Hant': '繁體中文',
-    ko: '한국어',
-    de: 'Deutsch',
-    es: 'Español',
-    fr: 'Français',
-    it: 'Italiano',
-    th: 'ไทย',
-    tr: 'Türkçe',
-  } as Record<string, string>)[locale] ?? locale;
+  return (
+    (
+      {
+        en: 'English',
+        ja: '日本語',
+        'zh-Hans': '简体中文',
+        'zh-Hant': '繁體中文',
+        ko: '한국어',
+        de: 'Deutsch',
+        es: 'Español',
+        fr: 'Français',
+        it: 'Italiano',
+        th: 'ไทย',
+        tr: 'Türkçe',
+      } as Record<string, string>
+    )[locale] ?? locale
+  );
 }

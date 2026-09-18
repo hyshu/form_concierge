@@ -4,11 +4,15 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'admin_messages.g.dart';
 
+/// Provides translated administrator interface text for a locale.
 class AppLocalizations {
+  /// Creates AppLocalizations with the supplied values.
   const AppLocalizations(this.locale);
 
+  /// The locale selected for the administrator interface.
   final Locale locale;
 
+  /// The locales supported by the administrator interface.
   static const supportedLocales = [
     Locale('en'),
     Locale('ja'),
@@ -23,6 +27,7 @@ class AppLocalizations {
     Locale('tr'),
   ];
 
+  /// Delegates for application, Material, Cupertino, and widget translations.
   static const List<LocalizationsDelegate<dynamic>> localizationsDelegates = [
     AppLocalizationsDelegate(),
     GlobalMaterialLocalizations.delegate,
@@ -30,9 +35,12 @@ class AppLocalizations {
     GlobalWidgetsLocalizations.delegate,
   ];
 
+  /// Returns the application translations associated with the build context.
   static AppLocalizations of(BuildContext context) =>
       Localizations.of<AppLocalizations>(context, AppLocalizations)!;
 
+  /// Resolves a message key and substitutes values, falling back to English and then the
+  /// key itself.
   String text(String key, [Map<String, Object?> values = const {}]) {
     final localeKey = _localeKey(locale);
     var result =
@@ -48,6 +56,7 @@ class AppLocalizations {
     return result;
   }
 
+  /// Translates an error message while preserving details after a recognized prefix.
   String message(String value) {
     for (final prefix in _errorPrefixes) {
       if (value.startsWith(prefix)) {
@@ -57,6 +66,7 @@ class AppLocalizations {
     return text(value);
   }
 
+  /// Selects a supported locale with Chinese script handling and English fallback.
   static Locale? localeResolutionCallback(
     Locale? locale,
     Iterable<Locale> supportedLocales,
@@ -87,9 +97,12 @@ class AppLocalizations {
   }
 }
 
+/// Loads the administrator translations used by Flutter localization.
 class AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
+  /// Creates AppLocalizationsDelegate with the supplied values.
   const AppLocalizationsDelegate();
 
+  /// Returns whether translations are available for the locale's language.
   @override
   bool isSupported(Locale locale) {
     if (locale.languageCode == 'zh') return true;
@@ -98,20 +111,26 @@ class AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
     );
   }
 
+  /// Returns translations for the selected locale synchronously.
   @override
   Future<AppLocalizations> load(Locale locale) =>
       SynchronousFuture(AppLocalizations(locale));
 
+  /// Returns false because the delegate has no mutable translation resources.
   @override
   bool shouldReload(AppLocalizationsDelegate old) => false;
 }
 
+/// Convenient access to translations through a build context.
 extension AppLocalizationsBuildContext on BuildContext {
+  /// The application translations associated with this context.
   AppLocalizations get l10n => AppLocalizations.of(this);
 
+  /// Returns translated text with the supplied placeholder values.
   String tr(String key, [Map<String, Object?> values = const {}]) =>
       l10n.text(key, values);
 
+  /// Translates a message while retaining its error details.
   String trMessage(String value) => l10n.message(value);
 }
 

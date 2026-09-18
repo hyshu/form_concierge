@@ -1,5 +1,8 @@
 import { HttpError, requireObject, requireString } from './utils';
 
+/**
+ * Locale codes supported by the built-in survey content.
+ */
 export const FORM_CONTENT_LOCALES = [
   'en',
   'ja',
@@ -13,8 +16,14 @@ export const FORM_CONTENT_LOCALES = [
   'th',
   'tr',
 ] as const;
+/**
+ * The fallback locale for survey content.
+ */
 export const DEFAULT_FORM_CONTENT_LOCALE = 'en';
 
+/**
+ * Text translations indexed by locale code.
+ */
 export type LocalizedText = Record<string, string>;
 
 /** Normalize browser/Accept-Language tags to form content locale codes. */
@@ -27,12 +36,7 @@ export function normalizeFormContentLocale(locale: string): string {
   if (lower === 'zh-hans' || lower === 'zh-cn' || lower === 'zh-sg') {
     return 'zh-Hans';
   }
-  if (
-    lower === 'zh-hant'
-    || lower === 'zh-tw'
-    || lower === 'zh-hk'
-    || lower === 'zh-mo'
-  ) {
+  if (lower === 'zh-hant' || lower === 'zh-tw' || lower === 'zh-hk' || lower === 'zh-mo') {
     return 'zh-Hant';
   }
   const language = lower.split('-')[0] ?? lower;
@@ -63,9 +67,7 @@ export function resolveFormContentLocale(
   }
 
   const normalizedDefault = normalizeFormContentLocale(defaultLocale);
-  const fallback = orderedSupported.includes(normalizedDefault)
-    ? normalizedDefault
-    : orderedSupported[0]!;
+  const fallback = orderedSupported.includes(normalizedDefault) ? normalizedDefault : orderedSupported[0]!;
 
   for (const preferred of preferredLocales) {
     const candidate = normalizeFormContentLocale(preferred);
@@ -75,9 +77,7 @@ export function resolveFormContentLocale(
 }
 
 /** Parse an Accept-Language header into tags ordered by quality (highest first). */
-export function preferredLocalesFromAcceptLanguage(
-  header: string | null | undefined,
-): string[] {
+export function preferredLocalesFromAcceptLanguage(header: string | null | undefined): string[] {
   if (!header?.trim()) return [];
   return header
     .split(',')
@@ -99,6 +99,9 @@ export function preferredLocalesFromAcceptLanguage(
     .map((item) => item.tag);
 }
 
+/**
+ * Validates the project's nonempty list of supported locale codes.
+ */
 export function requireSupportedLocales(value: unknown): string[] {
   if (!Array.isArray(value)) throw new HttpError(400, 'supportedLocales must be an array');
   const locales = value.map((locale, index) => {
@@ -109,13 +112,16 @@ export function requireSupportedLocales(value: unknown): string[] {
   });
   if (locales.length === 0) throw new HttpError(400, 'supportedLocales must not be empty');
   for (const locale of locales) {
-    if (!FORM_CONTENT_LOCALES.includes(locale as typeof FORM_CONTENT_LOCALES[number])) {
+    if (!FORM_CONTENT_LOCALES.includes(locale as (typeof FORM_CONTENT_LOCALES)[number])) {
       throw new HttpError(400, `Unsupported locale: ${locale}`);
     }
   }
   return locales;
 }
 
+/**
+ * Validates that the default locale belongs to the supported locale list.
+ */
 export function requireDefaultLocale(value: unknown, supportedLocales: string[]): string {
   const locale = requireString(value, 'defaultLocale');
   if (!supportedLocales.includes(locale)) {
@@ -124,6 +130,9 @@ export function requireDefaultLocale(value: unknown, supportedLocales: string[])
   return locale;
 }
 
+/**
+ * Validates locale-indexed text and any required translation values.
+ */
 export function requireLocalizedText(
   value: unknown,
   field: string,
@@ -146,17 +155,23 @@ export function requireLocalizedText(
   return localized;
 }
 
-export function defaultLocalizedText(
-  value: string,
-  locales: readonly string[] = FORM_CONTENT_LOCALES,
-): LocalizedText {
+/**
+ * Builds translations that use the supplied text for each selected locale.
+ */
+export function defaultLocalizedText(value: string, locales: readonly string[] = FORM_CONTENT_LOCALES): LocalizedText {
   return Object.fromEntries(locales.map((locale) => [locale, value]));
 }
 
+/**
+ * Encodes the same default text for all built-in locales as JSON.
+ */
 export function defaultLocalizedTextJson(value: string): string {
   return JSON.stringify(defaultLocalizedText(value));
 }
 
+/**
+ * Parses a locale-to-text JSON object and rejects invalid stored translations.
+ */
 export function parseLocalizedText(value: string): LocalizedText {
   const decoded = JSON.parse(value);
   if (!decoded || typeof decoded !== 'object' || Array.isArray(decoded)) {
@@ -170,6 +185,9 @@ export function parseLocalizedText(value: string): LocalizedText {
   );
 }
 
+/**
+ * Resolves stored text for a locale with default and first-translation fallbacks.
+ */
 export function localizedTextFor(value: string, locale = DEFAULT_FORM_CONTENT_LOCALE): string {
   const map = parseLocalizedText(value);
   // Prefer the requested locale, then the global default, then any available

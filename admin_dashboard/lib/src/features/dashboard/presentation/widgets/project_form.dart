@@ -6,12 +6,21 @@ import '../../../../core/forms/slug_auto_fill.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../surveys/presentation/widgets/localized_text_helpers.dart';
 
+/// Edits project identity, custom domain, and supported locales.
 class ProjectForm extends StatefulWidget {
+  /// The project to edit, or null when creating a new project.
   final Project? existingProject;
+
+  /// Whether a save operation is in progress.
   final bool isSaving;
+
+  /// The error message, when the operation could not complete.
   final String? error;
+
+  /// Called with the edited values when the user saves the form.
   final Future<void> Function(Project project) onSave;
 
+  /// Creates ProjectForm with the supplied values.
   const ProjectForm({
     super.key,
     this.existingProject,
@@ -20,6 +29,7 @@ class ProjectForm extends StatefulWidget {
     required this.onSave,
   });
 
+  /// Creates the mutable state used by this widget.
   @override
   State<ProjectForm> createState() => _ProjectFormState();
 }

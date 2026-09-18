@@ -6,6 +6,7 @@ import SwiftUI
   import AppKit
 #endif
 
+/// A SwiftUI form that loads a survey and guides the respondent through submission.
 public struct FormConciergeSurveyView: View {
   private let client: FormConciergeClient
   private let projectSlug: String
@@ -30,7 +31,7 @@ public struct FormConciergeSurveyView: View {
 
   /// Supplies a CAPTCHA token when the survey has CAPTCHA enabled.
   ///
-  /// The view never embeds a CAPTCHA implementation: the host resolves a token
+  /// The host supplies the CAPTCHA implementation and resolves a token
   /// with whatever provider it chooses (e.g. Cloudflare Turnstile in a web view)
   /// and returns it here. Return `nil` to abort the submission.
   private let captchaTokenProvider: (() async -> String?)?
@@ -50,6 +51,16 @@ public struct FormConciergeSurveyView: View {
   @State private var followUp: FollowUp?
   @State private var followUpAnswers: [String: FollowUpAnswerValue] = [:]
 
+  /// Creates a survey interface for the selected project.
+  ///
+  /// The survey slug takes precedence over its identifier. When neither is supplied,
+  /// the project must contain exactly one survey. Pass a saved anonymous token to
+  /// reuse a respondent session and persist newly created sessions through
+  /// onAnonymousSession. The host supplies CAPTCHA tokens when they are required.
+  ///
+  /// Response callbacks run after the main submission is saved. The follow-up
+  /// callback runs after follow-up answers are saved. The completion button invokes
+  /// onDone when supplied. processImage can transform or discard images before upload.
   public init(
     client: FormConciergeClient,
     projectSlug: String,
@@ -86,6 +97,7 @@ public struct FormConciergeSurveyView: View {
     self.captchaTokenProvider = captchaTokenProvider
   }
 
+  /// The SwiftUI content displayed by this view.
   public var body: some View {
     Group {
       if isLoading {
@@ -378,12 +390,18 @@ public struct FormConciergeSurveyView: View {
   }
 }
 
+/// An in-memory answer value used by the survey interface.
 public enum SurveyAnswerValue: Equatable, Sendable {
+  /// A text answer entered by the respondent.
   case text(String)
+  /// One selected choice identifier.
   case single(Int)
+  /// A set of selected choice identifiers.
   case multiple(Set<Int>)
+  /// Storage keys for uploaded images.
   case images([String])
 
+  /// Whether the answer has no text, selected choices, or uploaded files.
   public var isEmpty: Bool {
     switch self {
     case .text(let text):
@@ -782,7 +800,7 @@ private struct ImageUploadQuestionView: View {
     }
   }
 
-  /// Host process hook when provided; otherwise convert unsupported types to JPEG.
+  /// Uses the host processing hook when provided, otherwise converts unsupported types to JPEG.
   private func prepareForUpload(_ image: SurveyImagePayload) async throws -> SurveyImagePayload? {
     if let processImage {
       return try await processImage(image)

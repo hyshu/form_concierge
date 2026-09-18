@@ -5,19 +5,43 @@ import 'questions/image_upload_question.dart';
 
 /// Adaptive follow-up interview after the main survey submit.
 class FollowUpContent extends StatelessWidget {
+  /// The API client used to load data and submit changes.
   final Client client;
+
+  /// The survey displayed by this component or state.
   final Survey survey;
+
+  /// The adaptive follow-up interview associated with the response.
   final FollowUp followUp;
+
+  /// Current follow-up answers indexed by interview item identifier.
   final Map<String, dynamic> answers;
+
+  /// Validation messages indexed by follow-up item identifier.
   final Map<String, String> validationErrors;
+
+  /// The error message to display, or null when there is no error.
   final String? errorMessage;
+
+  /// The locale used to display the form content.
   final String locale;
+
+  /// Whether a submission is in progress and inputs should be disabled.
   final bool isSubmitting;
+
+  /// Called when the respondent changes an answer.
   final void Function(String itemId, dynamic value) onAnswerChanged;
+
+  /// Called when the respondent requests submission.
   final VoidCallback onSubmit;
+
+  /// Ensures an anonymous session exists before uploading media, when provided.
   final Future<void> Function()? ensureAuthenticated;
+
+  /// An optional transformation applied to each image before upload.
   final ProcessSurveyImage? processImage;
 
+  /// Creates FollowUpContent with the supplied values.
   const FollowUpContent({
     super.key,
     required this.client,
@@ -34,6 +58,7 @@ class FollowUpContent extends StatelessWidget {
     this.processImage,
   });
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context) {
     final colorScheme = Theme.of(context).colorScheme;

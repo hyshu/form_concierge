@@ -1,6 +1,8 @@
 import Foundation
 
+/// Shared visibility, validation, and answer conversion for survey interfaces.
 public enum FormConciergeSurveyLogic {
+  /// Returns visible questions in input order using answers from earlier visible questions.
   public static func visibleQuestions(
     questions: [Question],
     rules: [QuestionVisibilityRule],
@@ -38,6 +40,8 @@ public enum FormConciergeSurveyLogic {
     return result
   }
 
+  /// Returns the first localized validation error, or nil when all supplied answers pass
+  /// validation.
   public static func validationError(
     questions: [Question],
     answers: [Int: SurveyAnswerValue],
@@ -89,6 +93,7 @@ public enum FormConciergeSurveyLogic {
     return nil
   }
 
+  /// Builds submission answers from nonempty values for the supplied questions.
   public static func answerPayload(
     questions: [Question],
     answers: [Int: SurveyAnswerValue]

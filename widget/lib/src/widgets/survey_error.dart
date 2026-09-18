@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 
+/// Displays a survey error with an optional retry action.
 class SurveyError extends StatelessWidget {
+  /// The locale used to display the form content.
   final String locale;
+
+  /// The message displayed to the caller or user.
   final String message;
+
+  /// Called when the user requests another attempt, when provided.
   final VoidCallback? onRetry;
 
+  /// Creates SurveyError with the supplied values.
   const SurveyError({
     super.key,
     required this.locale,
@@ -13,6 +20,7 @@ class SurveyError extends StatelessWidget {
     this.onRetry,
   });
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context) {
     final colorScheme = Theme.of(context).colorScheme;

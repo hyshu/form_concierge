@@ -1,6 +1,7 @@
 import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:web/web.dart' as web;
 
+/// Collects available platform details for inclusion in a survey submission.
 DeviceInfo buildDeviceInfo() => DeviceInfo(
   label: 'Web',
   platform: 'web',

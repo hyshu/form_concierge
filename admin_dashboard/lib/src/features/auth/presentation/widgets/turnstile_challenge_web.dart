@@ -11,10 +11,18 @@ const _turnstileScriptSrc =
 @JS('turnstile')
 external TurnstileApi? get _turnstile;
 
+/// JavaScript interop for rendering and managing Turnstile widgets.
 extension type TurnstileApi(JSObject _) implements JSObject {
+  /// Renders a CAPTCHA widget in the supplied container and returns its identifier.
   external String render(JSAny container, JSObject parameters);
+
+  /// Resets the challenge for the supplied widget identifier.
   external void reset(JSAny widgetId);
+
+  /// Removes the widget with the supplied identifier.
   external void remove(JSAny widgetId);
+
+  /// Returns the response token for the supplied widget identifier.
   external String getResponse(JSAny widgetId);
 }
 
@@ -22,11 +30,15 @@ String? _activeWidgetId;
 Completer<void>? _scriptLoading;
 var _nextViewId = 0;
 
+/// Displays a Turnstile challenge on platforms that support the web widget.
 class TurnstileChallenge extends StatefulWidget {
+  /// Creates TurnstileChallenge with the supplied values.
   const TurnstileChallenge({super.key, required this.siteKey});
 
+  /// The public Turnstile site key used to render the CAPTCHA challenge.
   final String siteKey;
 
+  /// Creates the mutable state used by this widget.
   @override
   State<TurnstileChallenge> createState() => _TurnstileChallengeState();
 }
@@ -91,6 +103,7 @@ class _TurnstileChallengeState extends State<TurnstileChallenge> {
   );
 }
 
+/// Returns the current CAPTCHA response token, or null when unavailable.
 String? getTurnstileResponse() {
   final widgetId = _activeWidgetId;
   final api = _turnstile;
@@ -103,6 +116,7 @@ String? getTurnstileResponse() {
   }
 }
 
+/// Resets the active CAPTCHA challenge so it can issue a new token.
 void resetTurnstile() {
   final widgetId = _activeWidgetId;
   final api = _turnstile;

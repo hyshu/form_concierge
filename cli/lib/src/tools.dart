@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'cli_exception.dart';
 
+/// Returns whether an executable can be found on the current process path.
 Future<bool> commandExists(String command) async {
   try {
     final result = Platform.isWindows
@@ -98,6 +99,8 @@ Future<({int exitCode, String output})> runTee(
   return (exitCode: code, output: buffer.toString());
 }
 
+/// Reads a trimmed terminal answer, using the default for blank input. Returns an empty
+/// string when no terminal is attached.
 Future<String> promptName(String label, String defaultValue) async {
   if (!stdin.hasTerminal) {
     return '';
@@ -110,6 +113,7 @@ Future<String> promptName(String label, String defaultValue) async {
   return answer.trim();
 }
 
+/// Reads a terminal answer, or returns null when input is unavailable.
 Future<String?> promptOptional(String message) async {
   if (!stdin.hasTerminal) {
     return null;

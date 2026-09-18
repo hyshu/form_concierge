@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:web/web.dart' as web;
 
+/// Saves the supplied bytes using the suggested file name and content type.
 Future<void> downloadFile({
   required List<int> bytes,
   required String filename,

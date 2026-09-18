@@ -10,22 +10,50 @@ import 'survey_form.dart';
 
 /// List tile for displaying a question with its choices.
 class QuestionListTile extends StatelessWidget {
+  /// The question whose input is displayed.
   final Question question;
+
+  /// The choices available for this question.
   final List<Choice> choices;
+
+  /// The main locale used to display and edit localized content.
   final String primaryLocale;
+
+  /// The locales available for editing or displaying translated content.
   final Iterable<String> locales;
+
+  /// Conditions that determine which questions are visible.
   final List<QuestionVisibilityRule> visibilityRules;
+
+  /// The editor displayed for this question's visibility conditions.
   final Widget visibilityRuleEditor;
+
+  /// Whether the control is available for interaction.
   final bool enabled;
+
+  /// Whether AI-assisted translation controls are available.
   final bool aiTranslateEnabled;
+
+  /// Called when the user requests a translation of the displayed content.
   final SurveyLocalizedTranslate? onTranslate;
+
+  /// Called when the user requests editing of this item.
   final VoidCallback onEdit;
+
+  /// Called when the user requests deletion of this item.
   final VoidCallback onDelete;
+
+  /// Called when a new localized choice should be added to a question.
   final void Function(LocalizedText textTranslations) onAddChoice;
+
+  /// Called when an existing choice's localized text should be replaced.
   final void Function(Choice choice, LocalizedText textTranslations)
   onUpdateChoice;
+
+  /// Called when an existing choice should be removed.
   final void Function(Choice choice) onDeleteChoice;
 
+  /// Creates QuestionListTile with the supplied values.
   const QuestionListTile({
     super.key,
     required this.question,
@@ -44,6 +72,7 @@ class QuestionListTile extends StatelessWidget {
     required this.onDeleteChoice,
   });
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context) {
     final usesChoices = question.type.usesChoices;

@@ -1,24 +1,59 @@
 part of form_concierge_client;
 
+/// Optional device and application details attached to a survey response.
 class DeviceInfo {
+  /// An application-provided identifier for the device.
   final String? deviceId;
+
+  /// A human-readable label.
   final String? label;
+
+  /// The platform on which the respondent is running the form.
   final String? platform;
+
+  /// The name of the operating system.
   final String? os;
+
+  /// The version of the operating system.
   final String? osVersion;
+
+  /// The browser name, when available.
   final String? browser;
+
+  /// The browser version, when available.
   final String? browserVersion;
+
+  /// The application's public version string.
   final String? appVersion;
+
+  /// The application's build identifier.
   final String? appBuild;
+
+  /// The hardware model reported by the device.
   final String? model;
+
+  /// The hardware manufacturer reported by the device.
   final String? manufacturer;
+
+  /// The locale reported by the respondent's device.
   final String? locale;
+
+  /// The device's time zone identifier.
   final String? timezone;
+
+  /// The screen width reported by the host platform.
   final int? screenWidth;
+
+  /// The screen height reported by the host platform.
   final int? screenHeight;
+
+  /// The number of physical pixels per logical screen pixel.
   final double? devicePixelRatio;
+
+  /// The user agent reported by the client, when available.
   final String? userAgent;
 
+  /// Creates DeviceInfo with the supplied values.
   const DeviceInfo({
     this.deviceId,
     this.label,
@@ -39,6 +74,7 @@ class DeviceInfo {
     this.userAgent,
   });
 
+  /// Decodes DeviceInfo from its JSON representation.
   factory DeviceInfo.fromJson(Map<String, dynamic> json) => DeviceInfo(
     deviceId: _optionalString(json['deviceId']),
     label: _optionalString(json['label']),
@@ -63,6 +99,7 @@ class DeviceInfo {
     userAgent: _optionalString(json['userAgent']),
   );
 
+  /// Returns the JSON representation used by the API.
   Map<String, dynamic> toJson() => _withoutNulls({
     'deviceId': deviceId,
     'label': label,
@@ -83,6 +120,7 @@ class DeviceInfo {
     'userAgent': userAgent,
   });
 
+  /// Returns device details with non-null values from the override taking precedence.
   DeviceInfo merge(DeviceInfo? override) {
     if (override == null) return this;
     return DeviceInfo(
@@ -106,6 +144,7 @@ class DeviceInfo {
     );
   }
 
+  /// Returns a compact device label, or null when no useful details are available.
   String? get summary {
     final name = label ?? model;
     final system = [
@@ -124,6 +163,7 @@ class DeviceInfo {
     return parts.isEmpty ? null : parts.join(' / ');
   }
 
+  /// Returns a longer summary of available device details, or null when empty.
   String? get detailSummary {
     final screen = screenWidth != null && screenHeight != null
         ? '${screenWidth}x$screenHeight'

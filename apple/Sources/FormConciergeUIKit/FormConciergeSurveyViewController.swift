@@ -2,6 +2,7 @@
   @_exported import FormConciergeSwiftUI
   import UIKit
 
+  /// A UIKit controller that presents a survey and its submission flow.
   @MainActor
   public final class FormConciergeSurveyViewController: UIViewController {
     private let client: FormConciergeClient
@@ -39,6 +40,16 @@
     private let scrollView = UIScrollView()
     private let contentStack = UIStackView()
 
+    /// Creates a survey interface for the selected project.
+    ///
+    /// The survey slug takes precedence over its identifier. When neither is supplied,
+    /// the project must contain exactly one survey. Pass a saved anonymous token to
+    /// reuse a respondent session and persist newly created sessions through
+    /// onAnonymousSession. The host supplies CAPTCHA tokens when they are required.
+    ///
+    /// Response callbacks run after the main submission is saved. The follow-up
+    /// callback runs after follow-up answers are saved. The completion button invokes
+    /// onDone when supplied. processImage can transform or discard images before upload.
     public init(
       client: FormConciergeClient,
       projectSlug: String,
@@ -79,6 +90,7 @@
       fatalError("init(coder:) has not been implemented")
     }
 
+    /// Configures the survey interface and starts loading its content.
     public override func viewDidLoad() {
       super.viewDidLoad()
       configureView()
@@ -89,6 +101,7 @@
       loadTask?.cancel()
     }
 
+    /// Reloads the survey content using the current controller configuration.
     public func reloadSurvey() {
       loadTask?.cancel()
       loadTask = Task { [weak self] in

@@ -6,7 +6,9 @@ import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/hux_states.dart';
 import 'admin_settings_form_widgets.dart';
 
+/// AI provider selection and credential controls.
 class AdminSettingsAiSection extends StatelessWidget {
+  /// Creates AdminSettingsAiSection with the supplied values.
   const AdminSettingsAiSection({
     super.key,
     required this.settings,
@@ -29,25 +31,61 @@ class AdminSettingsAiSection extends StatelessWidget {
     required this.onClearCerebrasChanged,
   });
 
+  /// The settings currently displayed or edited.
   final AiIntegrationSettings settings;
+
+  /// The AI provider currently selected in the form.
   final AiProvider provider;
+
+  /// Controls the gemini key input.
   final TextEditingController geminiKeyController;
+
+  /// Controls the openai key input.
   final TextEditingController openaiKeyController;
+
+  /// Controls the claude key input.
   final TextEditingController claudeKeyController;
+
+  /// Controls the groq key input.
   final TextEditingController groqKeyController;
+
+  /// Controls the cerebras key input.
   final TextEditingController cerebrasKeyController;
+
+  /// Whether saving the form should remove the stored Gemini API key.
   final bool clearGeminiKey;
+
+  /// Whether saving the form should remove the stored OpenAI API key.
   final bool clearOpenaiKey;
+
+  /// Whether saving the form should remove the stored Claude API key.
   final bool clearClaudeKey;
+
+  /// Whether saving the form should remove the stored Groq API key.
   final bool clearGroqKey;
+
+  /// Whether saving the form should remove the stored Cerebras API key.
   final bool clearCerebrasKey;
+
+  /// Called when the selected AI provider changes.
   final ValueChanged<AiProvider> onProviderChanged;
+
+  /// Called when removal of the stored Gemini API key is toggled.
   final ValueChanged<bool> onClearGeminiChanged;
+
+  /// Called when removal of the stored OpenAI API key is toggled.
   final ValueChanged<bool> onClearOpenaiChanged;
+
+  /// Called when removal of the stored Claude API key is toggled.
   final ValueChanged<bool> onClearClaudeChanged;
+
+  /// Called when removal of the stored Groq API key is toggled.
   final ValueChanged<bool> onClearGroqChanged;
+
+  /// Called when removal of the stored Cerebras API key is toggled.
   final ValueChanged<bool> onClearCerebrasChanged;
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context) {
     final key = _selectedProviderKey;

@@ -10,19 +10,25 @@ import 'monorepo.dart';
 import 'template_resolver.dart';
 import 'tools.dart';
 
+/// Groups commands that remove deployed Form Concierge resources.
 class DestroyCommand extends Command<int> {
+  /// Creates the destroy command and registers its options.
   DestroyCommand() {
     addSubcommand(DestroyCloudflareCommand());
   }
 
+  /// The command name accepted on the command line.
   @override
   String get name => 'destroy';
 
+  /// The description displayed in command help.
   @override
   String get description => 'Destroy a deployed Form Concierge backend.';
 }
 
+/// Removes Cloudflare resources recorded in a saved deployment.
 class DestroyCloudflareCommand extends Command<int> {
+  /// Creates the destroy cloudflare command and registers its options.
   DestroyCloudflareCommand() {
     argParser
       ..addFlag(
@@ -62,12 +68,15 @@ class DestroyCloudflareCommand extends Command<int> {
       );
   }
 
+  /// The command name accepted on the command line.
   @override
   String get name => 'cloudflare';
 
+  /// The description displayed in command help.
   @override
   String get description => 'Destroy resources recorded in a saved deployment.';
 
+  /// Runs the command with the parsed options and returns its process exit code.
   @override
   Future<int> run() async {
     final results = argResults!;

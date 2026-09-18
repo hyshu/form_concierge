@@ -7,8 +7,10 @@ import 'package:form_concierge_client/form_concierge_client.dart';
 
 import 'src/app.dart';
 
+/// The API client used to load data and submit changes.
 late final Client client;
 
+/// Initializes the application and starts its root interface.
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 

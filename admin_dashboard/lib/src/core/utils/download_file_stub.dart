@@ -1,3 +1,4 @@
+/// Throws UnsupportedError because file downloads require the web implementation.
 Future<void> downloadFile({
   required List<int> bytes,
   required String filename,

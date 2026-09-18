@@ -1,7 +1,7 @@
-import { SECRET_NAMES } from "./secret_names";
-import { tryGetSecret, upsertSecret } from "./secrets_store";
-import type { Env } from "./types";
-import { logError } from "./utils";
+import { SECRET_NAMES } from './secret_names';
+import { tryGetSecret, upsertSecret } from './secrets_store';
+import type { Env } from './types';
+import { logError } from './utils';
 
 type RuntimeMigration = {
   id: string;
@@ -10,32 +10,32 @@ type RuntimeMigration = {
 
 const migrations: RuntimeMigration[] = [
   {
-    id: "2026-07-prefix-secrets",
+    id: '2026-07-prefix-secrets',
     run: migratePrefixedSecrets,
   },
 ];
 
-export function scheduleRuntimeMigrations(
-  env: Env,
-  ctx: ExecutionContext,
-): void {
+/**
+ * Schedules schema compatibility migrations without delaying the current request.
+ */
+export function scheduleRuntimeMigrations(env: Env, ctx: ExecutionContext): void {
   ctx.waitUntil(
     runRuntimeMigrations(env).catch((error) => {
-      logError("runtime_migration_error", error);
+      logError('runtime_migration_error', error);
     }),
   );
 }
 
+/**
+ * Applies the runtime schema changes required by the deployed Worker version.
+ */
 export async function runRuntimeMigrations(env: Env): Promise<void> {
   for (const migration of migrations) {
     await runMigration(env, migration);
   }
 }
 
-async function runMigration(
-  env: Env,
-  migration: RuntimeMigration,
-): Promise<void> {
+async function runMigration(env: Env, migration: RuntimeMigration): Promise<void> {
   await env.DB.prepare(
     `INSERT INTO runtime_migrations (id, status)
      VALUES (?, 'pending')
@@ -84,33 +84,19 @@ async function runMigration(
 }
 
 async function migratePrefixedSecrets(env: Env): Promise<void> {
-  const copies: [SecretsStoreSecret, SecretsStoreSecret | undefined, string][] =
-    [
-      [env.GEMINI_API_KEY, env.LEGACY_GEMINI_API_KEY, SECRET_NAMES.gemini],
-      [env.OPENAI_API_KEY, env.LEGACY_OPENAI_API_KEY, SECRET_NAMES.openai],
-      [env.CLAUDE_API_KEY, env.LEGACY_CLAUDE_API_KEY, SECRET_NAMES.claude],
-      [env.GROQ_API_KEY, env.LEGACY_GROQ_API_KEY, SECRET_NAMES.groq],
-      [
-        env.CEREBRAS_API_KEY,
-        env.LEGACY_CEREBRAS_API_KEY,
-        SECRET_NAMES.cerebras,
-      ],
-      [env.SMTP_PASSWORD, env.LEGACY_SMTP_PASSWORD, SECRET_NAMES.smtpPassword],
-      [
-        env.TURNSTILE_SITE_KEY,
-        env.LEGACY_TURNSTILE_SITE_KEY,
-        SECRET_NAMES.turnstileSiteKey,
-      ],
-      [
-        env.TURNSTILE_SECRET_KEY,
-        env.LEGACY_TURNSTILE_SECRET_KEY,
-        SECRET_NAMES.turnstileSecretKey,
-      ],
-    ];
+  const copies: [SecretsStoreSecret, SecretsStoreSecret | undefined, string][] = [
+    [env.GEMINI_API_KEY, env.LEGACY_GEMINI_API_KEY, SECRET_NAMES.gemini],
+    [env.OPENAI_API_KEY, env.LEGACY_OPENAI_API_KEY, SECRET_NAMES.openai],
+    [env.CLAUDE_API_KEY, env.LEGACY_CLAUDE_API_KEY, SECRET_NAMES.claude],
+    [env.GROQ_API_KEY, env.LEGACY_GROQ_API_KEY, SECRET_NAMES.groq],
+    [env.CEREBRAS_API_KEY, env.LEGACY_CEREBRAS_API_KEY, SECRET_NAMES.cerebras],
+    [env.SMTP_PASSWORD, env.LEGACY_SMTP_PASSWORD, SECRET_NAMES.smtpPassword],
+    [env.TURNSTILE_SITE_KEY, env.LEGACY_TURNSTILE_SITE_KEY, SECRET_NAMES.turnstileSiteKey],
+    [env.TURNSTILE_SECRET_KEY, env.LEGACY_TURNSTILE_SECRET_KEY, SECRET_NAMES.turnstileSecretKey],
+  ];
 
   for (const [currentBinding, legacyBinding, currentName] of copies) {
-    if (!legacyBinding || isUsable(await tryGetSecret(currentBinding)))
-      continue;
+    if (!legacyBinding || isUsable(await tryGetSecret(currentBinding))) continue;
     const legacyValue = await tryGetSecret(legacyBinding);
     if (isUsable(legacyValue)) {
       await upsertSecret(env, currentName, legacyValue!);
@@ -119,7 +105,5 @@ async function migratePrefixedSecrets(env: Env): Promise<void> {
 }
 
 function isUsable(value: string | null): boolean {
-  return (
-    value != null && value.trim().length > 0 && value.trim() !== "placeholder"
-  );
+  return value != null && value.trim().length > 0 && value.trim() !== 'placeholder';
 }

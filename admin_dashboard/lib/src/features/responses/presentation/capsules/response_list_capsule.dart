@@ -8,22 +8,52 @@ import '../../../../core/constants/pagination.dart';
 
 /// State for the response list.
 class ResponseListState {
+  /// The survey responses loaded for the current page.
   final List<SurveyResponse> responses;
+
+  /// The total number of records matching the current query.
   final int totalCount;
+
+  /// Whether data is currently being loaded.
   final bool isLoading;
+
+  /// Whether a response export is being downloaded.
   final bool isExporting;
+
+  /// The error message, when the operation could not complete.
   final String? error;
+
+  /// The current page index used for pagination.
   final int currentPage;
+
+  /// The maximum number of records requested per page.
   final int pageSize;
+
+  /// The survey questions in display order.
   final List<Question> questions;
+
+  /// Available choices indexed by question identifier.
   final Map<int, List<Choice>> choicesByQuestion;
+
+  /// Loaded answers indexed by response identifier.
   final Map<int, List<Answer>> answersByResponseId;
+
+  /// Response identifiers whose answer details are currently loading.
   final Set<int> loadingAnswerIds;
+
+  /// Answer loading errors indexed by response identifier.
   final Map<int, String> answerErrorsByResponseId;
+
+  /// Loaded administrator replies indexed by response identifier.
   final Map<int, List<AdminReply>> repliesByResponseId;
+
+  /// Response identifiers whose replies are currently loading.
   final Set<int> loadingReplyIds;
+
+  /// Reply loading errors indexed by response identifier.
   final Map<int, String> replyErrorsByResponseId;
 
+  /// Creates ResponseListState with the supplied values.
   const ResponseListState({
     this.responses = const [],
     this.totalCount = 0,
@@ -42,8 +72,10 @@ class ResponseListState {
     this.replyErrorsByResponseId = const {},
   });
 
+  /// Creates the initial state before any data has been loaded.
   factory ResponseListState.initial() => const ResponseListState();
 
+  /// Returns a copy with the supplied state changes.
   ResponseListState copyWith({
     List<SurveyResponse>? responses,
     int? totalCount,
@@ -80,6 +112,7 @@ class ResponseListState {
         replyErrorsByResponseId ?? this.replyErrorsByResponseId,
   );
 
+  /// The number of pages needed to display all matching records.
   int get totalPages => (totalCount / pageSize).ceil();
 }
 
@@ -102,10 +135,12 @@ ResponseListManager responseListManagerCapsule(CapsuleHandle use) {
 
 /// Manager class for response list operations.
 class ResponseListManager {
+  /// Reads the current state for the supplied record identifier.
   final ResponseListState Function(int surveyId) getState;
   final void Function(int surveyId, ResponseListState state) _setState;
   final Client _client;
 
+  /// Creates ResponseListManager with the supplied values.
   ResponseListManager({
     required this.getState,
     required this._setState,
@@ -273,6 +308,7 @@ class ResponseListManager {
     }
   }
 
+  /// Loads answer and reply details for the selected survey response.
   Future<void> loadResponseDetails(int surveyId, int responseId) async {
     await Future.wait([
       loadAnswersForResponse(surveyId, responseId),
@@ -318,6 +354,7 @@ class ResponseListManager {
     return true;
   }
 
+  /// Downloads a response export, or returns null and records an error on failure.
   Future<ResponseExportFile?> exportResponses(
     int surveyId,
     ResponseExportFormat format,

@@ -1,5 +1,8 @@
 import { HttpError } from './utils';
 
+/**
+ * Verifies a CAPTCHA token with Turnstile and rejects unsuccessful validation.
+ */
 export async function verifyTurnstileToken(
   token: string,
   secretKey: string,

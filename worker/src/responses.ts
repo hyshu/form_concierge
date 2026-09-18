@@ -13,13 +13,22 @@ import {
   queryInChunks,
   requiredRow,
 } from './utils';
-import { answerToJson, choiceToJson, parseChoiceIds, projectToJson, questionToJson, replyToJson, responseToJson, surveyToJson } from './serializers';
 import {
-  DEFAULT_FORM_CONTENT_LOCALE,
-  localizedTextFor,
-} from './localization';
+  answerToJson,
+  choiceToJson,
+  parseChoiceIds,
+  projectToJson,
+  questionToJson,
+  replyToJson,
+  responseToJson,
+  surveyToJson,
+} from './serializers';
+import { DEFAULT_FORM_CONTENT_LOCALE, localizedTextFor } from './localization';
 import { collectFileKeysFromResponse, deleteMediaKeys, parseStoredFileKeys } from './media';
 
+/**
+ * Returns paginated responses for a survey using query-string pagination options.
+ */
 export async function listResponses(env: Env, surveyId: number, url: URL): Promise<Response> {
   const limit = integerParam(url.searchParams.get('limit'), 'limit', 50, { min: 1, max: 100 });
   const offset = integerParam(url.searchParams.get('offset'), 'offset', 0, { min: 0 });
@@ -36,27 +45,33 @@ export async function listResponses(env: Env, surveyId: number, url: URL): Promi
      WHERE r.survey_id = ?
      ORDER BY r.submitted_at DESC
      LIMIT ? OFFSET ?`,
-  ).bind(surveyId, limit, offset).all<ResponseRow>();
+  )
+    .bind(surveyId, limit, offset)
+    .all<ResponseRow>();
   return json(rows.results.map(responseToJson));
 }
 
+/**
+ * Returns the number of recorded responses for a survey as JSON.
+ */
 export async function responseCount(env: Env, surveyId: number): Promise<Response> {
   return json({
-    count: await countRows(
-      env.DB,
-      `SELECT COUNT(*) AS count FROM survey_responses WHERE survey_id = ?`,
-      surveyId,
-    ),
+    count: await countRows(env.DB, `SELECT COUNT(*) AS count FROM survey_responses WHERE survey_id = ?`, surveyId),
   });
 }
 
+/**
+ * Returns answers for a response, using the requested locale where applicable.
+ */
 export async function responseAnswers(env: Env, responseId: number, url: URL): Promise<Response> {
   const limit = integerParam(url.searchParams.get('limit'), 'limit', 500, { min: 1, max: 2000 });
   const offset = integerParam(url.searchParams.get('offset'), 'offset', 0, { min: 0 });
   const rows = await env.DB.prepare(
     `SELECT * FROM answers WHERE survey_response_id = ?
      ORDER BY id LIMIT ? OFFSET ?`,
-  ).bind(responseId, limit, offset).all<AnswerRow>();
+  )
+    .bind(responseId, limit, offset)
+    .all<AnswerRow>();
   return json(rows.results.map(answerToJson));
 }
 
@@ -67,15 +82,18 @@ type AnswerWithResponseMeta = AnswerRow & {
   metadata: string | null;
 };
 
+/**
+ * Returns aggregate counts and individual answer details for a survey.
+ */
 export async function aggregatedResults(env: Env, surveyId: number): Promise<Response> {
   const totalResponses = await countRows(
     env.DB,
     `SELECT COUNT(*) AS count FROM survey_responses WHERE survey_id = ?`,
     surveyId,
   );
-  const questions = await env.DB.prepare(
-    `SELECT * FROM questions WHERE survey_id = ? ORDER BY order_index`,
-  ).bind(surveyId).all<QuestionRow>();
+  const questions = await env.DB.prepare(`SELECT * FROM questions WHERE survey_id = ? ORDER BY order_index`)
+    .bind(surveyId)
+    .all<QuestionRow>();
   const questionIds = questions.results.map((question) => question.id);
   const [allAnswers, allChoices] = await Promise.all([
     loadAnswersForQuestions(env.DB, questionIds),
@@ -87,17 +105,12 @@ export async function aggregatedResults(env: Env, surveyId: number): Promise<Res
   const questionResults = questions.results.map((question) => {
     const answers = answersByQuestion.get(question.id) ?? [];
     const individualAnswers = answers.map((answer) => {
-      const fileKeys = isImageUploadQuestionType(question.type)
-        ? (parseStoredFileKeys(answer.text_value) ?? [])
-        : null;
+      const fileKeys = isImageUploadQuestionType(question.type) ? (parseStoredFileKeys(answer.text_value) ?? []) : null;
       return {
         responseId: answer.survey_response_id,
         submittedAt: answer.submitted_at,
         anonymousId: answer.anonymous_id,
-        responseLocale: responseLocaleFrom(
-          answer.metadata,
-          answer.device_locale,
-        ),
+        responseLocale: responseLocaleFrom(answer.metadata, answer.device_locale),
         textValue: fileKeys ? null : answer.text_value,
         selectedChoiceIds: parseChoiceIds(answer.selected_choice_ids),
         fileKeys,
@@ -123,9 +136,7 @@ export async function aggregatedResults(env: Env, surveyId: number): Promise<Res
       };
     }
     if (isImageUploadQuestionType(question.type)) {
-      const withImages = individualAnswers.filter(
-        (answer) => (answer.fileKeys?.length ?? 0) > 0,
-      );
+      const withImages = individualAnswers.filter((answer) => (answer.fileKeys?.length ?? 0) > 0);
       return {
         questionId: question.id,
         questionText: localizedTextFor(question.text_translations, DEFAULT_FORM_CONTENT_LOCALE),
@@ -141,9 +152,7 @@ export async function aggregatedResults(env: Env, surveyId: number): Promise<Res
       questionText: localizedTextFor(question.text_translations, DEFAULT_FORM_CONTENT_LOCALE),
       questionType: question.type,
       choiceCounts: null,
-      textResponses: answers
-        .map((answer) => answer.text_value)
-        .filter((value): value is string => Boolean(value)),
+      textResponses: answers.map((answer) => answer.text_value).filter((value): value is string => Boolean(value)),
       imageResponseCount: null,
       individualAnswers,
     };
@@ -151,10 +160,7 @@ export async function aggregatedResults(env: Env, surveyId: number): Promise<Res
   return json({ surveyId, totalResponses, questionResults });
 }
 
-async function loadAnswersForQuestions(
-  db: D1Database,
-  questionIds: number[],
-): Promise<AnswerWithResponseMeta[]> {
+async function loadAnswersForQuestions(db: D1Database, questionIds: number[]): Promise<AnswerWithResponseMeta[]> {
   if (questionIds.length === 0) return [];
   return queryInChunks<AnswerWithResponseMeta>(
     db,
@@ -168,10 +174,10 @@ async function loadAnswersForQuestions(
   );
 }
 
-export function responseLocaleFrom(
-  metadataJson: string | null,
-  deviceLocale: string | null,
-): string | null {
+/**
+ * Resolves the response language from stored metadata, follow-up data, or device details.
+ */
+export function responseLocaleFrom(metadataJson: string | null, deviceLocale: string | null): string | null {
   let metadataLocale: unknown;
   if (metadataJson) {
     try {
@@ -206,6 +212,9 @@ async function loadChoicesForQuestions(db: D1Database, questionIds: number[]): P
   );
 }
 
+/**
+ * Returns daily response counts over the requested time range.
+ */
 export async function responseTrends(env: Env, surveyId: number, url: URL): Promise<Response> {
   const days = integerParam(url.searchParams.get('days'), 'days', 30, { min: 1, max: 365 });
   // UTC midnight buckets so "today" is always present and days are full calendar days.
@@ -215,12 +224,12 @@ export async function responseTrends(env: Env, surveyId: number, url: URL): Prom
   const start = new Date(todayUtc.getTime() - (days - 1) * 24 * 60 * 60 * 1000);
   const rows = await env.DB.prepare(
     `SELECT submitted_at FROM survey_responses WHERE survey_id = ? AND submitted_at >= ?`,
-  ).bind(surveyId, start.toISOString()).all<{ submitted_at: string }>();
+  )
+    .bind(surveyId, start.toISOString())
+    .all<{ submitted_at: string }>();
   const result: Record<string, number> = {};
   for (let i = 0; i < days; i++) {
-    const date = new Date(start.getTime() + i * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .slice(0, 10);
+    const date = new Date(start.getTime() + i * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
     result[date] = 0;
   }
   for (const row of rows.results) {
@@ -232,11 +241,14 @@ export async function responseTrends(env: Env, surveyId: number, url: URL): Prom
   return json(result);
 }
 
-/** Floor a Date to UTC midnight (00:00:00.000Z). */
+/** Returns the start of the UTC calendar day containing the date. */
 export function utcMidnight(date: Date): Date {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
 }
 
+/**
+ * Builds a CSV or JSON response export with optional date filtering.
+ */
 export async function exportResponses(env: Env, surveyId: number, url: URL): Promise<Response> {
   const format = (url.searchParams.get('format') ?? 'csv').toLowerCase();
   if (format !== 'csv' && format !== 'json') {
@@ -259,26 +271,32 @@ export async function exportResponses(env: Env, surveyId: number, url: URL): Pro
   });
 }
 
+/**
+ * Deletes a response and associated media, then returns a successful HTTP response.
+ */
 export async function deleteResponse(env: Env, responseId: number): Promise<Response> {
-  const response = await env.DB.prepare(
-    `SELECT follow_up FROM survey_responses WHERE id = ?`,
-  ).bind(responseId).first<{ follow_up: string | null }>();
+  const response = await env.DB.prepare(`SELECT follow_up FROM survey_responses WHERE id = ?`)
+    .bind(responseId)
+    .first<{ follow_up: string | null }>();
 
   const answers = response
-    ? (await env.DB.prepare(
-        `SELECT text_value FROM answers WHERE survey_response_id = ?`,
-      ).bind(responseId).all<{ text_value: string | null }>()).results
+    ? (
+        await env.DB.prepare(`SELECT text_value FROM answers WHERE survey_response_id = ?`)
+          .bind(responseId)
+          .all<{ text_value: string | null }>()
+      ).results
     : [];
 
-  const fileKeys = response
-    ? collectFileKeysFromResponse(answers, response.follow_up)
-    : [];
+  const fileKeys = response ? collectFileKeysFromResponse(answers, response.follow_up) : [];
 
   await env.DB.prepare(`DELETE FROM survey_responses WHERE id = ?`).bind(responseId).run();
   await deleteMediaKeys(env.MEDIA_BUCKET, fileKeys);
   return json({ ok: true });
 }
 
+/**
+ * Validates and records an administrator reply to a respondent's survey response.
+ */
 export async function createReply(
   request: Request,
   env: Env,
@@ -286,29 +304,28 @@ export async function createReply(
   responseId: number,
 ): Promise<Response> {
   const body = await readJson(request);
-  const response = await env.DB.prepare(
-    `SELECT id, anonymous_account_id FROM survey_responses WHERE id = ?`,
-  ).bind(responseId).first<{ id: number; anonymous_account_id: string }>();
+  const response = await env.DB.prepare(`SELECT id, anonymous_account_id FROM survey_responses WHERE id = ?`)
+    .bind(responseId)
+    .first<{ id: number; anonymous_account_id: string }>();
   if (!response) throw new HttpError(404, 'Response not found');
   const row = await env.DB.prepare(
     `INSERT INTO admin_replies
        (survey_response_id, anonymous_account_id, admin_id, body, created_at)
      VALUES (?, ?, ?, ?, ?)
      RETURNING *`,
-  ).bind(
-    response.id,
-    response.anonymous_account_id,
-    admin.id,
-    requireString(body.body, 'body'),
-    nowIso(),
-  ).first<ReplyRow>();
+  )
+    .bind(response.id, response.anonymous_account_id, admin.id, requireString(body.body, 'body'), nowIso())
+    .first<ReplyRow>();
   return json(replyToJson(requiredRow(row, 'Reply')), 201);
 }
 
+/**
+ * Returns administrator replies attached to the supplied response.
+ */
 export async function getReplies(env: Env, responseId: number): Promise<Response> {
-  const rows = await env.DB.prepare(
-    `SELECT * FROM admin_replies WHERE survey_response_id = ? ORDER BY created_at DESC`,
-  ).bind(responseId).all<ReplyRow>();
+  const rows = await env.DB.prepare(`SELECT * FROM admin_replies WHERE survey_response_id = ? ORDER BY created_at DESC`)
+    .bind(responseId)
+    .all<ReplyRow>();
   return json(rows.results.map(replyToJson));
 }
 
@@ -325,34 +342,46 @@ type ExportData = {
 async function loadExportData(env: Env, surveyId: number, url: URL): Promise<ExportData> {
   const survey = await mustSurvey(env.DB, surveyId);
   const project = await mustProject(env.DB, survey.project_id);
-  const questions = await env.DB.prepare(
-    `SELECT * FROM questions WHERE survey_id = ? ORDER BY order_index`,
-  ).bind(surveyId).all<QuestionRow>();
+  const questions = await env.DB.prepare(`SELECT * FROM questions WHERE survey_id = ? ORDER BY order_index`)
+    .bind(surveyId)
+    .all<QuestionRow>();
   const choices = await env.DB.prepare(
     `SELECT c.* FROM choices c
      JOIN questions q ON q.id = c.question_id
      WHERE q.survey_id = ?
      ORDER BY q.order_index, c.order_index`,
-  ).bind(surveyId).all<ChoiceRow>();
+  )
+    .bind(surveyId)
+    .all<ChoiceRow>();
   const dateFilter = exportDateFilter(url);
   const responses = await selectExportResponses(env, surveyId, dateFilter);
   const responseIds = responses.map((response) => response.id);
-  const answers = responseIds.length === 0
-    ? []
-    : (await env.DB.prepare(
-        `SELECT a.* FROM answers a
+  const answers =
+    responseIds.length === 0
+      ? []
+      : (
+          await env.DB.prepare(
+            `SELECT a.* FROM answers a
          JOIN survey_responses r ON r.id = a.survey_response_id
          WHERE r.survey_id = ?${dateFilter.sql}
          ORDER BY r.submitted_at DESC, a.id`,
-      ).bind(surveyId, ...dateFilter.binds).all<AnswerRow>()).results;
-  const replies = responseIds.length === 0
-    ? []
-    : (await env.DB.prepare(
-        `SELECT ar.* FROM admin_replies ar
+          )
+            .bind(surveyId, ...dateFilter.binds)
+            .all<AnswerRow>()
+        ).results;
+  const replies =
+    responseIds.length === 0
+      ? []
+      : (
+          await env.DB.prepare(
+            `SELECT ar.* FROM admin_replies ar
          JOIN survey_responses r ON r.id = ar.survey_response_id
          WHERE r.survey_id = ?${dateFilter.sql}
          ORDER BY ar.created_at`,
-      ).bind(surveyId, ...dateFilter.binds).all<ReplyRow>()).results;
+          )
+            .bind(surveyId, ...dateFilter.binds)
+            .all<ReplyRow>()
+        ).results;
 
   return {
     survey,
@@ -386,11 +415,7 @@ function exportDateFilter(url: URL): ExportDateFilter {
   };
 }
 
-async function selectExportResponses(
-  env: Env,
-  surveyId: number,
-  dateFilter: ExportDateFilter,
-): Promise<ResponseRow[]> {
+async function selectExportResponses(env: Env, surveyId: number, dateFilter: ExportDateFilter): Promise<ResponseRow[]> {
   const rows = await env.DB.prepare(
     `SELECT r.id, r.survey_id, r.anonymous_account_id, r.anonymous_id, r.submitted_at, r.user_agent,
        r.device_id, r.device_label, r.device_platform, r.device_os, r.device_os_version,
@@ -399,7 +424,9 @@ async function selectExportResponses(
      FROM survey_responses r
      WHERE r.survey_id = ?${dateFilter.sql}
      ORDER BY r.submitted_at DESC`,
-  ).bind(surveyId, ...dateFilter.binds).all<ResponseRow>();
+  )
+    .bind(surveyId, ...dateFilter.binds)
+    .all<ResponseRow>();
   return rows.results;
 }
 
@@ -449,10 +476,12 @@ function toExportCsv(data: ExportData): string {
   for (const question of questions) {
     choiceTextByQuestion.set(
       question.id,
-      new Map((data.choicesByQuestion.get(question.id) ?? []).map((choice) => [
-        choice.id,
-        localizedTextFor(choice.text_translations, DEFAULT_FORM_CONTENT_LOCALE),
-      ])),
+      new Map(
+        (data.choicesByQuestion.get(question.id) ?? []).map((choice) => [
+          choice.id,
+          localizedTextFor(choice.text_translations, DEFAULT_FORM_CONTENT_LOCALE),
+        ]),
+      ),
     );
   }
   const lines = [headers.map(csvCell).join(',')];
@@ -484,11 +513,7 @@ function toExportCsv(data: ExportData): string {
       response.metadata,
       replies,
       ...questions.map((question) =>
-        formatAnswerForCsv(
-          question,
-          answers.get(question.id),
-          choiceTextByQuestion.get(question.id) ?? new Map(),
-        ),
+        formatAnswerForCsv(question, answers.get(question.id), choiceTextByQuestion.get(question.id) ?? new Map()),
       ),
     ];
     lines.push(row.map(csvCell).join(','));
@@ -496,6 +521,9 @@ function toExportCsv(data: ExportData): string {
   return `${lines.join('\n')}\n`;
 }
 
+/**
+ * Formats an answer's text, choice labels, or uploaded file keys for a CSV cell.
+ */
 export function formatAnswerForCsv(
   question: QuestionRow,
   answer: AnswerRow | undefined,
@@ -514,6 +542,9 @@ export function formatAnswerForCsv(
   return answer.text_value ?? '';
 }
 
+/**
+ * Adds one to a choice count, initializing the counter when needed.
+ */
 export function incrementChoiceCount(counts: Record<string, number>, choiceId: number): void {
   const key = String(choiceId);
   // Skip orphaned choice ids (deleted after answers were stored) so aggregates
@@ -552,7 +583,12 @@ function exportHeaders(contentType: string, filename: string): HeadersInit {
 }
 
 function safeFilename(value: string): string {
-  return value.replace(/[^a-z0-9-]+/gi, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || 'survey';
+  return (
+    value
+      .replace(/[^a-z0-9-]+/gi, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '') || 'survey'
+  );
 }
 
 function parseDateParam(value: string, field: string, bound: 'start' | 'end' = 'start'): string {

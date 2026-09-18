@@ -1,17 +1,35 @@
 part of form_concierge_client;
 
+/// A question's text, choice identifier, choice list, or uploaded file keys.
 typedef AnswerValue = Object?;
+
+/// Answers indexed by question identifier.
 typedef AnswerValues = Map<int, AnswerValue>;
+
+/// Validation messages indexed by question identifier.
 typedef ValidationErrors = Map<int, String>;
 
+/// A submitted answer to one survey question.
 class Answer {
+  /// The identifier of this answer. Null until the record has been saved.
   final int? id;
+
+  /// The identifier of the associated survey response.
   final int surveyResponseId;
+
+  /// The identifier of the associated question.
   final int questionId;
+
+  /// The submitted text for a text question, when present.
   final String? textValue;
+
+  /// The identifiers of the selected answer choices.
   final List<int>? selectedChoiceIds;
+
+  /// Storage keys for the uploaded files attached to the answer.
   final List<String>? fileKeys;
 
+  /// Creates Answer with the supplied values.
   const Answer({
     this.id,
     required this.surveyResponseId,
@@ -21,6 +39,7 @@ class Answer {
     this.fileKeys,
   });
 
+  /// Decodes Answer from its JSON representation.
   factory Answer.fromJson(Map<String, dynamic> json) => Answer(
     id: json['id'] == null ? null : _int(json['id']),
     surveyResponseId: _int(json['surveyResponseId']),
@@ -30,6 +49,7 @@ class Answer {
     fileKeys: json['fileKeys'] == null ? null : _stringList(json['fileKeys']),
   );
 
+  /// Returns the JSON representation used by the API.
   Map<String, dynamic> toJson() => _withoutNulls({
     'id': id,
     'surveyResponseId': surveyResponseId,
@@ -39,6 +59,7 @@ class Answer {
     'fileKeys': fileKeys,
   });
 
+  /// Returns a copy with the supplied non-null values replacing the current values.
   Answer copyWith({
     int? id,
     int? surveyResponseId,
@@ -56,16 +77,23 @@ class Answer {
   );
 }
 
+/// Answers and validation errors after applying an edit.
 class AnswerChange {
+  /// The current answers indexed by question identifier.
   final AnswerValues answers;
+
+  /// Validation messages indexed by question identifier.
   final ValidationErrors validationErrors;
 
+  /// Creates AnswerChange with the supplied values.
   const AnswerChange({
     required this.answers,
     required this.validationErrors,
   });
 }
 
+/// Converts valid nonempty input values into submission answers. Questions without
+/// identifiers and values of the wrong type are skipped.
 List<Answer> buildAnswers(
   AnswerValues answerValues,
   Iterable<Question> questions, {
@@ -128,6 +156,8 @@ List<Answer> buildAnswers(
   return result;
 }
 
+/// Returns visible questions in input order by evaluating rules against answers to
+/// earlier visible questions.
 List<Question> resolveVisibleQuestions(
   List<Question> questions,
   List<QuestionVisibilityRule> visibilityRules,
@@ -167,6 +197,7 @@ List<Question> resolveVisibleQuestions(
   return result;
 }
 
+/// Returns only answers whose question identifiers are in the visible question list.
 AnswerValues pruneHiddenAnswers(
   AnswerValues answerValues,
   List<Question> visibleQuestions,
@@ -180,6 +211,7 @@ AnswerValues pruneHiddenAnswers(
   );
 }
 
+/// Returns localized errors for missing required answers and violated input limits.
 ValidationErrors validateSurveyAnswers(
   AnswerValues answerValues,
   List<Question> questions,
@@ -271,6 +303,8 @@ ValidationErrors validateSurveyAnswers(
   return errors;
 }
 
+/// Updates one answer, removes answers to newly hidden questions, and clears the edited
+/// question's validation error.
 AnswerChange applyAnswerChange({
   required AnswerValues answers,
   required ValidationErrors validationErrors,

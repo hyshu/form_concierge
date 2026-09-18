@@ -11,9 +11,12 @@ import '../../../../core/widgets/hux_states.dart';
 import '../capsules/admin_settings_capsule.dart';
 import '../widgets/admin_settings_form.dart';
 
+/// The screen for configuring AI, SMTP, and Turnstile integrations.
 class AdminSettingsPage extends RearchConsumer {
+  /// Creates AdminSettingsPage with the supplied values.
   const AdminSettingsPage({super.key});
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context, use) {
     final manager = use(adminSettingsManagerCapsule);

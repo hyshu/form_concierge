@@ -6,11 +6,16 @@ import 'package:image_picker/image_picker.dart';
 
 /// Image bytes chosen for upload (or returned from host-side processing).
 class PickedSurveyImage {
+  /// The file contents as raw bytes.
   final List<int> bytes;
+
+  /// The MIME type of the content.
   final String contentType;
 
+  /// Creates PickedSurveyImage with the supplied values.
   const PickedSurveyImage({required this.bytes, required this.contentType});
 
+  /// Returns a copy with the supplied non-null values replacing the current values.
   PickedSurveyImage copyWith({List<int>? bytes, String? contentType}) {
     return PickedSurveyImage(
       bytes: bytes ?? this.bytes,
@@ -28,11 +33,22 @@ typedef ProcessSurveyImage =
 
 /// Local image selection + upload for [QuestionType.imageUpload].
 class ImageUploadQuestion extends StatefulWidget {
+  /// The API client used to load data and submit changes.
   final Client client;
+
+  /// The maximum number of files allowed for this question.
   final int maxFiles;
+
+  /// Storage keys for the uploaded files attached to the answer.
   final List<String> fileKeys;
+
+  /// The locale used to display the form content.
   final String locale;
+
+  /// Whether image selection and removal are available.
   final bool enabled;
+
+  /// Called with the updated value when the input changes.
   final ValueChanged<List<String>> onChanged;
 
   /// Ensures an anonymous session exists before upload (main-form answers).
@@ -45,6 +61,7 @@ class ImageUploadQuestion extends StatefulWidget {
   final Future<List<PickedSurveyImage>> Function({required int maxImages})?
   pickImages;
 
+  /// Creates ImageUploadQuestion with the supplied values.
   const ImageUploadQuestion({
     super.key,
     required this.client,
@@ -58,6 +75,7 @@ class ImageUploadQuestion extends StatefulWidget {
     this.pickImages,
   });
 
+  /// Creates the mutable state used by this widget.
   @override
   State<ImageUploadQuestion> createState() => _ImageUploadQuestionState();
 }
@@ -186,6 +204,7 @@ class _ImageUploadQuestionState extends State<ImageUploadQuestion> {
   }
 }
 
+/// Opens the platform image picker and returns the selected images with their MIME types.
 Future<List<PickedSurveyImage>> defaultPickSurveyImages({
   required int maxImages,
 }) async {

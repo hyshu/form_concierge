@@ -9,9 +9,12 @@ import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/hux_admin_shell.dart';
 import '../../../../core/widgets/hux_states.dart';
 
+/// The screen for changing the signed-in administrator's password.
 class AccountPage extends RearchConsumer {
+  /// Creates AccountPage with the supplied values.
   const AccountPage({super.key});
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context, use) {
     final client = use(clientCapsule);

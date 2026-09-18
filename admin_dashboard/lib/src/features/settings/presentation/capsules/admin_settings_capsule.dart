@@ -4,13 +4,24 @@ import 'package:rearch/rearch.dart';
 import '../../../../core/capsules/client_capsule.dart';
 import '../../../../core/capsules/public_config_capsule.dart';
 
+/// Integration settings and progress or feedback for loading and saving them.
 class AdminSettingsState {
+  /// The settings currently displayed or edited.
   final AdminIntegrationSettings? settings;
+
+  /// Whether data is currently being loaded.
   final bool isLoading;
+
+  /// Whether a save operation is in progress.
   final bool isSaving;
+
+  /// The error message, when the operation could not complete.
   final String? error;
+
+  /// Feedback displayed after an operation succeeds, if any.
   final String? successMessage;
 
+  /// Creates AdminSettingsState with the supplied values.
   const AdminSettingsState({
     this.settings,
     this.isLoading = true,
@@ -19,6 +30,7 @@ class AdminSettingsState {
     this.successMessage,
   });
 
+  /// Returns a copy with the supplied state changes.
   AdminSettingsState copyWith({
     AdminIntegrationSettings? settings,
     bool? isLoading,
@@ -38,6 +50,7 @@ class AdminSettingsState {
   );
 }
 
+/// Provides reactive admin settings manager state and dependencies.
 AdminSettingsManager adminSettingsManagerCapsule(CapsuleHandle use) {
   final (state, setState) = use.state(const AdminSettingsState());
   final client = use(clientCapsule);
@@ -51,12 +64,15 @@ AdminSettingsManager adminSettingsManagerCapsule(CapsuleHandle use) {
   );
 }
 
+/// Loads and saves integration settings while updating interface state.
 class AdminSettingsManager {
+  /// The current state snapshot exposed by this manager.
   final AdminSettingsState state;
   final void Function(AdminSettingsState state) _setState;
   final Client _client;
   final PublicConfigManager _publicConfig;
 
+  /// Creates AdminSettingsManager with the supplied values.
   const AdminSettingsManager({
     required this.state,
     required this._setState,
@@ -64,6 +80,7 @@ class AdminSettingsManager {
     required this._publicConfig,
   });
 
+  /// Loads saved integration settings and records any failure in state.
   Future<void> loadSettings() async {
     _setState(state.copyWith(isLoading: true, clearError: true));
     try {
@@ -85,6 +102,7 @@ class AdminSettingsManager {
     }
   }
 
+  /// Saves integration settings and returns whether the update succeeded.
   Future<bool> saveSettings(AdminIntegrationSettingsInput input) async {
     _setState(
       state.copyWith(
@@ -118,6 +136,7 @@ class AdminSettingsManager {
     }
   }
 
+  /// Clears operation success and error feedback from the current state.
   void clearMessages() =>
       _setState(state.copyWith(clearError: true, clearSuccessMessage: true));
 }

@@ -2,7 +2,7 @@ import 'package:form_concierge_client/form_concierge_client.dart';
 
 /// Builds the public HTML URL for a survey.
 ///
-/// Prefers the project's custom domain when set; otherwise uses the Worker API
+/// Uses the project's custom domain when set, otherwise uses the Worker API
 /// host (`/{projectSlug}/{surveySlug}`).
 String publicSurveyUrl({
   required Uri apiBaseUri,

@@ -7,7 +7,9 @@ import '../capsules/auth_state_capsule.dart';
 import '../localization/app_localizations.dart';
 import 'hux_icon_action_button.dart';
 
+/// The shared navigation and page layout for administrator screens.
 class HuxAdminShell extends RearchConsumer {
+  /// Creates HuxAdminShell with the supplied values.
   const HuxAdminShell({
     super.key,
     required this.title,
@@ -19,14 +21,28 @@ class HuxAdminShell extends RearchConsumer {
     this.showSettings = false,
   });
 
+  /// The title displayed by this component.
   final String title;
+
+  /// The content displayed inside this container.
   final Widget child;
+
+  /// The navigation item currently highlighted in the sidebar.
   final String? selectedItemId;
+
+  /// Action widgets displayed in the page header.
   final List<Widget> actions;
+
+  /// Called when the user requests navigation to the previous screen.
   final VoidCallback? onBack;
+
+  /// Whether to show the administrator user management navigation item.
   final bool showUsers;
+
+  /// Whether to show the integration settings navigation item.
   final bool showSettings;
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context, use) {
     final authManager = use(authStateCapsule);

@@ -6,14 +6,28 @@ import '../capsules/login_form_capsule.dart';
 
 /// Login form widget with email and password fields.
 class LoginForm extends StatelessWidget {
+  /// The text controllers and validation key used by the form.
   final LoginFormControllers controllers;
+
+  /// Whether data is currently being loaded.
   final bool isLoading;
+
+  /// The error message, when the operation could not complete.
   final String? error;
+
+  /// Called when the respondent requests submission.
   final VoidCallback onSubmit;
+
+  /// Whether the form is creating the first administrator account.
   final bool isRegistration;
+
+  /// Called when the user requests the password reset flow.
   final VoidCallback? onForgotPassword;
+
+  /// An optional CAPTCHA widget displayed before authentication.
   final Widget? captcha;
 
+  /// Creates LoginForm with the supplied values.
   const LoginForm({
     super.key,
     required this.controllers,
@@ -25,6 +39,7 @@ class LoginForm extends StatelessWidget {
     this.captcha,
   });
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context) => AutofillGroup(
     child: Column(

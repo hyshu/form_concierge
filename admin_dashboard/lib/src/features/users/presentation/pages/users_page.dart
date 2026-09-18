@@ -15,9 +15,12 @@ import '../capsules/user_list_capsule.dart';
 import '../widgets/create_user_dialog.dart';
 import '../widgets/user_list_tile.dart';
 
+/// The screen for managing administrator accounts and roles.
 class UsersPage extends RearchConsumer {
+  /// Creates UsersPage with the supplied values.
   const UsersPage({super.key});
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context, use) {
     final manager = use(userListCapsule);

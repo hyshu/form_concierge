@@ -5,12 +5,16 @@ import '../utils/turnstile.dart';
 
 /// Explicit Turnstile widget re-mounted after the SSR shell is removed.
 class TurnstileCaptcha extends StatefulComponent {
+  /// Creates TurnstileCaptcha with the supplied values.
   const TurnstileCaptcha({required this.siteKey, super.key});
 
+  /// The public Turnstile site key used to render the CAPTCHA challenge.
   final String siteKey;
 
+  /// The DOM element identifier reserved for the CAPTCHA widget.
   static const containerId = 'form-concierge-turnstile';
 
+  /// Creates the state that manages this interactive component.
   @override
   State<TurnstileCaptcha> createState() => _TurnstileCaptchaState();
 }

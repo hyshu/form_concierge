@@ -7,7 +7,9 @@ import '../../../../core/widgets/hux_icon_action_button.dart';
 import 'localized_choice_dialog.dart';
 import 'survey_form.dart';
 
+/// Displays and edits a choice's translations with optional AI assistance.
 class LocalizedChoiceTile extends StatelessWidget {
+  /// Creates LocalizedChoiceTile with the supplied values.
   const LocalizedChoiceTile({
     super.key,
     required this.textTranslations,
@@ -21,16 +23,34 @@ class LocalizedChoiceTile extends StatelessWidget {
     this.leading,
   });
 
+  /// Display text indexed by locale code.
   final LocalizedText textTranslations;
+
+  /// The main locale used to display and edit localized content.
   final String primaryLocale;
+
+  /// The locales available for editing or displaying translated content.
   final Iterable<String> locales;
+
+  /// Whether the control is available for interaction.
   final bool enabled;
+
+  /// Whether AI-assisted translation controls are available.
   final bool aiTranslateEnabled;
+
+  /// Called when the user requests a translation of the displayed content.
   final SurveyLocalizedTranslate? onTranslate;
+
+  /// Called with the revised localized values for an existing item.
   final void Function(LocalizedText textTranslations) onUpdate;
+
+  /// Called when the user requests deletion of this item.
   final VoidCallback onDelete;
+
+  /// Optional content displayed before the main list item text.
   final Widget? leading;
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context) => HuxCard(
     margin: const EdgeInsets.symmetric(vertical: 4),

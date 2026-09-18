@@ -9,16 +9,34 @@ import 'survey_form.dart';
 
 /// Widget for editing question choices.
 class ChoiceEditor extends StatelessWidget {
+  /// The choices available for this question.
   final List<Choice> choices;
+
+  /// The main locale used to display and edit localized content.
   final String primaryLocale;
+
+  /// The locales available for editing or displaying translated content.
   final Iterable<String> locales;
+
+  /// Whether the control is available for interaction.
   final bool enabled;
+
+  /// Whether AI-assisted translation controls are available.
   final bool aiTranslateEnabled;
+
+  /// Called when the user requests a translation of the displayed content.
   final SurveyLocalizedTranslate? onTranslate;
+
+  /// Called when a new localized item should be created.
   final void Function(LocalizedText textTranslations) onAdd;
+
+  /// Called with the revised localized values for an existing item.
   final void Function(Choice choice, LocalizedText textTranslations) onUpdate;
+
+  /// Called when the user requests deletion of this item.
   final void Function(Choice choice) onDelete;
 
+  /// Creates ChoiceEditor with the supplied values.
   const ChoiceEditor({
     super.key,
     required this.choices,
@@ -32,6 +50,7 @@ class ChoiceEditor extends StatelessWidget {
     required this.onDelete,
   });
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,

@@ -6,9 +6,12 @@ import '../../../../core/forms/email_validation.dart';
 import '../../../../core/forms/password_validation.dart';
 import '../../../../core/localization/app_localizations.dart';
 
+/// Collects credentials and a role for a new administrator account.
 class CreateUserDialog extends StatefulWidget {
+  /// Creates CreateUserDialog with the supplied values.
   const CreateUserDialog({super.key});
 
+  /// Creates the mutable state used by this widget.
   @override
   State<CreateUserDialog> createState() => _CreateUserDialogState();
 }

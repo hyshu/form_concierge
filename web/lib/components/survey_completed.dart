@@ -2,16 +2,22 @@ import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:jaspr/jaspr.dart';
 import 'package:jaspr/dom.dart';
 
+/// Displays confirmation after a survey is submitted.
 class SurveyCompleted extends StatelessComponent {
+  /// Creates SurveyCompleted with the supplied values.
   const SurveyCompleted({
     required this.survey,
     required this.locale,
     super.key,
   });
 
+  /// The survey displayed by this component or state.
   final Survey survey;
+
+  /// The locale used to display the form content.
   final String locale;
 
+  /// Builds the HTML components for the current input and state.
   @override
   Component build(context) => div(
     classes:

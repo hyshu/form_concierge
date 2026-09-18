@@ -1,10 +1,6 @@
 import type { Env } from './types';
 import type { AiProvider } from './admin_settings';
-import {
-  apiKeyForProvider,
-  getIntegrationSettingsRow,
-  normalizeAiProvider,
-} from './admin_settings';
+import { apiKeyForProvider, getIntegrationSettingsRow, normalizeAiProvider } from './admin_settings';
 import {
   HttpError,
   MEDIA_MAX_FILES,
@@ -25,31 +21,15 @@ const DEFAULT_MODELS: Record<AiProvider, string> = {
   cerebras: 'gpt-oss-120b',
 };
 const MAX_PROMPT_LENGTH = 4_000;
-const LOCALES = [
-  'en',
-  'ja',
-  'zh-Hans',
-  'zh-Hant',
-  'ko',
-  'de',
-  'es',
-  'fr',
-  'it',
-  'th',
-  'tr',
-] as const;
+const LOCALES = ['en', 'ja', 'zh-Hans', 'zh-Hant', 'ko', 'de', 'es', 'fr', 'it', 'th', 'tr'] as const;
 
 const MAX_SOURCE_TEXT_LENGTH = 2_000;
-const TRANSLATION_FIELD_KINDS = [
-  'title',
-  'description',
-  'question',
-  'placeholder',
-  'choice',
-  'response',
-] as const;
+const TRANSLATION_FIELD_KINDS = ['title', 'description', 'question', 'placeholder', 'choice', 'response'] as const;
 type TranslationFieldKind = (typeof TRANSLATION_FIELD_KINDS)[number];
 
+/**
+ * Validates a generation request and returns questions from the configured AI provider.
+ */
 export async function generateSurveyQuestions(request: Request, env: Env): Promise<Response> {
   const { provider, apiKey } = await requireAiProvider(env);
 
@@ -74,18 +54,60 @@ export async function generateSurveyQuestions(request: Request, env: Env): Promi
   return json(decoded.map((question) => normalizeGeneratedQuestion(question, provider)));
 }
 
+/**
+ * A generated follow-up question before respondent answers are attached.
+ */
 export type FollowUpGeneratedItem = {
+  /**
+   * The identifier of this follow up generated item.
+   */
   id: string;
+  /**
+   * The input format used to collect the answer.
+   */
   type: string;
+  /**
+   * The question text shown to the respondent.
+   */
   text: string;
+  /**
+   * Whether the respondent must answer this question.
+   */
   required: boolean;
+  /**
+   * Hint text displayed when the text input is empty.
+   */
   placeholder: string | null;
+  /**
+   * The maximum number of files allowed for this question.
+   */
   maxFiles: number | null;
-  choices: { id: string; label: string }[];
+  /**
+   * The choices available for this question.
+   */
+  choices: {
+    /**
+     * The identifier of this follow up generated item.choices[].
+     */
+    id: string;
+    /**
+     * A human-readable label.
+     */
+    label: string;
+  }[];
 };
 
+/**
+ * Whether follow-up is needed and the generated interview items.
+ */
 export type FollowUpGenerationResult = {
+  /**
+   * Whether the generated follow-up requires additional answers.
+   */
   needed: boolean;
+  /**
+   * The questions in the follow-up interview.
+   */
   items: FollowUpGeneratedItem[];
 };
 
@@ -174,13 +196,7 @@ function followUpSchema() {
           properties: {
             type: {
               type: 'string',
-              enum: [
-                'singleChoice',
-                'multipleChoice',
-                'textSingle',
-                'textMultiLine',
-                'imageUpload',
-              ],
+              enum: ['singleChoice', 'multipleChoice', 'textSingle', 'textMultiLine', 'imageUpload'],
             },
             text: { type: 'string' },
             required: { type: 'boolean' },
@@ -248,11 +264,7 @@ function parseFollowUpGeneration(text: string, provider: AiProvider): FollowUpGe
       throw new HttpError(502, `${providerLabel(provider)} returned invalid required flag`);
     }
     const placeholder =
-      row.placeholder == null
-        ? null
-        : typeof row.placeholder === 'string'
-          ? row.placeholder.trim() || null
-          : null;
+      row.placeholder == null ? null : typeof row.placeholder === 'string' ? row.placeholder.trim() || null : null;
     if (!Array.isArray(row.choices)) {
       throw new HttpError(502, `${providerLabel(provider)} returned invalid follow-up choices`);
     }
@@ -262,10 +274,7 @@ function parseFollowUpGeneration(text: string, provider: AiProvider): FollowUpGe
       }
       const label = (choice as { label?: unknown }).label;
       if (typeof label !== 'string' || label.trim().length === 0) {
-        throw new HttpError(
-          502,
-          `${providerLabel(provider)} returned empty follow-up choice label`,
-        );
+        throw new HttpError(502, `${providerLabel(provider)} returned empty follow-up choice label`);
       }
       return {
         id: `c${choiceIndex + 1}`,
@@ -276,10 +285,7 @@ function parseFollowUpGeneration(text: string, provider: AiProvider): FollowUpGe
       throw new HttpError(502, `${providerLabel(provider)} returned invalid choice count`);
     }
     if ((isTextQuestionType(type) || isImageUploadQuestionType(type)) && choices.length > 0) {
-      throw new HttpError(
-        502,
-        `${providerLabel(provider)} returned non-choice follow-up with choices`,
-      );
+      throw new HttpError(502, `${providerLabel(provider)} returned non-choice follow-up with choices`);
     }
     let maxFiles: number | null = null;
     if (isImageUploadQuestionType(type)) {
@@ -316,24 +322,24 @@ function parseFollowUpGeneration(text: string, provider: AiProvider): FollowUpGe
   return { needed: true, items };
 }
 
+/**
+ * Translates supplied form text into the requested locales using the configured AI provider.
+ */
 export async function translateLocalizedText(request: Request, env: Env): Promise<Response> {
   const { provider, apiKey } = await requireAiProvider(env);
 
   const body = await readJson(request);
   const fieldKind = optionalTranslationFieldKind(body.fieldKind);
-  const sourceLocale = fieldKind === 'response'
-    ? requireResponseSourceLocale(body.sourceLocale)
-    : requireLocaleCode(body.sourceLocale, 'sourceLocale');
+  const sourceLocale =
+    fieldKind === 'response'
+      ? requireResponseSourceLocale(body.sourceLocale)
+      : requireLocaleCode(body.sourceLocale, 'sourceLocale');
   const sourceText = requireString(body.sourceText, 'sourceText').trim();
   if (sourceText.length === 0) throw new HttpError(400, 'sourceText is required');
   if (sourceText.length > MAX_SOURCE_TEXT_LENGTH) {
     throw new HttpError(400, `sourceText must be ${MAX_SOURCE_TEXT_LENGTH} characters or fewer`);
   }
-  const targetLocales = requireTargetLocales(
-    body.targetLocales,
-    sourceLocale,
-    fieldKind === 'response',
-  );
+  const targetLocales = requireTargetLocales(body.targetLocales, sourceLocale, fieldKind === 'response');
 
   const model = resolveModelId(env, provider);
   const text = await generateStructuredJson({
@@ -454,9 +460,7 @@ async function generateWithGemini(input: StructuredJsonRequest): Promise<string>
   return extractGeminiText(payload);
 }
 
-async function generateWithOpenAiCompatible(
-  input: StructuredJsonRequest & { endpoint: string },
-): Promise<string> {
+async function generateWithOpenAiCompatible(input: StructuredJsonRequest & { endpoint: string }): Promise<string> {
   const response = await fetch(input.endpoint, {
     method: 'POST',
     headers: {
@@ -482,8 +486,7 @@ async function generateWithOpenAiCompatible(
   });
   const payload = await response.json().catch(() => null);
   if (!response.ok) {
-    const message =
-      providerErrorMessage(payload) ?? `${providerLabel(input.provider)} request failed`;
+    const message = providerErrorMessage(payload) ?? `${providerLabel(input.provider)} request failed`;
     throw new HttpError(response.status >= 500 ? 502 : 400, message);
   }
   return extractOpenAiCompatibleText(payload, input.provider);
@@ -534,10 +537,7 @@ function systemInstruction(): string {
   ].join('\n');
 }
 
-function translationSystemInstruction(
-  sourceLocale: string,
-  fieldKind: TranslationFieldKind | null,
-): string {
+function translationSystemInstruction(sourceLocale: string, fieldKind: TranslationFieldKind | null): string {
   const isResponse = fieldKind === 'response';
   return [
     isResponse
@@ -583,11 +583,7 @@ function requireResponseSourceLocale(value: unknown): string {
   return locale;
 }
 
-function requireTargetLocales(
-  value: unknown,
-  sourceLocale: string,
-  allowAnyLocale = false,
-): string[] {
+function requireTargetLocales(value: unknown, sourceLocale: string, allowAnyLocale = false): string[] {
   if (!Array.isArray(value)) throw new HttpError(400, 'targetLocales must be an array');
   if (value.length === 0) throw new HttpError(400, 'targetLocales must not be empty');
   if (value.length > LOCALES.length) {
@@ -599,13 +595,9 @@ function requireTargetLocales(
       throw new HttpError(400, `targetLocales[${index}] must be a string`);
     }
     const isSupported = LOCALES.includes(item as (typeof LOCALES)[number]);
-    const isValidResponseLocale =
-      allowAnyLocale && /^[A-Za-z]{2,3}(?:[-_][A-Za-z0-9]{2,8})*$/.test(item);
+    const isValidResponseLocale = allowAnyLocale && /^[A-Za-z]{2,3}(?:[-_][A-Za-z0-9]{2,8})*$/.test(item);
     if (!isSupported && !isValidResponseLocale) {
-      throw new HttpError(
-        400,
-        `targetLocales[${index}] is not a valid locale`,
-      );
+      throw new HttpError(400, `targetLocales[${index}] is not a valid locale`);
     }
     if (item === sourceLocale) {
       throw new HttpError(400, 'targetLocales must not include sourceLocale');
@@ -646,10 +638,7 @@ function parseTranslations(
   for (const locale of targetLocales) {
     const value = raw[locale];
     if (typeof value !== 'string' || value.trim().length === 0) {
-      throw new HttpError(
-        502,
-        `${providerLabel(provider)} returned missing translation for ${locale}`,
-      );
+      throw new HttpError(502, `${providerLabel(provider)} returned missing translation for ${locale}`);
     }
     translations[locale] = value.trim();
   }
@@ -714,15 +703,11 @@ function questionSchema() {
 }
 
 /**
- * Normalize a shared JSON Schema into the dialect expected by each provider.
+ * Converts a shared JSON Schema to the representation used by an AI provider.
  *
- * - Gemini (`generateContent.responseSchema`): OpenAPI-like subset. Rejects
- *   `additionalProperties` and prefers `nullable` over `type: [T, "null"]`.
- * - OpenAI / Cerebras (`strict: true`): every object must set
- *   `additionalProperties: false`, and every property key must be listed in
- *   `required` (Cerebras documents the same rule; OpenAI structured outputs too).
- * - Claude: accepts JSON Schema; we still emit a strict-friendly object shape
- *   for consistency with examples that use `additionalProperties: false`.
+ * Gemini receives its supported schema subset with explicit nullable flags.
+ * Other providers receive object schemas with additional properties disabled
+ * and every declared property listed as required.
  */
 export function toProviderSchema(provider: AiProvider, schema: unknown): unknown {
   switch (provider) {
@@ -737,9 +722,8 @@ export function toProviderSchema(provider: AiProvider, schema: unknown): unknown
 }
 
 /**
- * Gemini Schema is a subset of OpenAPI/JSON Schema and rejects unknown keys
- * such as `additionalProperties`. Union types like `type: ['string', 'null']`
- * should become `type` + `nullable: true`.
+ * Removes unsupported Gemini schema keys and converts nullable union types
+ * into a concrete type with a nullable flag.
  */
 function toGeminiSchema(schema: unknown): unknown {
   if (Array.isArray(schema)) {
@@ -774,7 +758,7 @@ function toGeminiSchema(schema: unknown): unknown {
 
 /**
  * Make a schema safe for OpenAI/Cerebras strict structured outputs (and Claude).
- * Ensures every object has `additionalProperties: false` and that `required`
+ * Disables additional properties on every object and ensures that `required`
  * lists every key under `properties`.
  */
 function toStrictJsonSchema(schema: unknown): unknown {
@@ -792,8 +776,7 @@ function toStrictJsonSchema(schema: unknown): unknown {
 
   const properties = result.properties;
   const isObjectSchema =
-    result.type === 'object' ||
-    (properties != null && typeof properties === 'object' && !Array.isArray(properties));
+    result.type === 'object' || (properties != null && typeof properties === 'object' && !Array.isArray(properties));
 
   if (isObjectSchema) {
     result.additionalProperties = false;
@@ -830,8 +813,7 @@ function extractGeminiText(payload: unknown): string {
 
 function extractOpenAiCompatibleText(payload: unknown, provider: AiProvider): string {
   const choices = (payload as { choices?: unknown })?.choices;
-  if (!Array.isArray(choices))
-    throw new HttpError(502, `${providerLabel(provider)} returned no choices`);
+  if (!Array.isArray(choices)) throw new HttpError(502, `${providerLabel(provider)} returned no choices`);
   const content = (choices[0] as { message?: { content?: unknown } })?.message?.content;
   if (typeof content !== 'string' || content.trim().length === 0) {
     throw new HttpError(502, `${providerLabel(provider)} returned empty content`);
@@ -869,16 +851,10 @@ function normalizeGeneratedQuestion(value: unknown, provider: AiProvider) {
   const type = normalizeQuestionType(input.type);
   const choices = normalizeChoiceTranslations(input.choiceTranslations, provider);
   if (isChoiceQuestionType(type) && choices.length === 0) {
-    throw new HttpError(
-      502,
-      `${providerLabel(provider)} returned a choice question without choices`,
-    );
+    throw new HttpError(502, `${providerLabel(provider)} returned a choice question without choices`);
   }
   if ((isTextQuestionType(type) || isImageUploadQuestionType(type)) && choices.length > 0) {
-    throw new HttpError(
-      502,
-      `${providerLabel(provider)} returned a non-choice question with choices`,
-    );
+    throw new HttpError(502, `${providerLabel(provider)} returned a non-choice question with choices`);
   }
   let minSelected = nullableInteger(input.minSelected, 'minSelected', provider);
   let maxSelected = nullableInteger(input.maxSelected, 'maxSelected', provider);
@@ -896,26 +872,16 @@ function normalizeGeneratedQuestion(value: unknown, provider: AiProvider) {
     type,
     isRequired: normalizeRequiredBoolean(input.isRequired, 'isRequired', provider),
     placeholderTranslations: normalizeLocalizedText(input.placeholderTranslations, provider),
-    minLength: isTextQuestionType(type)
-      ? nullableInteger(input.minLength, 'minLength', provider)
-      : null,
-    maxLength: isTextQuestionType(type)
-      ? nullableInteger(input.maxLength, 'maxLength', provider)
-      : null,
+    minLength: isTextQuestionType(type) ? nullableInteger(input.minLength, 'minLength', provider) : null,
+    maxLength: isTextQuestionType(type) ? nullableInteger(input.maxLength, 'maxLength', provider) : null,
     minSelected: isChoiceQuestionType(type) || isImageUploadQuestionType(type) ? minSelected : null,
     maxSelected: isChoiceQuestionType(type) || isImageUploadQuestionType(type) ? maxSelected : null,
-    visibilityConditionMode: normalizeVisibilityConditionMode(
-      input.visibilityConditionMode,
-      provider,
-    ),
+    visibilityConditionMode: normalizeVisibilityConditionMode(input.visibilityConditionMode, provider),
     choiceTranslations: choices,
   };
 }
 
-function normalizeChoiceTranslations(
-  value: unknown,
-  provider: AiProvider,
-): Record<string, string>[] {
+function normalizeChoiceTranslations(value: unknown, provider: AiProvider): Record<string, string>[] {
   if (!Array.isArray(value)) {
     throw new HttpError(502, `${providerLabel(provider)} returned invalid choice translations`);
   }
@@ -957,10 +923,7 @@ function nullableInteger(value: unknown, field: string, provider: AiProvider): n
 
 function localizedStringValue(value: unknown, locale: string, provider: AiProvider): string {
   if (typeof value !== 'string') {
-    throw new HttpError(
-      502,
-      `${providerLabel(provider)} returned missing localized text for ${locale}`,
-    );
+    throw new HttpError(502, `${providerLabel(provider)} returned missing localized text for ${locale}`);
   }
   return value.trim();
 }

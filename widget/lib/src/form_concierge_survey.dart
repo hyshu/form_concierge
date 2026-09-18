@@ -19,9 +19,16 @@ export 'widgets/questions/image_upload_question.dart'
 /// submits answers, and renders an adaptive follow-up when enabled. Persist the
 /// session received by [onAnonymousSession] to receive replies across launches.
 class FormConciergeSurvey extends StatefulWidget {
+  /// The API client used to load data and submit changes.
   final Client client;
+
+  /// The URL-friendly name of the project to display.
   final String projectSlug;
+
+  /// The optional URL-friendly name of the survey to display.
   final String? surveySlug;
+
+  /// The identifier of the associated survey.
   final int? surveyId;
 
   /// Called after the main survey response is saved.
@@ -32,16 +39,30 @@ class FormConciergeSurvey extends StatefulWidget {
 
   /// Called when the user taps the completion-screen "Done" button.
   final VoidCallback? onDone;
+
+  /// Called with the recorded response and answers after submission succeeds.
   final void Function(SurveyResponse response, List<Answer> answers)?
   onResponseSubmitted;
 
   /// Called after follow-up answers are saved successfully.
   final ValueChanged<SurveyResponse>? onFollowUpSubmitted;
+
+  /// Called when a new anonymous session is created so the host can persist it.
   final ValueChanged<AnonymousSession>? onAnonymousSession;
+
+  /// An optional respondent identifier supplied by the host application.
   final String? anonymousId;
+
+  /// The bearer token for the anonymous respondent account.
   final String? anonymousToken;
+
+  /// Optional device details attached to the submission.
   final DeviceInfo? deviceInfo;
+
+  /// Application-provided metadata attached to the submission.
   final Map<String, dynamic>? metadata;
+
+  /// The locale used to display the form content.
   final String? locale;
 
   /// When false, the in-form locale dropdown is hidden even if the project
@@ -65,16 +86,18 @@ class FormConciergeSurvey extends StatefulWidget {
 
   /// Supplies a CAPTCHA token when the survey has CAPTCHA enabled.
   ///
-  /// The widget never embeds a CAPTCHA implementation: the host resolves a
+  /// The host supplies the CAPTCHA implementation and resolves a
   /// token with whatever provider it chooses (e.g. Cloudflare Turnstile in a
   /// WebView) and returns it here. Return `null` to abort the submission.
   /// Called once per submit attempt, and again if a stale-session retry occurs.
   final Future<String?> Function()? captchaTokenProvider;
 
   /// Called when a submission fails, with the underlying error. The widget
-  /// already shows an inline error message; use this to surface details.
+  /// already shows an inline error message. Use this callback to surface details.
   final void Function(Object error)? onSubmitError;
 
+  /// Creates a survey form for the project. The survey slug takes precedence over its
+  /// identifier. Without either selector, the project must contain exactly one survey.
   const FormConciergeSurvey({
     super.key,
     required this.client,
@@ -99,6 +122,7 @@ class FormConciergeSurvey extends StatefulWidget {
     this.onSubmitError,
   });
 
+  /// Creates the mutable state used by this widget.
   @override
   State<FormConciergeSurvey> createState() => _FormConciergeSurveyState();
 }
@@ -407,7 +431,7 @@ class _FormConciergeSurveyState extends State<FormConciergeSurvey> {
     });
   }
 
-  /// Follow-up items are always optional; empty answers are allowed.
+  /// Follow-up items are optional, so empty answers are allowed.
   Map<String, String> _validateFollowUp() => const {};
 
   Future<void> _submitFollowUp() async {

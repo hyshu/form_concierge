@@ -1,12 +1,23 @@
 import 'package:flutter/material.dart';
 
+/// An input for an answer spanning multiple lines.
 class TextMultiLineQuestion extends StatefulWidget {
+  /// Hint text displayed when the text input is empty.
   final String? placeholder;
+
+  /// The minimum accepted text length, or null when no minimum is set.
   final int? minLength;
+
+  /// The maximum accepted text length, or null when no maximum is set.
   final int? maxLength;
+
+  /// The current value displayed by the input.
   final String? value;
+
+  /// Called with the updated value when the input changes.
   final ValueChanged<String> onChanged;
 
+  /// Creates TextMultiLineQuestion with the supplied values.
   const TextMultiLineQuestion({
     super.key,
     this.placeholder,
@@ -16,6 +27,7 @@ class TextMultiLineQuestion extends StatefulWidget {
     required this.onChanged,
   });
 
+  /// Creates the mutable state used by this widget.
   @override
   State<TextMultiLineQuestion> createState() => _TextMultiLineQuestionState();
 }

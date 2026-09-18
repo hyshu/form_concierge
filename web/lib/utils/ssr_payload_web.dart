@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:web/web.dart' as web;
 
+/// Reads matching server-rendered survey data from the page, or null if none is
+/// available.
 Map<String, dynamic>? readSsrSurveyPayload({String? slug, String? domain}) {
   final element = web.document.getElementById('form-concierge-ssr');
   final text = element?.textContent?.trim();
@@ -29,6 +31,7 @@ Map<String, dynamic>? readSsrSurveyPayload({String? slug, String? domain}) {
   }
 }
 
+/// Returns the API URL embedded in the page configuration, when available.
 String? readConfiguredApiUrl() {
   final meta = web.document.querySelector(
     'meta[name="form-concierge-api-url"]',
@@ -37,5 +40,6 @@ String? readConfiguredApiUrl() {
   return content == null || content.isEmpty ? null : content;
 }
 
+/// Removes the server-rendered form after the interactive client is ready.
 void removeSsrRoot() =>
     web.document.getElementById('form-concierge-ssr-root')?.remove();

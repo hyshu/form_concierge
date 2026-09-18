@@ -9,8 +9,10 @@ import 'router/app_router.dart';
 
 /// Root application widget.
 class App extends RearchConsumer {
+  /// Creates App with the supplied values.
   const App({super.key});
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context, use) {
     final router = use(appRouterCapsule);

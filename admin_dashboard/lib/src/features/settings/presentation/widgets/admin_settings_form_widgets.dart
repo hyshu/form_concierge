@@ -3,7 +3,9 @@ import 'package:hux/hux.dart';
 
 import '../../../../core/localization/app_localizations.dart';
 
+/// Displays the title and icon for an integration settings section.
 class AdminSettingsSectionHeader extends StatelessWidget {
+  /// Creates AdminSettingsSectionHeader with the supplied values.
   const AdminSettingsSectionHeader({
     super.key,
     required this.icon,
@@ -11,10 +13,16 @@ class AdminSettingsSectionHeader extends StatelessWidget {
     required this.configured,
   });
 
+  /// The icon displayed alongside the content or action.
   final IconData icon;
+
+  /// The title displayed by this component.
   final String title;
+
+  /// Whether the integration has the settings required for use.
   final bool configured;
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context) => Row(
     children: [
@@ -39,7 +47,9 @@ class AdminSettingsSectionHeader extends StatelessWidget {
   );
 }
 
+/// Displays a settings toggle with its explanatory label.
 class AdminSettingsSwitchRow extends StatelessWidget {
+  /// Creates AdminSettingsSwitchRow with the supplied values.
   const AdminSettingsSwitchRow({
     super.key,
     required this.label,
@@ -47,10 +57,16 @@ class AdminSettingsSwitchRow extends StatelessWidget {
     required this.onChanged,
   });
 
+  /// A human-readable label.
   final String label;
+
+  /// The current value displayed by the input.
   final bool value;
+
+  /// Called with the updated value when the input changes.
   final ValueChanged<bool> onChanged;
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context) => Row(
     children: [
@@ -60,14 +76,18 @@ class AdminSettingsSwitchRow extends StatelessWidget {
   );
 }
 
+/// Arranges settings fields to fit the available width.
 class AdminSettingsResponsiveFields extends StatelessWidget {
+  /// Creates AdminSettingsResponsiveFields with the supplied values.
   const AdminSettingsResponsiveFields({
     super.key,
     required this.children,
   });
 
+  /// The child widgets displayed in order.
   final List<Widget> children;
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context) => LayoutBuilder(
     builder: (context, constraints) {

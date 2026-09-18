@@ -7,7 +7,9 @@ import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/hux_states.dart';
 import 'admin_settings_form_widgets.dart';
 
+/// SMTP connection, sender, and credential controls.
 class AdminSettingsSmtpSection extends StatelessWidget {
+  /// Creates AdminSettingsSmtpSection with the supplied values.
   const AdminSettingsSmtpSection({
     super.key,
     required this.settings,
@@ -23,18 +25,40 @@ class AdminSettingsSmtpSection extends StatelessWidget {
     required this.onClearPasswordChanged,
   });
 
+  /// The settings currently displayed or edited.
   final SmtpIntegrationSettings settings;
+
+  /// Controls the host input.
   final TextEditingController hostController;
+
+  /// Controls the port input.
   final TextEditingController portController;
+
+  /// Controls the username input.
   final TextEditingController usernameController;
+
+  /// Controls the password input.
   final TextEditingController passwordController;
+
+  /// Controls the from email input.
   final TextEditingController fromEmailController;
+
+  /// Controls the from name input.
   final TextEditingController fromNameController;
+
+  /// The transport security used for the SMTP connection.
   final SmtpSecureMode secureMode;
+
+  /// Whether saving the form should remove the stored SMTP password.
   final bool clearPassword;
+
+  /// Called when the SMTP transport security selection changes.
   final ValueChanged<SmtpSecureMode> onSecureModeChanged;
+
+  /// Called when removal of the stored SMTP password is toggled.
   final ValueChanged<bool> onClearPasswordChanged;
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context) => HuxCard(
     child: Column(

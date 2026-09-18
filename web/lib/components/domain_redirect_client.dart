@@ -6,18 +6,24 @@ import 'survey_error.dart';
 import 'survey_loading.dart';
 import '../utils/domain_location.dart';
 
+/// Resolves a custom domain to its project and redirects to an available survey.
 class DomainRedirectClient extends StatefulComponent {
+  /// Creates DomainRedirectClient with the supplied values.
   const DomainRedirectClient({required this.serverUrl, super.key});
 
+  /// The base URL used to connect to the API server.
   final String serverUrl;
 
+  /// Creates the state that manages this interactive component.
   @override
   State<DomainRedirectClient> createState() => DomainRedirectClientState();
 }
 
+/// Loads the domain's project and tracks redirect progress.
 class DomainRedirectClientState extends State<DomainRedirectClient> {
   var _state = _DomainRedirectState.loading;
 
+  /// Initializes the component and starts loading its required data.
   @override
   void initState() {
     super.initState();
@@ -45,6 +51,7 @@ class DomainRedirectClientState extends State<DomainRedirectClient> {
     }
   }
 
+  /// Builds the HTML components for the current input and state.
   @override
   Component build(context) => switch (_state) {
     _DomainRedirectState.loading => const SurveyLoading(),

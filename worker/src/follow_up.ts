@@ -37,42 +37,114 @@ const MAX_RECENT_RESPONSES = 20;
 /** Truncate long free-text answers in history. */
 const MAX_HISTORY_ANSWER_CHARS = 200;
 
+/**
+ * The progress of an adaptive follow-up interview.
+ */
 export type FollowUpStatus = 'skipped' | 'pending' | 'completed';
 
+/**
+ * A selectable option in a follow-up question.
+ */
 export type FollowUpChoice = {
+  /**
+   * The identifier of this follow up choice.
+   */
   id: string;
+  /**
+   * A human-readable label.
+   */
   label: string;
 };
 
+/**
+ * An answer to an adaptive follow-up question.
+ */
 export type FollowUpAnswer = {
+  /**
+   * The submitted text for a text question, when present.
+   */
   textValue: string | null;
+  /**
+   * The identifiers of the selected answer choices.
+   */
   selectedChoiceIds: string[];
+  /**
+   * Storage keys for the uploaded files attached to the answer.
+   */
   fileKeys: string[];
 };
 
+/**
+ * A follow-up question with its choices and any saved answer.
+ */
 export type FollowUpItem = {
+  /**
+   * The identifier of this follow up item.
+   */
   id: string;
+  /**
+   * The input format used to collect the answer.
+   */
   type: string;
+  /**
+   * The question text shown to the respondent.
+   */
   text: string;
+  /**
+   * Whether the respondent must answer this question.
+   */
   required: boolean;
+  /**
+   * Hint text displayed when the text input is empty.
+   */
   placeholder: string | null;
+  /**
+   * The maximum number of files allowed for this question.
+   */
   maxFiles: number | null;
+  /**
+   * The choices available for this question.
+   */
   choices: FollowUpChoice[];
+  /**
+   * The saved answer, if the follow-up question has been answered.
+   */
   answer: FollowUpAnswer | null;
 };
 
+/**
+ * The stored follow-up interview, its lifecycle timestamps, and respondent answers.
+ */
 export type FollowUpPayload = {
+  /**
+   * The version associated with this record.
+   */
   version: 1;
+  /**
+   * The current progress of the adaptive follow-up interview.
+   */
   status: FollowUpStatus;
+  /**
+   * When the follow-up interview was generated.
+   */
   generatedAt: string;
+  /**
+   * When the follow-up interview was completed, if applicable.
+   */
   completedAt: string | null;
+  /**
+   * The locale used to display the form content.
+   */
   locale: string;
+  /**
+   * The questions in the follow-up interview.
+   */
   items: FollowUpItem[];
 };
 
 /**
  * Decide whether adaptive follow-up is needed and optionally persist pending items.
- * If not needed / AI unavailable / errors: mark skipped and complete without blocking.
+ * Marks follow-up as skipped when it is unnecessary, AI is unavailable, or generation fails.
  */
 export async function generateFollowUp(
   request: Request,

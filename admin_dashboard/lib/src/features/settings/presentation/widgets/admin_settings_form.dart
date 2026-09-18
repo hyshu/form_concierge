@@ -8,7 +8,9 @@ import 'admin_settings_ai_section.dart';
 import 'admin_settings_smtp_section.dart';
 import 'admin_settings_turnstile_section.dart';
 
+/// Edits and validates AI, SMTP, and Turnstile integration settings.
 class AdminSettingsForm extends StatefulWidget {
+  /// Creates AdminSettingsForm with the supplied values.
   const AdminSettingsForm({
     super.key,
     required this.settings,
@@ -19,13 +21,25 @@ class AdminSettingsForm extends StatefulWidget {
     required this.onClearMessages,
   });
 
+  /// The settings currently displayed or edited.
   final AdminIntegrationSettings settings;
+
+  /// Whether a save operation is in progress.
   final bool isSaving;
+
+  /// The error message, when the operation could not complete.
   final String? error;
+
+  /// Feedback displayed after an operation succeeds, if any.
   final String? successMessage;
+
+  /// Called with the edited values when the user saves the form.
   final Future<bool> Function(AdminIntegrationSettingsInput input) onSave;
+
+  /// Called when existing success or error feedback should be dismissed.
   final VoidCallback onClearMessages;
 
+  /// Creates the mutable state used by this widget.
   @override
   State<AdminSettingsForm> createState() => _AdminSettingsFormState();
 }

@@ -6,18 +6,26 @@ import '../../../../core/capsules/manager_operation.dart';
 
 /// State for the user list.
 class UserListState {
+  /// The administrator accounts loaded for display.
   final List<AuthUserInfo> users;
+
+  /// Whether data is currently being loaded.
   final bool isLoading;
+
+  /// The error message, when the operation could not complete.
   final String? error;
 
+  /// Creates UserListState with the supplied values.
   const UserListState({
     this.users = const [],
     this.isLoading = true,
     this.error,
   });
 
+  /// Creates the initial state before any data has been loaded.
   factory UserListState.initial() => const UserListState();
 
+  /// Returns a copy with the supplied state changes.
   UserListState copyWith({
     List<AuthUserInfo>? users,
     bool? isLoading,
@@ -43,10 +51,12 @@ UserListManager userListCapsule(CapsuleHandle use) {
 
 /// Manager class for user list operations.
 class UserListManager {
+  /// The current state snapshot exposed by this manager.
   final UserListState state;
   final void Function(UserListState) _setState;
   final Client _client;
 
+  /// Creates UserListManager with the supplied values.
   UserListManager({
     required this.state,
     required this._setState,
@@ -85,6 +95,7 @@ class UserListManager {
     errorMessage: 'Failed to create user',
   );
 
+  /// Updates an administrator's role and refreshes the account list on success.
   Future<bool> updateUserRole(UuidValue userId, AdminRole role) =>
       runVoidAndReload(
         action: () => _client.userAdmin.updateRole(userId, role),

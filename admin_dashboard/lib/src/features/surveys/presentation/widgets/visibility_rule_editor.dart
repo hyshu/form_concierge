@@ -5,7 +5,9 @@ import 'package:hux/hux.dart';
 import '../../../../core/localization/app_localizations.dart';
 import 'visibility_rule_row.dart';
 
+/// Edits the source answers and comparisons that control question visibility.
 class VisibilityRuleEditor extends StatefulWidget {
+  /// Creates VisibilityRuleEditor with the supplied values.
   const VisibilityRuleEditor({
     super.key,
     required this.surveyId,
@@ -18,19 +20,35 @@ class VisibilityRuleEditor extends StatefulWidget {
     required this.onSave,
   });
 
+  /// The identifier of the associated survey.
   final int surveyId;
+
+  /// The question whose visibility rules are being edited.
   final Question targetQuestion;
+
+  /// The main locale used to display and edit localized content.
   final String primaryLocale;
+
+  /// Earlier questions available as sources for visibility conditions.
   final List<Question> sourceQuestions;
+
+  /// Available choices indexed by question identifier.
   final Map<int, List<Choice>> choicesByQuestion;
+
+  /// The visibility conditions currently applied to the target question.
   final List<QuestionVisibilityRule> rules;
+
+  /// Whether the control is available for interaction.
   final bool enabled;
+
+  /// Called with the edited values when the user saves the form.
   final Future<void> Function({
     required VisibilityConditionMode mode,
     required List<QuestionVisibilityRule> rules,
   })
   onSave;
 
+  /// Creates the mutable state used by this widget.
   @override
   State<VisibilityRuleEditor> createState() => _VisibilityRuleEditorState();
 }

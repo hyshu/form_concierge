@@ -9,11 +9,15 @@ final _duplicateHyphenPattern = RegExp(r'-{2,}');
 final _slugPattern = RegExp(r'^[a-z0-9-]+$');
 final _lowercaseLetterPattern = RegExp(r'[a-z]');
 
+/// Suggests a slug from a title while preserving manual edits.
 class SlugAutoFill {
   String? _lastAutoSlug;
 
+  /// Clears the remembered automatic slug before editing a different record.
   void reset() => _lastAutoSlug = null;
 
+  /// Updates the slug from the title when it is empty or still matches the previous
+  /// suggestion.
   void update({
     required TextEditingController slugController,
     required Iterable<String?> sourceValues,
@@ -37,6 +41,7 @@ class SlugAutoFill {
   }
 }
 
+/// Returns a valid slug derived from the supplied text, or null when none can be formed.
 String? slugFromText(
   String value, {
   bool requireAsciiSource = true,
@@ -58,6 +63,7 @@ String? slugFromText(
   return slug;
 }
 
+/// Returns a localized validation error for an invalid slug, or null when valid.
 String? validateSlug(
   BuildContext context,
   String? value, {
@@ -74,7 +80,9 @@ String? validateSlug(
   return null;
 }
 
+/// Returns whether the text matches the accepted slug character pattern.
 bool isSlugText(String value) => _slugPattern.hasMatch(value);
 
+/// Returns whether the slug contains at least one lowercase letter.
 bool hasLowercaseSlugLetter(String value) =>
     _lowercaseLetterPattern.hasMatch(value);

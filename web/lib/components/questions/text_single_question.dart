@@ -2,7 +2,9 @@ import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:jaspr/jaspr.dart';
 import 'package:jaspr/dom.dart';
 
+/// An input for a single line of answer text.
 class TextSingleQuestion extends StatelessComponent {
+  /// Creates TextSingleQuestion with the supplied values.
   const TextSingleQuestion({
     required this.question,
     required this.value,
@@ -14,14 +16,28 @@ class TextSingleQuestion extends StatelessComponent {
     super.key,
   });
 
+  /// The question whose input is displayed.
   final Question question;
+
+  /// The current value displayed by the input.
   final String? value;
+
+  /// The locale used to display the form content.
   final String locale;
+
+  /// Called with the updated value when the input changes.
   final void Function(AnswerValue value) onChanged;
+
+  /// Whether user interaction with this input is disabled.
   final bool disabled;
+
+  /// Whether the input should display its validation error state.
   final bool invalid;
+
+  /// The DOM identifier of additional accessible input guidance, if any.
   final String? describedById;
 
+  /// Builds the HTML components for the current input and state.
   @override
   Component build(context) => div([
     input(

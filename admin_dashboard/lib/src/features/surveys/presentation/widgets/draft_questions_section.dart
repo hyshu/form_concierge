@@ -13,7 +13,9 @@ import 'localized_text_helpers.dart';
 import 'question_form_dialog.dart';
 import 'survey_form.dart';
 
+/// Displays draft questions with manual editing and AI generation controls.
 class DraftQuestionsSection extends StatelessWidget {
+  /// Creates DraftQuestionsSection with the supplied values.
   const DraftQuestionsSection({
     super.key,
     required this.formManager,
@@ -25,14 +27,28 @@ class DraftQuestionsSection extends StatelessWidget {
     required this.locales,
   });
 
+  /// The manager used to edit and generate the survey draft.
   final SurveyFormManager formManager;
+
+  /// The current survey draft and its operation state.
   final SurveyFormState formState;
+
+  /// Whether AI-assisted content generation is available.
   final bool aiGenerationEnabled;
+
+  /// Whether AI-assisted translation controls are available.
   final bool aiTranslateEnabled;
+
+  /// Called when the user requests a translation of the displayed content.
   final SurveyLocalizedTranslate? onTranslate;
+
+  /// The main locale used to display and edit localized content.
   final String primaryLocale;
+
+  /// The locales available for editing or displaying translated content.
   final Iterable<String> locales;
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context) {
     final draftQuestions = formState.draftQuestions;

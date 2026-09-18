@@ -5,7 +5,9 @@ import 'package:hux/hux.dart';
 import '../../../../core/localization/app_localizations.dart';
 import 'admin_settings_form_widgets.dart';
 
+/// Turnstile site key and secret key controls.
 class AdminSettingsTurnstileSection extends StatelessWidget {
+  /// Creates AdminSettingsTurnstileSection with the supplied values.
   const AdminSettingsTurnstileSection({
     super.key,
     required this.settings,
@@ -17,14 +19,28 @@ class AdminSettingsTurnstileSection extends StatelessWidget {
     required this.onClearSecretKeyChanged,
   });
 
+  /// The settings currently displayed or edited.
   final TurnstileIntegrationSettings settings;
+
+  /// Controls the site key input.
   final TextEditingController siteKeyController;
+
+  /// Controls the secret key input.
   final TextEditingController secretKeyController;
+
+  /// Whether saving the form should remove the stored Turnstile site key.
   final bool clearSiteKey;
+
+  /// Whether saving the form should remove the stored Turnstile secret key.
   final bool clearSecretKey;
+
+  /// Called when removal of the stored Turnstile site key is toggled.
   final ValueChanged<bool> onClearSiteKeyChanged;
+
+  /// Called when removal of the stored Turnstile secret key is toggled.
   final ValueChanged<bool> onClearSecretKeyChanged;
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context) => HuxCard(
     child: Column(

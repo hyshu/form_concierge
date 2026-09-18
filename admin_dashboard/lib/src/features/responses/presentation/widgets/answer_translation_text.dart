@@ -4,14 +4,27 @@ import 'package:hux/hux.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/hux_icon_action_button.dart';
 
+/// Displays an answer with optional translation controls, progress, and errors.
 class AnswerTranslationText extends StatelessWidget {
+  /// The respondent's original answer text.
   final String originalText;
+
+  /// The translated answer text, if it has been loaded.
   final String? translation;
+
+  /// Whether data is currently being loaded.
   final bool isLoading;
+
+  /// The error message, when the operation could not complete.
   final String? error;
+
+  /// Called when the user requests a translation of the displayed content.
   final VoidCallback? onTranslate;
+
+  /// An optional text style applied to the displayed answer.
   final TextStyle? textStyle;
 
+  /// Creates AnswerTranslationText with the supplied values.
   const AnswerTranslationText({
     super.key,
     required this.originalText,
@@ -22,6 +35,7 @@ class AnswerTranslationText extends StatelessWidget {
     this.textStyle,
   });
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,

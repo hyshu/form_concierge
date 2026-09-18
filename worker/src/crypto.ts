@@ -3,27 +3,30 @@ const PASSWORD_ITERATIONS = 100000;
 const PASSWORD_SALT_BYTES = 16;
 const PASSWORD_HASH_BYTES = 32;
 
+/**
+ * Creates a cryptographically random bearer token.
+ */
 export function randomToken(): string {
   const bytes = new Uint8Array(32);
   crypto.getRandomValues(bytes);
   return base64Url(bytes);
 }
 
+/**
+ * Returns the hexadecimal SHA-256 digest of a UTF-8 string.
+ */
 export async function sha256Hex(input: string): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(input));
   return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
+/**
+ * Creates a salted password hash in the format used by administrator accounts.
+ */
 export async function hashPassword(password: string): Promise<string> {
   const salt = new Uint8Array(PASSWORD_SALT_BYTES);
   crypto.getRandomValues(salt);
-  const key = await crypto.subtle.importKey(
-    'raw',
-    new TextEncoder().encode(password),
-    'PBKDF2',
-    false,
-    ['deriveBits'],
-  );
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']);
   const bits = await crypto.subtle.deriveBits(
     { name: 'PBKDF2', hash: 'SHA-256', salt, iterations: PASSWORD_ITERATIONS },
     key,
@@ -32,6 +35,9 @@ export async function hashPassword(password: string): Promise<string> {
   return `${PASSWORD_ALGORITHM}:${PASSWORD_ITERATIONS}:${base64Url(salt)}:${base64Url(new Uint8Array(bits))}`;
 }
 
+/**
+ * Checks a password against its stored hash and returns whether it matches.
+ */
 export async function verifyPassword(password: string, stored: string): Promise<boolean> {
   const parts = stored.split(':');
   if (parts.length !== 4) return false;
@@ -47,22 +53,13 @@ export async function verifyPassword(password: string, stored: string): Promise<
   }
   const salt = base64UrlDecode(saltRaw);
   const expected = base64UrlDecode(hashRaw);
-  if (
-    !salt ||
-    !expected ||
-    salt.byteLength !== PASSWORD_SALT_BYTES ||
-    expected.byteLength !== PASSWORD_HASH_BYTES
-  ) {
+  if (!salt || !expected || salt.byteLength !== PASSWORD_SALT_BYTES || expected.byteLength !== PASSWORD_HASH_BYTES) {
     return false;
   }
   try {
-    const key = await crypto.subtle.importKey(
-      'raw',
-      new TextEncoder().encode(password),
-      'PBKDF2',
-      false,
-      ['deriveBits'],
-    );
+    const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, [
+      'deriveBits',
+    ]);
     const bits = await crypto.subtle.deriveBits(
       { name: 'PBKDF2', hash: 'SHA-256', salt, iterations },
       key,
@@ -82,7 +79,10 @@ function base64Url(bytes: Uint8Array): string {
 
 function base64UrlDecode(value: string): Uint8Array | null {
   if (!/^[A-Za-z0-9_-]+$/.test(value) || value.length % 4 === 1) return null;
-  const padded = value.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(value.length / 4) * 4, '=');
+  const padded = value
+    .replace(/-/g, '+')
+    .replace(/_/g, '/')
+    .padEnd(Math.ceil(value.length / 4) * 4, '=');
   try {
     const binary = atob(padded);
     return Uint8Array.from(binary, (char) => char.charCodeAt(0));

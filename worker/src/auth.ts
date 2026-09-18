@@ -36,6 +36,9 @@ const BOOTSTRAP_SCOPES = JSON.stringify([
   'user:manage',
 ]);
 
+/**
+ * Creates the first administrator account and returns its authenticated session.
+ */
 export async function bootstrapAdmin(request: Request, env: Env): Promise<Response> {
   const body = await readJson(request);
   // Same validation as createUser — bootstrap must not allow weak credentials.
@@ -61,6 +64,9 @@ export async function bootstrapAdmin(request: Request, env: Env): Promise<Respon
   return json(await createAdminSession(env.DB, user));
 }
 
+/**
+ * Validates credentials and any required CAPTCHA, then creates an administrator session.
+ */
 export async function loginAdmin(request: Request, env: Env): Promise<Response> {
   const body = await readJson(request);
   const email = requireString(body.email, 'email').toLowerCase();
@@ -181,6 +187,9 @@ async function clearLoginFailures(db: D1Database, keyHash: string): Promise<void
   ]);
 }
 
+/**
+ * Creates an anonymous respondent account and returns its session token.
+ */
 export async function createAnonymousAccount(request: Request, env: Env): Promise<Response> {
   await checkRateLimit(
     env.ANON_CREATE_RATE_LIMITER,
@@ -214,6 +223,9 @@ export async function createAnonymousAccount(request: Request, env: Env): Promis
   );
 }
 
+/**
+ * Validates the request's administrator bearer token and returns the authenticated account.
+ */
 export async function requireAdmin(request: Request, env: Env): Promise<AdminContext> {
   const token = bearerToken(request);
   if (!token) throw new HttpError(401, 'Admin authentication required');
@@ -239,6 +251,9 @@ export async function requireAdmin(request: Request, env: Env): Promise<AdminCon
   return adminRowToContext(row);
 }
 
+/**
+ * Revokes the administrator session identified by the request's bearer token.
+ */
 export async function logoutAdmin(request: Request, env: Env): Promise<Response> {
   const token = bearerToken(request);
   if (!token) throw new HttpError(401, 'Admin authentication required');
@@ -251,6 +266,9 @@ export async function logoutAdmin(request: Request, env: Env): Promise<Response>
   return json({ ok: true });
 }
 
+/**
+ * Validates the request's respondent bearer token and returns the anonymous account.
+ */
 export async function requireAnonymous(request: Request, env: Env): Promise<AnonymousContext> {
   const token = bearerToken(request);
   if (!token) throw new HttpError(401, 'Anonymous account required');
@@ -313,6 +331,9 @@ async function pruneStaleAnonymousAccounts(db: D1Database, now: string): Promise
     .run();
 }
 
+/**
+ * Loads an administrator context by identifier, or null when the account is absent.
+ */
 export async function getAdminById(db: D1Database, id: string): Promise<AdminContext | null> {
   const row = await db
     .prepare(`SELECT id, email, scope_names, created_at FROM admins WHERE id = ?`)

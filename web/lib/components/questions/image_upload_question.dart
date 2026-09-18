@@ -8,6 +8,7 @@ import 'package:universal_web/web.dart' as web;
 
 /// Browser file-picker image upload for main survey answers.
 class ImageUploadQuestion extends StatefulComponent {
+  /// Creates ImageUploadQuestion with the supplied values.
   const ImageUploadQuestion({
     required this.client,
     required this.question,
@@ -19,14 +20,28 @@ class ImageUploadQuestion extends StatefulComponent {
     super.key,
   });
 
+  /// The API client used to load data and submit changes.
   final Client client;
+
+  /// The question whose input is displayed.
   final Question question;
+
+  /// The current value displayed by the input.
   final List<String> value;
+
+  /// The locale used to display the form content.
   final String locale;
+
+  /// Called with the updated value when the input changes.
   final void Function(AnswerValue value) onChanged;
+
+  /// Ensures an anonymous session exists before uploading media, when provided.
   final Future<void> Function() ensureAuthenticated;
+
+  /// Whether user interaction with this input is disabled.
   final bool disabled;
 
+  /// Creates the state that manages this interactive component.
   @override
   State<ImageUploadQuestion> createState() => _ImageUploadQuestionState();
 }

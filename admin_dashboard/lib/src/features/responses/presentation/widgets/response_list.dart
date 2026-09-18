@@ -12,28 +12,70 @@ import 'answer_translation_text.dart';
 
 /// Widget showing a paginated list of individual responses.
 class ResponseList extends StatelessWidget {
+  /// The API client used to load data and submit changes.
   final Client client;
+
+  /// The survey responses loaded for the current page.
   final List<SurveyResponse> responses;
+
+  /// The total number of records matching the current query.
   final int totalCount;
+
+  /// The current page index used for pagination.
   final int currentPage;
+
+  /// The number of pages needed to display all matching records.
   final int totalPages;
+
+  /// Whether data is currently being loaded.
   final bool isLoading;
+
+  /// Whether response deletion and reply actions are available.
   final bool canManageResponses;
+
+  /// The error message, when the operation could not complete.
   final String? error;
+
+  /// The survey questions in display order.
   final List<Question> questions;
+
+  /// Available choices indexed by question identifier.
   final Map<int, List<Choice>> choicesByQuestion;
+
+  /// Loaded answers indexed by response identifier.
   final Map<int, List<Answer>> answersByResponseId;
+
+  /// Response identifiers whose answer details are currently loading.
   final Set<int> loadingAnswerIds;
+
+  /// Answer loading errors indexed by response identifier.
   final Map<int, String> answerErrorsByResponseId;
+
+  /// Loaded administrator replies indexed by response identifier.
   final Map<int, List<AdminReply>> repliesByResponseId;
+
+  /// Response identifiers whose replies are currently loading.
   final Set<int> loadingReplyIds;
+
+  /// Reply loading errors indexed by response identifier.
   final Map<int, String> replyErrorsByResponseId;
+
+  /// Optional state and callbacks for translating displayed answers.
   final AnswerTranslationBindings? answerTranslations;
+
+  /// Called when the user selects another response page.
   final void Function(int page) onPageChange;
+
+  /// Called when the user requests deletion of this item.
   final void Function(SurveyResponse response) onDelete;
+
+  /// Called when the user starts composing a reply to a response.
   final void Function(SurveyResponse response) onReply;
+
+  /// Called when a response is expanded and its details should be loaded.
   final void Function(int responseId) onExpandAnswers;
 
+  /// Creates ResponseList with the supplied values.
   const ResponseList({
     super.key,
     required this.client,
@@ -59,6 +101,7 @@ class ResponseList extends StatelessWidget {
     required this.onExpandAnswers,
   });
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context) {
     if (isLoading && responses.isEmpty) {
@@ -382,7 +425,7 @@ class _ResponseTile extends StatelessWidget {
   }
 
   /// HTTP client library defaults are not useful in the response list.
-  /// e.g. Dart's `http` package sends `Dart/3.x (dart:io)`.
+  /// For example, the Dart HTTP package sends a library-specific user agent.
   String? _displayableUserAgent(String? userAgent) {
     final value = userAgent?.trim();
     if (value == null || value.isEmpty) return null;

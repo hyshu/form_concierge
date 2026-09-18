@@ -11,11 +11,15 @@ import '../../../../core/widgets/hux_states.dart';
 import '../capsules/survey_list_capsule.dart';
 import '../widgets/project_form.dart';
 
+/// The screen for creating a project or editing its locale and domain settings.
 class ProjectEditorPage extends RearchConsumer {
+  /// The identifier of the project containing the survey.
   final int? projectId;
 
+  /// Creates ProjectEditorPage with the supplied values.
   const ProjectEditorPage({super.key, this.projectId});
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context, use) {
     final manager = use(surveyListCapsule);

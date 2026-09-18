@@ -1,6 +1,9 @@
 import type { NormalizedDeviceInfo } from './types';
 import { compactObject, HttpError, optionalInteger } from './utils';
 
+/**
+ * Validates and normalizes supplied device details for database storage.
+ */
 export function normalizeDeviceInfo(value: unknown): NormalizedDeviceInfo {
   const empty: NormalizedDeviceInfo = {
     deviceId: null,
@@ -75,6 +78,9 @@ export function normalizeDeviceInfo(value: unknown): NormalizedDeviceInfo {
   return { ...normalized, rawJson };
 }
 
+/**
+ * Validates application metadata and encodes it as JSON, or returns null when absent.
+ */
 export function normalizeMetadata(value: unknown): string | null {
   if (value == null) return null;
   if (typeof value !== 'object' || Array.isArray(value)) {
@@ -87,6 +93,9 @@ export function normalizeMetadata(value: unknown): string | null {
   return json;
 }
 
+/**
+ * Validates a nested metadata value against supported types and depth limits.
+ */
 export function normalizeMetadataValue(value: unknown, field: string, depth: number): unknown {
   if (depth > 5) throw new HttpError(400, `${field} is too deep`);
   if (value == null) return null;

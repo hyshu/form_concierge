@@ -54,15 +54,45 @@ import java.text.DateFormat
 import java.util.Date
 import java.util.Locale
 
+/**
+ * Server, survey, and host callbacks used by the inquiry flow.
+ */
 public data class FormConciergeInquiryConfig(
+    /**
+     * The base URL of the Form Concierge API server.
+     */
     public val baseUrl: String,
+    /**
+     * The URL-friendly name of the project to display.
+     */
     public val projectSlug: String,
+    /**
+     * The optional URL-friendly name of the survey to display.
+     */
     public val surveySlug: String? = null,
+    /**
+     * The identifier of the associated survey.
+     */
     public val surveyId: Int? = null,
+    /**
+     * The locale used to display the form content.
+     */
     public val locale: String? = null,
+    /**
+     * Optional device details attached to the submission.
+     */
     public val deviceInfo: DeviceInfo? = null,
+    /**
+     * Application-provided metadata attached to the submission.
+     */
     public val metadata: Map<String, JsonElement> = emptyMap(),
+    /**
+     * Obtains a CAPTCHA token before submission when the survey requires one.
+     */
     public val captchaTokenProvider: (suspend () -> String?)? = null,
+    /**
+     * An optional transformation applied to each image before upload.
+     */
     public val processImage: ProcessSurveyImage? = null,
 ) {
     internal fun surveyConfig(): FormConciergeSurveyConfig =
@@ -78,6 +108,10 @@ public data class FormConciergeInquiryConfig(
         )
 }
 
+/**
+ * Displays the survey, local inquiry history, and replies while preserving the respondent
+ * session.
+ */
 @Composable
 public fun FormConciergeInquiryFlow(
     config: FormConciergeInquiryConfig,
@@ -97,6 +131,10 @@ public fun FormConciergeInquiryFlow(
     )
 }
 
+/**
+ * Displays the survey, local inquiry history, and replies while preserving the respondent
+ * session.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 public fun FormConciergeInquiryFlow(
@@ -260,6 +298,9 @@ public fun FormConciergeInquiryFlow(
     }
 }
 
+/**
+ * Displays actions for sending an inquiry and reviewing inquiry history.
+ */
 @Composable
 public fun FormConciergeInquiryHub(
     locale: String,
@@ -313,6 +354,9 @@ private fun InquiryHubCard(
     }
 }
 
+/**
+ * Displays locally retained inquiries and lets the respondent select one.
+ */
 @Composable
 public fun FormConciergeInquiryList(
     client: FormConciergeApi,
@@ -411,6 +455,9 @@ public fun FormConciergeInquiryList(
     }
 }
 
+/**
+ * Displays a saved inquiry, its follow-up answers, and administrator replies.
+ */
 @Composable
 public fun FormConciergeInquiryDetail(
     inquiry: InquiryRecord,

@@ -19,10 +19,12 @@ AuthStateManager authStateCapsule(CapsuleHandle use) {
 
 /// Manager class for authentication operations.
 class AuthStateManager {
+  /// The current state snapshot exposed by this manager.
   final AuthState state;
   final void Function(AuthState) _setState;
   final Client _client;
 
+  /// Creates AuthStateManager with the supplied values.
   AuthStateManager({
     required this.state,
     required this._setState,

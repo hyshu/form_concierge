@@ -9,19 +9,25 @@ import 'monorepo.dart';
 import 'template_resolver.dart';
 import 'tools.dart';
 
+/// Groups commands that build Form Concierge applications.
 class BuildCommand extends Command<int> {
+  /// Creates the build command and registers its options.
   BuildCommand() {
     addSubcommand(AdminMacosBuildCommand());
   }
 
+  /// The command name accepted on the command line.
   @override
   String get name => 'build';
 
+  /// The description displayed in command help.
   @override
   String get description => 'Build Form Concierge applications.';
 }
 
+/// Builds the administrator application for macOS.
 class AdminMacosBuildCommand extends Command<int> {
+  /// Creates the admin macos build command and registers its options.
   AdminMacosBuildCommand() {
     argParser
       ..addOption('api-url', help: 'Worker API URL embedded in the app.')
@@ -53,13 +59,16 @@ class AdminMacosBuildCommand extends Command<int> {
       );
   }
 
+  /// The command name accepted on the command line.
   @override
   String get name => 'admin-macos';
 
+  /// The description displayed in command help.
   @override
   String get description =>
       'Build the macOS admin app and copy it to the current directory.';
 
+  /// Runs the command with the parsed options and returns its process exit code.
   @override
   Future<int> run() async {
     if (!Platform.isMacOS) {

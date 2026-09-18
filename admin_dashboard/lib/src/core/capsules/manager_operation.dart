@@ -1,3 +1,5 @@
+/// Runs a mutation, reloads data on success, and reports failures through the supplied
+/// callback.
 Future<T?> runAndReload<T>({
   required Future<T> Function() action,
   required Future<void> Function() reload,
@@ -21,6 +23,7 @@ Future<T?> runAndReload<T>({
   return result;
 }
 
+/// Runs an action and attempts to reload data. Returns whether the action succeeded even if refreshing fails.
 Future<bool> runVoidAndReload({
   required Future<void> Function() action,
   required Future<void> Function() reload,

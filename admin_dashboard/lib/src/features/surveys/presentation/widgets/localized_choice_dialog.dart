@@ -7,6 +7,7 @@ import 'localized_text_field_group.dart';
 import 'localized_text_helpers.dart';
 import 'survey_form.dart';
 
+/// Opens a dialog for entering or updating localized choice text.
 Future<void> showLocalizedChoiceDialog(
   BuildContext context, {
   required String title,

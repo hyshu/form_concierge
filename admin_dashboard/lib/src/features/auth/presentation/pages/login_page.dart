@@ -14,8 +14,10 @@ import '../widgets/turnstile_challenge.dart';
 
 /// Login page for admin authentication.
 class LoginPage extends RearchConsumer {
+  /// Creates LoginPage with the supplied values.
   const LoginPage({super.key});
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context, use) {
     final authManager = use(authStateCapsule);

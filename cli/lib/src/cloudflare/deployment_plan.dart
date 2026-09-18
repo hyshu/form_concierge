@@ -4,9 +4,12 @@ import 'cloudflare_release_manifest.dart';
 
 export 'cloudflare_release_manifest.dart';
 
+/// The deployment components selected for an install or upgrade.
 class CloudflareDeploymentPlan {
   CloudflareDeploymentPlan._(this.components, this.reason);
 
+  /// Selects deployment components from release changes, using all components when a safe
+  /// incremental plan cannot be determined.
   factory CloudflareDeploymentPlan.resolve({
     required String? installedVersion,
     required String targetVersion,
@@ -84,12 +87,18 @@ class CloudflareDeploymentPlan {
     );
   }
 
+  /// The deployment components included in this change or plan.
   final Set<CloudflareDeploymentComponent> components;
+
+  /// The explanation for selecting these deployment components.
   final String reason;
 
+  /// Returns whether the deployment plan contains the supplied component.
   bool includes(CloudflareDeploymentComponent component) =>
       components.contains(component);
 
+  /// Returns a plan with added components and an explanation, or this plan when nothing
+  /// is added.
   CloudflareDeploymentPlan withAdditionalComponents(
     Iterable<CloudflareDeploymentComponent> additional,
     String additionalReason,

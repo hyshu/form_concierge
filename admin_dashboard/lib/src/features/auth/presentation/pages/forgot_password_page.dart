@@ -9,8 +9,10 @@ import '../widgets/auth_card_scaffold.dart';
 
 /// Page for entering email to start password reset.
 class ForgotPasswordPage extends RearchConsumer {
+  /// Creates ForgotPasswordPage with the supplied values.
   const ForgotPasswordPage({super.key});
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context, use) {
     final resetManager = use(passwordResetCapsule);

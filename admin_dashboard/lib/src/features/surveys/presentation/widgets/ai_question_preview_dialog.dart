@@ -7,10 +7,16 @@ import '../models/draft_question.dart';
 
 /// Dialog for previewing AI-generated questions before applying them.
 class AiQuestionPreviewDialog extends StatelessWidget {
+  /// The survey questions in display order.
   final List<DraftQuestion> questions;
+
+  /// Called when the generated questions are accepted.
   final VoidCallback onApply;
+
+  /// Called when the generated question preview is dismissed without applying it.
   final VoidCallback onCancel;
 
+  /// Creates AiQuestionPreviewDialog with the supplied values.
   const AiQuestionPreviewDialog({
     super.key,
     required this.questions,
@@ -18,6 +24,7 @@ class AiQuestionPreviewDialog extends StatelessWidget {
     required this.onCancel,
   });
 
+  /// Opens a preview of generated questions for review before applying them.
   static Future<void> show(
     BuildContext context, {
     required List<DraftQuestion> questions,
@@ -33,6 +40,7 @@ class AiQuestionPreviewDialog extends StatelessWidget {
     ),
   );
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context) => HuxDialog(
     title: context.tr('Generated Questions'),

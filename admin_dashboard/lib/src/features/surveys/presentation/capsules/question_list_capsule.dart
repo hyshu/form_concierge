@@ -7,12 +7,22 @@ import '../../../../core/capsules/manager_operation.dart';
 
 /// State for the question list.
 class QuestionListState {
+  /// The survey questions in display order.
   final List<Question> questions;
+
+  /// Available choices indexed by question identifier.
   final Map<int, List<Choice>> choicesByQuestion;
+
+  /// Conditions that determine which questions are visible.
   final List<QuestionVisibilityRule> visibilityRules;
+
+  /// Whether data is currently being loaded.
   final bool isLoading;
+
+  /// The error message, when the operation could not complete.
   final String? error;
 
+  /// Creates QuestionListState with the supplied values.
   const QuestionListState({
     this.questions = const [],
     this.choicesByQuestion = const {},
@@ -21,8 +31,10 @@ class QuestionListState {
     this.error,
   });
 
+  /// Creates the initial state before any data has been loaded.
   factory QuestionListState.initial() => const QuestionListState();
 
+  /// Returns a copy with the supplied state changes.
   QuestionListState copyWith({
     List<Question>? questions,
     Map<int, List<Choice>>? choicesByQuestion,
@@ -57,10 +69,12 @@ QuestionListManager questionListManagerCapsule(CapsuleHandle use) {
 
 /// Manager class for question list operations.
 class QuestionListManager {
+  /// Reads the current state for the supplied record identifier.
   final QuestionListState Function(int surveyId) getState;
   final void Function(int surveyId, QuestionListState state) _setState;
   final Client _client;
 
+  /// Creates QuestionListManager with the supplied values.
   QuestionListManager({
     required this.getState,
     required this._setState,
@@ -195,6 +209,7 @@ class QuestionListManager {
     'Failed to delete choice',
   );
 
+  /// Saves a question's visibility conditions and reloads the question list on success.
   Future<bool> saveVisibilityRules({
     required int surveyId,
     required Question targetQuestion,

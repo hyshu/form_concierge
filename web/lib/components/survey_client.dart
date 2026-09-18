@@ -17,7 +17,9 @@ import 'survey_content.dart';
 import 'turnstile_captcha.dart';
 import 'not_found_page.dart';
 
+/// Loads or hydrates a public survey and manages its respondent session.
 class SurveyClient extends StatefulComponent {
+  /// Creates SurveyClient with the supplied values.
   const SurveyClient({
     required this.serverUrl,
     this.surveyJson,
@@ -32,21 +34,42 @@ class SurveyClient extends StatefulComponent {
     super.key,
   });
 
+  /// Server-rendered project data, when available for hydration.
   final Map<String, dynamic>? projectJson;
+
+  /// Server-rendered survey data, when available for hydration.
   final Map<String, dynamic>? surveyJson;
+
+  /// Server-rendered question definitions used for hydration.
   final List<Map<String, dynamic>> questionsJson;
+
+  /// Server-rendered visibility rules used for hydration.
   final List<Map<String, dynamic>> visibilityRulesJson;
+
+  /// Server-rendered choices indexed by question identifier.
   final Map<String, List<Map<String, dynamic>>> choicesByQuestionJson;
+
+  /// The base URL used to connect to the API server.
   final String serverUrl;
+
+  /// The URL-friendly name of the project to display.
   final String? projectSlug;
+
+  /// The optional URL-friendly name of the survey to display.
   final String? surveySlug;
+
+  /// The identifier of the associated survey.
   final int? surveyId;
+
+  /// The custom host name used to resolve a public project, when supplied.
   final String? domain;
 
+  /// Creates the state that manages this interactive component.
   @override
   State<SurveyClient> createState() => SurveyClientState();
 }
 
+/// Tracks survey answers, locale, uploads, and submission progress.
 class SurveyClientState extends State<SurveyClient> {
   late Client _client;
   Project? _project;
@@ -63,6 +86,7 @@ class SurveyClientState extends State<SurveyClient> {
   ValidationErrors _validationErrors = {};
   String? _errorMessage;
 
+  /// Initializes the component and starts loading its required data.
   @override
   void initState() {
     super.initState();
@@ -465,6 +489,7 @@ class SurveyClientState extends State<SurveyClient> {
 
   DeviceInfo _deviceInfo() => buildDeviceInfo();
 
+  /// Builds the HTML components for the current input and state.
   @override
   Component build(context) {
     final survey = _survey;

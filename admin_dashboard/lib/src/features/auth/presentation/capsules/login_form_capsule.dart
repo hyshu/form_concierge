@@ -22,9 +22,13 @@ LoginFormControllers loginFormControllersCapsule(CapsuleHandle use) {
 
 /// Container for login form controllers.
 class LoginFormControllers {
+  /// Controls the email input.
   final TextEditingController email;
+
+  /// Controls the password input.
   final TextEditingController password;
 
+  /// Creates LoginFormControllers with the supplied values.
   const LoginFormControllers({
     required this.email,
     required this.password,

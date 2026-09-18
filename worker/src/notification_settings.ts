@@ -25,6 +25,9 @@ import { mustSurvey } from './admin_records';
 import { buildAnswersSummary, formatCompletedFollowUpSummary } from './follow_up';
 import { DEFAULT_QUOTA_LIMITS, quotaLimit, reserveQuota, utcDay } from './usage_quota';
 
+/**
+ * Handles reading, updating, toggling, testing, or deleting survey email settings.
+ */
 export async function notificationSettings(
   request: Request,
   env: Env,
@@ -96,10 +99,22 @@ export async function notificationSettings(
   return json({ error: 'Not found' }, 404);
 }
 
+/**
+ * Whether a notification concerns a main submission or completed follow-up.
+ */
 export type ResponseNotificationKind = 'submission' | 'follow_up';
 
+/**
+ * The subject and plain text body of a response notification email.
+ */
 export type ResponseNotificationContent = {
+  /**
+   * The email subject line.
+   */
   subject: string;
+  /**
+   * The plain text email body.
+   */
   text: string;
 };
 

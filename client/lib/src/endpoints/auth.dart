@@ -1,9 +1,13 @@
 part of form_concierge_client;
 
+/// Authenticates administrators using email and password.
 class EmailIdpEndpoint {
   final Client _client;
+
+  /// Creates EmailIdpEndpoint using the supplied API client.
   EmailIdpEndpoint(this._client);
 
+  /// Authenticates an administrator and returns the session without persisting it.
   Future<AuthSuccess> login({
     required String email,
     required String password,
@@ -35,14 +39,17 @@ class EmailIdpEndpoint {
     }
   }
 
+  /// Throws an ApiException with status 501 because password reset is not implemented.
   Future<UuidValue> startPasswordReset({required String email}) async =>
       throw const ApiException(501, 'Password reset is not configured');
 
+  /// Throws an ApiException with status 501 because password reset is not implemented.
   Future<String> verifyPasswordResetCode({
     required UuidValue passwordResetRequestId,
     required String verificationCode,
   }) async => throw const ApiException(501, 'Password reset is not configured');
 
+  /// Throws an ApiException with status 501 because password reset is not implemented.
   Future<void> finishPasswordReset({
     required String finishPasswordResetToken,
     required String newPassword,

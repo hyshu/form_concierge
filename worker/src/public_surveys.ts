@@ -46,12 +46,18 @@ import { captchaRequiredForSurvey, isCaptchaRequiredForSurvey } from './captcha'
 import { clientIp } from './rate_limit';
 import { DEFAULT_QUOTA_LIMITS, ipQuotaSubject, quotaLimit, refundQuota, reserveQuotas, utcDay } from './usage_quota';
 
+/**
+ * Returns the public project and available surveys associated with a slug.
+ */
 export async function getPublicProject(env: Env, slug: string): Promise<Response> {
   const project = await env.DB.prepare(`SELECT * FROM projects WHERE slug = ?`).bind(slug).first<ProjectRow>();
   if (!project) throw new HttpError(404, 'Project not found');
   return json(await publicProjectPayload(env, project));
 }
 
+/**
+ * Resolves a custom host name to its public project and available surveys.
+ */
 export async function getPublicProjectByDomain(env: Env, domainValue: string | null): Promise<Response> {
   let customDomain: string | null = null;
   try {
@@ -87,6 +93,9 @@ async function publicProjectPayload(env: Env, project: ProjectRow) {
   };
 }
 
+/**
+ * Returns questions for a survey that is available to respondents.
+ */
 export async function getPublicQuestions(env: Env, surveyId: number): Promise<Response> {
   const survey = await env.DB.prepare(`SELECT * FROM surveys WHERE id = ? AND status = 'published' AND web_enabled = 1`)
     .bind(surveyId)
@@ -102,6 +111,9 @@ export async function getPublicQuestions(env: Env, surveyId: number): Promise<Re
   return json(rows.results.map(questionToJson));
 }
 
+/**
+ * Returns choices for a question in a publicly available survey.
+ */
 export async function getPublicChoices(env: Env, questionId: number): Promise<Response> {
   const question = await env.DB.prepare(
     `SELECT q.* FROM questions q
@@ -117,6 +129,10 @@ export async function getPublicChoices(env: Env, questionId: number): Promise<Re
   return json(rows.results.map(choiceToJson));
 }
 
+/**
+ * Validates respondent access, availability, CAPTCHA, answers, and quotas before saving a
+ * submission.
+ */
 export async function submitResponse(
   request: Request,
   env: Env,

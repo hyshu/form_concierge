@@ -2,9 +2,12 @@ import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:jaspr/jaspr.dart';
 import 'package:jaspr/dom.dart';
 
+/// Displays a loading indicator while survey data is being fetched.
 class SurveyLoading extends StatelessComponent {
+  /// Creates SurveyLoading with the supplied values.
   const SurveyLoading({super.key});
 
+  /// Builds the HTML components for the current input and state.
   @override
   Component build(context) => div(
     classes:

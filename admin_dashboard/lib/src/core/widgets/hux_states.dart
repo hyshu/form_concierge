@@ -4,7 +4,9 @@ import 'package:hux/hux.dart';
 import '../localization/app_localizations.dart';
 import 'hux_icon_action_button.dart';
 
+/// A scrollable page body with consistent width and padding.
 class HuxPageBody extends StatelessWidget {
+  /// Creates HuxPageBody with the supplied values.
   const HuxPageBody({
     super.key,
     required this.child,
@@ -12,10 +14,16 @@ class HuxPageBody extends StatelessWidget {
     this.padding = const EdgeInsets.all(24),
   });
 
+  /// The content displayed inside this container.
   final Widget child;
+
+  /// The maximum content width in logical pixels.
   final double maxWidth;
+
+  /// The spacing between the container edge and its content.
   final EdgeInsetsGeometry padding;
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context) => SingleChildScrollView(
     padding: padding,
@@ -28,7 +36,9 @@ class HuxPageBody extends StatelessWidget {
   );
 }
 
+/// Displays an empty-state icon, message, and optional action.
 class HuxEmptyState extends StatelessWidget {
+  /// Creates HuxEmptyState with the supplied values.
   const HuxEmptyState({
     super.key,
     required this.icon,
@@ -37,11 +47,19 @@ class HuxEmptyState extends StatelessWidget {
     this.action,
   });
 
+  /// The icon displayed alongside the content or action.
   final IconData icon;
+
+  /// The title displayed by this component.
   final String title;
+
+  /// The message displayed to the caller or user.
   final String message;
+
+  /// An optional action displayed below the empty-state message.
   final Widget? action;
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context) => Center(
     child: HuxCard(
@@ -76,7 +94,9 @@ class HuxEmptyState extends StatelessWidget {
   );
 }
 
+/// Displays a loading indicator with optional explanatory text.
 class HuxLoadingState extends StatelessWidget {
+  /// Creates HuxLoadingState with the supplied values.
   const HuxLoadingState({
     super.key,
     this.message,
@@ -85,11 +105,19 @@ class HuxLoadingState extends StatelessWidget {
     this.padding = const EdgeInsets.all(24),
   });
 
+  /// The message displayed to the caller or user.
   final String? message;
+
+  /// The size variant used by the loading indicator.
   final HuxLoadingSize size;
+
+  /// The maximum content width in logical pixels.
   final double maxWidth;
+
+  /// The spacing between the container edge and its content.
   final EdgeInsetsGeometry padding;
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context) => Padding(
     padding: padding,
@@ -132,16 +160,22 @@ class HuxLoadingState extends StatelessWidget {
   );
 }
 
+/// Displays an error message and an optional retry action.
 class HuxErrorState extends StatelessWidget {
+  /// Creates HuxErrorState with the supplied values.
   const HuxErrorState({
     super.key,
     required this.message,
     this.onRetry,
   });
 
+  /// The message displayed to the caller or user.
   final String message;
+
+  /// Called when the user requests another attempt, when provided.
   final VoidCallback? onRetry;
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context) => Center(
     child: HuxCard(
@@ -173,7 +207,9 @@ class HuxErrorState extends StatelessWidget {
   );
 }
 
+/// Displays dismissible feedback with optional destructive styling.
 class HuxMessageCard extends StatelessWidget {
+  /// Creates HuxMessageCard with the supplied values.
   const HuxMessageCard({
     super.key,
     required this.icon,
@@ -182,11 +218,19 @@ class HuxMessageCard extends StatelessWidget {
     this.onClose,
   });
 
+  /// The icon displayed alongside the content or action.
   final IconData icon;
+
+  /// The message displayed to the caller or user.
   final String message;
+
+  /// Whether to use styling that indicates a destructive action or error.
   final bool destructive;
+
+  /// Called when the user dismisses this component.
   final VoidCallback? onClose;
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context) {
     final color = destructive
@@ -216,7 +260,9 @@ class HuxMessageCard extends StatelessWidget {
   }
 }
 
+/// Displays current error and success messages with consistent spacing.
 class HuxFeedbackMessages extends StatelessWidget {
+  /// Creates HuxFeedbackMessages with the supplied values.
   const HuxFeedbackMessages({
     super.key,
     this.error,
@@ -225,11 +271,19 @@ class HuxFeedbackMessages extends StatelessWidget {
     this.spacing = 16,
   });
 
+  /// The error message, when the operation could not complete.
   final String? error;
+
+  /// Feedback displayed after an operation succeeds, if any.
   final String? successMessage;
+
+  /// Called when the user dismisses this component.
   final VoidCallback? onClose;
+
+  /// The space between adjacent child elements in logical pixels.
   final double spacing;
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -256,16 +310,22 @@ class HuxFeedbackMessages extends StatelessWidget {
   );
 }
 
+/// Displays a compact icon and text pair for record metadata.
 class HuxMetadataItem extends StatelessWidget {
+  /// Creates HuxMetadataItem with the supplied values.
   const HuxMetadataItem({
     super.key,
     required this.icon,
     required this.text,
   });
 
+  /// The icon displayed alongside the content or action.
   final IconData icon;
+
+  /// The text displayed by this component.
   final String text;
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context) {
     final color = HuxTokens.textSecondary(context);
@@ -283,16 +343,22 @@ class HuxMetadataItem extends StatelessWidget {
   }
 }
 
+/// Displays a form label above its associated control.
 class HuxLabeledControl extends StatelessWidget {
+  /// Creates HuxLabeledControl with the supplied values.
   const HuxLabeledControl({
     super.key,
     required this.label,
     required this.child,
   });
 
+  /// A human-readable label.
   final String label;
+
+  /// The content displayed inside this container.
   final Widget child;
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,

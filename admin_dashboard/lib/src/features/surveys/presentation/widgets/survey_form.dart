@@ -19,19 +19,46 @@ typedef SurveyLocalizedTranslate =
 
 /// Form widget for creating/editing survey basic info (title, slug, etc.).
 class SurveyForm extends StatefulWidget {
+  /// The text controllers and validation key used by the form.
   final SurveyFormControllers controllers;
+
+  /// The survey being edited, or null when creating a new survey.
   final Survey? existingSurvey;
+
+  /// Whether a save operation is in progress.
   final bool isSaving;
+
+  /// The error message, when the operation could not complete.
   final String? error;
+
+  /// The main locale used to display and edit localized content.
   final String primaryLocale;
+
+  /// The locales available for editing or displaying translated content.
   final Iterable<String> locales;
+
+  /// Whether the form displays its own save button.
   final bool showSubmitButton;
+
+  /// Whether AI-assisted translation controls are available.
   final bool aiTranslateEnabled;
+
+  /// Whether AI-assisted content generation is available.
   final bool aiGenerationEnabled;
+
+  /// Whether submissions may receive an adaptive follow-up interview.
   final bool followUpEnabled;
+
+  /// The configured CAPTCHA preference. Use captchaRequired for submission behavior.
   final bool captchaEnabled;
+
+  /// Called when adaptive follow-up generation is enabled or disabled.
   final ValueChanged<bool>? onFollowUpEnabledChanged;
+
+  /// Called when the user requests a translation of the displayed content.
   final SurveyLocalizedTranslate? onTranslate;
+
+  /// Called with the edited values when the user saves the form.
   final Future<void> Function({
     required String slug,
     required LocalizedText titleTranslations,
@@ -42,6 +69,7 @@ class SurveyForm extends StatefulWidget {
   })
   onSave;
 
+  /// Creates SurveyForm with the supplied values.
   const SurveyForm({
     super.key,
     required this.controllers,
@@ -60,10 +88,12 @@ class SurveyForm extends StatefulWidget {
     required this.onSave,
   });
 
+  /// Creates the mutable state used by this widget.
   @override
   SurveyFormWidgetState createState() => SurveyFormWidgetState();
 }
 
+/// Owns survey form controllers, validation, and save behavior.
 class SurveyFormWidgetState extends State<SurveyForm> {
   final _formKey = GlobalKey<FormState>();
   final _slugAutoFill = SlugAutoFill();
@@ -71,6 +101,7 @@ class SurveyFormWidgetState extends State<SurveyForm> {
   late bool _followUpEnabled;
   late bool _captchaEnabled;
 
+  /// Initializes controllers from the existing survey or empty form values.
   @override
   void initState() {
     super.initState();
@@ -86,6 +117,7 @@ class SurveyFormWidgetState extends State<SurveyForm> {
     _syncTitleSlugListener();
   }
 
+  /// Refreshes the form when the survey being edited changes.
   @override
   void didUpdateWidget(SurveyForm oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -108,6 +140,7 @@ class SurveyFormWidgetState extends State<SurveyForm> {
     }
   }
 
+  /// Releases the form's controllers before the widget is removed.
   @override
   void dispose() {
     widget.controllers.titleTranslations[_listeningTitleLocale]?.removeListener(
@@ -116,6 +149,7 @@ class SurveyFormWidgetState extends State<SurveyForm> {
     super.dispose();
   }
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context) => HuxCard(
     child: Form(
@@ -270,6 +304,8 @@ class SurveyFormWidgetState extends State<SurveyForm> {
     ),
   );
 
+  /// Validates the form and invokes its save callback, returning whether submission
+  /// succeeded.
   Future<bool> submit() async {
     _fillSlugFromTitleIfEmpty();
     if (!(_formKey.currentState?.validate() ?? false)) return false;

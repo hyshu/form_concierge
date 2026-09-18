@@ -52,17 +52,48 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonElement
 
+/**
+ * Survey selection, locale, metadata, and host callbacks for the survey form.
+ */
 public data class FormConciergeSurveyConfig(
+    /**
+     * The URL-friendly name of the project to display.
+     */
     public val projectSlug: String,
+    /**
+     * The optional URL-friendly name of the survey to display.
+     */
     public val surveySlug: String? = null,
+    /**
+     * The identifier of the associated survey.
+     */
     public val surveyId: Int? = null,
+    /**
+     * The locale used to display the form content.
+     */
     public val locale: String? = null,
+    /**
+     * Optional device details attached to the submission.
+     */
     public val deviceInfo: DeviceInfo? = null,
+    /**
+     * Application-provided metadata attached to the submission.
+     */
     public val metadata: Map<String, JsonElement> = emptyMap(),
+    /**
+     * Obtains a CAPTCHA token before submission when the survey requires one.
+     */
     public val captchaTokenProvider: (suspend () -> String?)? = null,
+    /**
+     * An optional transformation applied to each image before upload.
+     */
     public val processImage: ProcessSurveyImage? = null,
 )
 
+/**
+ * Loads and displays a survey with validation, image uploads, and adaptive follow-up
+ * questions.
+ */
 @Composable
 public fun FormConciergeSurvey(
     client: FormConciergeApi,

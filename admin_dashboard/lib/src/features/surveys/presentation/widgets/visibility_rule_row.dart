@@ -6,7 +6,9 @@ import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/hux_icon_action_button.dart';
 import '../../../../core/widgets/hux_states.dart';
 
+/// Displays one visibility condition with a removal action.
 class VisibilityRuleRow extends StatelessWidget {
+  /// Creates VisibilityRuleRow with the supplied values.
   const VisibilityRuleRow({
     super.key,
     required this.surveyId,
@@ -19,15 +21,31 @@ class VisibilityRuleRow extends StatelessWidget {
     required this.onDelete,
   });
 
+  /// The identifier of the associated survey.
   final int surveyId;
+
+  /// The visibility condition displayed by this row.
   final QuestionVisibilityRule rule;
+
+  /// The main locale used to display and edit localized content.
   final String primaryLocale;
+
+  /// Earlier questions available as sources for visibility conditions.
   final List<Question> sourceQuestions;
+
+  /// Available choices indexed by question identifier.
   final Map<int, List<Choice>> choicesByQuestion;
+
+  /// Whether the control is available for interaction.
   final bool enabled;
+
+  /// Called with the updated value when the input changes.
   final ValueChanged<QuestionVisibilityRule> onChanged;
+
+  /// Called when the user requests deletion of this item.
   final VoidCallback onDelete;
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context) {
     final source = sourceQuestions.firstWhere(

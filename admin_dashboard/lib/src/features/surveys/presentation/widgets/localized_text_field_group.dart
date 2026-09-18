@@ -14,7 +14,9 @@ typedef LocalizedTextTranslate =
       required List<String> targetLocales,
     });
 
+/// Edits text across supported locales with optional translation assistance.
 class LocalizedTextFieldGroup extends StatefulWidget {
+  /// Creates LocalizedTextFieldGroup with the supplied values.
   const LocalizedTextFieldGroup({
     super.key,
     required this.controllers,
@@ -31,22 +33,44 @@ class LocalizedTextFieldGroup extends StatefulWidget {
     this.onTranslate,
   });
 
+  /// Text controllers indexed by locale for the controllers inputs.
   final Map<String, TextEditingController> controllers;
+
+  /// The main locale used to display and edit localized content.
   final String primaryLocale;
+
+  /// The label displayed for the localized text input.
   final String labelText;
+
+  /// The locales available for editing or displaying translated content.
   final Iterable<String> locales;
+
+  /// Optional hint text displayed when the input is empty.
   final String? hintText;
+
+  /// Whether the control is available for interaction.
   final bool enabled;
+
+  /// The maximum number of visible lines in the text input.
   final int maxLines;
+
+  /// The validation message used when a required translation is empty.
   final String? requiredMessage;
+
+  /// The action shown on the input method's action key, when specified.
   final TextInputAction? textInputAction;
+
+  /// Whether this input should request focus when first displayed.
   final bool autofocus;
 
   /// When true and [onTranslate] is set, show a sparkle action to auto-fill
   /// secondary locales from the primary locale text.
   final bool aiTranslateEnabled;
+
+  /// Called when the user requests a translation of the displayed content.
   final LocalizedTextTranslate? onTranslate;
 
+  /// Creates the mutable state used by this widget.
   @override
   State<LocalizedTextFieldGroup> createState() =>
       _LocalizedTextFieldGroupState();

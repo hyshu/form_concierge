@@ -7,25 +7,44 @@ import Foundation
   import AppKit
 #endif
 
+/// Optional device and application details attached to a survey response.
 public struct DeviceInfo: Codable, Sendable {
+  /// An application-provided identifier for the device.
   public let deviceId: String?
+  /// A human-readable label.
   public let label: String?
+  /// The platform on which the respondent is running the form.
   public let platform: String?
+  /// The name of the operating system.
   public let os: String?
+  /// The version of the operating system.
   public let osVersion: String?
+  /// The browser name, when available.
   public let browser: String?
+  /// The browser version, when available.
   public let browserVersion: String?
+  /// The application's public version string.
   public let appVersion: String?
+  /// The application's build identifier.
   public let appBuild: String?
+  /// The hardware model reported by the device.
   public let model: String?
+  /// The hardware manufacturer reported by the device.
   public let manufacturer: String?
+  /// The locale reported by the respondent's device.
   public let locale: String?
+  /// The device's time zone identifier.
   public let timezone: String?
+  /// The screen width reported by the host platform.
   public let screenWidth: Int?
+  /// The screen height reported by the host platform.
   public let screenHeight: Int?
+  /// The number of physical pixels per logical screen pixel.
   public let devicePixelRatio: Double?
+  /// The user agent reported by the client, when available.
   public let userAgent: String?
 
+  /// Creates DeviceInfo with the supplied configuration.
   public init(
     deviceId: String? = nil,
     label: String? = nil,
@@ -64,6 +83,7 @@ public struct DeviceInfo: Codable, Sendable {
     self.userAgent = userAgent
   }
 
+  /// Collects available device, locale, and screen details from the current platform.
   public static var current: DeviceInfo {
     var label: String?
     var platform = "swiftui"

@@ -7,31 +7,41 @@ import 'cloudflare/setup_runner.dart';
 import 'monorepo.dart';
 import 'template_resolver.dart';
 
+/// Groups commands that provision a Form Concierge backend.
 class SetupCommand extends Command<int> {
+  /// Creates the setup command and registers its options.
   SetupCommand() {
     addSubcommand(CloudflareDeploymentCommand(action: 'setup'));
   }
 
+  /// The command name accepted on the command line.
   @override
   String get name => 'setup';
 
+  /// The description displayed in command help.
   @override
   String get description => 'Scaffold and provision Form Concierge backends.';
 }
 
+/// Groups commands that update an existing Form Concierge deployment.
 class UpdateCommand extends Command<int> {
+  /// Creates the update command and registers its options.
   UpdateCommand() {
     addSubcommand(CloudflareDeploymentCommand(action: 'update'));
   }
 
+  /// The command name accepted on the command line.
   @override
   String get name => 'update';
 
+  /// The description displayed in command help.
   @override
   String get description => 'Update deployed Form Concierge backends.';
 }
 
+/// Runs Cloudflare setup or update with parsed command options.
 class CloudflareDeploymentCommand extends Command<int> {
+  /// Creates the cloudflare deployment command and registers its options.
   CloudflareDeploymentCommand({required this.action}) {
     argParser
       ..addFlag(
@@ -127,16 +137,20 @@ class CloudflareDeploymentCommand extends Command<int> {
       );
   }
 
+  /// The deployment operation selected by the parent command.
   final String action;
 
+  /// The command name accepted on the command line.
   @override
   String get name => 'cloudflare';
 
+  /// The description displayed in command help.
   @override
   String get description => action == 'update'
       ? 'Update D1, R2, Worker, and Pages using saved deployment settings.'
       : 'Create/configure D1, R2, Worker, and Pages.';
 
+  /// Runs the command with the parsed options and returns its process exit code.
   @override
   Future<int> run() async {
     final results = argResults!;

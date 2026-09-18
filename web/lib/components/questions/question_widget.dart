@@ -8,7 +8,9 @@ import 'text_single_question.dart';
 import 'text_multi_line_question.dart';
 import 'image_upload_question.dart';
 
+/// Selects the input widget for a question and displays validation feedback.
 class QuestionWidget extends StatelessComponent {
+  /// Creates QuestionWidget with the supplied values.
   const QuestionWidget({
     required this.question,
     required this.choices,
@@ -22,18 +24,32 @@ class QuestionWidget extends StatelessComponent {
     super.key,
   });
 
+  /// The question whose input is displayed.
   final Question question;
+
+  /// The choices available for this question.
   final List<Choice> choices;
+
+  /// The current value displayed by the input.
   final AnswerValue value;
+
+  /// The error message, when the operation could not complete.
   final String? error;
+
+  /// The locale used to display the form content.
   final String locale;
 
   /// Disables all inputs (e.g. while the response is being submitted, so the
   /// visible form cannot drift from the payload in flight).
   final bool disabled;
 
+  /// Called with the updated value when the input changes.
   final void Function(AnswerValue value) onChanged;
+
+  /// The API client used to load data and submit changes.
   final Client client;
+
+  /// Ensures an anonymous session exists before uploading media, when provided.
   final Future<void> Function() ensureAuthenticated;
 
   bool get _isChoiceGroup =>
@@ -42,6 +58,7 @@ class QuestionWidget extends StatelessComponent {
 
   String get _errorId => 'question_${question.id}_error';
 
+  /// Builds the HTML components for the current input and state.
   @override
   Component build(context) {
     final hasError = error != null;

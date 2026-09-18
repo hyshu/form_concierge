@@ -1,5 +1,8 @@
 import type { Env } from './types';
 
+/**
+ * Reads a secret binding and returns null when the value cannot be obtained.
+ */
 export async function tryGetSecret(binding: SecretsStoreSecret): Promise<string | null> {
   try {
     return await binding.get();
@@ -28,7 +31,7 @@ function secretsApiBase(env: Env): string {
 
 function cfHeaders(env: Env): Record<string, string> {
   return {
-    'Authorization': `Bearer ${env.CF_API_TOKEN}`,
+    Authorization: `Bearer ${env.CF_API_TOKEN}`,
     'Content-Type': 'application/json',
   };
 }
@@ -36,10 +39,13 @@ function cfHeaders(env: Env): Record<string, string> {
 async function findSecretByName(env: Env, name: string): Promise<CfApiSecretMeta | null> {
   const res = await fetch(secretsApiBase(env), { headers: cfHeaders(env) });
   if (!res.ok) throw new Error(`Secrets Store list failed: ${res.status}`);
-  const data = await res.json() as CfApiResponse<CfApiSecretMeta[]>;
-  return data.result?.find(s => s.name === name) ?? null;
+  const data = (await res.json()) as CfApiResponse<CfApiSecretMeta[]>;
+  return data.result?.find((s) => s.name === name) ?? null;
 }
 
+/**
+ * Creates or replaces a named value in the deployment's Secrets Store.
+ */
 export async function upsertSecret(env: Env, name: string, value: string): Promise<void> {
   const base = secretsApiBase(env);
   const headers = cfHeaders(env);
@@ -61,6 +67,9 @@ export async function upsertSecret(env: Env, name: string, value: string): Promi
   }
 }
 
+/**
+ * Deletes a named secret from the deployment's Secrets Store when present.
+ */
 export async function deleteSecret(env: Env, name: string): Promise<void> {
   const existing = await findSecretByName(env, name);
   if (!existing) return;

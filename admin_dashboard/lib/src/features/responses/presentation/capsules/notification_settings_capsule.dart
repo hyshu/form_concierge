@@ -6,14 +6,28 @@ import '../../../../core/capsules/keyed_state.dart';
 
 /// State for notification settings.
 class NotificationSettingsState {
+  /// The settings currently displayed or edited.
   final NotificationSettings? settings;
+
+  /// Whether data is currently being loaded.
   final bool isLoading;
+
+  /// Whether a save operation is in progress.
   final bool isSaving;
+
+  /// Whether a test notification is being sent.
   final bool isSendingTest;
+
+  /// The error message, when the operation could not complete.
   final String? error;
+
+  /// Feedback displayed after an operation succeeds, if any.
   final String? successMessage;
+
+  /// Returns whether the server has the email settings required to send messages.
   final bool isEmailConfigured;
 
+  /// Creates NotificationSettingsState with the supplied values.
   const NotificationSettingsState({
     this.settings,
     this.isLoading = true,
@@ -24,9 +38,11 @@ class NotificationSettingsState {
     this.isEmailConfigured = false,
   });
 
+  /// Creates the initial state before any data has been loaded.
   factory NotificationSettingsState.initial() =>
       const NotificationSettingsState();
 
+  /// Returns a copy with the supplied state changes.
   NotificationSettingsState copyWith({
     NotificationSettings? settings,
     bool clearSettings = false,
@@ -72,10 +88,12 @@ NotificationSettingsManager notificationSettingsManagerCapsule(
 
 /// Manager class for notification settings operations.
 class NotificationSettingsManager {
+  /// Reads the current state for the supplied record identifier.
   final NotificationSettingsState Function(int surveyId) getState;
   final void Function(int surveyId, NotificationSettingsState state) _setState;
   final Client _client;
 
+  /// Creates NotificationSettingsManager with the supplied values.
   NotificationSettingsManager({
     required this.getState,
     required this._setState,

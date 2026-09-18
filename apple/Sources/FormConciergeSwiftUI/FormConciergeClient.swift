@@ -1,6 +1,8 @@
 import Foundation
 
+/// Loads public surveys and submits responses to a Form Concierge server.
 public actor FormConciergeClient {
+  /// The base URL of the Form Concierge API server.
   public let baseURL: URL
   private var anonymousToken: String?
   private let session: URLSession
@@ -16,6 +18,7 @@ public actor FormConciergeClient {
     return ISO8601DateFormatter().date(from: value)
   }
 
+  /// Creates FormConciergeClient with the supplied configuration.
   public init(baseURL: URL, session: URLSession = .shared) {
     self.baseURL = baseURL
     self.session = session
@@ -38,14 +41,17 @@ public actor FormConciergeClient {
     self.encoder.dateEncodingStrategy = .iso8601
   }
 
+  /// Sets or clears the token used for anonymous respondent requests.
   public func setAnonymousToken(_ token: String?) {
     anonymousToken = token
   }
 
+  /// Returns whether an anonymous token is currently stored in this client.
   public func hasAnonymousToken() -> Bool {
     anonymousToken != nil
   }
 
+  /// Creates an anonymous account and retains its token for subsequent requests.
   @discardableResult
   public func createAnonymousAccount(displayName: String? = nil) async throws -> AnonymousSession {
     let created: AnonymousSession = try await request(
@@ -57,6 +63,7 @@ public actor FormConciergeClient {
     return created
   }
 
+  /// Loads a public project by its slug or custom domain.
   public func project(slug: String) async throws -> PublicProject {
     let encoded = slug.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? slug
     do {
@@ -66,10 +73,12 @@ public actor FormConciergeClient {
     }
   }
 
+  /// Loads public feature flags and CAPTCHA configuration.
   public func publicConfig() async throws -> PublicConfig {
     try await request("GET", "/api/config")
   }
 
+  /// Loads a public project by its slug or custom domain.
   public func project(domain: String) async throws -> PublicProject {
     let encodedDomain =
       domain.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? domain
@@ -79,18 +88,23 @@ public actor FormConciergeClient {
     return project
   }
 
+  /// Loads the public questions for the supplied survey identifier.
   public func questions(surveyId: Int) async throws -> [Question] {
     try await request("GET", "/api/surveys/id/\(surveyId)/questions")
   }
 
+  /// Loads the available choices for the supplied question identifier.
   public func choices(questionId: Int) async throws -> [Choice] {
     try await request("GET", "/api/questions/\(questionId)/choices")
   }
 
+  /// Loads the rules controlling question visibility in a survey.
   public func visibilityRules(surveyId: Int) async throws -> [QuestionVisibilityRule] {
     try await request("GET", "/api/surveys/id/\(surveyId)/visibility-rules")
   }
 
+  /// Submits answers, creating an anonymous session if needed. Supply the same idempotency key
+  /// when retrying one submission.
   public func submitResponse(
     surveyId: Int,
     answers: [Answer],
@@ -116,6 +130,7 @@ public actor FormConciergeClient {
     )
   }
 
+  /// Requests an adaptive follow-up interview for a submitted response.
   public func generateFollowUp(
     responseId: Int,
     locale: String? = nil
@@ -128,6 +143,7 @@ public actor FormConciergeClient {
     )
   }
 
+  /// Saves answers to the adaptive follow-up interview and returns the updated response.
   public func saveFollowUp(
     responseId: Int,
     answers: [FollowUpSubmissionAnswer]
@@ -172,6 +188,7 @@ public actor FormConciergeClient {
     return try decoder.decode(MediaUpload.self, from: responseData)
   }
 
+  /// Loads administrator replies for the respondent, optionally limited to one response.
   public func replies(responseId: Int? = nil) async throws -> [AdminReply] {
     var path = "/api/anonymous/replies"
     if let responseId {
@@ -180,6 +197,7 @@ public actor FormConciergeClient {
     return try await request("GET", path, bearerToken: anonymousToken)
   }
 
+  /// Returns the latest matching administrator reply time, or nil if no reply exists.
   public func latestReplyAt(responseId: Int? = nil) async throws -> Date? {
     var path = "/api/anonymous/replies/latest"
     if let responseId {
@@ -230,8 +248,8 @@ public actor FormConciergeClient {
   }
 
   /// Join path onto baseURL without dropping a base path prefix.
-  /// `URL(string:relativeTo:)` treats a leading `/` as host-absolute and would
-  /// discard e.g. `https://host/prefix` when path is `/api/...`.
+  /// Relative URL resolution treats a leading slash as host-absolute.
+  /// This helper preserves any path prefix already present in the base URL.
   private func resolveURL(_ path: String) throws -> URL {
     var base = baseURL.absoluteString
     if base.hasSuffix("/") {

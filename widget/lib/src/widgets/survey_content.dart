@@ -4,25 +4,60 @@ import 'package:form_concierge_client/form_concierge_client.dart';
 import 'questions/image_upload_question.dart';
 import 'questions/question_widget.dart';
 
+/// Displays survey questions, validation feedback, and submission controls.
 class SurveyContent extends StatefulWidget {
+  /// The API client used to load data and submit changes.
   final Client client;
+
+  /// The project that contains the survey.
   final Project project;
+
+  /// The survey displayed by this component or state.
   final Survey survey;
+
+  /// The survey questions in display order.
   final List<Question> questions;
+
+  /// Available choices indexed by question identifier.
   final Map<int, List<Choice>> choicesByQuestion;
+
+  /// The current answers indexed by question identifier.
   final AnswerValues answers;
+
+  /// Validation messages indexed by question identifier.
   final ValidationErrors validationErrors;
+
+  /// The error message to display, or null when there is no error.
   final String? errorMessage;
+
+  /// The locale used to display the form content.
   final String locale;
+
+  /// Whether a submission is in progress and inputs should be disabled.
   final bool isSubmitting;
+
+  /// Whether to display a selector for the form language.
   final bool showLocalePicker;
+
+  /// Called when the respondent changes an answer.
   final void Function(int questionId, AnswerValue value) onAnswerChanged;
+
+  /// Called when the respondent selects a different form language.
   final ValueChanged<String> onLocaleChanged;
+
+  /// Called when the respondent requests submission.
   final VoidCallback onSubmit;
+
+  /// Ensures an anonymous session exists before uploading media, when provided.
   final Future<void> Function()? ensureAuthenticated;
+
+  /// An optional transformation applied to each image before upload.
   final ProcessSurveyImage? processImage;
+
+  /// Optional content displayed below the survey controls.
   final Widget? footer;
 
+  /// Creates SurveyContent with the supplied values.
   const SurveyContent({
     super.key,
     required this.client,
@@ -44,6 +79,7 @@ class SurveyContent extends StatefulWidget {
     this.footer,
   });
 
+  /// Creates the mutable state used by this widget.
   @override
   State<SurveyContent> createState() => _SurveyContentState();
 }

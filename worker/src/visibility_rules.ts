@@ -1,50 +1,77 @@
 import type { AnswerInput, Env, QuestionRow, VisibilityRuleInput, VisibilityRuleRow } from './types';
-import { HttpError, isChoiceQuestionType, isTextQuestionType, json, nowIso, optionalInteger, readJson, requiredInteger, requiredIntegerParam } from './utils';
+import {
+  HttpError,
+  isChoiceQuestionType,
+  isTextQuestionType,
+  json,
+  nowIso,
+  optionalInteger,
+  readJson,
+  requiredInteger,
+  requiredIntegerParam,
+} from './utils';
 import { mustSurvey } from './admin_records';
 import { visibilityRuleToJson } from './serializers';
 
-const VISIBILITY_OPERATORS = new Set([
-  'equals',
-  'notEquals',
-  'contains',
-  'notContains',
-  'isAnswered',
-  'isNotAnswered',
-]);
+const VISIBILITY_OPERATORS = new Set(['equals', 'notEquals', 'contains', 'notContains', 'isAnswered', 'isNotAnswered']);
 
 const VALUELESS_OPERATORS = new Set(['isAnswered', 'isNotAnswered']);
 
-export const UPDATE_QUESTION_CONDITION_MODE_SQL =
-  `UPDATE questions SET visibility_condition_mode = ? WHERE id = ?`;
+/**
+ * The parameterized statement used to change a question's visibility combination mode.
+ */
+export const UPDATE_QUESTION_CONDITION_MODE_SQL = `UPDATE questions SET visibility_condition_mode = ? WHERE id = ?`;
 
+/**
+ * A validated visibility condition ready for persistence or evaluation.
+ */
 export type NormalizedVisibilityRule = {
+  /**
+   * The identifier of the question whose visibility is controlled.
+   */
   targetQuestionId: number;
+  /**
+   * The identifier of the question whose answer is tested.
+   */
   sourceQuestionId: number;
+  /**
+   * The comparison applied to the source answer.
+   */
   operator: string;
+  /**
+   * The text or choice identifier to compare, or null for operators without a value.
+   */
   value: unknown;
 };
 
+/**
+ * Returns visibility rules for a survey available to respondents.
+ */
 export async function listPublicVisibilityRules(env: Env, surveyId: number): Promise<Response> {
   const rows = await env.DB.prepare(
-     `SELECT r.* FROM question_visibility_rules r
+    `SELECT r.* FROM question_visibility_rules r
      JOIN surveys s ON s.id = r.survey_id
      WHERE r.survey_id = ? AND s.status = 'published' AND s.web_enabled = 1
      ORDER BY r.target_question_id, r.id`,
-  ).bind(surveyId).all<VisibilityRuleRow>();
+  )
+    .bind(surveyId)
+    .all<VisibilityRuleRow>();
   return json(rows.results.map(visibilityRuleToJson));
 }
 
+/**
+ * Returns a survey's visibility rules for administrator use.
+ */
 export async function listAdminVisibilityRules(env: Env, surveyId: number): Promise<Response> {
   await mustSurvey(env.DB, surveyId);
   const rows = await getVisibilityRules(env.DB, surveyId);
   return json(rows.map(visibilityRuleToJson));
 }
 
-export async function replaceAdminVisibilityRules(
-  request: Request,
-  env: Env,
-  surveyId: number,
-): Promise<Response> {
+/**
+ * Validates and replaces survey visibility rules and optional question combination modes.
+ */
+export async function replaceAdminVisibilityRules(request: Request, env: Env, surveyId: number): Promise<Response> {
   await mustSurvey(env.DB, surveyId);
   const body = await readJson(request);
   if (!Array.isArray(body.rules)) throw new HttpError(400, 'rules must be an array');
@@ -91,7 +118,7 @@ export async function replaceAdminVisibilityRules(
   return listAdminVisibilityRules(env, surveyId);
 }
 
-/** Optional per-question visibility_condition_mode updates ({questionId: 'all'|'any'}). */
+/** Optional visibility combination modes indexed by question identifier. */
 function normalizeConditionModes(
   value: unknown,
   questionsById: ReadonlyMap<number, QuestionRow>,
@@ -114,18 +141,24 @@ function normalizeConditionModes(
   return modes;
 }
 
+/**
+ * Loads stored visibility rules for a survey in their evaluation order.
+ */
 export async function getVisibilityRules(db: D1Database, surveyId: number): Promise<VisibilityRuleRow[]> {
-  const rows = await db.prepare(
-    `SELECT * FROM question_visibility_rules
+  const rows = await db
+    .prepare(
+      `SELECT * FROM question_visibility_rules
      WHERE survey_id = ?
      ORDER BY target_question_id, id`,
-  ).bind(surveyId).all<VisibilityRuleRow>();
+    )
+    .bind(surveyId)
+    .all<VisibilityRuleRow>();
   return rows.results;
 }
 
 /**
  * Ensure every visibility rule still has source.order_index < target.order_index.
- * Call before/after reorder or orderIndex updates; otherwise evaluation always
+ * Call before or after reordering or updating order indexes. Otherwise evaluation always
  * sees an invisible source and hides the target forever.
  */
 export async function assertVisibilityOrderInvariant(
@@ -144,14 +177,14 @@ export async function assertVisibilityOrderInvariant(
     const targetOrder = orderMap.get(rule.target_question_id);
     if (sourceOrder == null || targetOrder == null) continue;
     if (sourceOrder >= targetOrder) {
-      throw new HttpError(
-        400,
-        'Question order would break a visibility rule: source must stay before target',
-      );
+      throw new HttpError(400, 'Question order would break a visibility rule: source must stay before target');
     }
   }
 }
 
+/**
+ * Evaluates visibility in question order using answers to earlier visible questions.
+ */
 export function visibleQuestionIds(
   questions: QuestionRow[],
   rules: VisibilityRuleRow[],
@@ -190,6 +223,9 @@ export function visibleQuestionIds(
   return visible;
 }
 
+/**
+ * Validates a visibility condition's identifiers, operator, and comparison value.
+ */
 export function normalizeRuleInput(value: unknown): NormalizedVisibilityRule {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     throw new HttpError(400, 'Invalid visibility rule');
@@ -218,20 +254,17 @@ async function validateRuleValue(db: D1Database, source: QuestionRow, operator: 
   }
   if (isChoiceQuestionType(source.type)) {
     const choiceId = requiredInteger(value, 'Choice visibility rule value', { min: 1 });
-    const row = await db.prepare(
-      `SELECT id FROM choices WHERE id = ? AND question_id = ?`,
-    ).bind(choiceId, source.id).first();
+    const row = await db
+      .prepare(`SELECT id FROM choices WHERE id = ? AND question_id = ?`)
+      .bind(choiceId, source.id)
+      .first();
     if (!row) throw new HttpError(400, `Choice ${choiceId} does not belong to question ${source.id}`);
     return;
   }
   throw new HttpError(400, 'Unsupported source question type');
 }
 
-function evaluateRule(
-  source: QuestionRow,
-  rule: VisibilityRuleRow,
-  answer: AnswerInput | undefined,
-): boolean {
+function evaluateRule(source: QuestionRow, rule: VisibilityRuleRow, answer: AnswerInput | undefined): boolean {
   const hasAnswer = answerHasValue(source, answer);
   if (rule.operator === 'isAnswered') return hasAnswer;
   if (rule.operator === 'isNotAnswered') return !hasAnswer;
@@ -288,8 +321,9 @@ function requireTextRuleValue(rule: VisibilityRuleRow, value: unknown): string {
 }
 
 async function getCurrentQuestions(db: D1Database, surveyId: number): Promise<QuestionRow[]> {
-  const rows = await db.prepare(
-    `SELECT * FROM questions WHERE survey_id = ? AND is_deleted = 0 ORDER BY order_index`,
-  ).bind(surveyId).all<QuestionRow>();
+  const rows = await db
+    .prepare(`SELECT * FROM questions WHERE survey_id = ? AND is_deleted = 0 ORDER BY order_index`)
+    .bind(surveyId)
+    .all<QuestionRow>();
   return rows.results;
 }

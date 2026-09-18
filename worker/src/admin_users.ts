@@ -17,6 +17,9 @@ import { scopesForRole } from './permissions';
 
 const MIN_PASSWORD_LENGTH = 8;
 
+/**
+ * Returns administrator accounts with their roles and granted scopes.
+ */
 export async function listUsers(env: Env): Promise<Response> {
   const rows = await env.DB.prepare(
     `SELECT id, email, scope_names, created_at FROM admins ORDER BY created_at`,
@@ -24,6 +27,9 @@ export async function listUsers(env: Env): Promise<Response> {
   return json(rows.results.map(adminUserToJson));
 }
 
+/**
+ * Validates credentials and creates an administrator with the requested role.
+ */
 export async function createUser(request: Request, env: Env): Promise<Response> {
   const body = await readJson(request);
   const id = crypto.randomUUID();
@@ -50,6 +56,9 @@ export async function createUser(request: Request, env: Env): Promise<Response> 
   return json(adminContextToJson(user!), 201);
 }
 
+/**
+ * Verifies the current password before replacing the signed-in administrator's password.
+ */
 export async function changeOwnPassword(request: Request, env: Env, admin: AdminContext): Promise<Response> {
   const body = await readJson(request);
   const currentPassword = requireString(body.currentPassword, 'currentPassword');
@@ -82,6 +91,9 @@ export async function changeOwnPassword(request: Request, env: Env, admin: Admin
   return json({ ok: true });
 }
 
+/**
+ * Changes an administrator's role while preserving required administrator access.
+ */
 export async function updateUserRole(request: Request, env: Env, userId: string): Promise<Response> {
   const body = await readJson(request);
   const role = requireString(body.role, 'role');
@@ -98,6 +110,10 @@ export async function updateUserRole(request: Request, env: Env, userId: string)
   return json(adminUserToJson(row));
 }
 
+/**
+ * Deletes an administrator while preserving required administrator access and reports self-
+ * deletion.
+ */
 export async function deleteUser(env: Env, admin: AdminContext, userId: string): Promise<Response> {
   if (await isLastActiveAdmin(env.DB, userId)) {
     throw new HttpError(400, 'Cannot delete the last active admin');

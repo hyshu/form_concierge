@@ -11,7 +11,9 @@ import '../capsules/survey_list_capsule.dart';
 import 'survey_action_buttons.dart';
 import 'survey_status_chip.dart';
 
+/// Displays a project's surveys with permitted management actions.
 class DashboardProjectCard extends StatelessWidget {
+  /// Creates DashboardProjectCard with the supplied values.
   const DashboardProjectCard({
     super.key,
     required this.item,
@@ -25,20 +27,38 @@ class DashboardProjectCard extends StatelessWidget {
     required this.onDeleteSurvey,
   });
 
+  /// The project and surveys displayed by this card.
   final ProjectWithSurveys item;
+
+  /// Whether the current administrator can change survey content.
   final bool canWrite;
+
+  /// The dashboard manager used to perform survey operations.
   final SurveyListManager manager;
+
+  /// The API base URI used to construct public survey links.
   final Uri apiBaseUri;
+
+  /// Called when the user opens the project editor.
   final VoidCallback onEditProject;
+
+  /// Called when the user starts creating a survey in this project.
   final VoidCallback onCreateSurvey;
+
+  /// Called when the user opens a survey for editing.
   final void Function(Survey survey) onOpenSurvey;
+
+  /// Called when the user opens the survey's response results.
   final void Function(Survey survey) onViewResponses;
+
+  /// Called when the user requests deletion of a survey.
   final void Function(Survey survey) onDeleteSurvey;
 
   /// Space between project metadata and the survey list, and between the
   /// survey list and the bottom of the card.
   static const double _sectionGap = 20;
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context) {
     final project = item.project;

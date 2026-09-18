@@ -5,7 +5,9 @@ import 'package:hux/hux.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/hux_icon_action_button.dart';
 
+/// Displays an administrator account with role and deletion controls.
 class UserListTile extends StatelessWidget {
+  /// Creates UserListTile with the supplied values.
   const UserListTile({
     super.key,
     required this.user,
@@ -14,11 +16,19 @@ class UserListTile extends StatelessWidget {
     this.isCurrentUser = false,
   });
 
+  /// The administrator authenticated by this session.
   final AuthUserInfo user;
+
+  /// Called when a different administrator role is selected.
   final ValueChanged<AdminRole> onRoleChanged;
+
+  /// Called when the user requests deletion of this item.
   final VoidCallback onDelete;
+
+  /// Whether this row represents the signed-in administrator.
   final bool isCurrentUser;
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context) => HuxCard(
     margin: const EdgeInsets.only(bottom: 12),

@@ -16,10 +16,16 @@ void clearAdminMediaCache() => _adminMediaCache.clear();
 
 /// Horizontal/wrapping gallery of authenticated media thumbnails.
 class AdminMediaGallery extends StatelessWidget {
+  /// The API client used to load data and submit changes.
   final Client client;
+
+  /// Storage keys for the uploaded files attached to the answer.
   final List<String> fileKeys;
+
+  /// The width and height of each image thumbnail in logical pixels.
   final double thumbnailSize;
 
+  /// Creates AdminMediaGallery with the supplied values.
   const AdminMediaGallery({
     super.key,
     required this.client,
@@ -27,6 +33,7 @@ class AdminMediaGallery extends StatelessWidget {
     this.thumbnailSize = 96,
   });
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context) {
     if (fileKeys.isEmpty) {
@@ -54,10 +61,16 @@ class AdminMediaGallery extends StatelessWidget {
 
 /// Loads one media object with the admin session and shows a tappable preview.
 class AdminMediaThumbnail extends StatefulWidget {
+  /// The API client used to load data and submit changes.
   final Client client;
+
+  /// The storage key of the image to load.
   final String fileKey;
+
+  /// The width and height of the thumbnail in logical pixels.
   final double size;
 
+  /// Creates AdminMediaThumbnail with the supplied values.
   const AdminMediaThumbnail({
     super.key,
     required this.client,
@@ -65,6 +78,7 @@ class AdminMediaThumbnail extends StatefulWidget {
     this.size = 96,
   });
 
+  /// Creates the mutable state used by this widget.
   @override
   State<AdminMediaThumbnail> createState() => _AdminMediaThumbnailState();
 }

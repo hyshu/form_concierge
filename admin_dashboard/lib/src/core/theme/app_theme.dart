@@ -3,6 +3,7 @@ import 'package:hux/hux.dart';
 
 /// Application theme configuration backed by Hux UI.
 abstract final class AppTheme {
+  /// Builds the administrator application's light theme.
   static ThemeData light() => HuxTheme.lightTheme.copyWith(
     scaffoldBackgroundColor: const Color(0xFFF8FAFC),
     appBarTheme: HuxTheme.lightTheme.appBarTheme.copyWith(
@@ -12,6 +13,7 @@ abstract final class AppTheme {
     ),
   );
 
+  /// Builds the administrator application's dark theme.
   static ThemeData dark() => HuxTheme.darkTheme.copyWith(
     appBarTheme: HuxTheme.darkTheme.appBarTheme.copyWith(
       centerTitle: false,

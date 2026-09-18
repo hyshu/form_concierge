@@ -19,11 +19,16 @@ import '../widgets/survey_form.dart';
 
 /// Page for creating or editing a survey and its questions.
 class SurveyEditorPage extends RearchConsumer {
+  /// The identifier of the associated survey.
   final int? surveyId;
+
+  /// The identifier of the project containing the survey.
   final int? projectId;
 
+  /// Creates SurveyEditorPage with the supplied values.
   const SurveyEditorPage({super.key, this.surveyId, this.projectId});
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context, use) {
     final formManager = use(surveyFormManagerCapsule);

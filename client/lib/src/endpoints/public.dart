@@ -1,9 +1,13 @@
 part of form_concierge_client;
 
+/// Public survey lookup, submission, follow-up, and media operations.
 class SurveyEndpoint {
   final Client _client;
+
+  /// Creates SurveyEndpoint using the supplied API client.
   SurveyEndpoint(this._client);
 
+  /// Returns the public project with this slug, or null if it is not found.
   Future<PublicProject?> getProjectBySlug(String slug) async {
     try {
       final json = await _client.request('GET', '/api/projects/$slug');
@@ -15,6 +19,7 @@ class SurveyEndpoint {
     }
   }
 
+  /// Returns the public project assigned to a host name, or null if it is not found.
   Future<PublicProject?> getProjectByDomain(String domain) async {
     try {
       final json = await _client.request(
@@ -30,6 +35,7 @@ class SurveyEndpoint {
     }
   }
 
+  /// Returns the publicly available questions for a survey.
   Future<List<Question>> getQuestionsForSurvey(int surveyId) async {
     final json = await _client.request(
       'GET',
@@ -38,6 +44,7 @@ class SurveyEndpoint {
     return _objectList(json, Question.fromJson);
   }
 
+  /// Returns the public visibility rules for a survey's questions.
   Future<List<QuestionVisibilityRule>> getVisibilityRulesForSurvey(
     int surveyId,
   ) async {
@@ -48,6 +55,7 @@ class SurveyEndpoint {
     return _objectList(json, QuestionVisibilityRule.fromJson);
   }
 
+  /// Returns the available choices for a question.
   Future<List<Choice>> getChoicesForQuestion(int questionId) async {
     final json = await _client.request(
       'GET',
@@ -56,10 +64,13 @@ class SurveyEndpoint {
     return _objectList(json, Choice.fromJson);
   }
 
+  /// Loads choices for choice-based questions and indexes them by question identifier.
   Future<Map<int, List<Choice>>> getChoicesByQuestion(
     Iterable<Question> questions,
   ) => _choicesByQuestion(questions, getChoicesForQuestion);
 
+  /// Submits answers using the current anonymous session and returns the saved response.
+  /// Reuse the same idempotency key when retrying a submission.
   Future<SurveyResponse> submitResponse({
     required int surveyId,
     required List<Answer> answers,
@@ -148,10 +159,14 @@ class SurveyEndpoint {
   }
 }
 
+/// Retrieves server features available to unauthenticated clients.
 class ConfigEndpoint {
   final Client _client;
+
+  /// Creates ConfigEndpoint using the supplied API client.
   ConfigEndpoint(this._client);
 
+  /// Returns public feature flags and the Turnstile site key, if configured.
   Future<PublicConfig> getPublicConfig() async {
     final json = await _client.request('GET', '/api/config');
     return PublicConfig.fromJson(json);

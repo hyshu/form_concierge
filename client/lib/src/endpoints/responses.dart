@@ -1,9 +1,13 @@
 part of form_concierge_client;
 
+/// Retrieves, exports, and manages responses using administrator access.
 class ResponseAnalyticsEndpoint {
   final Client _client;
+
+  /// Creates ResponseAnalyticsEndpoint using the supplied API client.
   ResponseAnalyticsEndpoint(this._client);
 
+  /// Lists survey responses with optional pagination.
   Future<List<SurveyResponse>> getResponses(
     int surveyId, {
     int? limit,
@@ -21,6 +25,7 @@ class ResponseAnalyticsEndpoint {
     return _objectList(json, SurveyResponse.fromJson);
   }
 
+  /// Returns the total number of responses for a survey.
   Future<int> getResponseCount(int surveyId) async {
     final json = await _client.request(
       'GET',
@@ -30,6 +35,7 @@ class ResponseAnalyticsEndpoint {
     return _int(json['count']);
   }
 
+  /// Returns the answers recorded for a response.
   Future<List<Answer>> getAnswersForResponse(int responseId) async {
     final json = await _client.request(
       'GET',
@@ -39,6 +45,7 @@ class ResponseAnalyticsEndpoint {
     return _objectList(json, Answer.fromJson);
   }
 
+  /// Returns per-question statistics and individual answers for a survey.
   Future<SurveyResults> getAggregatedResults(int surveyId) async {
     final json = await _client.request(
       'GET',
@@ -48,6 +55,7 @@ class ResponseAnalyticsEndpoint {
     return SurveyResults.fromJson(json);
   }
 
+  /// Returns response counts grouped by date over the requested number of days.
   Future<Map<String, int>> getResponseTrends(
     int surveyId, {
     int days = 30,
@@ -63,6 +71,7 @@ class ResponseAnalyticsEndpoint {
     ).map((key, value) => MapEntry(key, _int(value)));
   }
 
+  /// Downloads responses in the selected format with optional date filters.
   Future<ResponseExportFile> exportResponses(
     int surveyId, {
     ResponseExportFormat format = ResponseExportFormat.csv,
@@ -92,6 +101,7 @@ class ResponseAnalyticsEndpoint {
     );
   }
 
+  /// Deletes a response and returns true after the request succeeds.
   Future<bool> deleteResponse(int responseId) async {
     await _client.request(
       'DELETE',
@@ -101,6 +111,7 @@ class ResponseAnalyticsEndpoint {
     return true;
   }
 
+  /// Sends an administrator reply to the owner of a survey response.
   Future<AdminReply> createReply(int responseId, String body) async {
     final json = await _client.request(
       'POST',
@@ -111,6 +122,7 @@ class ResponseAnalyticsEndpoint {
     return AdminReply.fromJson(json);
   }
 
+  /// Lists administrator replies attached to a response.
   Future<List<AdminReply>> getReplies(int responseId) async {
     final json = await _client.request(
       'GET',
@@ -121,10 +133,14 @@ class ResponseAnalyticsEndpoint {
   }
 }
 
+/// Manages survey email notifications using administrator access.
 class NotificationSettingsEndpoint {
   final Client _client;
+
+  /// Creates NotificationSettingsEndpoint using the supplied API client.
   NotificationSettingsEndpoint(this._client);
 
+  /// Returns notification settings for a survey, or null when none exist.
   Future<NotificationSettings?> getForSurvey(int surveyId) async {
     final json = await _client.request(
       'GET',
@@ -134,6 +150,7 @@ class NotificationSettingsEndpoint {
     return json == null ? null : NotificationSettings.fromJson(json);
   }
 
+  /// Creates or replaces a survey's notification settings.
   Future<NotificationSettings> upsert(NotificationSettings settings) async {
     final json = await _client.request(
       'PUT',
@@ -144,7 +161,10 @@ class NotificationSettingsEndpoint {
     return NotificationSettings.fromJson(json);
   }
 
+  /// Enables email notifications for a survey and returns the saved settings.
   Future<NotificationSettings> enable(int surveyId) => _toggle(surveyId, true);
+
+  /// Disables email notifications for a survey and returns the saved settings.
   Future<NotificationSettings> disable(int surveyId) =>
       _toggle(surveyId, false);
 
@@ -158,6 +178,7 @@ class NotificationSettingsEndpoint {
     return NotificationSettings.fromJson(json);
   }
 
+  /// Deletes a survey's notification settings and returns true on success.
   Future<bool> delete(int surveyId) async {
     await _client.request(
       'DELETE',
@@ -167,8 +188,10 @@ class NotificationSettingsEndpoint {
     return true;
   }
 
+  /// Returns whether the server has the email settings required to send messages.
   Future<bool> isEmailConfigured() => _client.adminSettings.isEmailConfigured();
 
+  /// Requests a test notification and returns true after the request succeeds.
   Future<bool> sendTestNotification(int surveyId) async {
     await _client.request(
       'POST',

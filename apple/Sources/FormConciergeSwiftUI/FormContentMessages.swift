@@ -1,6 +1,8 @@
 import Foundation
 
+/// Localized labels and validation messages used in survey forms.
 public enum FormContentMessages {
+  /// Returns a localized message by key with English as the fallback language.
   public static func text(_ locale: String, _ key: String) -> String {
     let localized =
       messages[normalizeFormContentLocale(locale)]
@@ -10,34 +12,40 @@ public enum FormContentMessages {
       ?? key
   }
 
+  /// Returns the localized message for a missing required answer.
   public static func requiredQuestion(_ locale: String, question: String) -> String {
     text(locale, "requiredQuestion").replacingOccurrences(of: "{question}", with: question)
   }
 
+  /// Returns a localized message describing the minimum text length.
   public static func minCharacters(_ locale: String, question: String, count: Int) -> String {
     text(locale, "minCharacters")
       .replacingOccurrences(of: "{question}", with: question)
       .replacingOccurrences(of: "{count}", with: "\(count)")
   }
 
+  /// Returns a localized message describing the maximum text length.
   public static func maxCharacters(_ locale: String, question: String, count: Int) -> String {
     text(locale, "maxCharacters")
       .replacingOccurrences(of: "{question}", with: question)
       .replacingOccurrences(of: "{count}", with: "\(count)")
   }
 
+  /// Returns a localized message describing the minimum number of selections.
   public static func minChoices(_ locale: String, question: String, count: Int) -> String {
     text(locale, "minChoices")
       .replacingOccurrences(of: "{question}", with: question)
       .replacingOccurrences(of: "{count}", with: "\(count)")
   }
 
+  /// Returns a localized message describing the maximum number of selections.
   public static func maxChoices(_ locale: String, question: String, count: Int) -> String {
     text(locale, "maxChoices")
       .replacingOccurrences(of: "{question}", with: question)
       .replacingOccurrences(of: "{count}", with: "\(count)")
   }
 
+  /// Returns a localized completion message containing the survey title.
   public static func submittedWithTitle(_ locale: String, title: String) -> String {
     text(locale, "submittedWithTitle").replacingOccurrences(of: "{title}", with: title)
   }

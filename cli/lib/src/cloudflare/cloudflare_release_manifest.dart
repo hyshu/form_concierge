@@ -1,22 +1,40 @@
+/// A resource or application that can be deployed independently.
 enum CloudflareDeploymentComponent {
+  /// Secrets Store resources and Worker secret bindings.
   secrets('Secrets'),
+
+  /// Schema migrations for the D1 database.
   d1Migrations('D1 migrations'),
+
+  /// The API Worker deployment.
   worker('Worker'),
+
+  /// The administrator application on Cloudflare Pages.
   adminPages('Admin Pages'),
+
+  /// Public form assets on Cloudflare Pages.
   webPages('Web Pages');
 
+  /// Creates CloudflareDeploymentComponent with the supplied values.
   const CloudflareDeploymentComponent(this.label);
 
+  /// A human-readable label.
   final String label;
 }
 
+/// The deployment components affected by a particular release.
 class CloudflareReleaseChange {
+  /// Creates CloudflareReleaseChange with the supplied values.
   const CloudflareReleaseChange(this.version, this.components);
 
+  /// The version associated with this record.
   final String version;
+
+  /// The deployment components included in this change or plan.
   final Set<CloudflareDeploymentComponent> components;
 }
 
+/// All independently deployable Cloudflare components.
 const allCloudflareDeploymentComponents = {
   CloudflareDeploymentComponent.secrets,
   CloudflareDeploymentComponent.d1Migrations,

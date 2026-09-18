@@ -8,25 +8,37 @@ type SocketLike = ReturnType<typeof connect>;
 /** Per I/O step timeout so test-send endpoints cannot hang the admin UI. */
 const SMTP_IO_TIMEOUT_MS = 15_000;
 
+/**
+ * The recipient, subject, and plain text body of an outgoing email.
+ */
 export type EmailMessage = {
+  /**
+   * The recipient email address.
+   */
   to: string;
+  /**
+   * The email subject line.
+   */
   subject: string;
+  /**
+   * The plain text email body.
+   */
   text: string;
 };
 
+/**
+ * Sends a plain text message using the validated SMTP settings.
+ */
 export async function sendEmail(settings: RequiredSmtpSettings, message: EmailMessage): Promise<void> {
   if (settings.secureMode === 'none' && (settings.username || settings.password)) {
-    throw new HttpError(400, 'SMTP authentication requires starttls or tls; refusing to send credentials over an unencrypted connection');
+    throw new HttpError(
+      400,
+      'SMTP authentication requires starttls or tls; refusing to send credentials over an unencrypted connection',
+    );
   }
-  const secureTransport: SocketOptions['secureTransport'] = settings.secureMode === 'tls'
-    ? 'on'
-    : settings.secureMode === 'starttls'
-      ? 'starttls'
-      : 'off';
-  const socket = connect(
-    { hostname: settings.host, port: settings.port },
-    { secureTransport, allowHalfOpen: false },
-  );
+  const secureTransport: SocketOptions['secureTransport'] =
+    settings.secureMode === 'tls' ? 'on' : settings.secureMode === 'starttls' ? 'starttls' : 'off';
+  const socket = connect({ hostname: settings.host, port: settings.port }, { secureTransport, allowHalfOpen: false });
   const client = new SmtpConnection(socket);
 
   try {
@@ -79,10 +91,7 @@ class SmtpConnection {
   }
 
   async write(value: string): Promise<void> {
-    await withTimeout(
-      this.writer.write(this.encoder.encode(value)),
-      'SMTP write timed out',
-    );
+    await withTimeout(this.writer.write(this.encoder.encode(value)), 'SMTP write timed out');
   }
 
   async readReply(expectedCodes: readonly number[]): Promise<string> {
@@ -187,7 +196,7 @@ function dotStuff(value: string): string {
   return value
     .replace(/\r?\n/g, '\r\n')
     .split('\r\n')
-    .map((line) => line.startsWith('.') ? `.${line}` : line)
+    .map((line) => (line.startsWith('.') ? `.${line}` : line))
     .join('\r\n');
 }
 

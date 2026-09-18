@@ -12,26 +12,50 @@ import 'survey_form.dart';
 
 /// Widget for editing draft questions and their choices.
 class DraftQuestionEditor extends StatelessWidget {
+  /// The survey questions in display order.
   final List<DraftQuestion> questions;
+
+  /// The main locale used to display and edit localized content.
   final String primaryLocale;
+
+  /// The locales available for editing or displaying translated content.
   final Iterable<String> locales;
+
+  /// Whether the control is available for interaction.
   final bool enabled;
+
+  /// Whether AI-assisted translation controls are available.
   final bool aiTranslateEnabled;
+
+  /// Called when the user requests a translation of the displayed content.
   final SurveyLocalizedTranslate? onTranslate;
+
+  /// Called when the user requests editing of this item.
   final void Function(DraftQuestion question) onEdit;
+
+  /// Called when the user requests deletion of this item.
   final void Function(DraftQuestion question) onDelete;
+
+  /// Called with the old and new positions when an item is moved.
   final void Function(int oldIndex, int newIndex) onReorder;
+
+  /// Called when a new localized choice should be added to a question.
   final void Function(DraftQuestion question, LocalizedText textTranslations)
   onAddChoice;
+
+  /// Called when an existing choice's localized text should be replaced.
   final void Function(
     DraftQuestion question,
     DraftChoice choice,
     LocalizedText textTranslations,
   )
   onUpdateChoice;
+
+  /// Called when an existing choice should be removed.
   final void Function(DraftQuestion question, DraftChoice choice)
   onDeleteChoice;
 
+  /// Creates DraftQuestionEditor with the supplied values.
   const DraftQuestionEditor({
     super.key,
     required this.questions,
@@ -48,6 +72,7 @@ class DraftQuestionEditor extends StatelessWidget {
     required this.onDeleteChoice,
   });
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context) {
     if (questions.isEmpty) return const SizedBox.shrink();

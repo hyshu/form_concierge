@@ -1,38 +1,42 @@
 import type { Env, IntegrationSettingsRow } from './types';
 import { tryGetSecret, upsertSecret, deleteSecret } from './secrets_store';
 import { SECRET_NAMES } from './secret_names';
-import {
-  HttpError,
-  json,
-  nowIso,
-  optionalBoolean,
-  optionalInteger,
-  readJson,
-  requireObject,
-} from './utils';
+import { HttpError, json, nowIso, optionalBoolean, optionalInteger, readJson, requireObject } from './utils';
 
+/**
+ * The transport security used when connecting to an SMTP server.
+ */
 export type SmtpSecureMode = 'none' | 'starttls' | 'tls';
+/**
+ * The service used to generate and translate survey content.
+ */
 export type AiProvider = 'gemini' | 'openai' | 'claude' | 'groq' | 'cerebras';
 
 const SETTINGS_ID = 1;
 const SMTP_SECURE_MODES = new Set<SmtpSecureMode>(['none', 'starttls', 'tls']);
 const AI_PROVIDERS = new Set<AiProvider>(['gemini', 'openai', 'claude', 'groq', 'cerebras']);
 
+/**
+ * Loads the saved integration settings row, or null when none exists.
+ */
 export async function getIntegrationSettingsRow(env: Env): Promise<IntegrationSettingsRow | null> {
   return env.DB.prepare(`SELECT * FROM integration_settings WHERE id = ?`)
     .bind(SETTINGS_ID)
     .first<IntegrationSettingsRow>();
 }
 
+/**
+ * Returns integration settings with secret availability flags instead of secret values.
+ */
 export async function getAdminIntegrationSettings(env: Env): Promise<Response> {
   const row = await getIntegrationSettingsRow(env);
   return json(await integrationSettingsToJson(env, row));
 }
 
-export async function updateAdminIntegrationSettings(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+/**
+ * Validates and saves integration settings and requested secret changes.
+ */
+export async function updateAdminIntegrationSettings(request: Request, env: Env): Promise<Response> {
   const body = await readJson(request);
   const ai = requireObject(body.ai, 'ai');
   const smtp = requireObject(body.smtp, 'smtp');
@@ -47,10 +51,7 @@ export async function updateAdminIntegrationSettings(
       throw new HttpError(400, 'expectedUpdatedAt must be a string');
     }
     const current = await getIntegrationSettingsRow(env);
-    if (
-      current?.updated_at != null &&
-      Date.parse(current.updated_at) !== Date.parse(body.expectedUpdatedAt)
-    ) {
+    if (current?.updated_at != null && Date.parse(current.updated_at) !== Date.parse(body.expectedUpdatedAt)) {
       throw new HttpError(409, 'Settings were changed by someone else. Reload and try again.');
     }
   }
@@ -163,9 +164,7 @@ export async function updateAdminIntegrationSettings(
       )
       .first<IntegrationSettingsRow>(),
     ...secretOps.map((op) =>
-      op.action === 'upsert'
-        ? upsertSecret(env, op.secretName, op.value!)
-        : deleteSecret(env, op.secretName),
+      op.action === 'upsert' ? upsertSecret(env, op.secretName, op.value!) : deleteSecret(env, op.secretName),
     ),
   ]);
 
@@ -179,9 +178,7 @@ type SecretOp = {
   value?: string;
 };
 
-function buildSecretOps(
-  specs: { next: unknown; clear: boolean; field: string; secretName: string }[],
-): SecretOp[] {
+function buildSecretOps(specs: { next: unknown; clear: boolean; field: string; secretName: string }[]): SecretOp[] {
   const ops: SecretOp[] = [];
   for (const spec of specs) {
     if (spec.clear) {
@@ -202,6 +199,9 @@ function buildSecretOps(
   return ops;
 }
 
+/**
+ * Returns whether the selected AI provider has a usable API key.
+ */
 export async function isAiGenerationConfigured(env: Env): Promise<boolean> {
   const row = await getIntegrationSettingsRow(env);
   if (!row) return false;
@@ -218,11 +218,11 @@ export async function getTurnstileSecretKey(env: Env): Promise<string | null> {
   return usableSecretValue(await tryGetSecret(env.TURNSTILE_SECRET_KEY));
 }
 
+/**
+ * Returns whether both Turnstile keys are available.
+ */
 export async function isTurnstileConfigured(env: Env): Promise<boolean> {
-  const [siteKey, secretKey] = await Promise.all([
-    getTurnstileSiteKey(env),
-    getTurnstileSecretKey(env),
-  ]);
+  const [siteKey, secretKey] = await Promise.all([getTurnstileSiteKey(env), getTurnstileSecretKey(env)]);
   return Boolean(siteKey && secretKey);
 }
 
@@ -234,19 +234,25 @@ function usableSecretValue(value: string | null): string | null {
   return trimmed;
 }
 
+/**
+ * Returns a JSON flag indicating whether SMTP settings are usable.
+ */
 export async function isEmailConfiguredResponse(env: Env): Promise<Response> {
   const row = await getIntegrationSettingsRow(env);
   return json({ configured: isSmtpConfigured(row) });
 }
 
+/**
+ * Checks whether the stored SMTP connection and sender settings are complete.
+ */
 export function isSmtpConfigured(row: IntegrationSettingsRow | null): boolean {
   return Boolean(row?.smtp_host && row.smtp_port && row.smtp_from_email);
 }
 
-export async function requireSmtpSettings(
-  row: IntegrationSettingsRow | null,
-  env: Env,
-): Promise<RequiredSmtpSettings> {
+/**
+ * Loads usable SMTP settings or rejects an unconfigured email integration.
+ */
+export async function requireSmtpSettings(row: IntegrationSettingsRow | null, env: Env): Promise<RequiredSmtpSettings> {
   if (!isSmtpConfigured(row)) {
     throw new HttpError(400, 'SMTP settings are not configured');
   }
@@ -261,13 +267,37 @@ export async function requireSmtpSettings(
   };
 }
 
+/**
+ * Validated SMTP connection details and credentials used to send email.
+ */
 export type RequiredSmtpSettings = {
+  /**
+   * The host name of the SMTP server.
+   */
   host: string;
+  /**
+   * The TCP port used to connect to the SMTP server.
+   */
   port: number;
+  /**
+   * The username used for SMTP authentication, if required.
+   */
   username: string | null;
+  /**
+   * The SMTP password, or null when password authentication is not configured.
+   */
   password: string | null;
+  /**
+   * The email address used as the message sender.
+   */
   fromEmail: string;
+  /**
+   * The display name used for the message sender.
+   */
   fromName: string | null;
+  /**
+   * The transport security used for the SMTP connection.
+   */
   secureMode: SmtpSecureMode;
 };
 
@@ -279,6 +309,9 @@ const API_KEY_BINDINGS = {
   cerebras: 'CEREBRAS_API_KEY',
 } as const;
 
+/**
+ * Reads the configured API key for a provider, or null when it is unavailable.
+ */
 export async function apiKeyForProvider(env: Env, provider: AiProvider): Promise<string | null> {
   const binding = env[API_KEY_BINDINGS[provider]];
   return usableSecretValue(await tryGetSecret(binding));
@@ -286,17 +319,16 @@ export async function apiKeyForProvider(env: Env, provider: AiProvider): Promise
 
 async function integrationSettingsToJson(env: Env, row: IntegrationSettingsRow | null) {
   const provider = normalizeAiProvider(row?.ai_provider ?? 'gemini');
-  const [gemini, openai, claude, groq, cerebras, smtpPwd, turnstileSite, turnstileSecret] =
-    await Promise.all([
-      tryGetSecret(env.GEMINI_API_KEY),
-      tryGetSecret(env.OPENAI_API_KEY),
-      tryGetSecret(env.CLAUDE_API_KEY),
-      tryGetSecret(env.GROQ_API_KEY),
-      tryGetSecret(env.CEREBRAS_API_KEY),
-      tryGetSecret(env.SMTP_PASSWORD),
-      getTurnstileSiteKey(env),
-      getTurnstileSecretKey(env),
-    ]);
+  const [gemini, openai, claude, groq, cerebras, smtpPwd, turnstileSite, turnstileSecret] = await Promise.all([
+    tryGetSecret(env.GEMINI_API_KEY),
+    tryGetSecret(env.OPENAI_API_KEY),
+    tryGetSecret(env.CLAUDE_API_KEY),
+    tryGetSecret(env.GROQ_API_KEY),
+    tryGetSecret(env.CEREBRAS_API_KEY),
+    tryGetSecret(env.SMTP_PASSWORD),
+    getTurnstileSiteKey(env),
+    getTurnstileSecretKey(env),
+  ]);
   return {
     ai: {
       provider,
@@ -332,6 +364,9 @@ function aiProviderToJson(apiKey: string | null, selected: boolean) {
   };
 }
 
+/**
+ * Normalizes an AI provider name and rejects unsupported providers.
+ */
 export function normalizeAiProvider(value: string): AiProvider {
   if (!AI_PROVIDERS.has(value as AiProvider)) {
     throw new HttpError(500, 'Invalid stored AI provider');
@@ -406,9 +441,9 @@ function optionalSettingsString(value: unknown, field: string): string | null {
   return trimmed.length === 0 ? null : trimmed;
 }
 
-/** Implicit TLS (SMTPS) ports — must use secureMode "tls", not STARTTLS. */
+/** Ports that require implicit TLS from the start of the SMTP connection. */
 const IMPLICIT_TLS_PORTS = new Set([465, 2465]);
-/** Explicit STARTTLS ports — must use secureMode "starttls". */
+/** Ports that require upgrading the SMTP connection with STARTTLS. */
 const STARTTLS_PORTS = new Set([587, 2587]);
 
 function assertSmtpSettingsAreCoherent(settings: {
@@ -420,10 +455,7 @@ function assertSmtpSettingsAreCoherent(settings: {
   secureMode: SmtpSecureMode;
 }): void {
   if (settings.secureMode === 'none' && (settings.username || settings.password)) {
-    throw new HttpError(
-      400,
-      'smtp.secureMode must be starttls or tls when SMTP authentication is configured',
-    );
+    throw new HttpError(400, 'smtp.secureMode must be starttls or tls when SMTP authentication is configured');
   }
   const anySmtpValue = Boolean(
     settings.host || settings.port || settings.fromEmail || settings.username || settings.password,
@@ -434,11 +466,7 @@ function assertSmtpSettingsAreCoherent(settings: {
   if (!settings.fromEmail) throw new HttpError(400, 'smtp.fromEmail is required');
 
   // Port/mode mismatch causes a silent hang then "SMTP read timed out" (e.g. Resend 465 + STARTTLS).
-  if (
-    settings.port != null &&
-    IMPLICIT_TLS_PORTS.has(settings.port) &&
-    settings.secureMode !== 'tls'
-  ) {
+  if (settings.port != null && IMPLICIT_TLS_PORTS.has(settings.port) && settings.secureMode !== 'tls') {
     throw new HttpError(
       400,
       `Port ${settings.port} requires Security = TLS (implicit SSL/TLS). STARTTLS is for ports 587/2587.`,

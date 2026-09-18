@@ -8,20 +8,46 @@ import '../../../../core/widgets/hux_states.dart';
 
 /// View for configuring response email notifications.
 class NotificationSettingsView extends StatefulWidget {
+  /// The identifier of the associated survey.
   final int surveyId;
+
+  /// The settings currently displayed or edited.
   final NotificationSettings? settings;
+
+  /// Whether data is currently being loaded.
   final bool isLoading;
+
+  /// Whether a save operation is in progress.
   final bool isSaving;
+
+  /// Whether a test notification is being sent.
   final bool isSendingTest;
+
+  /// The error message, when the operation could not complete.
   final String? error;
+
+  /// Feedback displayed after an operation succeeds, if any.
   final String? successMessage;
+
+  /// Returns whether the server has the email settings required to send messages.
   final bool isEmailConfigured;
+
+  /// Called when the user requests fresh data from the server.
   final Future<void> Function() onRefresh;
+
+  /// Called with the edited values when the user saves the form.
   final Future<bool> Function(NotificationSettings settings) onSave;
+
+  /// Called when the notification enabled state should be toggled.
   final Future<bool> Function() onToggleEnabled;
+
+  /// Called when a test notification should be sent.
   final Future<bool> Function() onSendTest;
+
+  /// Called when existing success or error feedback should be dismissed.
   final VoidCallback onClearMessages;
 
+  /// Creates NotificationSettingsView with the supplied values.
   const NotificationSettingsView({
     super.key,
     required this.surveyId,
@@ -39,6 +65,7 @@ class NotificationSettingsView extends StatefulWidget {
     required this.onClearMessages,
   });
 
+  /// Creates the mutable state used by this widget.
   @override
   State<NotificationSettingsView> createState() =>
       _NotificationSettingsViewState();

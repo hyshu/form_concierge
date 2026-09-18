@@ -12,17 +12,40 @@ import 'visibility_rule_editor.dart';
 
 /// Widget displaying the list of questions for a survey.
 class QuestionList extends StatelessWidget {
+  /// The identifier of the associated survey.
   final int surveyId;
+
+  /// The survey questions in display order.
   final List<Question> questions;
+
+  /// Available choices indexed by question identifier.
   final Map<int, List<Choice>> choicesByQuestion;
+
+  /// Conditions that determine which questions are visible.
   final List<QuestionVisibilityRule> visibilityRules;
+
+  /// The main locale used to display and edit localized content.
   final String primaryLocale;
+
+  /// The locales available for editing or displaying translated content.
   final Iterable<String> locales;
+
+  /// Whether data is currently being loaded.
   final bool isLoading;
+
+  /// Whether the control is available for interaction.
   final bool enabled;
+
+  /// Whether existing questions may be changed to a different input type.
   final bool canChangeQuestionType;
+
+  /// Whether AI-assisted translation controls are available.
   final bool aiTranslateEnabled;
+
+  /// Called when the user requests a translation of the displayed content.
   final SurveyLocalizedTranslate? onTranslate;
+
+  /// Called with the definition of a new question to add.
   final void Function({
     required LocalizedText textTranslations,
     required QuestionType type,
@@ -35,6 +58,8 @@ class QuestionList extends StatelessWidget {
     required VisibilityConditionMode visibilityConditionMode,
   })
   onAddQuestion;
+
+  /// Called with the revised definition of an existing question.
   final void Function(
     Question question, {
     required LocalizedText textTranslations,
@@ -48,12 +73,22 @@ class QuestionList extends StatelessWidget {
     required VisibilityConditionMode visibilityConditionMode,
   })
   onEditQuestion;
+
+  /// Called when a survey question should be removed.
   final void Function(Question question) onDeleteQuestion;
+
+  /// Called when a new localized choice should be added to a question.
   final void Function(int questionId, LocalizedText textTranslations)
   onAddChoice;
+
+  /// Called when an existing choice's localized text should be replaced.
   final void Function(Choice choice, LocalizedText textTranslations)
   onUpdateChoice;
+
+  /// Called when an existing choice should be removed.
   final void Function(Choice choice) onDeleteChoice;
+
+  /// Called with the revised visibility mode and rules for a question.
   final Future<void> Function({
     required Question question,
     required VisibilityConditionMode mode,
@@ -61,6 +96,7 @@ class QuestionList extends StatelessWidget {
   })
   onSaveVisibility;
 
+  /// Creates QuestionList with the supplied values.
   const QuestionList({
     super.key,
     required this.surveyId,
@@ -83,6 +119,7 @@ class QuestionList extends StatelessWidget {
     required this.onSaveVisibility,
   });
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,

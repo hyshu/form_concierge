@@ -6,10 +6,13 @@ import '../../../../core/localization/app_localizations.dart';
 
 /// Chip displaying survey status with appropriate colors.
 class SurveyStatusChip extends StatelessWidget {
+  /// The survey publication status displayed by the chip.
   final SurveyStatus status;
 
+  /// Creates SurveyStatusChip with the supplied values.
   const SurveyStatusChip({super.key, required this.status});
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context) {
     final (label, variant) = switch (status) {

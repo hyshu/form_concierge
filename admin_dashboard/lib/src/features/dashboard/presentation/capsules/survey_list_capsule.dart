@@ -6,21 +6,30 @@ import '../../../../core/capsules/manager_operation.dart';
 
 /// State for the survey list.
 class SurveyListState {
+  /// The loaded projects together with their surveys.
   final List<ProjectWithSurveys> projects;
+
+  /// Whether data is currently being loaded.
   final bool isLoading;
+
+  /// The error message, when the operation could not complete.
   final String? error;
 
+  /// Creates SurveyListState with the supplied values.
   const SurveyListState({
     this.projects = const [],
     this.isLoading = true,
     this.error,
   });
 
+  /// Creates the initial state before any data has been loaded.
   factory SurveyListState.initial() => const SurveyListState();
 
+  /// The surveys included in the project result.
   List<Survey> get surveys =>
       projects.expand((project) => project.surveys).toList();
 
+  /// Returns a copy with the supplied state changes.
   SurveyListState copyWith({
     List<ProjectWithSurveys>? projects,
     bool? isLoading,
@@ -46,10 +55,12 @@ SurveyListManager surveyListCapsule(CapsuleHandle use) {
 
 /// Manager class for survey list operations.
 class SurveyListManager {
+  /// The current state snapshot exposed by this manager.
   final SurveyListState state;
   final void Function(SurveyListState) _setState;
   final Client _client;
 
+  /// Creates SurveyListManager with the supplied values.
   SurveyListManager({
     required this.state,
     required this._setState,
@@ -72,8 +83,11 @@ class SurveyListManager {
     }
   }
 
+  /// Reloads projects and their surveys for the dashboard.
   Future<void> loadSurveys() => loadProjects();
 
+  /// Loads a project by identifier, returning null if it is unavailable or the request
+  /// fails.
   Future<ProjectWithSurveys?> getProject(int projectId) async {
     try {
       return await _client.projectAdmin.getById(projectId);
@@ -87,6 +101,7 @@ class SurveyListManager {
     }
   }
 
+  /// Creates a project and reloads the dashboard, returning null on failure.
   Future<Project?> createProject(Project project) => runAndReload(
     action: () => _client.projectAdmin.create(project),
     reload: loadProjects,
@@ -94,6 +109,7 @@ class SurveyListManager {
     errorMessage: 'Failed to create project',
   );
 
+  /// Updates a project and reloads the dashboard, returning null on failure.
   Future<Project?> updateProject(Project project) => runAndReload(
     action: () => _client.projectAdmin.update(project),
     reload: loadProjects,
@@ -101,6 +117,8 @@ class SurveyListManager {
     errorMessage: 'Failed to update project',
   );
 
+  /// Deletes a project and reloads the dashboard, returning whether the operation
+  /// succeeded.
   Future<bool> deleteProject(int projectId) => runVoidAndReload(
     action: () => _client.projectAdmin.delete(projectId),
     reload: loadSurveys,
@@ -140,6 +158,7 @@ class SurveyListManager {
     errorMessage: 'Failed to reopen survey',
   );
 
+  /// Changes public web availability and reloads the dashboard on success.
   Future<bool> updateSurveyWebEnabled(Survey survey, bool enabled) =>
       runVoidAndReload(
         action: () => _client.surveyAdmin.update(

@@ -17,8 +17,10 @@ import '../widgets/project_form.dart';
 
 /// Main dashboard page showing list of surveys.
 class DashboardPage extends RearchConsumer {
+  /// Creates DashboardPage with the supplied values.
   const DashboardPage({super.key});
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context, use) {
     final surveyManager = use(surveyListCapsule);

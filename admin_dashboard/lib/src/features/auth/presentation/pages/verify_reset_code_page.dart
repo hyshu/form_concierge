@@ -9,8 +9,10 @@ import '../widgets/auth_card_scaffold.dart';
 
 /// Page for entering verification code for password reset.
 class VerifyResetCodePage extends RearchConsumer {
+  /// Creates VerifyResetCodePage with the supplied values.
   const VerifyResetCodePage({super.key});
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context, use) {
     final resetManager = use(passwordResetCapsule);

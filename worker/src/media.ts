@@ -12,9 +12,21 @@ import { DEFAULT_QUOTA_LIMITS, quotaLimit, refundQuota, reserveQuota, utcDay } f
 
 const KEY_PATTERN = /^uploads\/[a-zA-Z0-9_-]+\/[a-zA-Z0-9-]+\.(jpe?g|png|webp|gif)$/i;
 
+/**
+ * The key, MIME type, and byte size of a stored media object.
+ */
 export type MediaObjectMeta = {
+  /**
+   * The storage key used to retrieve the media object.
+   */
   key: string;
+  /**
+   * The MIME type of the content.
+   */
   contentType: string;
+  /**
+   * The size of the media object in bytes.
+   */
   size: number;
 };
 
@@ -151,7 +163,7 @@ export async function uploadMedia(request: Request, env: Env, anonymous: Anonymo
   );
 }
 
-/** Fetch image bytes. Anonymous may only read their own uploads; admins may read any. */
+/** Fetches image bytes. Respondents may read only their own uploads. Administrators may read any upload. */
 export async function getMedia(
   env: Env,
   key: string,
@@ -181,12 +193,18 @@ export async function getMedia(
   return new Response(object.body, { status: 200, headers });
 }
 
+/**
+ * Rejects storage keys that do not match the accepted media key format.
+ */
 export function assertValidMediaKey(key: string): void {
   if (!KEY_PATTERN.test(key)) {
     throw new HttpError(400, 'Invalid media key');
   }
 }
 
+/**
+ * Rejects media keys that do not belong to the supplied anonymous account.
+ */
 export function assertOwnedMediaKeys(keys: readonly string[], anonymousAccountId: string): void {
   const prefix = `uploads/${anonymousAccountId}/`;
   for (const key of keys) {
@@ -197,6 +215,9 @@ export function assertOwnedMediaKeys(keys: readonly string[], anonymousAccountId
   }
 }
 
+/**
+ * Checks that all referenced media objects exist in storage.
+ */
 export async function assertMediaObjectsExist(env: Env, keys: readonly string[]): Promise<void> {
   for (const key of keys) {
     const head = await env.MEDIA_BUCKET.head(key);
@@ -204,6 +225,9 @@ export async function assertMediaObjectsExist(env: Env, keys: readonly string[])
   }
 }
 
+/**
+ * Associates uploaded media with a response so it is retained after submission.
+ */
 export async function markMediaAttached(
   env: Env,
   keys: readonly string[],
@@ -223,6 +247,9 @@ export async function markMediaAttached(
   );
 }
 
+/**
+ * Deletes a bounded batch of expired unattached uploads and returns the number removed.
+ */
 export async function cleanupExpiredMedia(env: Env, limit = 100): Promise<number> {
   const rows = await env.DB.prepare(
     `SELECT key, anonymous_account_id, size_bytes
@@ -246,10 +273,16 @@ export async function cleanupExpiredMedia(env: Env, limit = 100): Promise<number
   return deleted;
 }
 
+/**
+ * Encodes uploaded file keys in the representation stored with an answer.
+ */
 export function encodeFileKeysForStorage(fileKeys: readonly string[]): string {
   return JSON.stringify({ fileKeys: [...fileKeys] });
 }
 
+/**
+ * Extracts uploaded file keys from a stored answer, or null for other answer formats.
+ */
 export function parseStoredFileKeys(textValue: string | null): string[] | null {
   if (!textValue) return null;
   try {
@@ -290,7 +323,7 @@ function normalizeContentType(value: string | null): string {
   return value.split(';')[0]?.trim().toLowerCase() ?? '';
 }
 
-/** Delete R2 objects by key. Best-effort: logs failures but never throws. */
+/** Deletes R2 objects by key, logging failures without throwing. */
 export async function deleteMediaKeys(bucket: R2Bucket, keys: string[]): Promise<void> {
   if (keys.length === 0) return;
   try {

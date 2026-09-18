@@ -7,14 +7,17 @@ import 'package:path/path.dart' as p;
 
 import 'cli_exception.dart';
 
+/// The release version of this CLI package.
 const formConciergeCliVersion = '0.3.0';
 const _githubRepository = 'hyshu/form_concierge';
 const _maximumTemplateBytes = 250 * 1024 * 1024;
 
+/// Downloads the archive at the given URI as bytes.
 typedef TemplateDownloader = Future<List<int>> Function(Uri uri);
 
 /// Resolves a versioned Form Concierge release template into a local cache.
 class TemplateResolver {
+  /// Creates TemplateResolver with the supplied values.
   TemplateResolver({
     String? cacheRoot,
     TemplateDownloader? downloader,
@@ -23,6 +26,7 @@ class TemplateResolver {
        _downloader = downloader ?? _download,
        _log = log ?? stderr.writeln;
 
+  /// The directory used to cache downloaded release templates.
   final String cacheRoot;
   final TemplateDownloader _downloader;
   final void Function(String message) _log;
@@ -121,12 +125,14 @@ class TemplateResolver {
   }
 }
 
+/// Returns the GitHub archive URI for a Form Concierge release tag.
 Uri defaultTemplateArchiveUri(String version) => Uri.https(
   'github.com',
   '/$_githubRepository/releases/download/v$version/'
       'form-concierge-template-$version.tar.gz',
 );
 
+/// Returns the local directory used to cache release templates.
 String defaultTemplateCacheRoot() {
   if (Platform.isWindows) {
     final localAppData = Platform.environment['LOCALAPPDATA'];

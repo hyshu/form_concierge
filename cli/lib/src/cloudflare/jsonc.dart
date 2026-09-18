@@ -13,6 +13,7 @@ dynamic parseJsonc(String raw) {
   return jsonDecode(withoutTrailingCommas);
 }
 
+/// Encodes a JSON value with indentation and a trailing newline.
 String encodePrettyJson(Object? value) {
   const encoder = JsonEncoder.withIndent('  ');
   return '${encoder.convert(value)}\n';

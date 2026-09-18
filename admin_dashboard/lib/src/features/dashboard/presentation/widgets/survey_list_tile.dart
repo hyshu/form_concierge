@@ -8,15 +8,31 @@ import 'survey_status_chip.dart';
 
 /// List tile for displaying a survey with actions.
 class SurveyListTile extends StatelessWidget {
+  /// The survey displayed by this component or state.
   final Survey survey;
+
+  /// The locale used to display the form content.
   final String locale;
+
+  /// Called when the user selects this list item.
   final VoidCallback onTap;
+
+  /// Called when the user opens the survey's response results.
   final VoidCallback onViewResponses;
+
+  /// Called when the user requests publication of the survey.
   final VoidCallback? onPublish;
+
+  /// Called when the user requests closing the survey to new responses.
   final VoidCallback? onClose;
+
+  /// Called when the user requests reopening of the survey.
   final VoidCallback? onReopen;
+
+  /// Called when the user requests deletion of this item.
   final VoidCallback? onDelete;
 
+  /// Creates SurveyListTile with the supplied values.
   const SurveyListTile({
     super.key,
     required this.survey,
@@ -29,6 +45,7 @@ class SurveyListTile extends StatelessWidget {
     this.onDelete,
   });
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context) {
     final title = survey.titleFor(locale);

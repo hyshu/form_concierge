@@ -27,31 +27,74 @@ import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
+/**
+ * A readable question and answer pair stored in local inquiry history.
+ */
 @Serializable
 public data class InquiryContentItem(
+    /**
+     * The question text displayed when the response was submitted.
+     */
     public val question: String,
+    /**
+     * The submitted answer text or selected choice labels, if available.
+     */
     public val answer: String? = null,
+    /**
+     * Whether the answer includes uploaded images.
+     */
     public val hasImages: Boolean = false,
 )
 
+/**
+ * A locally stored summary of a submitted inquiry and its follow-up answers.
+ */
 @Serializable
 public data class InquiryRecord(
+    /**
+     * The identifier of the associated survey response.
+     */
     public val responseId: Int,
+    /**
+     * The submission time in milliseconds since the Unix epoch.
+     */
     public val submittedAtEpochMillis: Long,
+    /**
+     * Readable question and answer pairs from the main survey.
+     */
     public val items: List<InquiryContentItem>,
+    /**
+     * Readable question and answer pairs from the follow-up interview.
+     */
     public val followUpItems: List<InquiryContentItem> = emptyList(),
+    /**
+     * Whether the respondent has marked replies to this inquiry as seen.
+     */
     public val repliesSeen: Boolean = false,
 ) {
+    /**
+     * The first nonempty answer, falling back to the first question or an empty string.
+     */
     public val title: String
         get() =
             items.firstNotNullOfOrNull { it.answer?.trim()?.takeIf(String::isNotEmpty) }
                 ?: items.firstOrNull()?.question
                 ?: ""
 
+    /**
+     * Whether any main survey answer contains uploaded images.
+     */
     public val hasImages: Boolean
         get() = items.any(InquiryContentItem::hasImages)
 
+    /**
+     * Factory helpers and shared values for InquiryRecord.
+     */
     public companion object {
+        /**
+         * Builds local inquiry history from a submission, using the fallback time if its
+         * timestamp cannot be parsed.
+         */
         public fun fromSubmission(
             submission: FormConciergeSubmission,
             fallbackTimeMillis: Long = System.currentTimeMillis(),
@@ -93,30 +136,61 @@ public data class InquiryRecord(
     }
 }
 
+/**
+ * Persistence for anonymous sessions, inquiry history, and reply seen times.
+ */
 public interface FormConciergeSessionStore {
+    /**
+     * Returns the stored respondent token, or null when no token is available.
+     */
     public suspend fun readAnonymousToken(): String?
 
+    /**
+     * Persists the token used to authenticate anonymous respondent requests.
+     */
     public suspend fun writeAnonymousToken(token: String)
 
+    /**
+     * Returns locally retained inquiries in descending submission order.
+     */
     public suspend fun readInquiries(): List<InquiryRecord>
 
+    /**
+     * Stores an inquiry unless a record with the same response identifier already exists.
+     */
     public suspend fun addInquiry(record: InquiryRecord)
 
+    /**
+     * Replaces the locally stored follow-up summary for the matching response.
+     */
     public suspend fun updateFollowUp(
         responseId: Int,
         followUpItems: List<InquiryContentItem>,
     )
 
+    /**
+     * Marks replies to the matching local inquiry as seen.
+     */
     public suspend fun markRepliesSeen(responseId: Int)
 
+    /**
+     * Returns the stored seen timestamp for one response or the combined reply scope.
+     */
     public suspend fun readLastSeenReplyAt(responseId: Int? = null): String?
 
+    /**
+     * Stores the seen timestamp for one response or the combined reply scope.
+     */
     public suspend fun writeLastSeenReplyAt(
         responseId: Int? = null,
         timestamp: String,
     )
 }
 
+/**
+ * Stores encrypted respondent data in SharedPreferences using Android Keystore keys. Inquiry
+ * history is retained for three months by default.
+ */
 public class AndroidFormConciergeSessionStore(
     context: Context,
     namespace: String = context.packageName,
@@ -136,10 +210,19 @@ public class AndroidFormConciergeSessionStore(
             encodeDefaults = true
         }
 
+    /**
+     * Returns the stored respondent token, or null when no token is available.
+     */
     override suspend fun readAnonymousToken(): String? = readEncrypted(TOKEN_KEY)
 
+    /**
+     * Persists the token used to authenticate anonymous respondent requests.
+     */
     override suspend fun writeAnonymousToken(token: String): Unit = writeEncrypted(TOKEN_KEY, token)
 
+    /**
+     * Returns locally retained inquiries in descending submission order.
+     */
     override suspend fun readInquiries(): List<InquiryRecord> =
         mutex.withLock {
             withContext(Dispatchers.IO) {
@@ -158,11 +241,17 @@ public class AndroidFormConciergeSessionStore(
             }
         }
 
+    /**
+     * Stores an inquiry unless a record with the same response identifier already exists.
+     */
     override suspend fun addInquiry(record: InquiryRecord): Unit =
         mutateInquiries { records ->
             if (records.any { it.responseId == record.responseId }) records else listOf(record) + records
         }
 
+    /**
+     * Replaces the locally stored follow-up summary for the matching response.
+     */
     override suspend fun updateFollowUp(
         responseId: Int,
         followUpItems: List<InquiryContentItem>,
@@ -173,6 +262,9 @@ public class AndroidFormConciergeSessionStore(
             }
         }
 
+    /**
+     * Marks replies to the matching local inquiry as seen.
+     */
     override suspend fun markRepliesSeen(responseId: Int): Unit =
         mutateInquiries { records ->
             records.map { record ->
@@ -180,8 +272,14 @@ public class AndroidFormConciergeSessionStore(
             }
         }
 
+    /**
+     * Returns the stored seen timestamp for one response or the combined reply scope.
+     */
     override suspend fun readLastSeenReplyAt(responseId: Int?): String? = readEncrypted(lastSeenKey(responseId))
 
+    /**
+     * Stores the seen timestamp for one response or the combined reply scope.
+     */
     override suspend fun writeLastSeenReplyAt(
         responseId: Int?,
         timestamp: String,
@@ -239,6 +337,9 @@ public class AndroidFormConciergeSessionStore(
     }
 }
 
+/**
+ * Remembers an encrypted Android session store for the application and namespace.
+ */
 @Composable
 public fun rememberFormConciergeSessionStore(namespace: String = LocalContext.current.packageName): FormConciergeSessionStore {
     val applicationContext = LocalContext.current.applicationContext
@@ -247,6 +348,9 @@ public fun rememberFormConciergeSessionStore(namespace: String = LocalContext.cu
     }
 }
 
+/**
+ * Builds readable local history from nonempty follow-up answers.
+ */
 public fun followUpItemsFromResponse(response: SurveyResponse): List<InquiryContentItem> =
     response.followUp?.items.orEmpty().mapNotNull { item ->
         val answer = item.answer

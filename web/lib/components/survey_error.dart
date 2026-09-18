@@ -2,7 +2,9 @@ import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:jaspr/jaspr.dart';
 import 'package:jaspr/dom.dart';
 
+/// Displays a survey error with an optional retry action.
 class SurveyError extends StatelessComponent {
+  /// Creates SurveyError with the supplied values.
   const SurveyError({
     required this.locale,
     required this.message,
@@ -10,10 +12,16 @@ class SurveyError extends StatelessComponent {
     super.key,
   });
 
+  /// The locale used to display the form content.
   final String locale;
+
+  /// The message displayed to the caller or user.
   final String message;
+
+  /// Called when the user requests another attempt, when provided.
   final void Function()? onRetry;
 
+  /// Builds the HTML components for the current input and state.
   @override
   Component build(context) => div(
     classes:

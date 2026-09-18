@@ -5,11 +5,19 @@ import 'client_capsule.dart';
 
 /// State for public configuration.
 class PublicConfigState {
+  /// The public server configuration, if it has been loaded.
   final PublicConfig? config;
+
+  /// Whether data is currently being loaded.
   final bool isLoading;
+
+  /// Whether an initial load has completed.
   final bool hasLoaded;
+
+  /// The error message, when the operation could not complete.
   final String? error;
 
+  /// Creates PublicConfigState with the supplied values.
   const PublicConfigState({
     this.config,
     this.isLoading = false,
@@ -17,6 +25,7 @@ class PublicConfigState {
     this.error,
   });
 
+  /// Returns a copy with the supplied state changes.
   PublicConfigState copyWith({
     PublicConfig? config,
     bool? isLoading,
@@ -35,6 +44,7 @@ class PublicConfigState {
   /// Whether AI question generation is enabled.
   bool get aiGenerationEnabled => config?.aiGenerationEnabled ?? false;
 
+  /// The public Turnstile site key used by the CAPTCHA widget.
   String? get turnstileSiteKey => config?.turnstileSiteKey;
 }
 
@@ -52,10 +62,12 @@ PublicConfigManager publicConfigCapsule(CapsuleHandle use) {
 
 /// Manager class for public configuration.
 class PublicConfigManager {
+  /// The current state snapshot exposed by this manager.
   final PublicConfigState state;
   final void Function(PublicConfigState) _setState;
   final Client _client;
 
+  /// Creates PublicConfigManager with the supplied values.
   PublicConfigManager({
     required this.state,
     required this._setState,

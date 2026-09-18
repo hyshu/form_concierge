@@ -11,8 +11,10 @@ import '../widgets/auth_page_scaffold.dart';
 
 /// Page for entering new password to complete reset.
 class ResetPasswordPage extends RearchConsumer {
+  /// Creates ResetPasswordPage with the supplied values.
   const ResetPasswordPage({super.key});
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context, use) {
     final resetManager = use(passwordResetCapsule);

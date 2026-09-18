@@ -24,33 +24,38 @@ import { surveyToJson } from './serializers';
 import { mustProject, mustSurvey, projectSupportedLocales } from './admin_records';
 import { insertQuestion, normalizeQuestionValidation, normalizeVisibilityConditionMode } from './admin_questions';
 import { collectFileKeysForSurveys, deleteMediaKeys } from './media';
-import {
-  DEFAULT_FORM_CONTENT_LOCALE,
-  LocalizedText,
-  localizedTextFor,
-  requireLocalizedText,
-} from './localization';
+import { DEFAULT_FORM_CONTENT_LOCALE, LocalizedText, localizedTextFor, requireLocalizedText } from './localization';
 
+/**
+ * Returns a paginated survey list, optionally restricted to one project.
+ */
 export async function listSurveys(env: Env, projectId: number | undefined, url: URL): Promise<Response> {
   const limit = integerParam(url.searchParams.get('limit'), 'limit', 100, { min: 1, max: 500 });
   const offset = integerParam(url.searchParams.get('offset'), 'offset', 0, { min: 0 });
-  const statement = projectId == null
-    ? env.DB.prepare(`SELECT * FROM surveys ORDER BY updated_at DESC LIMIT ? OFFSET ?`).bind(limit, offset)
-    : env.DB.prepare(
-        `SELECT * FROM surveys WHERE project_id = ? ORDER BY updated_at DESC LIMIT ? OFFSET ?`,
-      ).bind(projectId, limit, offset);
+  const statement =
+    projectId == null
+      ? env.DB.prepare(`SELECT * FROM surveys ORDER BY updated_at DESC LIMIT ? OFFSET ?`).bind(limit, offset)
+      : env.DB.prepare(`SELECT * FROM surveys WHERE project_id = ? ORDER BY updated_at DESC LIMIT ? OFFSET ?`).bind(
+          projectId,
+          limit,
+          offset,
+        );
   const rows = await statement.all<SurveyRow>();
   return json(rows.results.map(surveyToJson));
 }
 
+/**
+ * Returns the administrator representation of a survey by identifier.
+ */
 export async function getAdminSurvey(env: Env, surveyId: number): Promise<Response> {
-  const row = await env.DB.prepare(`SELECT * FROM surveys WHERE id = ?`)
-    .bind(surveyId)
-    .first<SurveyRow>();
+  const row = await env.DB.prepare(`SELECT * FROM surveys WHERE id = ?`).bind(surveyId).first<SurveyRow>();
   if (!row) throw new HttpError(404, 'Survey not found');
   return json(surveyToJson(row));
 }
 
+/**
+ * Validates a survey payload and records the authenticated administrator as its creator.
+ */
 export async function createSurvey(request: Request, env: Env, admin: AdminContext): Promise<Response> {
   const body = await readJson(request);
   const row = await insertSurvey(env.DB, body, admin);
@@ -64,23 +69,17 @@ async function insertSurvey(
   project?: ProjectRow,
 ): Promise<SurveyRow> {
   const projectId = requireProjectId(body.projectId);
-  const resolvedProject = project ?? await mustProject(db, projectId);
+  const resolvedProject = project ?? (await mustProject(db, projectId));
   const content = parseSurveyContent(body, resolvedProject);
   const explicitSlug = body.slug != null && body.slug !== '';
   let slug = await resolveSurveySlug(db, body.slug, resolvedProject, content);
-  const baseAutoSlug = explicitSlug
-    ? null
-    : (slugFromSurveyTitle(content, resolvedProject.default_locale) ?? 'survey');
+  const baseAutoSlug = explicitSlug ? null : (slugFromSurveyTitle(content, resolvedProject.default_locale) ?? 'survey');
   const now = nowIso();
-  const webEnabled = Object.hasOwn(body, 'webEnabled')
-    ? boolToInt(requiredBoolean(body.webEnabled, 'webEnabled'))
-    : 1;
+  const webEnabled = Object.hasOwn(body, 'webEnabled') ? boolToInt(requiredBoolean(body.webEnabled, 'webEnabled')) : 1;
   const followUpEnabled = Object.hasOwn(body, 'followUpEnabled')
     ? boolToInt(requiredBoolean(body.followUpEnabled, 'followUpEnabled'))
     : 0;
-  const followUpPrompt = Object.hasOwn(body, 'followUpPrompt')
-    ? optionalFollowUpPrompt(body.followUpPrompt)
-    : null;
+  const followUpPrompt = Object.hasOwn(body, 'followUpPrompt') ? optionalFollowUpPrompt(body.followUpPrompt) : null;
   const captchaEnabled = Object.hasOwn(body, 'captchaEnabled')
     ? boolToInt(requiredBoolean(body.captchaEnabled, 'captchaEnabled'))
     : 1;
@@ -93,13 +92,14 @@ async function insertSurvey(
   // Auto-slug path: retry INSERT on UNIQUE races instead of failing with 500.
   for (let attempt = 0; attempt < 8; attempt++) {
     try {
-      const row = await db.prepare(
-        `INSERT INTO surveys
+      const row = await db
+        .prepare(
+          `INSERT INTO surveys
            (project_id, slug, title_translations, description_translations, status, web_enabled, follow_up_enabled,
             follow_up_prompt, captcha_enabled, created_by_admin_id, created_at, updated_at, starts_at, ends_at)
          VALUES (?, ?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?, ?, ?)
          RETURNING *`,
-      )
+        )
         .bind(
           projectId,
           slug,
@@ -128,11 +128,10 @@ async function insertSurvey(
   throw new HttpError(400, 'Unable to generate a unique survey slug');
 }
 
-export async function createSurveyWithQuestions(
-  request: Request,
-  env: Env,
-  admin: AdminContext,
-): Promise<Response> {
+/**
+ * Creates a survey and its initial questions and choices from one request.
+ */
+export async function createSurveyWithQuestions(request: Request, env: Env, admin: AdminContext): Promise<Response> {
   const body = await readJson(request);
   const survey = requireObject(body.survey, 'survey');
   validateQuestionInputShape(body.questions);
@@ -157,21 +156,20 @@ export async function createSurveyWithQuestions(
   return json(surveyToJson(created), 201);
 }
 
+/**
+ * Validates and saves changes to a survey's settings and localized content.
+ */
 export async function updateSurvey(request: Request, env: Env, surveyId: number): Promise<Response> {
   const existing = await mustSurvey(env.DB, surveyId);
   const body = await readJson(request);
   const project = await mustProject(env.DB, existing.project_id);
   const content = parseSurveyContent(body, project);
-  const slug = Object.hasOwn(body, 'slug')
-    ? requireSurveySlug(body.slug)
-    : existing.slug;
+  const slug = Object.hasOwn(body, 'slug') ? requireSurveySlug(body.slug) : existing.slug;
   await ensureUniqueSurveySlug(env.DB, project.id, slug, surveyId);
   const startsAt = Object.hasOwn(body, 'startsAt')
     ? optionalIsoDateTime(body.startsAt, 'startsAt')
     : existing.starts_at;
-  const endsAt = Object.hasOwn(body, 'endsAt')
-    ? optionalIsoDateTime(body.endsAt, 'endsAt')
-    : existing.ends_at;
+  const endsAt = Object.hasOwn(body, 'endsAt') ? optionalIsoDateTime(body.endsAt, 'endsAt') : existing.ends_at;
   assertSurveySchedule(startsAt, endsAt);
   const row = await env.DB.prepare(
     `UPDATE surveys
@@ -180,25 +178,27 @@ export async function updateSurvey(request: Request, env: Env, surveyId: number)
          starts_at = ?, ends_at = ?, updated_at = ?
      WHERE id = ?
      RETURNING *`,
-  ).bind(
-    slug,
-    JSON.stringify(content.titleTranslations),
-    JSON.stringify(content.descriptionTranslations),
-    Object.hasOwn(body, 'webEnabled') ? boolToInt(requiredBoolean(body.webEnabled, 'webEnabled')) : existing.web_enabled,
-    Object.hasOwn(body, 'followUpEnabled')
-      ? boolToInt(requiredBoolean(body.followUpEnabled, 'followUpEnabled'))
-      : existing.follow_up_enabled,
-    Object.hasOwn(body, 'followUpPrompt')
-      ? optionalFollowUpPrompt(body.followUpPrompt)
-      : existing.follow_up_prompt,
-    Object.hasOwn(body, 'captchaEnabled')
-      ? boolToInt(requiredBoolean(body.captchaEnabled, 'captchaEnabled'))
-      : existing.captcha_enabled,
-    startsAt,
-    endsAt,
-    nowIso(),
-    surveyId,
-  ).first<SurveyRow>();
+  )
+    .bind(
+      slug,
+      JSON.stringify(content.titleTranslations),
+      JSON.stringify(content.descriptionTranslations),
+      Object.hasOwn(body, 'webEnabled')
+        ? boolToInt(requiredBoolean(body.webEnabled, 'webEnabled'))
+        : existing.web_enabled,
+      Object.hasOwn(body, 'followUpEnabled')
+        ? boolToInt(requiredBoolean(body.followUpEnabled, 'followUpEnabled'))
+        : existing.follow_up_enabled,
+      Object.hasOwn(body, 'followUpPrompt') ? optionalFollowUpPrompt(body.followUpPrompt) : existing.follow_up_prompt,
+      Object.hasOwn(body, 'captchaEnabled')
+        ? boolToInt(requiredBoolean(body.captchaEnabled, 'captchaEnabled'))
+        : existing.captcha_enabled,
+      startsAt,
+      endsAt,
+      nowIso(),
+      surveyId,
+    )
+    .first<SurveyRow>();
   return json(surveyToJson(requiredRow(row, 'Survey')));
 }
 
@@ -214,6 +214,9 @@ function assertSurveySchedule(startsAt: string | null, endsAt: string | null): v
   }
 }
 
+/**
+ * Deletes a survey and its associated response data and uploaded media.
+ */
 export async function deleteSurvey(env: Env, surveyId: number): Promise<Response> {
   const fileKeys = await collectFileKeysForSurveys(env.DB, [surveyId]);
   await env.DB.prepare(`DELETE FROM surveys WHERE id = ?`).bind(surveyId).run();
@@ -221,6 +224,9 @@ export async function deleteSurvey(env: Env, surveyId: number): Promise<Response
   return json({ ok: true });
 }
 
+/**
+ * Applies a supported survey publication action and returns the updated survey.
+ */
 export async function updateSurveyStatus(
   env: Env,
   surveyId: number,
@@ -235,9 +241,9 @@ export async function updateSurveyStatus(
   if (status === 'published') {
     await assertSurveyCanPublish(env.DB, surveyId);
   }
-  const row = await env.DB.prepare(
-    `UPDATE surveys SET status = ?, updated_at = ? WHERE id = ? RETURNING *`,
-  ).bind(status, nowIso(), survey.id).first<SurveyRow>();
+  const row = await env.DB.prepare(`UPDATE surveys SET status = ?, updated_at = ? WHERE id = ? RETURNING *`)
+    .bind(status, nowIso(), survey.id)
+    .first<SurveyRow>();
   return json(surveyToJson(requiredRow(row, 'Survey')));
 }
 
@@ -256,10 +262,7 @@ function validateQuestionInputShape(value: unknown): void {
       throw new HttpError(400, `questions[${index}].choiceTranslations must not be empty`);
     }
     if ((isTextQuestionType(type) || type === 'imageUpload') && question.choiceTranslations.length > 0) {
-      throw new HttpError(
-        400,
-        `questions[${index}].choiceTranslations must be empty for text and image questions`,
-      );
+      throw new HttpError(400, `questions[${index}].choiceTranslations must be empty for text and image questions`);
     }
   });
 }
@@ -268,11 +271,9 @@ function parseQuestionInputs(value: unknown, locales: readonly string[]): Questi
   validateQuestionInputShape(value);
   return (value as Record<string, unknown>[]).map((question, index) => {
     const type = normalizeQuestionType(question.type);
-    const choiceTranslations = (question.choiceTranslations as unknown[]).map((choice, choiceIndex) => requireLocalizedText(
-      choice,
-      `questions[${index}].choiceTranslations[${choiceIndex}]`,
-      locales,
-    ));
+    const choiceTranslations = (question.choiceTranslations as unknown[]).map((choice, choiceIndex) =>
+      requireLocalizedText(choice, `questions[${index}].choiceTranslations[${choiceIndex}]`, locales),
+    );
     return {
       textTranslations: requireLocalizedText(
         question.textTranslations,
@@ -294,7 +295,10 @@ function parseQuestionInputs(value: unknown, locales: readonly string[]): Questi
   });
 }
 
-function parseSurveyContent(body: Record<string, unknown>, project: ProjectRow): {
+function parseSurveyContent(
+  body: Record<string, unknown>,
+  project: ProjectRow,
+): {
   titleTranslations: LocalizedText;
   descriptionTranslations: LocalizedText;
 } {
@@ -335,10 +339,7 @@ function requireSurveySlug(value: unknown): string {
   return slug;
 }
 
-function slugFromSurveyTitle(
-  content: SurveyContent,
-  defaultLocale: string,
-): string | null {
+function slugFromSurveyTitle(content: SurveyContent, defaultLocale: string): string | null {
   const candidates = [
     content.titleTranslations[defaultLocale],
     content.titleTranslations[DEFAULT_FORM_CONTENT_LOCALE],
@@ -359,17 +360,14 @@ function slugFromSurveyTitle(
   return null;
 }
 
-async function uniqueSurveySlug(
-  db: D1Database,
-  projectId: number,
-  base: string,
-): Promise<string> {
+async function uniqueSurveySlug(db: D1Database, projectId: number, base: string): Promise<string> {
   // Prefer SELECT for the common path; insert still retries on UNIQUE races.
   for (let index = 0; index < 100; index++) {
     const slug = index === 0 ? base : `${base}-${index + 1}`;
-    const row = await db.prepare(
-      `SELECT id FROM surveys WHERE project_id = ? AND slug = ?`,
-    ).bind(projectId, slug).first<{ id: number }>();
+    const row = await db
+      .prepare(`SELECT id FROM surveys WHERE project_id = ? AND slug = ?`)
+      .bind(projectId, slug)
+      .first<{ id: number }>();
     if (!row) return slug;
   }
   throw new HttpError(400, 'Unable to generate a unique survey slug');
@@ -392,9 +390,10 @@ export async function nextSurveySlugCandidate(
   for (let index = start; index < start + 100; index++) {
     const slug = index === 1 ? base : `${base}-${index}`;
     if (slug === failedSlug) continue;
-    const row = await db.prepare(
-      `SELECT id FROM surveys WHERE project_id = ? AND slug = ?`,
-    ).bind(projectId, slug).first<{ id: number }>();
+    const row = await db
+      .prepare(`SELECT id FROM surveys WHERE project_id = ? AND slug = ?`)
+      .bind(projectId, slug)
+      .first<{ id: number }>();
     if (!row) return slug;
   }
   throw new HttpError(400, 'Unable to generate a unique survey slug');
@@ -406,13 +405,16 @@ async function ensureUniqueSurveySlug(
   slug: string,
   exceptSurveyId?: number,
 ): Promise<void> {
-  const row = exceptSurveyId == null
-    ? await db.prepare(
-        `SELECT id FROM surveys WHERE project_id = ? AND slug = ?`,
-      ).bind(projectId, slug).first<{ id: number }>()
-    : await db.prepare(
-        `SELECT id FROM surveys WHERE project_id = ? AND slug = ? AND id != ?`,
-      ).bind(projectId, slug, exceptSurveyId).first<{ id: number }>();
+  const row =
+    exceptSurveyId == null
+      ? await db
+          .prepare(`SELECT id FROM surveys WHERE project_id = ? AND slug = ?`)
+          .bind(projectId, slug)
+          .first<{ id: number }>()
+      : await db
+          .prepare(`SELECT id FROM surveys WHERE project_id = ? AND slug = ? AND id != ?`)
+          .bind(projectId, slug, exceptSurveyId)
+          .first<{ id: number }>();
   if (row) throw new HttpError(400, 'A survey with this slug already exists');
 }
 
@@ -421,19 +423,16 @@ function requireProjectId(value: unknown): number {
 }
 
 async function assertSurveyCanPublish(db: D1Database, surveyId: number): Promise<void> {
-  const questions = await db.prepare(
-    `SELECT * FROM questions WHERE survey_id = ? AND is_deleted = 0`,
-  ).bind(surveyId).all<QuestionRow>();
+  const questions = await db
+    .prepare(`SELECT * FROM questions WHERE survey_id = ? AND is_deleted = 0`)
+    .bind(surveyId)
+    .all<QuestionRow>();
   if (questions.results.length === 0) {
     throw new HttpError(400, 'Survey must have at least one question');
   }
   for (const question of questions.results) {
     if (!isChoiceQuestionType(question.type)) continue;
-    const choiceCount = await countRows(
-      db,
-      `SELECT COUNT(*) AS count FROM choices WHERE question_id = ?`,
-      question.id,
-    );
+    const choiceCount = await countRows(db, `SELECT COUNT(*) AS count FROM choices WHERE question_id = ?`, question.id);
     if (choiceCount === 0) {
       throw new HttpError(
         400,

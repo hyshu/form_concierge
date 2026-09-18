@@ -1,7 +1,9 @@
 part of form_concierge_client;
 
+/// A UUID represented as a string.
 typedef UuidValue = String;
 
+/// Creates a random key that can be reused when retrying one submission.
 String generateIdempotencyKey() {
   final rng = Random.secure();
   final bytes = List<int>.generate(16, (_) => rng.nextInt(256));
@@ -12,36 +14,92 @@ String generateIdempotencyKey() {
       '${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20)}';
 }
 
+/// The input format used to collect a question's answer.
 enum QuestionType {
+  /// A question that accepts one selected choice.
   singleChoice,
+
+  /// A question that accepts several selected choices.
   multipleChoice,
+
+  /// A question that accepts a single line of text.
   textSingle,
+
+  /// A question that accepts multiple lines of text.
   textMultiLine,
+
+  /// A question that accepts uploaded images.
   imageUpload,
 }
 
-enum SurveyStatus { draft, published, closed, archived }
+/// The publication state of a survey.
+enum SurveyStatus {
+  /// A survey that has not been published.
+  draft,
 
-enum AdminRole { admin, editor, viewer }
+  /// A published survey, subject to its availability schedule.
+  published,
 
-enum VisibilityConditionMode { all, any }
+  /// A survey that no longer accepts responses.
+  closed,
 
+  /// A survey retained for reference after active use.
+  archived,
+}
+
+/// The permission level assigned to an administrator.
+enum AdminRole {
+  /// Full administrator access, including user and integration management.
+  admin,
+
+  /// Access to edit survey content and manage responses.
+  editor,
+
+  /// Read access to survey content and response results.
+  viewer,
+}
+
+/// How multiple rules combine to control question visibility.
+enum VisibilityConditionMode {
+  /// Shows the question only when every rule matches.
+  all,
+
+  /// Shows the question when at least one rule matches.
+  any,
+}
+
+/// The comparison applied to a source question's answer.
 enum VisibilityOperator {
+  /// Matches equal text or a selected choice.
   equals,
+
+  /// Matches different text or an unselected choice when an answer exists.
   notEquals,
+
+  /// Matches text containing a substring or a selected choice.
   contains,
+
+  /// Matches an answer that excludes the text or choice.
   notContains,
+
+  /// Matches a nonempty answer.
   isAnswered,
+
+  /// Matches a missing or empty answer.
   isNotAnswered,
 }
 
+/// Input capabilities associated with each question type.
 extension QuestionTypeProperties on QuestionType {
+  /// Whether this question type presents selectable choices.
   bool get usesChoices =>
       this == QuestionType.singleChoice || this == QuestionType.multipleChoice;
 
+  /// Whether this question type accepts text input.
   bool get usesTextAnswer =>
       this == QuestionType.textSingle || this == QuestionType.textMultiLine;
 
+  /// Whether this question type accepts image uploads.
   bool get usesImageUpload => this == QuestionType.imageUpload;
 }
 
@@ -164,13 +222,21 @@ Map<String, dynamic> _withoutNulls(Map<String, dynamic> source) {
   return Map.fromEntries(source.entries.where((entry) => entry.value != null));
 }
 
+/// An unsuccessful API response with its HTTP status and error details.
 class ApiException implements Exception {
+  /// The HTTP status returned by the server.
   final int statusCode;
+
+  /// The message displayed to the caller or user.
   final String message;
+
+  /// Additional error information returned by the server, when available.
   final Object? details;
 
+  /// Creates ApiException with the supplied values.
   const ApiException(this.statusCode, this.message, [this.details]);
 
+  /// Returns a readable description of this error.
   @override
   String toString() => 'ApiException($statusCode): $message';
 }

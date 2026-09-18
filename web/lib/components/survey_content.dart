@@ -5,7 +5,9 @@ import 'package:jaspr/dom.dart';
 import 'questions/question_widget.dart';
 import 'turnstile_captcha.dart';
 
+/// Displays survey questions, validation feedback, and submission controls.
 class SurveyContent extends StatelessComponent {
+  /// Creates SurveyContent with the supplied values.
   const SurveyContent({
     required this.client,
     required this.project,
@@ -25,22 +27,52 @@ class SurveyContent extends StatelessComponent {
     super.key,
   });
 
+  /// The API client used to load data and submit changes.
   final Client client;
+
+  /// The project that contains the survey.
   final Project project;
+
+  /// The survey displayed by this component or state.
   final Survey survey;
+
+  /// The survey questions in display order.
   final List<Question> questions;
+
+  /// Available choices indexed by question identifier.
   final Map<int, List<Choice>> choicesByQuestion;
+
+  /// The current answers indexed by question identifier.
   final AnswerValues answers;
+
+  /// Validation messages indexed by question identifier.
   final ValidationErrors validationErrors;
+
+  /// The error message to display, or null when there is no error.
   final String? errorMessage;
+
+  /// The locale used to display the form content.
   final String locale;
+
+  /// Whether a submission is in progress and inputs should be disabled.
   final bool isSubmitting;
+
+  /// Called when the respondent changes an answer.
   final void Function(int questionId, AnswerValue value) onAnswerChanged;
+
+  /// Called when the respondent selects a different form language.
   final void Function(String locale) onLocaleChanged;
+
+  /// Called when the respondent requests submission.
   final void Function() onSubmit;
+
+  /// Ensures an anonymous session exists before uploading media, when provided.
   final Future<void> Function() ensureAuthenticated;
+
+  /// The public Turnstile site key used by the CAPTCHA widget.
   final String? turnstileSiteKey;
 
+  /// Builds the HTML components for the current input and state.
   @override
   Component build(context) => div(classes: 'max-w-xl mx-auto', [
     // Header card with accent border

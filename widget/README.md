@@ -292,7 +292,7 @@ Future<String?> resolveCaptchaToken(BuildContext context) async {
 
 This example uses [`cloudflare_turnstile`](https://pub.dev/packages/cloudflare_turnstile) and `dart:async`. The provider runs only when CAPTCHA is required; return `null` to cancel submission. Turnstile tokens are single-use, and `baseUrl` must use a hostname allowed by the Turnstile widget configuration.
 
-See [`examples/flutter_mobile_full`](examples/flutter_mobile_full) for complete error and timeout handling.
+See [`examples/flutter_mobile_full`](https://github.com/hyshu/form_concierge/tree/main/widget/examples/flutter_mobile_full) for complete error and timeout handling.
 
 ## Privacy and Data Ownership
 

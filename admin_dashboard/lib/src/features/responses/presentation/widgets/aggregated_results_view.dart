@@ -9,14 +9,28 @@ import 'question_result_card.dart';
 
 /// View showing aggregated survey results.
 class AggregatedResultsView extends StatelessWidget {
+  /// The API client used to load data and submit changes.
   final Client client;
+
+  /// The aggregated survey results, when available.
   final SurveyResults? results;
+
+  /// Available choices indexed by question identifier.
   final Map<int, List<Choice>> choicesByQuestion;
+
+  /// Whether data is currently being loaded.
   final bool isLoading;
+
+  /// The error message, when the operation could not complete.
   final String? error;
+
+  /// Optional state and callbacks for translating displayed answers.
   final AnswerTranslationBindings? answerTranslations;
+
+  /// Called when the user requests fresh data from the server.
   final VoidCallback onRefresh;
 
+  /// Creates AggregatedResultsView with the supplied values.
   const AggregatedResultsView({
     super.key,
     required this.client,
@@ -28,6 +42,7 @@ class AggregatedResultsView extends StatelessWidget {
     required this.onRefresh,
   });
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context) {
     if (isLoading && results == null) {

@@ -21,10 +21,13 @@ import '../widgets/response_list.dart';
 
 /// Page showing survey responses and aggregated results.
 class ResponsesPage extends RearchConsumer {
+  /// The identifier of the associated survey.
   final int surveyId;
 
+  /// Creates ResponsesPage with the supplied values.
   const ResponsesPage({super.key, required this.surveyId});
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context, use) {
     final responseManager = use(responseListManagerCapsule);

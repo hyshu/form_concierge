@@ -1,9 +1,12 @@
 import 'package:jaspr/jaspr.dart';
 import 'package:jaspr/dom.dart';
 
+/// Displays a message when the requested public form does not exist.
 class NotFoundPage extends StatelessComponent {
+  /// Creates NotFoundPage with the supplied values.
   const NotFoundPage({super.key});
 
+  /// Builds the HTML components for the current input and state.
   @override
   Component build(context) => div(
     classes:

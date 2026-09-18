@@ -71,7 +71,13 @@ import { scheduleRuntimeMigrations } from './runtime_migrations';
 import { cleanupOldQuotaPeriods } from './usage_quota';
 import { checkRateLimit, clientIp } from './rate_limit';
 
+/**
+ * Cloudflare Worker entry points for HTTP requests and scheduled maintenance.
+ */
 export default {
+  /**
+   * Routes an HTTP request and converts expected failures into API responses.
+   */
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     scheduleRuntimeMigrations(env, ctx);
     if (request.method === 'OPTIONS') {
@@ -91,6 +97,9 @@ export default {
       return json({ error: 'Internal server error' }, 500);
     }
   },
+  /**
+   * Schedules schema updates and cleanup of expired media and quota counters.
+   */
   async scheduled(_controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
     ctx.waitUntil(
       Promise.all([cleanupExpiredMedia(env), cleanupOldQuotaPeriods(env.DB)])

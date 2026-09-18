@@ -1,9 +1,25 @@
-import type { AdminContext, AdminRow, AnonymousContext, AnswerRow, ChoiceRow, NotificationSettingsRow, ProjectRow, QuestionRow, ReplyRow, ResponseRow, SurveyRow, VisibilityRuleRow } from './types';
+import type {
+  AdminContext,
+  AdminRow,
+  AnonymousContext,
+  AnswerRow,
+  ChoiceRow,
+  NotificationSettingsRow,
+  ProjectRow,
+  QuestionRow,
+  ReplyRow,
+  ResponseRow,
+  SurveyRow,
+  VisibilityRuleRow,
+} from './types';
 import { roleFromScopes } from './permissions';
 import { HttpError, compactObject } from './utils';
 import { parseLocalizedText } from './localization';
 import { parseStoredFileKeys } from './media';
 
+/**
+ * Converts the project into its public JSON representation.
+ */
 export function projectToJson(row: ProjectRow) {
   return {
     id: row.id,
@@ -18,6 +34,9 @@ export function projectToJson(row: ProjectRow) {
   };
 }
 
+/**
+ * Converts the survey into its public JSON representation.
+ */
 export function surveyToJson(row: SurveyRow) {
   return {
     id: row.id,
@@ -39,6 +58,9 @@ export function surveyToJson(row: SurveyRow) {
   };
 }
 
+/**
+ * Converts the public survey into its public JSON representation.
+ */
 export function publicSurveyToJson(row: SurveyRow, captchaRequired: boolean) {
   return {
     ...surveyToJson(row),
@@ -46,6 +68,9 @@ export function publicSurveyToJson(row: SurveyRow, captchaRequired: boolean) {
   };
 }
 
+/**
+ * Converts the question into its public JSON representation.
+ */
 export function questionToJson(row: QuestionRow) {
   return {
     id: row.id,
@@ -64,6 +89,9 @@ export function questionToJson(row: QuestionRow) {
   };
 }
 
+/**
+ * Converts the visibility rule into its public JSON representation.
+ */
 export function visibilityRuleToJson(row: VisibilityRuleRow) {
   return {
     id: row.id,
@@ -77,6 +105,9 @@ export function visibilityRuleToJson(row: VisibilityRuleRow) {
   };
 }
 
+/**
+ * Converts the choice into its public JSON representation.
+ */
 export function choiceToJson(row: ChoiceRow) {
   return {
     id: row.id,
@@ -87,6 +118,9 @@ export function choiceToJson(row: ChoiceRow) {
   };
 }
 
+/**
+ * Converts the response into its public JSON representation.
+ */
 export function responseToJson(row: ResponseRow) {
   return {
     id: row.id,
@@ -102,18 +136,27 @@ export function responseToJson(row: ResponseRow) {
   };
 }
 
+/**
+ * Parses stored follow-up JSON, returning null when it is absent or invalid.
+ */
 export function followUpToJson(value: string | null): Record<string, unknown> | null {
   if (!value) return null;
   const decoded = parseJsonObject(value, 'followUp');
   return Object.keys(decoded).length === 0 ? null : decoded;
 }
 
+/**
+ * Parses stored response metadata, returning null when it is absent or invalid.
+ */
 export function metadataToJson(value: string | null) {
   if (!value) return null;
   const metadata = parseJsonObject(value, 'metadata');
   return Object.keys(metadata).length === 0 ? null : metadata;
 }
 
+/**
+ * Builds public device details from a response's stored metadata and legacy columns.
+ */
 export function deviceInfoToJson(row: ResponseRow) {
   const raw = parseJsonObject(row.device_info, 'deviceInfo');
   const compacted = compactObject({
@@ -135,6 +178,9 @@ export function deviceInfoToJson(row: ResponseRow) {
   return Object.keys(compacted).length === 0 ? null : compacted;
 }
 
+/**
+ * Converts the answer into its public JSON representation.
+ */
 export function answerToJson(row: AnswerRow) {
   const fileKeys = parseStoredFileKeys(row.text_value);
   return {
@@ -147,6 +193,9 @@ export function answerToJson(row: AnswerRow) {
   };
 }
 
+/**
+ * Converts the reply into its public JSON representation.
+ */
 export function replyToJson(row: ReplyRow) {
   return {
     id: row.id,
@@ -159,6 +208,9 @@ export function replyToJson(row: ReplyRow) {
   };
 }
 
+/**
+ * Converts the notification into its public JSON representation.
+ */
 export function notificationToJson(row: NotificationSettingsRow) {
   return {
     id: row.id,
@@ -169,10 +221,16 @@ export function notificationToJson(row: NotificationSettingsRow) {
   };
 }
 
+/**
+ * Converts the admin user into its public JSON representation.
+ */
 export function adminUserToJson(row: AdminRow) {
   return adminContextToJson(adminRowToContext(row));
 }
 
+/**
+ * Converts the admin context into its public JSON representation.
+ */
 export function adminContextToJson(user: AdminContext) {
   return {
     id: user.id,
@@ -183,6 +241,9 @@ export function adminContextToJson(user: AdminContext) {
   };
 }
 
+/**
+ * Converts an administrator database row into an authentication context.
+ */
 export function adminRowToContext(row: AdminRow): AdminContext {
   return {
     id: row.id,
@@ -192,6 +253,9 @@ export function adminRowToContext(row: AdminRow): AdminContext {
   };
 }
 
+/**
+ * Converts the anonymous account into its public JSON representation.
+ */
 export function anonymousAccountToJson(account: AnonymousContext) {
   return {
     id: account.id,
@@ -201,6 +265,9 @@ export function anonymousAccountToJson(account: AnonymousContext) {
   };
 }
 
+/**
+ * Parses selected choice identifiers from stored JSON, returning an empty list when unavailable.
+ */
 export function parseChoiceIds(value: string | null): number[] {
   if (!value) return [];
   return parseJsonIntegerArray(value, 'selectedChoiceIds');

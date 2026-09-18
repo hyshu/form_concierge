@@ -3,7 +3,13 @@ package com.formconcierge.compose
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonPrimitive
 
+/**
+ * Shared visibility, validation, and answer conversion for survey interfaces.
+ */
 public object FormConciergeSurveyLogic {
+    /**
+     * Returns visible questions in input order using answers from earlier visible questions.
+     */
     public fun visibleQuestions(
         questions: List<Question>,
         rules: List<QuestionVisibilityRule>,
@@ -34,6 +40,10 @@ public object FormConciergeSurveyLogic {
         }
     }
 
+    /**
+     * Returns the first localized validation error, or null when all supplied answers pass
+     * validation.
+     */
     public fun validationError(
         questions: List<Question>,
         answers: Map<Int, SurveyAnswerValue>,
@@ -98,6 +108,9 @@ public object FormConciergeSurveyLogic {
         return null
     }
 
+    /**
+     * Builds submission answers from nonempty values for the supplied questions.
+     */
     public fun answerPayload(
         questions: List<Question>,
         answers: Map<Int, SurveyAnswerValue>,

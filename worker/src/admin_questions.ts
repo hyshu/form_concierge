@@ -19,25 +19,74 @@ import {
   updateOrder,
 } from './utils';
 import { choiceToJson, parseChoiceIds, questionToJson } from './serializers';
-import { guardPublishedSurvey, mustChoice, mustProject, mustQuestion, mustSurvey, projectSupportedLocales } from './admin_records';
+import {
+  guardPublishedSurvey,
+  mustChoice,
+  mustProject,
+  mustQuestion,
+  mustSurvey,
+  projectSupportedLocales,
+} from './admin_records';
 import { defaultLocalizedText, requireLocalizedText } from './localization';
 import { assertVisibilityOrderInvariant } from './visibility_rules';
 
+/**
+ * Validated question values and optional choices used when inserting a question.
+ */
 type InsertQuestionInput = {
+  /**
+   * The identifier of the associated survey.
+   */
   surveyId: number;
+  /**
+   * Display text indexed by locale code.
+   */
   textTranslations: Record<string, string>;
+  /**
+   * The input format used to collect the answer.
+   */
   type: string;
+  /**
+   * The position of this item in its ordered question or choice list.
+   */
   orderIndex: number;
+  /**
+   * Whether the respondent must answer this question.
+   */
   isRequired: boolean;
+  /**
+   * Input hints indexed by locale code.
+   */
   placeholderTranslations: Record<string, string>;
+  /**
+   * The minimum accepted text length, or null when no minimum is set.
+   */
   minLength: number | null;
+  /**
+   * The maximum accepted text length, or null when no maximum is set.
+   */
   maxLength: number | null;
+  /**
+   * The minimum number of choices or uploaded files required, if set.
+   */
   minSelected: number | null;
+  /**
+   * The maximum number of choices or uploaded files allowed, if set.
+   */
   maxSelected: number | null;
+  /**
+   * Whether all visibility rules or any one rule must match.
+   */
   visibilityConditionMode: string;
+  /**
+   * Localized text for each choice in display order.
+   */
   choiceTranslations?: readonly Record<string, string>[];
 };
 
+/**
+ * Validates a question payload and returns the inserted question.
+ */
 export async function createQuestion(request: Request, env: Env): Promise<Response> {
   const body = await readJson(request);
   const surveyId = requiredInteger(body.surveyId, 'surveyId', { min: 1 });
@@ -49,51 +98,51 @@ export async function createQuestion(request: Request, env: Env): Promise<Respon
   const locales = await surveySupportedLocales(env.DB, surveyId);
   const type = normalizeQuestionType(body.type);
   const validation = normalizeQuestionValidation(body, type);
-  const max = await env.DB.prepare(
-    `SELECT MAX(order_index) AS max_order FROM questions WHERE survey_id = ?`,
-  ).bind(surveyId).first<{ max_order: number | null }>();
+  const max = await env.DB.prepare(`SELECT MAX(order_index) AS max_order FROM questions WHERE survey_id = ?`)
+    .bind(surveyId)
+    .first<{ max_order: number | null }>();
   const question = await insertQuestion(env.DB, {
     surveyId,
     textTranslations: requireLocalizedText(body.textTranslations, 'textTranslations', locales),
     type,
     orderIndex: (max?.max_order ?? -1) + 1,
     isRequired: optionalBoolean(body.isRequired, 'isRequired') ?? true,
-    placeholderTranslations: requireLocalizedText(
-      body.placeholderTranslations,
-      'placeholderTranslations',
-      locales,
-      { allowEmpty: true },
-    ),
+    placeholderTranslations: requireLocalizedText(body.placeholderTranslations, 'placeholderTranslations', locales, {
+      allowEmpty: true,
+    }),
     ...validation,
     visibilityConditionMode: normalizeVisibilityConditionMode(body.visibilityConditionMode),
-    choiceTranslations: [
-      defaultLocalizedText('Choice 1', locales),
-      defaultLocalizedText('Choice 2', locales),
-    ],
+    choiceTranslations: [defaultLocalizedText('Choice 1', locales), defaultLocalizedText('Choice 2', locales)],
   });
   return json(questionToJson(question), 201);
 }
 
+/**
+ * Inserts a validated question definition and returns its database row.
+ */
 export async function insertQuestion(db: D1Database, input: InsertQuestionInput): Promise<QuestionRow> {
-  const row = await db.prepare(
-    `INSERT INTO questions
+  const row = await db
+    .prepare(
+      `INSERT INTO questions
        (survey_id, text_translations, type, order_index, is_required, placeholder_translations,
         min_length, max_length, min_selected, max_selected, visibility_condition_mode)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      RETURNING *`,
-  ).bind(
-    input.surveyId,
-    JSON.stringify(input.textTranslations),
-    input.type,
-    input.orderIndex,
-    boolToInt(input.isRequired),
-    JSON.stringify(input.placeholderTranslations),
-    input.minLength,
-    input.maxLength,
-    input.minSelected,
-    input.maxSelected,
-    input.visibilityConditionMode,
-  ).first<QuestionRow>();
+    )
+    .bind(
+      input.surveyId,
+      JSON.stringify(input.textTranslations),
+      input.type,
+      input.orderIndex,
+      boolToInt(input.isRequired),
+      JSON.stringify(input.placeholderTranslations),
+      input.minLength,
+      input.maxLength,
+      input.minSelected,
+      input.maxSelected,
+      input.visibilityConditionMode,
+    )
+    .first<QuestionRow>();
   const question = requiredRow(row, 'Question');
   if (isChoiceQuestionType(question.type) && input.choiceTranslations?.length) {
     await insertChoices(db, question.id, input.choiceTranslations);
@@ -101,6 +150,9 @@ export async function insertQuestion(db: D1Database, input: InsertQuestionInput)
   return question;
 }
 
+/**
+ * Validates and saves changes to a question and its input constraints.
+ */
 export async function updateQuestion(request: Request, env: Env, questionId: number): Promise<Response> {
   const existing = await mustQuestion(env.DB, questionId);
   const survey = await mustSurvey(env.DB, existing.survey_id);
@@ -118,7 +170,7 @@ export async function updateQuestion(request: Request, env: Env, questionId: num
       throw new HttpError(400, 'Cannot change question type after responses exist');
     }
   }
-  const newIsRequired = optionalBoolean(body.isRequired, 'isRequired') ?? (existing.is_required === 1);
+  const newIsRequired = optionalBoolean(body.isRequired, 'isRequired') ?? existing.is_required === 1;
   if (newIsRequired && existing.is_required !== 1) {
     guardPublishedSurvey(survey, 'make a question required');
   }
@@ -137,18 +189,16 @@ export async function updateQuestion(request: Request, env: Env, questionId: num
   if (orderIndex !== existing.order_index) {
     const siblings = await env.DB.prepare(
       `SELECT id, order_index FROM questions WHERE survey_id = ? AND is_deleted = 0`,
-    ).bind(existing.survey_id).all<{ id: number; order_index: number }>();
+    )
+      .bind(existing.survey_id)
+      .all<{ id: number; order_index: number }>();
     const proposed = new Map(
-      siblings.results.map((row) => [
-        row.id,
-        row.id === questionId ? orderIndex : row.order_index,
-      ]),
+      siblings.results.map((row) => [row.id, row.id === questionId ? orderIndex : row.order_index]),
     );
     await assertVisibilityOrderInvariant(env.DB, existing.survey_id, proposed);
   }
-  const typeChangedFromChoice = type !== existing.type
-    && isChoiceQuestionType(existing.type)
-    && !isChoiceQuestionType(type);
+  const typeChangedFromChoice =
+    type !== existing.type && isChoiceQuestionType(existing.type) && !isChoiceQuestionType(type);
   const updateStmt = env.DB.prepare(
     `UPDATE questions
      SET text_translations = ?, type = ?, order_index = ?, is_required = ?, placeholder_translations = ?,
@@ -161,18 +211,15 @@ export async function updateQuestion(request: Request, env: Env, questionId: num
     type,
     orderIndex,
     boolToInt(newIsRequired),
-    JSON.stringify(requireLocalizedText(
-      body.placeholderTranslations,
-      'placeholderTranslations',
-      locales,
-      { allowEmpty: true },
-    )),
+    JSON.stringify(
+      requireLocalizedText(body.placeholderTranslations, 'placeholderTranslations', locales, { allowEmpty: true }),
+    ),
     validation.minLength,
     validation.maxLength,
     validation.minSelected,
     validation.maxSelected,
     normalizeVisibilityConditionMode(body.visibilityConditionMode ?? existing.visibility_condition_mode),
-    boolToInt(optionalBoolean(body.isDeleted, 'isDeleted') ?? (existing.is_deleted === 1)),
+    boolToInt(optionalBoolean(body.isDeleted, 'isDeleted') ?? existing.is_deleted === 1),
     questionId,
   );
   if (typeChangedFromChoice) {
@@ -191,6 +238,9 @@ export async function updateQuestion(request: Request, env: Env, questionId: num
   return json(questionToJson(requiredRow(row, 'Question')));
 }
 
+/**
+ * Accepts a supported visibility combination mode and rejects invalid values.
+ */
 export function normalizeVisibilityConditionMode(value: unknown): string {
   if (value == null) return 'all';
   if (typeof value !== 'string') throw new HttpError(400, 'Invalid visibility condition mode');
@@ -199,6 +249,9 @@ export function normalizeVisibilityConditionMode(value: unknown): string {
   throw new HttpError(400, 'Invalid visibility condition mode');
 }
 
+/**
+ * Validates question input limits and clears constraints that do not apply to its type.
+ */
 export function normalizeQuestionValidation(
   body: Record<string, unknown>,
   type: string,
@@ -251,6 +304,9 @@ function isTextQuestionTypeName(type: string): boolean {
   return type === 'textSingle' || type === 'textMultiLine';
 }
 
+/**
+ * Deletes a question after checking survey editing constraints.
+ */
 export async function deleteQuestion(env: Env, questionId: number): Promise<Response> {
   const question = await mustQuestion(env.DB, questionId);
   const survey = await mustSurvey(env.DB, question.survey_id);
@@ -282,38 +338,52 @@ export async function deleteQuestion(env: Env, questionId: number): Promise<Resp
   return json({ hardDeleted: true });
 }
 
+/**
+ * Validates and saves the requested question order for a survey.
+ */
 export async function reorderQuestions(request: Request, env: Env, surveyId: number): Promise<Response> {
   const body = await readJson(request);
   const questionIds = requireNumberList(body.questionIds, 'questionIds', { min: 1 });
   const rows = await env.DB.prepare(
     `SELECT * FROM questions WHERE survey_id = ? AND is_deleted = 0 ORDER BY order_index`,
-  ).bind(surveyId).all<QuestionRow>();
-  assertExactIds(rows.results.map((row) => row.id), questionIds, 'questionIds');
-  // Reject reorder that would put a visibility source after its target.
-  await assertVisibilityOrderInvariant(
-    env.DB,
-    surveyId,
-    new Map(questionIds.map((id, index) => [id, index])),
+  )
+    .bind(surveyId)
+    .all<QuestionRow>();
+  assertExactIds(
+    rows.results.map((row) => row.id),
+    questionIds,
+    'questionIds',
   );
+  // Reject reorder that would put a visibility source after its target.
+  await assertVisibilityOrderInvariant(env.DB, surveyId, new Map(questionIds.map((id, index) => [id, index])));
   await updateOrder(env.DB, 'questions', questionIds);
   return getAdminQuestions(env, surveyId);
 }
 
+/**
+ * Returns the questions belonging to a survey for administrator use.
+ */
 export async function getAdminQuestions(env: Env, surveyId: number): Promise<Response> {
   const rows = await env.DB.prepare(
     `SELECT * FROM questions WHERE survey_id = ? AND is_deleted = 0 ORDER BY order_index`,
-  ).bind(surveyId).all<QuestionRow>();
+  )
+    .bind(surveyId)
+    .all<QuestionRow>();
   return json(rows.results.map(questionToJson));
 }
 
+/**
+ * Returns a question by identifier or rejects a missing record.
+ */
 export async function getQuestion(env: Env, questionId: number): Promise<Response> {
-  const row = await env.DB.prepare(`SELECT * FROM questions WHERE id = ?`)
-    .bind(questionId)
-    .first<QuestionRow>();
+  const row = await env.DB.prepare(`SELECT * FROM questions WHERE id = ?`).bind(questionId).first<QuestionRow>();
   if (!row) throw new HttpError(404, 'Question not found');
   return json(questionToJson(row));
 }
 
+/**
+ * Validates and inserts a choice for an editable survey question.
+ */
 export async function createChoice(request: Request, env: Env): Promise<Response> {
   const body = await readJson(request);
   const question = await mustQuestion(env.DB, requiredInteger(body.questionId, 'questionId', { min: 1 }));
@@ -321,22 +391,27 @@ export async function createChoice(request: Request, env: Env): Promise<Response
   if (!isChoiceQuestionType(question.type)) {
     throw new HttpError(400, 'Only choice questions can have choices');
   }
-  const max = await env.DB.prepare(
-    `SELECT MAX(order_index) AS max_order FROM choices WHERE question_id = ?`,
-  ).bind(question.id).first<{ max_order: number | null }>();
+  const max = await env.DB.prepare(`SELECT MAX(order_index) AS max_order FROM choices WHERE question_id = ?`)
+    .bind(question.id)
+    .first<{ max_order: number | null }>();
   const row = await env.DB.prepare(
     `INSERT INTO choices (question_id, text_translations, order_index, value)
      VALUES (?, ?, ?, ?)
      RETURNING *`,
-  ).bind(
-    question.id,
-    JSON.stringify(requireLocalizedText(body.textTranslations, 'textTranslations', locales)),
-    (max?.max_order ?? -1) + 1,
-    optionalString(body.value, 'value'),
-  ).first<ChoiceRow>();
+  )
+    .bind(
+      question.id,
+      JSON.stringify(requireLocalizedText(body.textTranslations, 'textTranslations', locales)),
+      (max?.max_order ?? -1) + 1,
+      optionalString(body.value, 'value'),
+    )
+    .first<ChoiceRow>();
   return json(choiceToJson(requiredRow(row, 'Choice')), 201);
 }
 
+/**
+ * Updates a choice's localized text and stored value.
+ */
 export async function updateChoice(request: Request, env: Env, choiceId: number): Promise<Response> {
   const existing = await mustChoice(env.DB, choiceId);
   const question = await mustQuestion(env.DB, existing.question_id);
@@ -344,12 +419,14 @@ export async function updateChoice(request: Request, env: Env, choiceId: number)
   const body = await readJson(request);
   const row = await env.DB.prepare(
     `UPDATE choices SET text_translations = ?, order_index = ?, value = ? WHERE id = ? RETURNING *`,
-  ).bind(
-    JSON.stringify(requireLocalizedText(body.textTranslations, 'textTranslations', locales)),
-    optionalInteger(body.orderIndex, 'orderIndex', { min: 0 }) ?? existing.order_index,
-    optionalString(body.value ?? existing.value, 'value'),
-    choiceId,
-  ).first<ChoiceRow>();
+  )
+    .bind(
+      JSON.stringify(requireLocalizedText(body.textTranslations, 'textTranslations', locales)),
+      optionalInteger(body.orderIndex, 'orderIndex', { min: 0 }) ?? existing.order_index,
+      optionalString(body.value ?? existing.value, 'value'),
+      choiceId,
+    )
+    .first<ChoiceRow>();
   return json(choiceToJson(requiredRow(row, 'Choice')));
 }
 
@@ -359,6 +436,9 @@ async function surveySupportedLocales(db: D1Database, surveyId: number): Promise
   return projectSupportedLocales(project);
 }
 
+/**
+ * Deletes a choice after checking survey editing constraints.
+ */
 export async function deleteChoice(env: Env, choiceId: number): Promise<Response> {
   const choice = await mustChoice(env.DB, choiceId);
   const question = await mustQuestion(env.DB, choice.question_id);
@@ -367,55 +447,70 @@ export async function deleteChoice(env: Env, choiceId: number): Promise<Response
   const answers = await env.DB.prepare(
     `SELECT selected_choice_ids FROM answers
      WHERE question_id = ? AND selected_choice_ids IS NOT NULL`,
-  ).bind(choice.question_id).all<{ selected_choice_ids: string }>();
+  )
+    .bind(choice.question_id)
+    .all<{ selected_choice_ids: string }>();
   for (const answer of answers.results) {
     if (parseChoiceIds(answer.selected_choice_ids).includes(choiceId)) {
-      throw new HttpError(
-        400,
-        'Cannot delete a choice that has been selected in responses',
-      );
+      throw new HttpError(400, 'Cannot delete a choice that has been selected in responses');
     }
   }
   await env.DB.prepare(`DELETE FROM choices WHERE id = ?`).bind(choiceId).run();
   return json({ ok: true });
 }
 
+/**
+ * Validates and saves the requested choice order for a question.
+ */
 export async function reorderChoices(request: Request, env: Env, questionId: number): Promise<Response> {
   const body = await readJson(request);
   const choiceIds = requireNumberList(body.choiceIds, 'choiceIds', { min: 1 });
-  const rows = await env.DB.prepare(
-    `SELECT * FROM choices WHERE question_id = ? ORDER BY order_index`,
-  ).bind(questionId).all<ChoiceRow>();
-  assertExactIds(rows.results.map((row) => row.id), choiceIds, 'choiceIds');
+  const rows = await env.DB.prepare(`SELECT * FROM choices WHERE question_id = ? ORDER BY order_index`)
+    .bind(questionId)
+    .all<ChoiceRow>();
+  assertExactIds(
+    rows.results.map((row) => row.id),
+    choiceIds,
+    'choiceIds',
+  );
   await updateOrder(env.DB, 'choices', choiceIds);
   return getChoices(env, questionId);
 }
 
+/**
+ * Returns the choices belonging to a question.
+ */
 export async function getChoices(env: Env, questionId: number): Promise<Response> {
-  const rows = await env.DB.prepare(
-    `SELECT * FROM choices WHERE question_id = ? ORDER BY order_index`,
-  ).bind(questionId).all<ChoiceRow>();
+  const rows = await env.DB.prepare(`SELECT * FROM choices WHERE question_id = ? ORDER BY order_index`)
+    .bind(questionId)
+    .all<ChoiceRow>();
   return json(rows.results.map(choiceToJson));
 }
 
+/**
+ * Returns a choice by identifier or rejects a missing record.
+ */
 export async function getChoice(env: Env, choiceId: number): Promise<Response> {
-  const row = await env.DB.prepare(`SELECT * FROM choices WHERE id = ?`)
-    .bind(choiceId)
-    .first<ChoiceRow>();
+  const row = await env.DB.prepare(`SELECT * FROM choices WHERE id = ?`).bind(choiceId).first<ChoiceRow>();
   if (!row) throw new HttpError(404, 'Choice not found');
   return json(choiceToJson(row));
 }
 
 async function compactQuestionOrder(db: D1Database, surveyId: number): Promise<void> {
-  const rows = await db.prepare(
-    `SELECT id, order_index FROM questions
+  const rows = await db
+    .prepare(
+      `SELECT id, order_index FROM questions
      WHERE survey_id = ? AND is_deleted = 0
      ORDER BY order_index`,
-  ).bind(surveyId).all<{ id: number; order_index: number }>();
+    )
+    .bind(surveyId)
+    .all<{ id: number; order_index: number }>();
   const updates = rows.results
-    .map((row, index) => row.order_index === index
-      ? null
-      : db.prepare(`UPDATE questions SET order_index = ? WHERE id = ?`).bind(index, row.id))
+    .map((row, index) =>
+      row.order_index === index
+        ? null
+        : db.prepare(`UPDATE questions SET order_index = ? WHERE id = ?`).bind(index, row.id),
+    )
     .filter((statement): statement is D1PreparedStatement => statement !== null);
   if (updates.length > 0) await db.batch(updates);
 }

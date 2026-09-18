@@ -2,7 +2,9 @@ import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:jaspr/jaspr.dart';
 import 'package:jaspr/dom.dart';
 
+/// An input that lets the respondent select one choice.
 class SingleChoiceQuestion extends StatelessComponent {
+  /// Creates SingleChoiceQuestion with the supplied values.
   const SingleChoiceQuestion({
     required this.question,
     required this.choices,
@@ -13,13 +15,25 @@ class SingleChoiceQuestion extends StatelessComponent {
     super.key,
   });
 
+  /// The question whose input is displayed.
   final Question question;
+
+  /// The choices available for this question.
   final List<Choice> choices;
+
+  /// The current value displayed by the input.
   final int? value;
+
+  /// The locale used to display the form content.
   final String locale;
+
+  /// Called with the updated value when the input changes.
   final void Function(AnswerValue value) onChanged;
+
+  /// Whether user interaction with this input is disabled.
   final bool disabled;
 
+  /// Builds the HTML components for the current input and state.
   @override
   Component build(context) => div(classes: 'space-y-2', [
     for (final choice in choices)

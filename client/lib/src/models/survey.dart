@@ -3,6 +3,7 @@ part of form_concierge_client;
 /// Sentinel for [Question.copyWith] so null can clear optional constraints.
 const Object _unset = Object();
 
+/// Locale codes supported by the built-in survey translations.
 const formContentLocaleCodes = <String>[
   'en',
   'ja',
@@ -17,8 +18,10 @@ const formContentLocaleCodes = <String>[
   'tr',
 ];
 
+/// The fallback locale used when a translation is unavailable.
 const defaultFormContentLocale = 'en';
 
+/// Human-readable language names indexed by supported locale code.
 const formContentLocaleLabels = <String, String>{
   'en': 'English',
   'ja': '日本語',
@@ -33,6 +36,8 @@ const formContentLocaleLabels = <String, String>{
   'tr': 'Türkçe',
 };
 
+/// Normalizes locale separators and supported language aliases while preserving
+/// unrecognized locale codes.
 String normalizeFormContentLocale(String locale) {
   final normalized = locale.replaceAll('_', '-');
   if (formContentLocaleCodes.contains(normalized)) return normalized;
@@ -81,11 +86,15 @@ String resolveFormContentLocale({
   return fallback;
 }
 
+/// Text translations indexed by locale code.
 class LocalizedText {
+  /// Translations indexed by locale code.
   final Map<String, String> values;
 
+  /// Creates LocalizedText with the supplied values.
   const LocalizedText(this.values);
 
+  /// Decodes LocalizedText from its JSON representation.
   factory LocalizedText.fromJson(Object? json) {
     final map = _requiredMap(json);
     return LocalizedText(
@@ -93,6 +102,7 @@ class LocalizedText {
     );
   }
 
+  /// Creates translations that use the same text for every supplied locale.
   factory LocalizedText.filled(
     String value, {
     Iterable<String> locales = formContentLocaleCodes,
@@ -100,8 +110,11 @@ class LocalizedText {
     for (final locale in locales) locale: value,
   });
 
+  /// Returns the JSON representation used by the API.
   Map<String, dynamic> toJson() => Map<String, dynamic>.from(values);
 
+  /// Returns the requested translation, falling back to English, the first stored value,
+  /// then an empty string.
   String valueFor(String locale) {
     final normalized = normalizeFormContentLocale(locale);
     return values[normalized] ??
@@ -109,13 +122,16 @@ class LocalizedText {
         (values.isEmpty ? '' : values.values.first);
   }
 
+  /// Returns translations with the normalized locale set to the supplied text.
   LocalizedText copyWithLocale(String locale, String value) => LocalizedText({
     ...values,
     normalizeFormContentLocale(locale): value,
   });
 }
 
+/// Localized labels and validation messages used in survey forms.
 class FormContentMessages {
+  /// Returns a localized message by key with English as the fallback language.
   static String text(String locale, String key) {
     final messages =
         formContentLocalizedValues[normalizeFormContentLocale(locale)] ??
@@ -124,21 +140,27 @@ class FormContentMessages {
         formContentLocalizedValues[defaultFormContentLocale]![key]!;
   }
 
+  /// Returns the localized message for a missing required answer.
   static String requiredQuestion(String locale) =>
       text(locale, 'requiredQuestion');
 
+  /// Returns a localized message describing the minimum text length.
   static String minCharacters(String locale, int count) =>
       text(locale, 'minCharacters').replaceAll('{count}', '$count');
 
+  /// Returns a localized message describing the maximum text length.
   static String maxCharacters(String locale, int count) =>
       text(locale, 'maxCharacters').replaceAll('{count}', '$count');
 
+  /// Returns a localized message describing the minimum number of selections.
   static String minChoices(String locale, int count) =>
       text(locale, 'minChoices').replaceAll('{count}', '$count');
 
+  /// Returns a localized message describing the maximum number of selections.
   static String maxChoices(String locale, int count) =>
       text(locale, 'maxChoices').replaceAll('{count}', '$count');
 
+  /// Returns a localized hint for the supplied minimum and maximum selection counts.
   static String selectionHint(
     String locale, {
     int? minSelected,
@@ -157,17 +179,36 @@ class FormContentMessages {
   }
 }
 
+/// A group of surveys with shared locale and domain settings.
 class Project {
+  /// The identifier of this project. Null until the record has been saved.
   final int? id;
+
+  /// The URL-friendly name used to look up this resource.
   final String slug;
+
+  /// The custom host name assigned to the project, if any.
   final String? customDomain;
+
+  /// The locale used when the respondent's preferred language is unavailable.
   final String defaultLocale;
+
+  /// The locale codes enabled for this project.
   final List<String> supportedLocales;
+
+  /// The name displayed for the project.
   final String name;
+
+  /// The identifier of the administrator who created this resource.
   final String? createdByUserId;
+
+  /// When this record was created.
   final DateTime createdAt;
+
+  /// When this record was last updated.
   final DateTime updatedAt;
 
+  /// Creates Project with the supplied values.
   const Project({
     this.id,
     required this.slug,
@@ -180,6 +221,7 @@ class Project {
     required this.updatedAt,
   });
 
+  /// Decodes Project from its JSON representation.
   factory Project.fromJson(Map<String, dynamic> json) => Project(
     id: json['id'] == null ? null : _int(json['id']),
     slug: _string(json['slug']),
@@ -192,6 +234,7 @@ class Project {
     updatedAt: _date(json['updatedAt']),
   );
 
+  /// Returns the JSON representation used by the API.
   Map<String, dynamic> toJson() => _withoutNulls({
     'id': id,
     'slug': slug,
@@ -204,6 +247,8 @@ class Project {
     'updatedAt': updatedAt.toIso8601String(),
   });
 
+  /// Returns a copy with the supplied changes. Set clearCustomDomain to remove
+  /// the custom domain instead of preserving it.
   Project copyWith({
     int? id,
     String? slug,
@@ -228,12 +273,18 @@ class Project {
   );
 }
 
+/// An administrator's view of a project and its surveys.
 class ProjectWithSurveys {
+  /// The project that contains the survey.
   final Project project;
+
+  /// The surveys included in the project result.
   final List<Survey> surveys;
 
+  /// Creates ProjectWithSurveys with the supplied values.
   const ProjectWithSurveys({required this.project, required this.surveys});
 
+  /// Decodes ProjectWithSurveys from its JSON representation.
   factory ProjectWithSurveys.fromJson(Map<String, dynamic> json) =>
       ProjectWithSurveys(
         project: _object(json['project'], Project.fromJson),
@@ -241,26 +292,48 @@ class ProjectWithSurveys {
       );
 }
 
+/// A public project and the surveys available to respondents.
 class PublicProject {
+  /// The project that contains the survey.
   final Project project;
+
+  /// The surveys included in the project result.
   final List<Survey> surveys;
 
+  /// Creates PublicProject with the supplied values.
   const PublicProject({required this.project, required this.surveys});
 
+  /// Decodes PublicProject from its JSON representation.
   factory PublicProject.fromJson(Map<String, dynamic> json) => PublicProject(
     project: _object(json['project'], Project.fromJson),
     surveys: _objectList(json['surveys'], Survey.fromJson),
   );
 }
 
+/// A form's localized content, availability, and submission settings.
 class Survey {
+  /// The identifier of this survey. Null until the record has been saved.
   final int? id;
+
+  /// The identifier of the project containing the survey.
   final int projectId;
+
+  /// The URL-friendly name used to look up this resource.
   final String slug;
+
+  /// Survey titles indexed by locale code.
   final LocalizedText titleTranslations;
+
+  /// Survey descriptions indexed by locale code.
   final LocalizedText descriptionTranslations;
+
+  /// The current publication state of the survey.
   final SurveyStatus status;
+
+  /// Whether the survey is available through its public web page.
   final bool webEnabled;
+
+  /// Whether submissions may receive an adaptive follow-up interview.
   final bool followUpEnabled;
 
   /// Admin-authored instructions included in AI follow-up generation.
@@ -269,17 +342,29 @@ class Survey {
   /// Persisted admin setting. Use [captchaRequired] for submission behavior.
   final bool captchaConfigurationEnabled;
 
+  /// The configured CAPTCHA preference. Use captchaRequired for submission behavior.
   @Deprecated('Use captchaRequired for submission behavior.')
   bool get captchaEnabled => captchaConfigurationEnabled;
 
   /// Whether this client must supply a CAPTCHA token for this survey.
   final bool captchaRequired;
+
+  /// The identifier of the administrator who created this resource.
   final String? createdByUserId;
+
+  /// When this record was created.
   final DateTime createdAt;
+
+  /// When this record was last updated.
   final DateTime updatedAt;
+
+  /// When the survey begins accepting responses, if scheduled.
   final DateTime? startsAt;
+
+  /// When the survey stops accepting responses, if scheduled.
   final DateTime? endsAt;
 
+  /// Creates Survey with the supplied values.
   const Survey({
     this.id,
     required this.projectId,
@@ -304,6 +389,7 @@ class Survey {
        captchaRequired =
            captchaRequired ?? captchaEnabled ?? captchaConfigurationEnabled;
 
+  /// Decodes Survey from its JSON representation.
   factory Survey.fromJson(Map<String, dynamic> json) => Survey(
     id: json['id'] == null ? null : _int(json['id']),
     projectId: _int(json['projectId']),
@@ -328,6 +414,7 @@ class Survey {
     endsAt: _optionalDate(json['endsAt']),
   );
 
+  /// Returns the JSON representation used by the API.
   Map<String, dynamic> toJson() => {
     ..._withoutNulls({
       'id': id,
@@ -350,6 +437,8 @@ class Survey {
     'followUpPrompt': followUpPrompt ?? '',
   };
 
+  /// Returns a copy with the supplied changes. Set clearFollowUpPrompt to remove
+  /// the follow-up instructions instead of preserving them.
   Survey copyWith({
     int? id,
     int? projectId,
@@ -395,32 +484,65 @@ class Survey {
     endsAt: endsAt ?? this.endsAt,
   );
 
+  /// Returns the survey title for the requested locale with translation fallback.
   String titleFor(String locale) => titleTranslations.valueFor(locale);
+
+  /// Returns the survey description for the requested locale with translation fallback.
   String descriptionFor(String locale) =>
       descriptionTranslations.valueFor(locale);
 
+  /// The survey title in the default form content locale.
   String get title => titleFor(defaultFormContentLocale);
+
+  /// The survey description in the default form content locale, or null when empty.
   String? get description {
     final value = descriptionFor(defaultFormContentLocale);
     return value.trim().isEmpty ? null : value;
   }
 }
 
+/// A survey question with input constraints and visibility settings.
 class Question {
+  /// The identifier of this question. Null until the record has been saved.
   final int? id;
+
+  /// The identifier of the associated survey.
   final int surveyId;
+
+  /// Display text indexed by locale code.
   final LocalizedText textTranslations;
+
+  /// The input format used to collect the answer.
   final QuestionType type;
+
+  /// The position of this item in its ordered question or choice list.
   final int orderIndex;
+
+  /// Whether the respondent must answer this question.
   final bool isRequired;
+
+  /// Input hints indexed by locale code.
   final LocalizedText placeholderTranslations;
+
+  /// The minimum accepted text length, or null when no minimum is set.
   final int? minLength;
+
+  /// The maximum accepted text length, or null when no maximum is set.
   final int? maxLength;
+
+  /// The minimum number of choices or uploaded files required, if set.
   final int? minSelected;
+
+  /// The maximum number of choices or uploaded files allowed, if set.
   final int? maxSelected;
+
+  /// Whether all visibility rules or any one rule must match.
   final VisibilityConditionMode visibilityConditionMode;
+
+  /// Whether the question is marked as deleted.
   final bool isDeleted;
 
+  /// Creates Question with the supplied values.
   const Question({
     this.id,
     required this.surveyId,
@@ -437,6 +559,7 @@ class Question {
     this.isDeleted = false,
   });
 
+  /// Decodes Question from its JSON representation.
   factory Question.fromJson(Map<String, dynamic> json) => Question(
     id: json['id'] == null ? null : _int(json['id']),
     surveyId: _int(json['surveyId']),
@@ -458,6 +581,7 @@ class Question {
     isDeleted: _bool(json['isDeleted']),
   );
 
+  /// Returns the JSON representation used by the API.
   Map<String, dynamic> toJson() => {
     // Always include constraint fields (including null) so updates can clear
     // min/max on the server via Object.hasOwn. Other nulls are still stripped.
@@ -478,6 +602,8 @@ class Question {
     'maxSelected': maxSelected,
   };
 
+  /// Returns a copy with the supplied changes. Omit optional constraints to preserve them
+  /// or pass null to clear them.
   Question copyWith({
     int? id,
     int? surveyId,
@@ -518,27 +644,50 @@ class Question {
     isDeleted: isDeleted ?? this.isDeleted,
   );
 
+  /// Returns display text for the requested locale with translation fallback.
   String textFor(String locale) => textTranslations.valueFor(locale);
 
+  /// Returns the localized input hint, or null when the resolved hint is empty.
   String? placeholderFor(String locale) {
     final value = placeholderTranslations.valueFor(locale);
     return value.trim().isEmpty ? null : value;
   }
 
+  /// The display text in the default form content locale.
   String get text => textFor(defaultFormContentLocale);
+
+  /// The input hint in the default form content locale, or null when empty.
   String? get placeholder => placeholderFor(defaultFormContentLocale);
 }
 
+/// A condition on another answer that controls question visibility.
 class QuestionVisibilityRule {
+  /// The identifier of this question visibility rule. Null until the record has been
+  /// saved.
   final int? id;
+
+  /// The identifier of the associated survey.
   final int surveyId;
+
+  /// The identifier of the question whose visibility is controlled.
   final int targetQuestionId;
+
+  /// The identifier of the question whose answer is tested.
   final int sourceQuestionId;
+
+  /// The comparison applied to the source answer.
   final VisibilityOperator operator;
+
+  /// The text or choice identifier to compare with the source answer.
   final Object? value;
+
+  /// When this record was created.
   final DateTime? createdAt;
+
+  /// When this record was last updated.
   final DateTime? updatedAt;
 
+  /// Creates QuestionVisibilityRule with the supplied values.
   const QuestionVisibilityRule({
     this.id,
     required this.surveyId,
@@ -550,6 +699,7 @@ class QuestionVisibilityRule {
     this.updatedAt,
   });
 
+  /// Decodes QuestionVisibilityRule from its JSON representation.
   factory QuestionVisibilityRule.fromJson(Map<String, dynamic> json) =>
       QuestionVisibilityRule(
         id: json['id'] == null ? null : _int(json['id']),
@@ -562,6 +712,7 @@ class QuestionVisibilityRule {
         updatedAt: _optionalDate(json['updatedAt']),
       );
 
+  /// Returns the JSON representation used by the API.
   Map<String, dynamic> toJson() => _withoutNulls({
     'id': id,
     'surveyId': surveyId,
@@ -573,6 +724,8 @@ class QuestionVisibilityRule {
     'updatedAt': updatedAt?.toIso8601String(),
   });
 
+  /// Returns a copy with the supplied changes. Set clearValue to remove the
+  /// comparison value instead of preserving it.
   QuestionVisibilityRule copyWith({
     int? id,
     int? surveyId,
@@ -595,13 +748,24 @@ class QuestionVisibilityRule {
   );
 }
 
+/// A localized answer option belonging to a choice question.
 class Choice {
+  /// The identifier of this choice. Null until the record has been saved.
   final int? id;
+
+  /// The identifier of the associated question.
   final int questionId;
+
+  /// Display text indexed by locale code.
   final LocalizedText textTranslations;
+
+  /// The position of this item in its ordered question or choice list.
   final int orderIndex;
+
+  /// An optional application-defined value for this choice.
   final String? value;
 
+  /// Creates Choice with the supplied values.
   const Choice({
     this.id,
     required this.questionId,
@@ -610,6 +774,7 @@ class Choice {
     this.value,
   });
 
+  /// Decodes Choice from its JSON representation.
   factory Choice.fromJson(Map<String, dynamic> json) => Choice(
     id: json['id'] == null ? null : _int(json['id']),
     questionId: _int(json['questionId']),
@@ -618,6 +783,7 @@ class Choice {
     value: _optionalString(json['value']),
   );
 
+  /// Returns the JSON representation used by the API.
   Map<String, dynamic> toJson() => _withoutNulls({
     'id': id,
     'questionId': questionId,
@@ -626,6 +792,7 @@ class Choice {
     'value': value,
   });
 
+  /// Returns a copy with the supplied non-null values replacing the current values.
   Choice copyWith({
     int? id,
     int? questionId,
@@ -640,22 +807,46 @@ class Choice {
     value: value ?? this.value,
   );
 
+  /// Returns display text for the requested locale with translation fallback.
   String textFor(String locale) => textTranslations.valueFor(locale);
+
+  /// The display text in the default form content locale.
   String get text => textFor(defaultFormContentLocale);
 }
 
+/// A question definition and its choices for creation or AI generation.
 class QuestionWithChoices {
+  /// Display text indexed by locale code.
   final LocalizedText textTranslations;
+
+  /// The input format used to collect the answer.
   final QuestionType type;
+
+  /// Whether the respondent must answer this question.
   final bool isRequired;
+
+  /// Input hints indexed by locale code.
   final LocalizedText placeholderTranslations;
+
+  /// The minimum accepted text length, or null when no minimum is set.
   final int? minLength;
+
+  /// The maximum accepted text length, or null when no maximum is set.
   final int? maxLength;
+
+  /// The minimum number of choices or uploaded files required, if set.
   final int? minSelected;
+
+  /// The maximum number of choices or uploaded files allowed, if set.
   final int? maxSelected;
+
+  /// Whether all visibility rules or any one rule must match.
   final VisibilityConditionMode visibilityConditionMode;
+
+  /// Localized text for each choice in display order.
   final List<LocalizedText> choiceTranslations;
 
+  /// Creates QuestionWithChoices with the supplied values.
   const QuestionWithChoices({
     required this.textTranslations,
     required this.type,
@@ -669,6 +860,7 @@ class QuestionWithChoices {
     required this.choiceTranslations,
   });
 
+  /// Decodes QuestionWithChoices from its JSON representation.
   factory QuestionWithChoices.fromJson(
     Map<String, dynamic> json,
   ) => QuestionWithChoices(
@@ -692,6 +884,7 @@ class QuestionWithChoices {
     ),
   );
 
+  /// Returns the JSON representation used by the API.
   Map<String, dynamic> toJson() => _withoutNulls({
     'textTranslations': textTranslations.toJson(),
     'type': _enumName(type),
@@ -707,12 +900,16 @@ class QuestionWithChoices {
         .toList(),
   });
 
+  /// The display text in the default form content locale.
   String get text => textTranslations.valueFor(defaultFormContentLocale);
+
+  /// The input hint in the default form content locale, or null when empty.
   String? get placeholder {
     final value = placeholderTranslations.valueFor(defaultFormContentLocale);
     return value.trim().isEmpty ? null : value;
   }
 
+  /// The choice labels in the default form content locale.
   List<String> get choices => choiceTranslations
       .map((translations) => translations.valueFor(defaultFormContentLocale))
       .toList();

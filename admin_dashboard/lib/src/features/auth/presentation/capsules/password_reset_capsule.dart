@@ -6,14 +6,28 @@ import '../../../../core/capsules/client_capsule.dart';
 
 /// State for password reset flow.
 class PasswordResetState {
+  /// The current stage of the password reset flow.
   final PasswordResetStep step;
+
+  /// The administrator's email address, when available.
   final String? email;
+
+  /// The identifier returned when a password reset was requested, if available.
   final UuidValue? passwordResetRequestId;
+
+  /// The token obtained after verifying the reset code, if available.
   final String? resetToken;
+
+  /// Whether data is currently being loaded.
   final bool isLoading;
+
+  /// The error message, when the operation could not complete.
   final String? error;
+
+  /// Feedback displayed after an operation succeeds, if any.
   final String? successMessage;
 
+  /// Creates PasswordResetState with the supplied values.
   const PasswordResetState({
     this.step = PasswordResetStep.enterEmail,
     this.email,
@@ -24,6 +38,7 @@ class PasswordResetState {
     this.successMessage,
   });
 
+  /// Returns a copy with the supplied state changes.
   PasswordResetState copyWith({
     PasswordResetStep? step,
     String? email,
@@ -46,9 +61,16 @@ class PasswordResetState {
 
 /// Steps in the password reset flow.
 enum PasswordResetStep {
+  /// Collects the email address for the password reset request.
   enterEmail,
+
+  /// Collects the verification code sent for the reset request.
   enterCode,
+
+  /// Collects and confirms the replacement password.
   enterNewPassword,
+
+  /// The password reset flow has completed.
   completed,
 }
 
@@ -79,11 +101,19 @@ PasswordResetControllers passwordResetControllersCapsule(CapsuleHandle use) {
 
 /// Container for password reset form controllers.
 class PasswordResetControllers {
+  /// Controls the email input.
   final TextEditingController email;
+
+  /// Controls the code input.
   final TextEditingController code;
+
+  /// Controls the password input.
   final TextEditingController password;
+
+  /// Controls the confirm password input.
   final TextEditingController confirmPassword;
 
+  /// Creates PasswordResetControllers with the supplied values.
   const PasswordResetControllers({
     required this.email,
     required this.code,
@@ -91,6 +121,7 @@ class PasswordResetControllers {
     required this.confirmPassword,
   });
 
+  /// Clears all password reset input controllers.
   void clear() {
     email.clear();
     code.clear();
@@ -113,10 +144,12 @@ PasswordResetManager passwordResetCapsule(CapsuleHandle use) {
 
 /// Manager class for password reset operations.
 class PasswordResetManager {
+  /// The current state snapshot exposed by this manager.
   final PasswordResetState state;
   final void Function(PasswordResetState) _setState;
   final Client _client;
 
+  /// Creates PasswordResetManager with the supplied values.
   PasswordResetManager({
     required this.state,
     required this._setState,

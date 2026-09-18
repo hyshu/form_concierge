@@ -10,12 +10,25 @@ import 'survey_form.dart';
 
 /// Dialog for creating/editing a question.
 class QuestionFormDialog extends StatefulWidget {
+  /// The question being edited, or null when creating a new question.
   final Question? existingQuestion;
+
+  /// The main locale used to display and edit localized content.
   final String primaryLocale;
+
+  /// The locales available for editing or displaying translated content.
   final Iterable<String> locales;
+
+  /// Whether AI-assisted translation controls are available.
   final bool aiTranslateEnabled;
+
+  /// Whether the question's input type can be changed.
   final bool canChangeType;
+
+  /// Called when the user requests a translation of the displayed content.
   final SurveyLocalizedTranslate? onTranslate;
+
+  /// Called with the edited values when the user saves the form.
   final void Function({
     required LocalizedText textTranslations,
     required QuestionType type,
@@ -29,6 +42,7 @@ class QuestionFormDialog extends StatefulWidget {
   })
   onSave;
 
+  /// Creates QuestionFormDialog with the supplied values.
   const QuestionFormDialog({
     super.key,
     this.existingQuestion,
@@ -40,6 +54,7 @@ class QuestionFormDialog extends StatefulWidget {
     required this.onSave,
   });
 
+  /// Opens a dialog for creating or editing a localized survey question.
   static Future<void> show(
     BuildContext context, {
     Question? existingQuestion,
@@ -75,6 +90,7 @@ class QuestionFormDialog extends StatefulWidget {
     );
   }
 
+  /// Creates the mutable state used by this widget.
   @override
   State<QuestionFormDialog> createState() => _QuestionFormDialogState();
 }

@@ -12,12 +12,22 @@ const int _kMaxTextResponsesPreview = 10;
 
 /// Card displaying results for a single question.
 class QuestionResultCard extends StatelessWidget {
+  /// The API client used to load data and submit changes.
   final Client client;
+
+  /// The question result summarized by this card.
   final QuestionResult result;
+
+  /// The choices available for this question.
   final List<Choice> choices;
+
+  /// The total number of responses included in the results.
   final int totalResponses;
+
+  /// Optional state and callbacks for translating displayed answers.
   final AnswerTranslationBindings? answerTranslations;
 
+  /// Creates QuestionResultCard with the supplied values.
   const QuestionResultCard({
     super.key,
     required this.client,
@@ -27,6 +37,7 @@ class QuestionResultCard extends StatelessWidget {
     this.answerTranslations,
   });
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context) => HuxCard(
     margin: const EdgeInsets.only(bottom: 16),

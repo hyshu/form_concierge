@@ -1,27 +1,61 @@
 part of form_concierge_client;
 
+/// Connects to a Form Concierge server and exposes its API endpoints.
 class Client {
+  /// The server's base URI with any trailing slash removed.
   final Uri baseUri;
   final http.Client _httpClient;
 
+  /// Public survey, response submission, and media operations.
   late final SurveyEndpoint survey;
+
+  /// Administrator operations for projects.
   late final ProjectAdminEndpoint projectAdmin;
+
+  /// Administrator operations for surveys.
   late final SurveyAdminEndpoint surveyAdmin;
+
+  /// Administrator operations for questions.
   late final QuestionAdminEndpoint questionAdmin;
+
+  /// Administrator operations for question choices.
   late final ChoiceAdminEndpoint choiceAdmin;
+
+  /// Administrator operations for responses and aggregated results.
   late final ResponseAnalyticsEndpoint responseAnalytics;
+
+  /// Administrator operations for survey email notifications.
   late final NotificationSettingsEndpoint notificationSettings;
+
+  /// Administrator operations for server integrations.
   late final AdminSettingsEndpoint adminSettings;
+
+  /// Access to public server configuration.
   late final ConfigEndpoint config;
+
+  /// Administrator account and role operations.
   late final UserAdminEndpoint userAdmin;
+
+  /// AI-assisted survey question generation.
   late final AiAdminEndpoint aiAdmin;
+
+  /// Email and password authentication operations.
   late final EmailIdpEndpoint emailIdp;
+
+  /// The respondent session and reply operations.
   late final AnonymousEndpoint anonymous;
+
+  /// The current administrator session and its local persistence.
   late final ClientAuth auth;
 
+  /// An optional application-owned authentication integration.
   Object? authSessionManager;
+
+  /// An optional application-owned connectivity integration.
   Object? connectivityMonitor;
 
+  /// Creates a client for the server URL with an optional HTTP transport. Closing this
+  /// client also closes the supplied transport.
   Client(String serverUrl, {http.Client? httpClient})
     : baseUri = Uri.parse(
         serverUrl.endsWith('/')
@@ -48,8 +82,11 @@ class Client {
     );
   }
 
+  /// The maximum time allowed for sending an HTTP request.
   static const Duration requestTimeout = Duration(seconds: 30);
 
+  /// Sends a request and decodes its JSON response. Throws an ApiException for an
+  /// unsuccessful HTTP status.
   Future<dynamic> request(
     String method,
     String path, {
@@ -91,6 +128,8 @@ class Client {
     return decoded;
   }
 
+  /// Downloads a response without JSON decoding. Throws an ApiException for an
+  /// unsuccessful HTTP status.
   Future<RawResponse> rawRequest(
     String method,
     String path, {
@@ -164,6 +203,7 @@ class Client {
     return decoded;
   }
 
+  /// Closes the HTTP transport and releases its connections.
   void close() => _httpClient.close();
 
   Future<http.Response> _sendRequest(
@@ -200,6 +240,7 @@ class Client {
         .then(http.Response.fromStream);
   }
 
+  /// Builds a server URI with encoded path segments and nonempty query values.
   Uri uriFor(String path, [Map<String, String>? query]) => _uriFor(path, query);
 
   Uri _uriFor(String path, Map<String, String>? query) {
@@ -243,17 +284,25 @@ class Client {
   }
 }
 
+/// Downloaded bytes and optional file metadata from an API response.
 class RawResponse {
+  /// The response body as raw bytes.
   final List<int> bodyBytes;
+
+  /// The MIME type of the content.
   final String? contentType;
+
+  /// The suggested name for the downloaded file.
   final String? filename;
 
+  /// Creates RawResponse with the supplied values.
   const RawResponse({
     required this.bodyBytes,
     this.contentType,
     this.filename,
   });
 
+  /// Decodes the downloaded bytes as UTF-8 text.
   String get bodyText => utf8.decode(bodyBytes);
 }
 
@@ -288,20 +337,28 @@ ApiException _rawApiException(http.Response response) {
   }
 }
 
+/// Stores the current administrator session and persists it locally.
 class ClientAuth {
   final String _storageKey;
   final Future<void> Function()? _revokeSession;
+
+  /// The bearer token used to authenticate requests.
   String? token;
+
+  /// The administrator associated with the current session, if any.
   AuthUserInfo? signedInUser;
 
+  /// Creates ClientAuth with the supplied values.
   ClientAuth({
     required String storageKey,
     Future<void> Function()? revokeSession,
   }) : _storageKey = storageKey,
        _revokeSession = revokeSession;
 
+  /// Whether a token is set locally, without checking its server validity.
   bool get isAuthenticated => token != null;
 
+  /// Updates the current administrator session and persists it locally.
   Future<void> updateSignedInUser(AuthSuccess authSuccess) async {
     token = authSuccess.token;
     signedInUser = authSuccess.user;
@@ -311,6 +368,7 @@ class ClientAuth {
     );
   }
 
+  /// Restores a locally stored administrator session when its data can be decoded.
   Future<void> restore() async {
     final raw = await auth_storage.readAuthSession(_storageKey);
     if (raw == null || raw.isEmpty) return;
@@ -327,6 +385,8 @@ class ClientAuth {
     }
   }
 
+  /// Attempts to revoke the server session, then clears local session data even if
+  /// revocation fails.
   Future<void> signOutDevice() async {
     // Best-effort server-side session revoke before clearing local state.
     if (token != null && _revokeSession != null) {

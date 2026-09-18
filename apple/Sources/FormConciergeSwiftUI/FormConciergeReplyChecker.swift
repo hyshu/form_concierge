@@ -1,10 +1,14 @@
 import CryptoKit
 import Foundation
 
+/// The latest server reply time compared with locally stored seen state.
 public struct AdminReplyCheckStatus: Sendable {
+  /// The time of the latest administrator reply, if one exists.
   public let latestReplyAt: Date?
+  /// The latest reply time previously marked as seen, if available.
   public let lastSeenReplyAt: Date?
 
+  /// Whether the latest reply is newer than the stored seen time, or no seen time exists yet.
   public var hasNewReplies: Bool {
     guard let latestReplyAt else { return false }
     guard let lastSeenReplyAt else { return true }
@@ -14,13 +18,14 @@ public struct AdminReplyCheckStatus: Sendable {
 
 /// Host-provided persistence for last-seen reply timestamps.
 ///
-/// The package never writes to disk by itself — the host app owns
+/// The host app owns persistence through
 /// `UserDefaults`, Keychain, or any other backend (same as Flutter widget).
 public struct FormConciergeReplySeenStore: @unchecked Sendable {
   private let _read: (String) -> String?
   private let _write: (String, String) -> Void
   private let _remove: (String) -> Void
 
+  /// Creates FormConciergeReplySeenStore with the supplied configuration.
   public init(
     read: @escaping (String) -> String?,
     write: @escaping (String, String) -> Void,
@@ -31,8 +36,11 @@ public struct FormConciergeReplySeenStore: @unchecked Sendable {
     self._remove = remove
   }
 
+  /// Reads a stored value for the supplied persistence key.
   public func read(_ key: String) -> String? { _read(key) }
+  /// Stores a value under the supplied persistence key.
   public func write(_ key: String, _ value: String) { _write(key, value) }
+  /// Removes the value associated with the supplied persistence key.
   public func remove(_ key: String) { _remove(key) }
 
   /// Optional host convenience. The host must still pass this store explicitly.
@@ -68,6 +76,7 @@ public struct FormConciergeReplySeenStore: @unchecked Sendable {
   }
 }
 
+/// Checks for new administrator replies using host-provided seen state.
 public final class FormConciergeReplyChecker {
   private let client: FormConciergeClient
   private let anonymousToken: String
@@ -91,6 +100,7 @@ public final class FormConciergeReplyChecker {
     return formatter.string(from: date)
   }
 
+  /// Creates FormConciergeReplyChecker with the supplied configuration.
   public init(
     client: FormConciergeClient,
     anonymousToken: String,
@@ -110,6 +120,7 @@ public final class FormConciergeReplyChecker {
       )
   }
 
+  /// Builds a persistence key from a hash of the anonymous token and the response scope.
   public static func defaultStorageKey(
     anonymousToken: String,
     responseId: Int? = nil
@@ -121,6 +132,8 @@ public final class FormConciergeReplyChecker {
     return "form_concierge.reply_seen.\(scope).\(tokenHash)"
   }
 
+  /// Compares the latest reply time with local seen state and optionally marks it seen. Sets
+  /// the client's anonymous token before requesting replies.
   public func check(markSeen shouldMarkSeen: Bool = false) async throws -> AdminReplyCheckStatus {
     await client.setAnonymousToken(anonymousToken)
     let latestReplyAt = try await client.latestReplyAt(responseId: responseId)
@@ -134,6 +147,7 @@ public final class FormConciergeReplyChecker {
     return status
   }
 
+  /// The latest reply time previously marked as seen, if available.
   public var lastSeenReplyAt: Date? {
     guard let value = store.read(storageKey) else {
       return nil
@@ -141,10 +155,12 @@ public final class FormConciergeReplyChecker {
     return Self.parseISO8601(value)
   }
 
+  /// Records the supplied timestamp as the latest reply time seen by the respondent.
   public func markSeen(at date: Date = Date()) {
     store.write(storageKey, Self.formatISO8601(date))
   }
 
+  /// Fetches the latest reply time and marks it seen if a reply exists.
   public func markLatestSeen() async throws {
     await client.setAnonymousToken(anonymousToken)
     if let latestReplyAt = try await client.latestReplyAt(responseId: responseId) {
@@ -152,6 +168,7 @@ public final class FormConciergeReplyChecker {
     }
   }
 
+  /// Removes the stored seen time for this reply scope.
   public func clearSeen() {
     store.remove(storageKey)
   }

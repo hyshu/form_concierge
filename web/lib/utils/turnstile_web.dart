@@ -9,10 +9,18 @@ const _turnstileScriptSrc =
 @JS('turnstile')
 external TurnstileApi? get _turnstile;
 
+/// JavaScript interop for rendering and managing Turnstile widgets.
 extension type TurnstileApi(JSObject _) implements JSObject {
+  /// Renders a CAPTCHA widget in the supplied container and returns its identifier.
   external String render(JSAny container, JSObject parameters);
+
+  /// Resets the challenge for the supplied widget identifier.
   external void reset(JSAny widgetId);
+
+  /// Removes the widget with the supplied identifier.
   external void remove(JSAny widgetId);
+
+  /// Returns the response token for the supplied widget identifier.
   external String getResponse(JSAny widgetId);
 }
 
@@ -82,6 +90,7 @@ void resetTurnstile() {
   api.reset(widgetId.toJS);
 }
 
+/// Removes the active CAPTCHA widget and clears its local identifier.
 void unmountTurnstile() {
   final widgetId = _widgetId;
   final api = _turnstile;

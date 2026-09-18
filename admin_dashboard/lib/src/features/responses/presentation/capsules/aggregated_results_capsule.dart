@@ -6,11 +6,19 @@ import '../../../../core/capsules/keyed_state.dart';
 
 /// State for aggregated results.
 class AggregatedResultsState {
+  /// The aggregated survey results, when available.
   final SurveyResults? results;
+
+  /// Available choices indexed by question identifier.
   final Map<int, List<Choice>> choicesByQuestion;
+
+  /// Whether data is currently being loaded.
   final bool isLoading;
+
+  /// The error message, when the operation could not complete.
   final String? error;
 
+  /// Creates AggregatedResultsState with the supplied values.
   const AggregatedResultsState({
     this.results,
     this.choicesByQuestion = const {},
@@ -18,8 +26,10 @@ class AggregatedResultsState {
     this.error,
   });
 
+  /// Creates the initial state before any data has been loaded.
   factory AggregatedResultsState.initial() => const AggregatedResultsState();
 
+  /// Returns a copy with the supplied state changes.
   AggregatedResultsState copyWith({
     SurveyResults? results,
     Map<int, List<Choice>>? choicesByQuestion,
@@ -52,10 +62,12 @@ AggregatedResultsManager aggregatedResultsManagerCapsule(CapsuleHandle use) {
 
 /// Manager class for aggregated results operations.
 class AggregatedResultsManager {
+  /// Reads the current state for the supplied record identifier.
   final AggregatedResultsState Function(int surveyId) getState;
   final void Function(int surveyId, AggregatedResultsState state) _setState;
   final Client _client;
 
+  /// Creates AggregatedResultsManager with the supplied values.
   AggregatedResultsManager({
     required this.getState,
     required this._setState,

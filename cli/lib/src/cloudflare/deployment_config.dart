@@ -5,7 +5,9 @@ import 'package:path/path.dart' as p;
 
 import '../cli_exception.dart';
 
+/// Persisted resource identifiers and settings for a Cloudflare deployment.
 class CloudflareDeploymentConfig {
+  /// Creates CloudflareDeploymentConfig with the supplied values.
   CloudflareDeploymentConfig({
     this.schemaVersion = 1,
     this.provider = 'cloudflare',
@@ -28,26 +30,64 @@ class CloudflareDeploymentConfig {
     this.deployAdminPages = true,
   });
 
+  /// The version of the saved deployment configuration format.
   final int schemaVersion;
+
+  /// The hosting provider associated with this deployment.
   final String provider;
+
+  /// The Form Concierge release last installed in this deployment.
   String? installedVersion;
+
+  /// The Cloudflare account that owns the deployment resources.
   String? accountId;
+
+  /// The name of the API Worker.
   String? workerName;
+
+  /// The public URL of the API Worker.
   String? workerUrl;
+
+  /// The Worker binding name used for the D1 database.
   String databaseBinding;
+
+  /// The name of the Cloudflare D1 database.
   String? databaseName;
+
+  /// The identifier of the Cloudflare D1 database.
   String? databaseId;
+
+  /// The name of the R2 bucket used for uploaded media.
   String? r2BucketName;
+
+  /// The name of the Cloudflare Secrets Store used by the deployment.
   String? secretsStoreName;
+
+  /// The identifier of the Cloudflare Secrets Store used by the deployment.
   String? secretsStoreId;
+
+  /// The Cloudflare Pages project serving the administrator application.
   String? adminPagesProject;
+
+  /// The public URL of the administrator Pages deployment.
   String? adminPagesUrl;
+
+  /// The Cloudflare Pages project serving public form assets.
   String? webPagesProject;
+
+  /// The public URL of the web Pages deployment.
   String? webPagesUrl;
+
+  /// The base URL used to load public form assets.
   String? publicFormAssetBaseUrl;
+
+  /// Whether local development should use remote bindings, if configured.
   bool? remoteBindingsForLocalDev;
+
+  /// Whether deployment includes the administrator Pages application.
   bool deployAdminPages;
 
+  /// Whether any deployable Cloudflare resources are recorded in this configuration.
   bool get hasResources =>
       workerName != null ||
       databaseName != null ||
@@ -56,6 +96,7 @@ class CloudflareDeploymentConfig {
       adminPagesProject != null ||
       webPagesProject != null;
 
+  /// Decodes CloudflareDeploymentConfig from its JSON representation.
   static CloudflareDeploymentConfig fromJson(Map<String, dynamic> json) {
     final schemaVersion = json['schemaVersion'];
     if (schemaVersion != 1) {
@@ -99,6 +140,7 @@ class CloudflareDeploymentConfig {
     );
   }
 
+  /// Returns the JSON representation used for local persistence.
   Map<String, dynamic> toJson() => {
     'schemaVersion': schemaVersion,
     'provider': provider,
@@ -149,13 +191,17 @@ class CloudflareDeploymentConfig {
       value is String && value.isNotEmpty ? value : null;
 }
 
+/// Loads and saves a named deployment's local configuration file.
 class CloudflareDeploymentStore {
   CloudflareDeploymentStore._(this.name, this.path);
 
+  /// The name identifying this saved deployment.
   final String name;
 
+  /// The path to this deployment's configuration file.
   final String path;
 
+  /// Selects a saved deployment or prepares a new one according to the supplied options.
   static Future<CloudflareDeploymentStore> select({
     String? requestedName,
     required bool allowCreate,
@@ -248,6 +294,7 @@ class CloudflareDeploymentStore {
     }
   }
 
+  /// Reads the saved deployment configuration, or returns null when no file exists.
   Future<CloudflareDeploymentConfig?> load() async {
     final file = File(path);
     if (!await file.exists()) return null;
@@ -264,6 +311,7 @@ class CloudflareDeploymentStore {
     }
   }
 
+  /// Writes the deployment configuration to this store's file.
   Future<void> save(CloudflareDeploymentConfig config) async {
     final file = File(path);
     await file.parent.create(recursive: true);
@@ -273,6 +321,7 @@ class CloudflareDeploymentStore {
     await temporary.rename(path);
   }
 
+  /// Removes this store's configuration file when it exists.
   Future<void> delete() async {
     final file = File(path);
     if (await file.exists()) await file.delete();

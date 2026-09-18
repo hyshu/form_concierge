@@ -6,13 +6,17 @@ import 'package:path/path.dart' as p;
 import 'monorepo.dart';
 import 'tools.dart';
 
+/// Checks that the local tools needed by Form Concierge are available.
 class DoctorCommand extends Command<int> {
+  /// The command name accepted on the command line.
   @override
   String get name => 'doctor';
 
+  /// The description displayed in command help.
   @override
   String get description => 'Check local tools required for Form Concierge.';
 
+  /// Runs the command with the parsed options and returns its process exit code.
   @override
   Future<int> run() async {
     final missing = <String>[];

@@ -5,7 +5,7 @@ type Bucket = {
   resetAt: number;
 };
 
-/** Best-effort in-isolate limiter; swept periodically to prevent unbounded growth. */
+/** Best-effort isolate-local limiter, swept periodically to bound memory use. */
 const buckets = new Map<string, Bucket>();
 const SWEEP_INTERVAL = 128;
 let callsSinceSweep = 0;
@@ -17,6 +17,9 @@ function sweepExpired(): void {
   }
 }
 
+/**
+ * Consumes one request from an isolate-local time window and throws HTTP 429 when exceeded.
+ */
 export function consumeRateLimit(
   key: string,
   limit: number,
@@ -39,6 +42,9 @@ export function consumeRateLimit(
   }
 }
 
+/**
+ * Checks a Cloudflare rate limit binding and throws HTTP 429 when the request is denied.
+ */
 export async function checkRateLimit(
   limiter: RateLimit,
   key: string,
@@ -48,6 +54,9 @@ export async function checkRateLimit(
   if (!success) throw new HttpError(429, message);
 }
 
+/**
+ * Reads the connecting IP from request headers, falling back to an unknown marker.
+ */
 export function clientIp(request: Request): string {
   const cf = request.headers.get('cf-connecting-ip');
   if (cf && cf.trim().length > 0) return cf.trim();
@@ -59,7 +68,7 @@ export function clientIp(request: Request): string {
   return 'unknown';
 }
 
-/** Test helper: clear buckets between unit tests. */
+/** Clears rate limit buckets between unit tests. */
 export function resetRateLimitsForTests(): void {
   buckets.clear();
   callsSinceSweep = 0;

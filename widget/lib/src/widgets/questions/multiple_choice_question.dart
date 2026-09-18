@@ -1,13 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 
+/// An input that lets the respondent select several choices.
 class MultipleChoiceQuestion extends StatelessWidget {
+  /// The question whose input is displayed.
   final Question question;
+
+  /// The choices available for this question.
   final List<Choice> choices;
+
+  /// The identifiers of the selected answer choices.
   final List<int> selectedChoiceIds;
+
+  /// The locale used to display the form content.
   final String locale;
+
+  /// Called with the updated value when the input changes.
   final ValueChanged<List<int>> onChanged;
 
+  /// Creates MultipleChoiceQuestion with the supplied values.
   const MultipleChoiceQuestion({
     super.key,
     required this.question,
@@ -17,6 +28,7 @@ class MultipleChoiceQuestion extends StatelessWidget {
     required this.onChanged,
   });
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,

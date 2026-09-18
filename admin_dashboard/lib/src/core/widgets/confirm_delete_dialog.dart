@@ -3,12 +3,21 @@ import 'package:hux/hux.dart';
 
 import '../localization/app_localizations.dart';
 
+/// Asks the user to confirm a destructive action.
 class ConfirmDeleteDialog extends StatelessWidget {
+  /// The title displayed by this component.
   final String title;
+
+  /// The explanation displayed in the confirmation dialog.
   final String content;
+
+  /// The label used for the confirmation action.
   final String confirmLabel;
+
+  /// The label used for the cancellation action.
   final String cancelLabel;
 
+  /// Creates ConfirmDeleteDialog with the supplied values.
   const ConfirmDeleteDialog({
     super.key,
     required this.title,
@@ -17,6 +26,7 @@ class ConfirmDeleteDialog extends StatelessWidget {
     this.cancelLabel = 'Cancel',
   });
 
+  /// Displays the confirmation dialog and returns true only when deletion is confirmed.
   static Future<bool> show(
     BuildContext context, {
     required String title,
@@ -36,6 +46,7 @@ class ConfirmDeleteDialog extends StatelessWidget {
     return result ?? false;
   }
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context) => HuxDialog(
     title: title,

@@ -7,17 +7,36 @@ import 'text_single_question.dart';
 import 'text_multi_line_question.dart';
 import 'image_upload_question.dart';
 
+/// Selects the input widget for a question and displays validation feedback.
 class QuestionWidget extends StatelessWidget {
+  /// The question whose input is displayed.
   final Question question;
+
+  /// The choices available for this question.
   final List<Choice> choices;
+
+  /// The current value displayed by the input.
   final AnswerValue value;
+
+  /// The error message, when the operation could not complete.
   final String? error;
+
+  /// The locale used to display the form content.
   final String locale;
+
+  /// Called with the updated value when the input changes.
   final ValueChanged<AnswerValue> onChanged;
+
+  /// The API client used to load data and submit changes.
   final Client? client;
+
+  /// Ensures an anonymous session exists before uploading media, when provided.
   final Future<void> Function()? ensureAuthenticated;
+
+  /// An optional transformation applied to each image before upload.
   final ProcessSurveyImage? processImage;
 
+  /// Creates QuestionWidget with the supplied values.
   const QuestionWidget({
     super.key,
     required this.question,
@@ -31,6 +50,7 @@ class QuestionWidget extends StatelessWidget {
     this.processImage,
   });
 
+  /// Builds the widget tree for the current input and state.
   @override
   Widget build(context) {
     final colorScheme = Theme.of(context).colorScheme;

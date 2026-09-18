@@ -28,10 +28,12 @@ SurveyFormManager surveyFormManagerCapsule(CapsuleHandle use) {
 
 /// Manager class for survey form operations.
 class SurveyFormManager {
+  /// Reads the current state for the supplied record identifier.
   final SurveyFormState Function(int? surveyId) getState;
   final void Function(int? surveyId, SurveyFormState state) _setState;
   final Client _client;
 
+  /// Creates SurveyFormManager with the supplied values.
   SurveyFormManager({
     required this.getState,
     required this._setState,
@@ -65,6 +67,7 @@ class SurveyFormManager {
     }
   }
 
+  /// Loads project locale settings and optionally the survey being edited.
   Future<void> loadProject(int projectId, {int? surveyId}) async {
     _setState(surveyId, getState(surveyId).copyWith(isLoading: true));
     try {

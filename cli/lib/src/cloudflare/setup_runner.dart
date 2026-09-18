@@ -14,6 +14,7 @@ import 'setup_options.dart';
 
 /// Orchestrates Cloudflare D1 / R2 / Worker / Pages provisioning.
 class CloudflareSetupRunner {
+  /// Creates CloudflareSetupRunner with the supplied values.
   CloudflareSetupRunner({
     required this.paths,
     required this.options,
@@ -22,10 +23,19 @@ class CloudflareSetupRunner {
     this.allowCreateDeployment = true,
   });
 
+  /// Repository paths used to locate application sources and tooling.
   final MonorepoPaths paths;
+
+  /// The setup options parsed from the command line.
   final CloudflareSetupOptions options;
+
+  /// The directory from which the deployment command was invoked, if supplied.
   final String? invocationDir;
+
+  /// The name of the saved deployment to select, when supplied.
   final String? deploymentName;
+
+  /// Whether the runner may create a new saved deployment.
   final bool allowCreateDeployment;
 
   List<String> _jasprCmd = const ['jaspr'];
@@ -35,6 +45,8 @@ class CloudflareSetupRunner {
   late CloudflareDeploymentStore _deploymentStore;
   CloudflareDeploymentConfig _deployment = CloudflareDeploymentConfig();
 
+  /// Checks prerequisites and applies the selected deployment plan, returning a process
+  /// exit code.
   Future<int> run() async {
     if (options.explain) {
       _printExplain();
@@ -390,7 +402,7 @@ class CloudflareSetupRunner {
     await _ensureJaspr();
   }
 
-  /// Local `wrangler.jsonc` is gitignored; bootstrap from the committed example.
+  /// Bootstraps the gitignored local `wrangler.jsonc` from the committed example.
   Future<void> _ensureWranglerConfigFile() async {
     final config = File(paths.wranglerConfig);
     if (config.existsSync()) {
@@ -570,7 +582,7 @@ Run setup interactively, or pass:
     }
   }
 
-  /// Returns [current] if set; otherwise prompts (interactive) or empty.
+  /// Returns [current] when set, otherwise prompts interactively or returns an empty value.
   Future<String?> _resolveName(
     String? current,
     String label,

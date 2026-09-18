@@ -5,12 +5,22 @@ import '../../../../core/localization/app_localizations.dart';
 
 /// Prompt input for generating draft survey questions with AI.
 class AiPromptInput extends StatefulWidget {
+  /// Whether AI question generation is in progress.
   final bool isGenerating;
+
+  /// The error message, when the operation could not complete.
   final String? error;
+
+  /// Called with the prompt when AI question generation is requested.
   final void Function(String prompt) onGenerate;
+
+  /// Called when the user chooses to create a question without AI generation.
   final VoidCallback onAddManually;
+
+  /// Whether a save operation is in progress.
   final bool isSaving;
 
+  /// Creates AiPromptInput with the supplied values.
   const AiPromptInput({
     super.key,
     required this.isGenerating,
@@ -20,6 +30,7 @@ class AiPromptInput extends StatefulWidget {
     required this.isSaving,
   });
 
+  /// Creates the mutable state used by this widget.
   @override
   State<AiPromptInput> createState() => _AiPromptInputState();
 }
