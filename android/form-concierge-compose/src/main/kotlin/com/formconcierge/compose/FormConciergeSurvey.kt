@@ -596,7 +596,7 @@ private fun FollowUpContent(controller: SurveyController) {
                 ensureAuthenticated = controller::ensureAuthenticated,
                 processImage = controller.config.processImage,
                 imagePreviews = controller.imagePreviews,
-                onAnswer = { controller.followUpAnswers[item.id] = it },
+                onAnswer = { controller.updateFollowUpAnswer(item.id, it) },
             )
         }
         controller.errorMessage?.let { error ->
@@ -839,6 +839,40 @@ internal class SurveyController(
             .toList()
             .filterNot(visibleIds::contains)
             .forEach(answers::remove)
+        discardUnusedImagePreviews()
+    }
+
+    fun updateFollowUpAnswer(
+        itemId: String,
+        answer: FollowUpAnswerValue,
+    ) {
+        followUpAnswers[itemId] = answer
+        discardUnusedImagePreviews()
+    }
+
+    private fun discardUnusedImagePreviews() {
+        val referencedKeys =
+            when (phase) {
+                SurveyPhase.Form -> {
+                    answers.values.filterIsInstance<SurveyAnswerValue.Images>().flatMap { it.fileKeys }
+                }
+
+                SurveyPhase.FollowUp -> {
+                    followUp
+                        ?.items
+                        .orEmpty()
+                        .mapNotNull { followUpAnswers[it.id] as? FollowUpAnswerValue.Images }
+                        .flatMap { it.fileKeys }
+                }
+
+                else -> {
+                    emptyList()
+                }
+            }.toSet()
+        imagePreviews.keys
+            .toList()
+            .filterNot(referencedKeys::contains)
+            .forEach(imagePreviews::remove)
     }
 
     suspend fun ensureAuthenticated() {
@@ -895,6 +929,7 @@ internal class SurveyController(
                 startFollowUp(response.id)
             } else {
                 phase = SurveyPhase.Completed
+                discardUnusedImagePreviews()
             }
         } catch (error: Throwable) {
             errorMessage = error.message ?: FormConciergeStrings.text(locale, "tryAgainLater")
@@ -920,6 +955,7 @@ internal class SurveyController(
 
     private suspend fun startFollowUp(responseId: Int) {
         phase = SurveyPhase.GeneratingFollowUp
+        discardUnusedImagePreviews()
         try {
             val result = client.generateFollowUp(responseId, locale)
             if (result.needed && result.followUp.status == FollowUpStatus.Pending &&
@@ -983,6 +1019,7 @@ internal class SurveyController(
             followUp = null
             onFollowUpSubmitted(response)
             phase = SurveyPhase.Completed
+            discardUnusedImagePreviews()
         } catch (error: Throwable) {
             errorMessage = error.message ?: FormConciergeStrings.text(locale, "tryAgainLater")
         } finally {
