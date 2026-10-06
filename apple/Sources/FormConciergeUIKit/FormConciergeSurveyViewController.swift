@@ -15,6 +15,7 @@
     private let metadata: [String: FormConciergeMetadataValue]?
     private let onAnonymousSession: ((AnonymousSession) -> Void)?
     private let onResponseSubmitted: ((SurveyResponse) -> Void)?
+    private let onResponseSubmittedWithAnswers: ((SurveyResponse, [Answer]) -> Void)?
     private let onFollowUpSubmitted: ((SurveyResponse) -> Void)?
     private let onSubmitted: (() -> Void)?
     private let onDone: (() -> Void)?
@@ -48,7 +49,8 @@
     /// onAnonymousSession. The host supplies CAPTCHA tokens when they are required.
     ///
     /// Response callbacks run after the main submission is saved. The follow-up
-    /// callback runs after follow-up answers are saved. The completion button invokes
+    /// callback runs after follow-up answers are saved. Use onResponseSubmittedWithAnswers
+    /// to retain the exact submitted answers in the host app. The completion button invokes
     /// onDone when supplied. processImage can transform or discard images before upload.
     public init(
       client: FormConciergeClient,
@@ -61,6 +63,7 @@
       metadata: [String: FormConciergeMetadataValue]? = nil,
       onAnonymousSession: ((AnonymousSession) -> Void)? = nil,
       onResponseSubmitted: ((SurveyResponse) -> Void)? = nil,
+      onResponseSubmittedWithAnswers: ((SurveyResponse, [Answer]) -> Void)? = nil,
       onFollowUpSubmitted: ((SurveyResponse) -> Void)? = nil,
       onSubmitted: (() -> Void)? = nil,
       onDone: (() -> Void)? = nil,
@@ -77,6 +80,7 @@
       self.metadata = metadata
       self.onAnonymousSession = onAnonymousSession
       self.onResponseSubmitted = onResponseSubmitted
+      self.onResponseSubmittedWithAnswers = onResponseSubmittedWithAnswers
       self.onFollowUpSubmitted = onFollowUpSubmitted
       self.onSubmitted = onSubmitted
       self.onDone = onDone
@@ -429,18 +433,20 @@
             return
           }
         }
+        let payload = FormConciergeSurveyLogic.answerPayload(
+          questions: visibleQuestions,
+          answers: answers
+        )
         let response = try await client.submitResponse(
           surveyId: survey.id,
-          answers: FormConciergeSurveyLogic.answerPayload(
-            questions: visibleQuestions,
-            answers: answers
-          ),
+          answers: payload,
           deviceInfo: deviceInfo,
           metadata: metadata,
           captchaToken: captchaToken
         )
         submittedResponse = response
         onResponseSubmitted?(response)
+        onResponseSubmittedWithAnswers?(response, payload)
         onSubmitted?()
         if survey.followUpEnabled {
           await startFollowUp(responseId: response.id)

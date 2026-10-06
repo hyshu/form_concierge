@@ -112,6 +112,11 @@ Pass `deviceInfo` from your app when you need stable device IDs, app versions, O
 
 Use the saved anonymous token to receive admin replies. Submitted answers are retained on the server for admins, but anonymous users cannot fetch their answer history from the API.
 
+Both interfaces accept `onResponseSubmittedWithAnswers`, which receives the saved
+response and the exact answer payload submitted with it. Use this callback to
+retain a local inquiry history. The existing `onResponseSubmitted` callback
+remains available when only the response is needed.
+
 When the API reports `captchaRequired: true`, the view calls `captchaTokenProvider` before submission. Integrate Turnstile in the host app and return its token from that closure. The older `Survey.captchaEnabled` property is deprecated for submission decisions because it represents the saved survey setting, not whether Turnstile is currently configured.
 
 ```swift

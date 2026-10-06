@@ -592,7 +592,9 @@
     }
 
     private func loadImage(from provider: NSItemProvider) async throws -> SurveyImagePayload {
-      let type = provider.registeredContentTypes.first { $0.conforms(to: .image) } ?? .image
+      let type =
+        provider.registeredTypeIdentifiers.compactMap { UTType($0) }
+        .first { $0.conforms(to: .image) } ?? .image
       let data: Data = try await withCheckedThrowingContinuation { continuation in
         provider.loadDataRepresentation(forTypeIdentifier: type.identifier) { data, error in
           if let error {
