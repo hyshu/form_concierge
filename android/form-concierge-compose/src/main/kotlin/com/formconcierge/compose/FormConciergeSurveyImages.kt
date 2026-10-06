@@ -45,15 +45,7 @@ internal suspend fun prepareSurveyImage(
 }
 
 private fun encodeSurveyImageJpeg(bytes: ByteArray): ByteArray? {
-    // ImageDecoder handles EXIF orientation and HEIF on supported Android versions.
-    val bitmap =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            ImageDecoder.decodeBitmap(ImageDecoder.createSource(ByteBuffer.wrap(bytes))) { decoder, _, _ ->
-                decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
-            }
-        } else {
-            BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-        } ?: return null
+    val bitmap = decodeSurveyImageBitmap(bytes) ?: return null
     return try {
         ByteArrayOutputStream().use { output ->
             if (bitmap.compress(Bitmap.CompressFormat.JPEG, 85, output)) output.toByteArray() else null
@@ -61,4 +53,48 @@ private fun encodeSurveyImageJpeg(bytes: ByteArray): ByteArray? {
     } finally {
         bitmap.recycle()
     }
+}
+
+internal fun decodeSurveyImagePreview(bytes: ByteArray): Bitmap? = decodeSurveyImageBitmap(bytes, maxSide = 160)
+
+internal fun surveyImagePreviewSize(
+    width: Int,
+    height: Int,
+    maxSide: Int,
+): Pair<Int, Int> {
+    require(width > 0 && height > 0 && maxSide > 0)
+    val scale = minOf(1.0, maxSide.toDouble() / maxOf(width, height))
+    return (width * scale).toInt().coerceAtLeast(1) to (height * scale).toInt().coerceAtLeast(1)
+}
+
+private fun decodeSurveyImageBitmap(
+    bytes: ByteArray,
+    maxSide: Int? = null,
+): Bitmap? {
+    // ImageDecoder handles EXIF orientation and HEIF on supported Android versions.
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        return ImageDecoder.decodeBitmap(ImageDecoder.createSource(ByteBuffer.wrap(bytes))) { decoder, info, _ ->
+            decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
+            if (maxSide != null) {
+                val (width, height) = surveyImagePreviewSize(info.size.width, info.size.height, maxSide)
+                decoder.setTargetSize(width, height)
+            }
+        }
+    }
+    val options = BitmapFactory.Options()
+    if (maxSide != null) {
+        options.inJustDecodeBounds = true
+        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)
+        if (options.outWidth <= 0 || options.outHeight <= 0) return null
+        options.inJustDecodeBounds = false
+        options.inSampleSize = 1
+        while (maxOf(options.outWidth, options.outHeight) / (options.inSampleSize * 2) >= maxSide) {
+            options.inSampleSize *= 2
+        }
+    }
+    val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options) ?: return null
+    if (maxSide == null) return bitmap
+    val (width, height) = surveyImagePreviewSize(bitmap.width, bitmap.height, maxSide)
+    if (bitmap.width == width && bitmap.height == height) return bitmap
+    return Bitmap.createScaledBitmap(bitmap, width, height, true).also { bitmap.recycle() }
 }

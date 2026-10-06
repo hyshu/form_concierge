@@ -5,6 +5,7 @@ package com.formconcierge.compose
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,9 +16,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddPhotoAlternate
@@ -39,12 +42,17 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -276,6 +284,7 @@ private fun SurveyFormContent(
                 isEnabled = !controller.isSubmitting,
                 ensureAuthenticated = controller::ensureAuthenticated,
                 processImage = controller.config.processImage,
+                imagePreviews = controller.imagePreviews,
                 onAnswer = { controller.updateAnswer(question.id, it) },
             )
         }
@@ -323,6 +332,7 @@ private fun QuestionEditor(
     isEnabled: Boolean,
     ensureAuthenticated: suspend () -> Unit,
     processImage: ProcessSurveyImage?,
+    imagePreviews: MutableMap<String, ByteArray>,
     onAnswer: (SurveyAnswerValue) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -410,6 +420,7 @@ private fun QuestionEditor(
                     isEnabled = isEnabled,
                     ensureAuthenticated = ensureAuthenticated,
                     processImage = processImage,
+                    imagePreviews = imagePreviews,
                     onChange = { onAnswer(SurveyAnswerValue.Images(it)) },
                 )
             }
@@ -426,6 +437,7 @@ private fun ImageUploadEditor(
     isEnabled: Boolean,
     ensureAuthenticated: suspend () -> Unit,
     processImage: ProcessSurveyImage?,
+    imagePreviews: MutableMap<String, ByteArray>,
     onChange: (List<String>) -> Unit,
 ) {
     val context = LocalContext.current
@@ -447,7 +459,10 @@ private fun ImageUploadEditor(
                         loadImage = { context.imagePayload(it) },
                         processImage = processImage,
                         uploadImage = { client.uploadMedia(it.bytes, it.contentType).key },
-                        onUploaded = { keys, _ -> onChange(keys) },
+                        onUploaded = { keys, payload ->
+                            imagePreviews[keys.last()] = payload.bytes
+                            onChange(keys)
+                        },
                     )
                 } catch (cancelled: CancellationException) {
                     throw cancelled
@@ -466,7 +481,9 @@ private fun ImageUploadEditor(
                     modifier = Modifier.fillMaxWidth().padding(start = 14.dp, top = 8.dp, bottom = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Icon(Icons.Default.AddPhotoAlternate, contentDescription = null)
+                    androidx.compose.runtime.key(key) {
+                        ImageUploadPreview(imagePreviews[key])
+                    }
                     Spacer(Modifier.width(10.dp))
                     Text(
                         "${index + 1} / $maxFiles",
@@ -474,7 +491,10 @@ private fun ImageUploadEditor(
                         style = MaterialTheme.typography.bodyMedium,
                     )
                     IconButton(
-                        onClick = { onChange(fileKeys.filterNot { it == key }) },
+                        onClick = {
+                            imagePreviews.remove(key)
+                            onChange(fileKeys.filterNot { it == key })
+                        },
                         enabled = isEnabled && !uploading,
                     ) {
                         Icon(
@@ -510,6 +530,40 @@ private fun ImageUploadEditor(
 }
 
 @Composable
+private fun ImageUploadPreview(bytes: ByteArray?) {
+    val preview by produceState<ImageBitmap?>(initialValue = null, bytes) {
+        value =
+            if (bytes == null) {
+                null
+            } else {
+                withContext(Dispatchers.IO) {
+                    try {
+                        decodeSurveyImagePreview(bytes)?.asImageBitmap()
+                    } catch (cancelled: CancellationException) {
+                        throw cancelled
+                    } catch (_: Exception) {
+                        null
+                    }
+                }
+            }
+    }
+    val bitmap = preview
+    val modifier = Modifier.size(64.dp).clip(RoundedCornerShape(8.dp))
+    if (bitmap == null) {
+        Box(modifier, contentAlignment = Alignment.Center) {
+            Icon(Icons.Default.AddPhotoAlternate, contentDescription = null)
+        }
+    } else {
+        Image(
+            bitmap = bitmap,
+            contentDescription = null,
+            modifier = modifier,
+            contentScale = ContentScale.Crop,
+        )
+    }
+}
+
+@Composable
 private fun FollowUpContent(controller: SurveyController) {
     val followUp = controller.followUp ?: return
     LazyColumn(
@@ -541,6 +595,7 @@ private fun FollowUpContent(controller: SurveyController) {
                 enabled = !controller.isSubmitting,
                 ensureAuthenticated = controller::ensureAuthenticated,
                 processImage = controller.config.processImage,
+                imagePreviews = controller.imagePreviews,
                 onAnswer = { controller.followUpAnswers[item.id] = it },
             )
         }
@@ -580,6 +635,7 @@ private fun FollowUpEditor(
     enabled: Boolean,
     ensureAuthenticated: suspend () -> Unit,
     processImage: ProcessSurveyImage?,
+    imagePreviews: MutableMap<String, ByteArray>,
     onAnswer: (FollowUpAnswerValue) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -651,6 +707,7 @@ private fun FollowUpEditor(
                     isEnabled = enabled,
                     ensureAuthenticated = ensureAuthenticated,
                     processImage = processImage,
+                    imagePreviews = imagePreviews,
                     onChange = { onAnswer(FollowUpAnswerValue.Images(it)) },
                 )
             }
@@ -709,6 +766,7 @@ internal class SurveyController(
     var choicesByQuestion by mutableStateOf<Map<Int, List<Choice>>>(emptyMap())
     val answers = mutableStateMapOf<Int, SurveyAnswerValue>()
     val followUpAnswers = mutableStateMapOf<String, FollowUpAnswerValue>()
+    val imagePreviews = mutableStateMapOf<String, ByteArray>()
     var followUp by mutableStateOf<FollowUp?>(null)
     var submittedResponse by mutableStateOf<SurveyResponse?>(null)
     var errorMessage by mutableStateOf<String?>(null)
@@ -760,6 +818,7 @@ internal class SurveyController(
             visibilityRules = client.visibilityRules(loadedSurvey.id)
             choicesByQuestion = loadedChoices
             answers.clear()
+            imagePreviews.clear()
             phase = SurveyPhase.Form
         } catch (error: Throwable) {
             errorMessage = error.message
