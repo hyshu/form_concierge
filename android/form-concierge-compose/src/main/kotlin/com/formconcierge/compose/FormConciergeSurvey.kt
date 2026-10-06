@@ -49,6 +49,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -439,14 +440,17 @@ private fun ImageUploadEditor(
                 localError = null
                 try {
                     ensureAuthenticated()
-                    val uploaded = mutableListOf<String>()
-                    for (uri in uris.take((maxFiles - fileKeys.size).coerceAtLeast(0))) {
-                        val payload = context.imagePayload(uri) ?: continue
-                        val processed = prepareSurveyImage(payload, processImage)
-                        if (processed == null) continue
-                        uploaded += client.uploadMedia(processed.bytes, processed.contentType).key
-                    }
-                    if (uploaded.isNotEmpty()) onChange(fileKeys + uploaded)
+                    uploadSurveyImages(
+                        sources = uris,
+                        existingFileKeys = fileKeys,
+                        maxFiles = maxFiles,
+                        loadImage = { context.imagePayload(it) },
+                        processImage = processImage,
+                        uploadImage = { client.uploadMedia(it.bytes, it.contentType).key },
+                        onUploaded = { keys, _ -> onChange(keys) },
+                    )
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
                 } catch (_: Throwable) {
                     localError = FormConciergeStrings.text(locale, "photoUploadFailed")
                 } finally {

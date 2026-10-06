@@ -11,6 +11,26 @@ import java.nio.ByteBuffer
 
 private val supportedSurveyImageTypes = setOf("image/jpeg", "image/png", "image/webp", "image/gif")
 
+internal suspend fun <Source> uploadSurveyImages(
+    sources: List<Source>,
+    existingFileKeys: List<String>,
+    maxFiles: Int,
+    loadImage: suspend (Source) -> SurveyImagePayload?,
+    processImage: ProcessSurveyImage?,
+    uploadImage: suspend (SurveyImagePayload) -> String,
+    onUploaded: (List<String>, SurveyImagePayload) -> Unit,
+) {
+    val fileKeys = existingFileKeys.toMutableList()
+    for (source in sources) {
+        if (fileKeys.size >= maxFiles) break
+        val payload = loadImage(source) ?: continue
+        val processed = prepareSurveyImage(payload, processImage) ?: continue
+        fileKeys += uploadImage(processed)
+        // Save each acknowledged upload before starting another network request.
+        onUploaded(fileKeys.toList(), processed)
+    }
+}
+
 internal suspend fun prepareSurveyImage(
     payload: SurveyImagePayload,
     processImage: ProcessSurveyImage?,
