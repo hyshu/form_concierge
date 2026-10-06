@@ -49,7 +49,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonElement
 
 /**
@@ -440,7 +442,7 @@ private fun ImageUploadEditor(
                     val uploaded = mutableListOf<String>()
                     for (uri in uris.take((maxFiles - fileKeys.size).coerceAtLeast(0))) {
                         val payload = context.imagePayload(uri) ?: continue
-                        val processed = if (processImage == null) payload else processImage(payload)
+                        val processed = prepareSurveyImage(payload, processImage)
                         if (processed == null) continue
                         uploaded += client.uploadMedia(processed.bytes, processed.contentType).key
                     }
@@ -953,8 +955,9 @@ internal sealed interface FollowUpAnswerValue {
     ) : FollowUpAnswerValue
 }
 
-private fun android.content.Context.imagePayload(uri: Uri): SurveyImagePayload? {
-    val contentType = contentResolver.getType(uri) ?: "image/jpeg"
-    val bytes = contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return null
-    return SurveyImagePayload(bytes, contentType)
-}
+private suspend fun android.content.Context.imagePayload(uri: Uri): SurveyImagePayload? =
+    withContext(Dispatchers.IO) {
+        val contentType = contentResolver.getType(uri) ?: "application/octet-stream"
+        val bytes = contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return@withContext null
+        SurveyImagePayload(bytes, contentType)
+    }
