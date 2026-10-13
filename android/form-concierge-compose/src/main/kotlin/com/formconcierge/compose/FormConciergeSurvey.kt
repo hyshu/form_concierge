@@ -138,6 +138,77 @@ public fun FormConciergeSurvey(
         client.setAnonymousToken(anonymousToken)
     }
 
+    SurveyContent(controller, modifier, onDone, footer)
+}
+
+/**
+ * A host-retained survey session. Keep this in a ViewModel to preserve answers and in-flight
+ * work across configuration changes. Call close when the respondent actually leaves the form.
+ * The supplied scope and callbacks must not retain an Activity or its views.
+ */
+public class FormConciergeSurveyState(
+    client: FormConciergeApi,
+    config: FormConciergeSurveyConfig,
+    fallbackDeviceInfo: DeviceInfo,
+    scope: kotlinx.coroutines.CoroutineScope,
+    onAnonymousSession: suspend (AnonymousSession) -> Unit = {},
+    onResponseSubmitted: suspend (FormConciergeSubmission) -> Unit = {},
+    onFollowUpSubmitted: suspend (SurveyResponse) -> Unit = {},
+) : AutoCloseable {
+    private val job = kotlinx.coroutines.SupervisorJob(scope.coroutineContext[kotlinx.coroutines.Job])
+    private val retainedScope = kotlinx.coroutines.CoroutineScope(scope.coroutineContext + job)
+    internal val controller =
+        SurveyController(
+            client,
+            config,
+            fallbackDeviceInfo,
+            onAnonymousSession,
+            onResponseSubmitted,
+            onFollowUpSubmitted,
+            retainedScope,
+        )
+    private var started = false
+
+    internal fun start() {
+        if (started) return
+        started = true
+        retainedScope.launch { controller.load() }
+    }
+
+    /** Whether submission or follow-up generation is currently in progress. */
+    public val isBusy: Boolean get() = controller.isSubmitting || controller.phase == SurveyPhase.GeneratingFollowUp
+
+    /** Reloads survey questions after an explicit retry. */
+    public fun reload() {
+        if (isBusy) return
+        retainedScope.launch { controller.load() }
+    }
+
+    /** Cancels this session's requests without cancelling the host's scope. */
+    override fun close() {
+        job.cancel()
+    }
+}
+
+/** Displays a retained survey session without resetting its answers on recomposition. */
+@Composable
+public fun FormConciergeSurvey(
+    state: FormConciergeSurveyState,
+    modifier: Modifier = Modifier,
+    onDone: (() -> Unit)? = null,
+    footer: (@Composable () -> Unit)? = null,
+) {
+    LaunchedEffect(state) { state.start() }
+    SurveyContent(state.controller, modifier, onDone, footer)
+}
+
+@Composable
+private fun SurveyContent(
+    controller: SurveyController,
+    modifier: Modifier,
+    onDone: (() -> Unit)?,
+    footer: (@Composable () -> Unit)?,
+) {
     Box(modifier.fillMaxSize()) {
         when (controller.phase) {
             SurveyPhase.Loading -> {

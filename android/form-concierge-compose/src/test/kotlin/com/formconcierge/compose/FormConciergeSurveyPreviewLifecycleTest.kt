@@ -35,11 +35,11 @@ class FormConciergeSurveyPreviewLifecycleTest {
                 val conditionalKey = "conditional-$iteration"
                 controller.imagePreviews[conditionalKey] = byteArrayOf(2)
                 controller.updateAnswer(2, SurveyAnswerValue.Images(listOf(conditionalKey)))
-                assertEquals(setOf("always-visible", conditionalKey), controller.imagePreviews.keys)
+                assertEquals(setOf("always-visible", conditionalKey), controller.imagePreviews.keys.toSet())
 
                 controller.updateAnswer(1, SurveyAnswerValue.Text("hide"))
                 assertNull(controller.answers[2])
-                assertEquals(setOf("always-visible"), controller.imagePreviews.keys)
+                assertEquals(setOf("always-visible"), controller.imagePreviews.keys.toSet())
                 assertSame(visibleBytes, controller.imagePreviews["always-visible"])
             }
         }
@@ -53,7 +53,7 @@ class FormConciergeSurveyPreviewLifecycleTest {
             controller.imagePreviews["retained"] = retainedBytes
             controller.updateAnswer(2, SurveyAnswerValue.Images(listOf("removed", "retained")))
             controller.updateAnswer(2, SurveyAnswerValue.Images(listOf("retained")))
-            assertEquals(setOf("retained"), controller.imagePreviews.keys)
+            assertEquals(setOf("retained"), controller.imagePreviews.keys.toSet())
             assertSame(retainedBytes, controller.imagePreviews["retained"])
         }
 
@@ -95,7 +95,7 @@ class FormConciergeSurveyPreviewLifecycleTest {
             controller.imagePreviews["follow-up"] = bytes
             controller.imagePreviews["obsolete"] = byteArrayOf(3)
             controller.updateFollowUpAnswer("photo", FollowUpAnswerValue.Images(listOf("follow-up")))
-            assertEquals(setOf("follow-up"), controller.imagePreviews.keys)
+            assertEquals(setOf("follow-up"), controller.imagePreviews.keys.toSet())
             assertSame(bytes, controller.imagePreviews["follow-up"])
             client.failFollowUp = true
             controller.submitFollowUp()
