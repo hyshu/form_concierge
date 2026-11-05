@@ -1,3 +1,12 @@
+## 0.4.0
+
+- Allow administrator email notifications and the recipient address to be
+  configured when creating a survey in the admin dashboard template.
+- Allow question visibility rules to be configured before saving a new survey.
+- Update Worker, admin, and web dependencies.
+- Install Jaspr CLI 0.23.5 when bootstrapping the public web build toolchain.
+- Expand CLI API and deployment lifecycle verification documentation.
+
 ## 0.3.0
 
 - Prefix Secrets Store entry names with `form_concierge_` to avoid collisions

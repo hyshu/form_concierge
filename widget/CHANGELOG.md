@@ -1,3 +1,11 @@
+## 0.4.0
+
+- Expose survey creation options for administrator email notifications and
+  question visibility rules through the client API.
+- Update image picking and cryptography dependencies and adopt Flutter lints 6.
+- Update the development and CI toolchain to Flutter 3.47.9 and Dart 3.13.7.
+- Expand documentation for survey, reply-checking, and submission APIs.
+
 ## 0.3.0
 
 - Request a token from `captchaTokenProvider` only when the API reports that

@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "com.github.hyshu.form-concierge"
-version = "0.4.0-SNAPSHOT"
+version = "0.4.0"
 
 android {
     namespace = "com.formconcierge.compose"
