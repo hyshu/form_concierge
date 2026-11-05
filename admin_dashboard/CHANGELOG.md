@@ -1,3 +1,18 @@
+## 0.4.0
+
+- Configure administrator email notifications while creating a survey. Reuse the
+  latest recipient from the same project, then fall back to the latest recipient
+  across projects; enable notifications when an address is available.
+- Hide the recipient field while notifications are disabled and retain its value
+  when notifications are enabled again.
+- Configure question visibility rules before saving a new survey. The first
+  question is always visible; later questions can depend on earlier questions.
+- Preserve the selected all/any visibility match mode through draft editing
+  and saving.
+- Describe AI follow-up support across Flutter, SwiftUI, UIKit, and Android
+  Compose as an in-app feature.
+- Update navigation, UI, and other dependencies and refresh platform build settings.
+
 ## 0.3.0
 
 - Preserve the saved CAPTCHA setting when surveys are loaded, edited, and

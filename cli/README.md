@@ -344,3 +344,4 @@ This includes releases that do not require any deployment changes.
 | 0.2.0   |     Yes |           Yes |    Yes |         Yes |       Yes |
 | 0.2.1   |      No |           Yes |    Yes |         Yes |        No |
 | 0.3.0   |     Yes |           Yes |    Yes |         Yes |       Yes |
+| 0.4.0   |      No |            No |    Yes |         Yes |       Yes |

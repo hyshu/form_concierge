@@ -7,10 +7,10 @@ Survey forms backed by Cloudflare Workers and D1. Respondents use generated anon
 | Directory          | Package / role                  | Description                                                      |
 | ------------------ | ------------------------------- | ---------------------------------------------------------------- |
 | `worker/`          | (deployed API)                  | Cloudflare Workers API and D1 migrations                         |
-| `client/`          | `form_concierge_client` `0.3.0` | Published Dart REST client shared by Flutter apps and Jaspr      |
-| `widget/`          | `form_concierge` `0.3.0`        | Published Flutter package for embedding surveys                  |
-| `cli/`             | `form_concierge_cli` `0.3.0`    | Published setup / doctor CLI (`form_concierge setup cloudflare`) |
-| `admin_dashboard/` | app `0.3.0`                     | Flutter admin dashboard                                          |
+| `client/`          | `form_concierge_client` `0.4.0` | Published Dart REST client shared by Flutter apps and Jaspr      |
+| `widget/`          | `form_concierge` `0.4.0`        | Published Flutter package for embedding surveys                  |
+| `cli/`             | `form_concierge_cli` `0.4.0`    | Published setup / doctor CLI (`form_concierge setup cloudflare`) |
+| `admin_dashboard/` | app `0.4.0`                     | Flutter admin dashboard                                          |
 | `apple/`           | SPM                             | Swift Package for embedding surveys in SwiftUI and UIKit apps    |
 | `android/`         | Gradle / Compose                | Android library for surveys, inquiry history, and admin replies  |
 | `web/`             | app                             | Jaspr web survey form                                            |
@@ -30,31 +30,25 @@ for local composite-build installation and integration examples.
 
 ## Package Release
 
-Publish the client before the widget because `form_concierge` depends on
-`form_concierge_client`. Before publishing the CLI, push the matching version
-tag and wait for the release-template workflow to attach the archive and
-checksum:
+Use `tool/publish.sh` to publish the client and widget together. It waits ten
+minutes after publishing the client so the hosted widget dependency can resolve.
+After the matching tag workflow has uploaded the template archive and checksum,
+publish the CLI:
 
 ```bash
-cd client
-dart pub publish --dry-run
-dart pub publish
+tool/publish.sh --plan client widget
+tool/publish.sh client widget
 
-cd ../widget
-flutter pub publish --dry-run
-flutter pub publish
+git tag v0.4.0
+git push origin v0.4.0
 
-cd ..
-git tag v0.3.0
-git push origin v0.3.0
-
-cd cli
-dart pub publish --dry-run
-dart pub publish
+# Wait for the release-template workflow and verify both release assets.
+tool/publish.sh --plan cli
+tool/publish.sh cli
 ```
 
-Review every file listed by each dry run before confirming an upload. Published
-versions cannot be deleted; fixes require a new version.
+Review each package's dry run and file list before publishing. Each publish
+requires confirmation; published versions cannot be deleted.
 
 ## Local Development
 

@@ -9,6 +9,8 @@ Native Android library for Form Concierge surveys and inquiry threads. It suppor
 - Android Keystore AES-GCM encryption for the anonymous token and locally retained inquiry content
 
 The library requires Android API 24 or later and Jetpack Compose Material 3.
+Compile consuming apps with Android API 37 or later. This release uses AGP 9.5,
+Gradle 9.8.2, and Kotlin 2.4.21.
 
 ## Local composite dependency
 
@@ -22,7 +24,7 @@ Then add the library dependency:
 
 ```kotlin
 dependencies {
-    implementation("com.github.hyshu.form-concierge:form-concierge-compose:0.4.0-SNAPSHOT")
+    implementation("com.github.hyshu.form-concierge:form-concierge-compose:0.4.0")
 }
 ```
 

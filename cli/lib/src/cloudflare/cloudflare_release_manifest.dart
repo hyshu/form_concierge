@@ -70,4 +70,11 @@ const cloudflareReleaseChanges = [
   // Namespaced secrets, migrations 0004-0005, public cost controls, deployment
   // configuration, and CAPTCHA state fixes affect every deployed component.
   CloudflareReleaseChange('0.3.0', allCloudflareDeploymentComponents),
+  // Survey creation settings and refreshed application dependencies. Secret
+  // requirements and D1 migration files are unchanged from 0.3.0.
+  CloudflareReleaseChange('0.4.0', {
+    CloudflareDeploymentComponent.worker,
+    CloudflareDeploymentComponent.adminPages,
+    CloudflareDeploymentComponent.webPages,
+  }),
 ];

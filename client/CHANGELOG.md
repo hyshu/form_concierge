@@ -1,3 +1,11 @@
+## 0.4.0
+
+- Add survey creation options for enabling administrator email notifications
+  and setting the recipient address.
+- Add `SurveyVisibilityRuleInput` so `createWithQuestions` can create question
+  visibility rules together with a new survey.
+- Expand public API documentation and update HTTP and test dependencies.
+
 ## 0.3.0
 
 - Add `Survey.captchaRequired`, which reports whether a submission must include
