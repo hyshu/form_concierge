@@ -1,6 +1,6 @@
 name: flutter_mobile_full
 description: Full mobile Form Concierge example with storage and localization.
-publish_to: 'none'
+publish_to: "none"
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -24,12 +24,12 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
-  flutter_secure_storage: ^10.0.0
-  cloudflare_turnstile: ^3.7.2
+  flutter_secure_storage: ^11.2.0
+  cloudflare_turnstile: ^3.8.1
   form_concierge:
     path: ../..
-  cupertino_icons: ^1.0.8
-  shared_preferences: ^2.3.5
+  cupertino_icons: ^2.0.0
+  shared_preferences: ^2.5.6
 
 dependency_overrides:
   form_concierge_client:
@@ -39,7 +39,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
-  http: ^1.2.2
+  http: ^1.6.0
 
 flutter:
   uses-material-design: true

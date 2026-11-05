@@ -14,13 +14,13 @@ executables:
   form_concierge_cli: form_concierge_cli
 
 dependencies:
-  archive: ^4.0.7
+  archive: ^4.6.0
   args: ^2.7.0
-  crypto: ^3.0.6
-  http: ^1.2.2
+  crypto: ^3.0.8
+  http: ^1.6.0
   path: ^1.9.1
-  pub_semver: ^2.2.0
+  pub_semver: ^2.2.1
 
 dev_dependencies:
   lints: ^6.1.0
-  test: ^1.31.1
+  test: ^1.33.0

@@ -19,9 +19,9 @@ try {
   exitCode = await run(npx, [
     "wrangler",
     "types",
-    generatedTypes,
+    path.relative(workerDirectory, generatedTypes),
     "--config",
-    checkConfig,
+    path.relative(workerDirectory, checkConfig),
     "--env-interface",
     "WorkerEnv",
     "--include-runtime",
@@ -52,7 +52,7 @@ process.exitCode = exitCode;
 
 function declarations(source) {
   const start = source.indexOf("interface __BaseEnv_");
-  return start === -1 ? source : source.slice(start);
+  return (start === -1 ? source : source.slice(start)).trimEnd();
 }
 
 function run(command, arguments_) {

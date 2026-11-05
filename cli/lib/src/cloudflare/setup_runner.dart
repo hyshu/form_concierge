@@ -515,7 +515,7 @@ Then re-run setup.
       'global',
       'activate',
       'jaspr_cli',
-      '0.23.1',
+      '0.23.5',
     ]);
     _jasprCmd = const ['dart', 'pub', 'global', 'run', 'jaspr_cli:jaspr'];
   }

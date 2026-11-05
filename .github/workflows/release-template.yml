@@ -15,15 +15,15 @@ jobs:
     timeout-minutes: 45
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7.1.0
         with:
-          node-version: "22"
+          node-version-file: .node-version
 
-      - uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@v2.23.0
         with:
-          flutter-version: "3.44.2"
+          flutter-version: "3.47.9"
           cache: true
 
       - name: Add Dart pub cache to PATH
@@ -38,7 +38,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
 

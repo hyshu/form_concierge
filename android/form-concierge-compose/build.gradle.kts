@@ -12,7 +12,7 @@ version = "0.4.0-SNAPSHOT"
 
 android {
     namespace = "com.formconcierge.compose"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 24
@@ -47,7 +47,7 @@ kotlin {
 }
 
 dependencies {
-    val composeBom = platform("androidx.compose:compose-bom:2026.06.00")
+    val composeBom = platform("androidx.compose:compose-bom:2026.09.00")
 
     api(composeBom)
     api("androidx.compose.material3:material3")
@@ -55,10 +55,10 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.core:core-ktx:1.18.0")
+    implementation("androidx.core:core-ktx:1.19.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")
-    api("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
-    api("com.squareup.okhttp3:okhttp:5.4.0")
+    api("org.jetbrains.kotlinx:kotlinx-serialization-json:1.12.0")
+    api("com.squareup.okhttp3:okhttp:5.5.1")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
 

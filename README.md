@@ -4,17 +4,17 @@ Survey forms backed by Cloudflare Workers and D1. Respondents use generated anon
 
 ## Project Structure
 
-| Directory | Package / role | Description |
-|-----------|----------------|-------------|
-| `worker/` | (deployed API) | Cloudflare Workers API and D1 migrations |
-| `client/` | `form_concierge_client` `0.3.0` | Published Dart REST client shared by Flutter apps and Jaspr |
-| `widget/` | `form_concierge` `0.3.0` | Published Flutter package for embedding surveys |
-| `cli/` | `form_concierge_cli` `0.3.0` | Published setup / doctor CLI (`form_concierge setup cloudflare`) |
-| `admin_dashboard/` | app `0.3.0` | Flutter admin dashboard |
-| `apple/` | SPM | Swift Package for embedding surveys in SwiftUI and UIKit apps |
-| `android/` | Gradle / Compose | Android library for surveys, inquiry history, and admin replies |
-| `web/` | app | Jaspr web survey form |
-| `widget/examples/` | apps | Full example apps demonstrating widget package usage |
+| Directory          | Package / role                  | Description                                                      |
+| ------------------ | ------------------------------- | ---------------------------------------------------------------- |
+| `worker/`          | (deployed API)                  | Cloudflare Workers API and D1 migrations                         |
+| `client/`          | `form_concierge_client` `0.3.0` | Published Dart REST client shared by Flutter apps and Jaspr      |
+| `widget/`          | `form_concierge` `0.3.0`        | Published Flutter package for embedding surveys                  |
+| `cli/`             | `form_concierge_cli` `0.3.0`    | Published setup / doctor CLI (`form_concierge setup cloudflare`) |
+| `admin_dashboard/` | app `0.3.0`                     | Flutter admin dashboard                                          |
+| `apple/`           | SPM                             | Swift Package for embedding surveys in SwiftUI and UIKit apps    |
+| `android/`         | Gradle / Compose                | Android library for surveys, inquiry history, and admin replies  |
+| `web/`             | app                             | Jaspr web survey form                                            |
+| `widget/examples/` | apps                            | Full example apps demonstrating widget package usage             |
 
 The Dart client, Flutter widget, and setup CLI are pub.dev packages. Apps and
 deployment templates remain source distributions.
@@ -60,10 +60,23 @@ versions cannot be deleted; fixes require a new version.
 
 ### Prerequisites
 
-- Dart SDK / Flutter
-- Node.js
+- Flutter 3.47.9 / Dart 3.13 (package minimum: Dart 3.12)
+- Node.js 26.13.0 LTS (`.node-version`)
 - Wrangler CLI via `npm install` in `worker/`
-- Jaspr CLI: `dart pub global activate jaspr_cli 0.23.4`
+- Jaspr CLI: `dart pub global activate jaspr_cli 0.23.5`
+
+Jaspr 0.23.5 requires the build 4.x / analyzer 12.x toolchain. Keep the
+compatible versions resolved in `web/pubspec.lock` until Jaspr supports newer
+build tools. `universal_web` also pins `web` to 1.1.1.
+
+The E2E server uses a scoped `compression` override because `serve` 14.2.6
+pins a vulnerable version. Remove the override when `serve` includes 1.8.2 or later.
+
+Android examples use AGP 9.5, Kotlin 2.4.21, and compileSdk 37. The legacy
+Kotlin/Android DSL flags remain for Flutter plugin compatibility. The full
+example also allows the legacy ProGuard file requested by stable
+`flutter_inappwebview_android` 1.1.3; remove that opt-out when its AGP 9 fix
+reaches a stable release.
 
 ### Setup
 

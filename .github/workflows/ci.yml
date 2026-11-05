@@ -17,15 +17,15 @@ jobs:
     timeout-minutes: 45
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7.1.0
         with:
-          node-version: "22"
+          node-version-file: .node-version
 
-      - uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@v2.23.0
         with:
-          flutter-version: "3.47.0"
+          flutter-version: "3.47.9"
           cache: true
 
       - name: Add Dart pub cache to PATH
@@ -43,7 +43,7 @@ jobs:
     timeout-minutes: 60
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
 
       - name: Run API, admin, web, and Flutter embedded form E2E in Docker
         run: docker compose -f tool/ci/docker-compose.e2e.yml run --rm e2e
@@ -54,7 +54,7 @@ jobs:
     timeout-minutes: 20
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
 
       - name: Test Apple Swift package
         working-directory: apple
@@ -66,23 +66,23 @@ jobs:
     timeout-minutes: 20
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6.2.0
         with:
           distribution: temurin
           java-version: "21"
 
-      - uses: android-actions/setup-android@v3
+      - uses: android-actions/setup-android@v4.0.4
         with:
           packages: platform-tools
 
       - name: Install Android SDK platform
-        run: sdkmanager "platforms;android-36"
+        run: sdkmanager "platforms;android-37.0"
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6.4.1
         with:
-          gradle-version: "9.1.0"
+          gradle-version: "9.8.2"
 
       - name: Test and build Compose library
         run: >-
