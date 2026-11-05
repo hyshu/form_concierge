@@ -53,6 +53,7 @@ class FakeCloudflare {
     this.secrets = [];
     this.versions = 0;
     this.pages = { admin: 0, web: 0 };
+    this.namespaces = [];
   }
 
   saveProfile() {
@@ -136,6 +137,10 @@ class FakeCloudflare {
     const command = args.slice(0, 3).join(" ");
     if (args[0] === "whoami")
       return json(this.identitySequence?.shift() ?? this.identity);
+    if (command === "kv namespace list")
+      return this.failure === "kv-read"
+        ? fail("Authentication error [code: 10000]")
+        : json(this.namespaces);
     if (args[0] === "deployments") {
       return this.worker
         ? json(
@@ -326,6 +331,31 @@ test("the complete lifecycle verifies updates and removes all owned resources", 
   assert.ok(!log.includes("ci-token-value"));
   for (const call of cloud.calls)
     assert.equal(call.options.env.CF_CLI_E2E_WORKER_API_TOKEN, undefined);
+});
+
+test("missing KV read access stops before creating resources or an ownership journal", async (t) => {
+  const { runner, cloud } = fixture(t);
+  cloud.failure = "kv-read";
+  await assert.rejects(runner.run(), /Workers KV Storage Read/);
+  assert.deepEqual(cloud.mutations, []);
+  assert.equal(existsSync(runner.journalPath), false);
+  await runner.cleanup();
+  assert.deepEqual(cloud.mutations, []);
+});
+
+test("legacy Workers Sites namespaces are preserved when their names collide", async (t) => {
+  for (const suffix of ["", "_preview"]) {
+    const { runner, cloud } = fixture(t);
+    cloud.namespaces = [
+      {
+        id: id(99),
+        title: `__${cloud.plan.worker}-workers_sites_assets${suffix}`,
+      },
+    ];
+    await assert.rejects(runner.run(), /Existing Workers Sites assets/);
+    assert.deepEqual(cloud.mutations, []);
+    assert.equal(existsSync(runner.journalPath), false);
+  }
 });
 
 test("trimmed credentials are also redacted and internal newlines are rejected", async (t) => {

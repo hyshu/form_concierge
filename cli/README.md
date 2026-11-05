@@ -275,6 +275,10 @@ For `CF_CLI_E2E_API_TOKEN`, grant the required permissions only on account
 - D1 Edit, Workers R2 Storage Edit, Cloudflare Pages Edit, Secrets Store Edit.
 - Account Settings Read, plus User Details Read and Memberships Read so
   `wrangler whoami --json` can verify the email and account.
+- Workers KV Storage Read: Wrangler checks for legacy Workers Sites namespaces
+  after deleting a Worker, even though this deployment does not use KV. KV write
+  access is not required. The runner verifies this read access before creation
+  and refuses existing legacy asset namespaces matching this run's Worker name.
 
 The deployment token and Worker token serve different purposes. A token with
 only Secrets Store Edit cannot create all the test resources. Enter token values
