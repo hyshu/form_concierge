@@ -392,12 +392,12 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Response notifications are active": "Antwortbenachrichtigungen sind aktiv",
     "Response notifications are paused":
         "Antwortbenachrichtigungen werden angehalten",
-    "Flutter follow-up interview": "Flutter-Folgeinterview",
-    "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.":
-        "Generieren Sie nach dem Hauptformular optional adaptive Folgefragen in Flutter-Apps. Springt direkt zur Fertigstellung, wenn keine benötigt wird.",
+    "In-app AI follow-up interview": "KI-Folgeinterview in der App",
+    "After the main form, optionally generate AI follow-up questions in Flutter, SwiftUI, UIKit, and Android Compose apps. The public web form is not supported. Skips straight to completion when none are needed.":
+        "Nach dem Hauptformular können Flutter-, SwiftUI-, UIKit- und Android-Compose-Apps optionale KI-Folgefragen anzeigen. Das öffentliche Webformular wird nicht unterstützt. Sind keine Fragen nötig, wird direkt abgeschlossen.",
     "AI follow-up prompt (optional)": "AI-Follow-up-Prompt (optional)",
-    "Extra instructions included when generating AI follow-up questions for Flutter.":
-        "Zusätzliche Anweisungen für die Generierung von AI-Folgefragen in Flutter.",
+    "Extra instructions included when generating AI follow-up questions in supported apps.":
+        "Zusätzliche Anweisungen für KI-Folgefragen in unterstützten Apps.",
     "e.g. Prefer questions about product quality; avoid asking for contact info.":
         "z. B. Fragen zur Produktqualität bevorzugen; keine Kontaktdaten erfragen.",
     "CAPTCHA verification": "CAPTCHA-Verifizierung",
@@ -631,12 +631,12 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Publish survey confirmation":
         "Are you sure you want to publish this survey?\n\nOnce published, you will not be able to edit the questions.",
     "Title": "Title",
-    "Flutter follow-up interview": "Flutter follow-up interview",
-    "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.":
-        "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.",
+    "In-app AI follow-up interview": "In-app AI follow-up interview",
+    "After the main form, optionally generate AI follow-up questions in Flutter, SwiftUI, UIKit, and Android Compose apps. The public web form is not supported. Skips straight to completion when none are needed.":
+        "After the main form, optionally generate AI follow-up questions in Flutter, SwiftUI, UIKit, and Android Compose apps. The public web form is not supported. Skips straight to completion when none are needed.",
     "AI follow-up prompt (optional)": "AI follow-up prompt (optional)",
-    "Extra instructions included when generating AI follow-up questions for Flutter.":
-        "Extra instructions included when generating AI follow-up questions for Flutter.",
+    "Extra instructions included when generating AI follow-up questions in supported apps.":
+        "Extra instructions included when generating AI follow-up questions in supported apps.",
     "e.g. Prefer questions about product quality; avoid asking for contact info.":
         "e.g. Prefer questions about product quality; avoid asking for contact info.",
     "CAPTCHA verification": "CAPTCHA verification",
@@ -1342,12 +1342,13 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Anonymous · {id}": "Anónimo · {id}",
     "View answers": "Ver respuestas",
     "No answers for this response": "No hay respuestas para esta respuesta.",
-    "Flutter follow-up interview": "Entrevista de seguimiento de Flutter",
-    "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.":
-        "Después del formulario principal, opcionalmente genera preguntas de seguimiento adaptativas en las aplicaciones Flutter. Salta directamente hasta el final cuando no se necesita ninguno.",
+    "In-app AI follow-up interview":
+        "Entrevista de seguimiento con IA en la app",
+    "After the main form, optionally generate AI follow-up questions in Flutter, SwiftUI, UIKit, and Android Compose apps. The public web form is not supported. Skips straight to completion when none are needed.":
+        "Tras el formulario principal, las apps Flutter, SwiftUI, UIKit y Android Compose pueden generar preguntas opcionales con IA. El formulario web público no es compatible. Si no hacen falta preguntas, se finaliza directamente.",
     "AI follow-up prompt (optional)": "Prompt de seguimiento con IA (opcional)",
-    "Extra instructions included when generating AI follow-up questions for Flutter.":
-        "Instrucciones adicionales para generar preguntas de seguimiento con IA en Flutter.",
+    "Extra instructions included when generating AI follow-up questions in supported apps.":
+        "Instrucciones adicionales para generar preguntas de seguimiento con IA en apps compatibles.",
     "e.g. Prefer questions about product quality; avoid asking for contact info.":
         "p. ej. Preferir preguntas sobre calidad del producto; no pedir datos de contacto.",
     "CAPTCHA verification": "Verificación CAPTCHA",
@@ -1806,12 +1807,13 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Anonymous · {id}": "Anonyme · {id}",
     "View answers": "Afficher les réponses",
     "No answers for this response": "Aucune réponse pour cette réponse",
-    "Flutter follow-up interview": "Entretien de suivi de Flutter",
-    "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.":
-        "Après le formulaire principal, générez éventuellement des questions de suivi adaptatives dans les applications Flutter. Passe directement à la fin lorsqu'aucun n'est nécessaire.",
+    "In-app AI follow-up interview":
+        "Entretien de suivi par IA dans l’application",
+    "After the main form, optionally generate AI follow-up questions in Flutter, SwiftUI, UIKit, and Android Compose apps. The public web form is not supported. Skips straight to completion when none are needed.":
+        "Après le formulaire principal, les applications Flutter, SwiftUI, UIKit et Android Compose peuvent générer des questions facultatives par IA. Le formulaire web public n’est pas pris en charge. Si aucune question n’est nécessaire, le formulaire se termine directement.",
     "AI follow-up prompt (optional)": "Invite de suivi IA (facultatif)",
-    "Extra instructions included when generating AI follow-up questions for Flutter.":
-        "Instructions supplémentaires pour générer les questions de suivi IA dans Flutter.",
+    "Extra instructions included when generating AI follow-up questions in supported apps.":
+        "Instructions supplémentaires pour les questions de suivi par IA dans les applications compatibles.",
     "e.g. Prefer questions about product quality; avoid asking for contact info.":
         "ex. Préférer les questions sur la qualité produit ; ne pas demander de coordonnées.",
     "CAPTCHA verification": "Vérification CAPTCHA",
@@ -2257,12 +2259,12 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Anonymous · {id}": "Anonimo · {id}",
     "View answers": "Visualizza le risposte",
     "No answers for this response": "Nessuna risposta per questa risposta",
-    "Flutter follow-up interview": "Intervista di follow-up su Flutter",
-    "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.":
-        "Dopo il modulo principale, puoi facoltativamente generare domande di follow-up adattive nelle app Flutter. Passa direttamente al completamento quando non sono necessari.",
+    "In-app AI follow-up interview": "Intervista di follow-up con IA nell’app",
+    "After the main form, optionally generate AI follow-up questions in Flutter, SwiftUI, UIKit, and Android Compose apps. The public web form is not supported. Skips straight to completion when none are needed.":
+        "Dopo il modulo principale, le app Flutter, SwiftUI, UIKit e Android Compose possono generare domande facoltative con IA. Il modulo web pubblico non è supportato. Se non servono domande, si passa direttamente al completamento.",
     "AI follow-up prompt (optional)": "Prompt di follow-up IA (facoltativo)",
-    "Extra instructions included when generating AI follow-up questions for Flutter.":
-        "Istruzioni aggiuntive per generare domande di follow-up IA in Flutter.",
+    "Extra instructions included when generating AI follow-up questions in supported apps.":
+        "Istruzioni aggiuntive per le domande di follow-up con IA nelle app supportate.",
     "e.g. Prefer questions about product quality; avoid asking for contact info.":
         "es. Preferire domande sulla qualità del prodotto; non chiedere contatti.",
     "CAPTCHA verification": "Verifica CAPTCHA",
@@ -2425,12 +2427,12 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Publish survey confirmation":
         "このアンケートを公開してもよろしいですか？\n\n公開後は質問を編集できなくなります。",
     "Title": "タイトル",
-    "Flutter follow-up interview": "Flutter 追加インタビュー",
-    "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.":
-        "本編の回答後、Flutter アプリのみ追加の適応型質問を生成します。不要な場合はそのまま完了します。",
+    "In-app AI follow-up interview": "アプリ内のAI追加インタビュー",
+    "After the main form, optionally generate AI follow-up questions in Flutter, SwiftUI, UIKit, and Android Compose apps. The public web form is not supported. Skips straight to completion when none are needed.":
+        "通常フォームの回答後、Flutter・SwiftUI・UIKit・Android ComposeアプリでAIによる追加質問を任意で生成します。公開Webフォームは未対応です。追加質問が不要ならそのまま完了します。",
     "AI follow-up prompt (optional)": "AIフォローアップ用プロンプト（任意）",
-    "Extra instructions included when generating AI follow-up questions for Flutter.":
-        "FlutterのAIフォローアップ質問生成時にプロンプトへ含める追加指示です。",
+    "Extra instructions included when generating AI follow-up questions in supported apps.":
+        "対応アプリでAIの追加質問を生成する際に含める追加指示です。",
     "e.g. Prefer questions about product quality; avoid asking for contact info.":
         "例: 製品品質に関する質問を優先。連絡先の入力は求めない。",
     "CAPTCHA verification": "CAPTCHA 認証",
@@ -3024,12 +3026,12 @@ const adminLocalizedValues = <String, Map<String, String>>{
         "새로운 응답이 제출될 때마다 이메일을 보내세요.",
     "Response notifications are active": "응답 알림이 활성화되었습니다.",
     "Response notifications are paused": "응답 알림이 일시중지되었습니다.",
-    "Flutter follow-up interview": "Flutter 후속 인터뷰",
-    "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.":
-        "기본 양식 후에 선택적으로 Flutter 앱에서 적응형 후속 질문을 생성하세요. 필요하지 않은 경우 바로 완료로 건너뜁니다.",
+    "In-app AI follow-up interview": "앱 내 AI 후속 인터뷰",
+    "After the main form, optionally generate AI follow-up questions in Flutter, SwiftUI, UIKit, and Android Compose apps. The public web form is not supported. Skips straight to completion when none are needed.":
+        "기본 설문 제출 후 Flutter, SwiftUI, UIKit, Android Compose 앱에서 선택적인 AI 후속 질문을 생성합니다. 공개 웹 설문은 지원하지 않습니다. 추가 질문이 필요 없으면 바로 완료됩니다.",
     "AI follow-up prompt (optional)": "AI 후속 질문 프롬프트(선택 사항)",
-    "Extra instructions included when generating AI follow-up questions for Flutter.":
-        "Flutter AI 후속 질문 생성 시 프롬프트에 포함되는 추가 지시입니다.",
+    "Extra instructions included when generating AI follow-up questions in supported apps.":
+        "지원되는 앱에서 AI 후속 질문을 생성할 때 포함할 추가 지침입니다.",
     "e.g. Prefer questions about product quality; avoid asking for contact info.":
         "예: 제품 품질 관련 질문을 우선하고, 연락처 요청은 피하세요.",
     "CAPTCHA verification": "CAPTCHA 인증",
@@ -3507,12 +3509,12 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Anonymous · {id}": "ไม่ระบุชื่อ · {id}",
     "View answers": "ดูคำตอบ",
     "No answers for this response": "ไม่มีคำตอบสำหรับคำตอบนี้",
-    "Flutter follow-up interview": "สัมภาษณ์ติดตามผล Flutter",
-    "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.":
-        "หลังจากแบบฟอร์มหลัก ให้เลือกสร้างคำถามติดตามผลแบบปรับเปลี่ยนได้ในแอป Flutter ข้ามไปจนจบเมื่อไม่จำเป็น",
+    "In-app AI follow-up interview": "การสัมภาษณ์ติดตามผลด้วย AI ในแอป",
+    "After the main form, optionally generate AI follow-up questions in Flutter, SwiftUI, UIKit, and Android Compose apps. The public web form is not supported. Skips straight to completion when none are needed.":
+        "หลังส่งแบบฟอร์มหลัก แอป Flutter, SwiftUI, UIKit และ Android Compose สามารถสร้างคำถามเพิ่มเติมด้วย AI ซึ่งตอบหรือไม่ก็ได้ แบบฟอร์มเว็บสาธารณะยังไม่รองรับ หากไม่จำเป็นต้องถามเพิ่ม จะจบทันที",
     "AI follow-up prompt (optional)": "พรอมต์คำถามติดตามผล AI (ไม่บังคับ)",
-    "Extra instructions included when generating AI follow-up questions for Flutter.":
-        "คำสั่งเพิ่มเติมเมื่อสร้างคำถามติดตามผล AI สำหรับ Flutter",
+    "Extra instructions included when generating AI follow-up questions in supported apps.":
+        "คำแนะนำเพิ่มเติมสำหรับสร้างคำถามติดตามผลด้วย AI ในแอปที่รองรับ",
     "e.g. Prefer questions about product quality; avoid asking for contact info.":
         "เช่น เน้นคำถามคุณภาพสินค้า อย่าขอข้อมูลติดต่อ",
     "CAPTCHA verification": "การยืนยัน CAPTCHA",
@@ -3948,12 +3950,12 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Anonymous · {id}": "İsimsiz · {id}",
     "View answers": "Yanıtları görüntüle",
     "No answers for this response": "Bu yanıt için yanıt yok",
-    "Flutter follow-up interview": "Flutter takip röportajı",
-    "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.":
-        "Ana formdan sonra isteğe bağlı olarak Flutter uygulamalarında uyarlanabilir takip soruları oluşturun. Hiçbirine ihtiyaç duyulmadığında doğrudan tamamlamaya atlar.",
+    "In-app AI follow-up interview": "Uygulama içi yapay zekâ takip görüşmesi",
+    "After the main form, optionally generate AI follow-up questions in Flutter, SwiftUI, UIKit, and Android Compose apps. The public web form is not supported. Skips straight to completion when none are needed.":
+        "Ana formdan sonra Flutter, SwiftUI, UIKit ve Android Compose uygulamalarında isteğe bağlı yapay zekâ takip soruları oluşturulur. Herkese açık web formu desteklenmez. Ek soru gerekmiyorsa doğrudan tamamlanır.",
     "AI follow-up prompt (optional)": "AI takip istemi (isteğe bağlı)",
-    "Extra instructions included when generating AI follow-up questions for Flutter.":
-        "Flutter için AI takip soruları üretilirken kullanılan ek yönergeler.",
+    "Extra instructions included when generating AI follow-up questions in supported apps.":
+        "Desteklenen uygulamalarda yapay zekâ takip soruları için ek talimatlar.",
     "e.g. Prefer questions about product quality; avoid asking for contact info.":
         "örn. Ürün kalitesi sorularını tercih edin; iletişim bilgisi istemeyin.",
     "CAPTCHA verification": "CAPTCHA doğrulaması",
@@ -4295,12 +4297,12 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Send an email every time a new response is submitted.": "每次提交新回复时发送电子邮件。",
     "Response notifications are active": "响应通知已激活",
     "Response notifications are paused": "响应通知已暂停",
-    "Flutter follow-up interview": "Flutter后续采访",
-    "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.":
-        "在主表单之后，可以选择在 Flutter 应用程序中生成自适应后续问题。当不需要时直接跳到完成。",
+    "In-app AI follow-up interview": "应用内AI追加访谈",
+    "After the main form, optionally generate AI follow-up questions in Flutter, SwiftUI, UIKit, and Android Compose apps. The public web form is not supported. Skips straight to completion when none are needed.":
+        "提交主要表单后，可在Flutter、SwiftUI、UIKit和Android Compose应用中生成可选的AI追加问题。公开网页表单暂不支持。无需追加问题时直接完成。",
     "AI follow-up prompt (optional)": "AI 跟进提示词（可选）",
-    "Extra instructions included when generating AI follow-up questions for Flutter.":
-        "生成 Flutter AI 跟进问题时写入提示词的额外说明。",
+    "Extra instructions included when generating AI follow-up questions in supported apps.":
+        "在支持的应用中生成AI追加问题时使用的额外指示。",
     "e.g. Prefer questions about product quality; avoid asking for contact info.":
         "例如：优先询问产品质量；不要索要联系方式。",
     "CAPTCHA verification": "CAPTCHA 验证",
@@ -4693,12 +4695,12 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Send an email every time a new response is submitted.": "每次提交新回覆時發送電子郵件。",
     "Response notifications are active": "回應通知已激活",
     "Response notifications are paused": "回應通知已暫停",
-    "Flutter follow-up interview": "Flutter後續採訪",
-    "After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.":
-        "在主表單之後，可以選擇在 Flutter 應用程式中產生自適應後續問題。當不需要時直接跳到完成。",
+    "In-app AI follow-up interview": "應用程式內AI追加訪談",
+    "After the main form, optionally generate AI follow-up questions in Flutter, SwiftUI, UIKit, and Android Compose apps. The public web form is not supported. Skips straight to completion when none are needed.":
+        "提交主要表單後，可在Flutter、SwiftUI、UIKit和Android Compose應用程式中產生選填的AI追加問題。公開網頁表單尚未支援。無需追加問題時直接完成。",
     "AI follow-up prompt (optional)": "AI 跟進提示詞（可選）",
-    "Extra instructions included when generating AI follow-up questions for Flutter.":
-        "產生 Flutter AI 跟進問題時寫入提示詞的額外說明。",
+    "Extra instructions included when generating AI follow-up questions in supported apps.":
+        "在支援的應用程式中產生AI追加問題時使用的額外指示。",
     "e.g. Prefer questions about product quality; avoid asking for contact info.":
         "例如：優先詢問產品品質；不要索取聯絡方式。",
     "CAPTCHA verification": "CAPTCHA 驗證",

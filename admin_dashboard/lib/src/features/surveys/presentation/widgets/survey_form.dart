@@ -216,10 +216,10 @@ class SurveyFormWidgetState extends State<SurveyForm> {
             const SizedBox(height: 16),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: Text(context.tr('Flutter follow-up interview')),
+              title: Text(context.tr('In-app AI follow-up interview')),
               subtitle: Text(
                 context.tr(
-                  'After the main form, optionally generate adaptive follow-up questions in Flutter apps. Skips straight to completion when none are needed.',
+                  'After the main form, optionally generate AI follow-up questions in Flutter, SwiftUI, UIKit, and Android Compose apps. The public web form is not supported. Skips straight to completion when none are needed.',
                 ),
               ),
               value: _followUpEnabled,
@@ -242,7 +242,7 @@ class SurveyFormWidgetState extends State<SurveyForm> {
                 ),
                 subtitle: Text(
                   context.tr(
-                    'Extra instructions included when generating AI follow-up questions for Flutter.',
+                    'Extra instructions included when generating AI follow-up questions in supported apps.',
                   ),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),

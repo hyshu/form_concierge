@@ -273,10 +273,10 @@ void main() {
       (tester) async {
         await tester.pumpWidget(buildSubject(aiGenerationEnabled: true));
 
-        expect(find.text('Flutter follow-up interview'), findsOneWidget);
+        expect(find.text('In-app AI follow-up interview'), findsOneWidget);
         expect(find.text('AI follow-up prompt (optional)'), findsNothing);
 
-        await tester.tap(find.text('Flutter follow-up interview'));
+        await tester.tap(find.text('In-app AI follow-up interview'));
         await tester.pumpAndSettle();
 
         expect(find.text('AI follow-up prompt (optional)'), findsOneWidget);
