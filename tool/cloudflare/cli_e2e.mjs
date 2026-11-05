@@ -330,6 +330,29 @@ export class CliE2E {
     );
   }
 
+  verifyWorkerDeletion() {
+    // Wrangler also scans legacy Workers Sites KV namespaces after deleting a
+    // Worker, even when this application does not use KV.
+    const result = this.wrangler(["kv", "namespace", "list"], {
+      allowFailure: true,
+    });
+    assert.equal(
+      result.status,
+      0,
+      "Could not verify Workers KV Storage Read access required by Wrangler deletion",
+    );
+    const namespaces = JSON.parse(result.stdout);
+    assert.ok(Array.isArray(namespaces), "Unrecognized KV namespace listing");
+    const assetNames = new Set([
+      `__${this.plan.worker}-workers_sites_assets`,
+      `__${this.plan.worker}-workers_sites_assets_preview`,
+    ]);
+    assert.ok(
+      !namespaces.some(({ title }) => assetNames.has(title)),
+      "Existing Workers Sites assets share this run's name; refusing to delete them",
+    );
+  }
+
   secrets(storeId) {
     return parseSecrets(
       this.wrangler(
@@ -553,6 +576,7 @@ export class CliE2E {
       !existsSync(join(this.root, "worker", "wrangler.jsonc")),
       "Use a fresh checkout; refusing to replace an existing local Wrangler config",
     );
+    this.verifyWorkerDeletion();
     this.assertAbsent(this.inventory());
     assert.deepEqual(
       this.stores(),
