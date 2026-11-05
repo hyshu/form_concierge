@@ -26,6 +26,7 @@ import { insertQuestion, normalizeQuestionValidation, normalizeVisibilityConditi
 import { collectFileKeysForSurveys, deleteMediaKeys } from './media';
 import { DEFAULT_FORM_CONTENT_LOCALE, LocalizedText, localizedTextFor, requireLocalizedText } from './localization';
 import { createSurveyNotifications, parseSurveyNotifications } from './notification_settings';
+import { parseSurveyCreationRules, saveSurveyCreationRules } from './survey_creation_rules';
 
 /**
  * Returns a paginated survey list, optionally restricted to one project.
@@ -147,16 +148,21 @@ export async function createSurveyWithQuestions(request: Request, env: Env, admi
   const projectId = requireProjectId(survey.projectId);
   const project = await mustProject(env.DB, projectId);
   const questions = parseQuestionInputs(body.questions, projectSupportedLocales(project));
+  const rules = parseSurveyCreationRules(body.visibilityRules, questions);
   const created = await insertSurvey(env.DB, survey, admin, project);
 
   try {
+    const createdQuestions: QuestionRow[] = [];
     for (let i = 0; i < questions.length; i++) {
-      await insertQuestion(env.DB, {
-        ...questions[i],
-        surveyId: created.id,
-        orderIndex: i,
-      });
+      createdQuestions.push(
+        await insertQuestion(env.DB, {
+          ...questions[i],
+          surveyId: created.id,
+          orderIndex: i,
+        }),
+      );
     }
+    await saveSurveyCreationRules(env.DB, created.id, createdQuestions, rules);
     await createSurveyNotifications(env.DB, created.id, notifications);
   } catch (error) {
     // Cascade deletes questions/choices so a mid-loop failure leaves no half survey.

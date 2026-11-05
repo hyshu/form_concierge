@@ -200,8 +200,18 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Visibility rule match": "Übereinstimmung der Sichtbarkeitsregeln",
     "All rules": "Alle Regeln",
     "Any rule": "Eine Regel",
-    "Add conditions from Visibility rules → Add rule below this question. For a new survey, create it first. With no rules, this question is always visible.":
-        "Füge Bedingungen unter dieser Frage über „Sichtbarkeitsregeln“ → „Regel hinzufügen“ hinzu. Erstelle eine neue Umfrage zuerst und öffne sie dann zum Bearbeiten. Ohne Regeln ist diese Frage immer sichtbar.",
+    "The first question is always visible.":
+        "Die erste Frage ist immer sichtbar.",
+    "When all conditions match": "Wenn alle Bedingungen zutreffen",
+    "When any condition matches": "Wenn eine Bedingung zutrifft",
+    "Enter a value for each condition.":
+        "Gib für jede Bedingung einen Wert ein.",
+    "Edit conditions in Visibility rules on the question card.":
+        "Bearbeite Bedingungen unter Sichtbarkeitsregeln auf der Fragekarte.",
+    "Remove dependent visibility rules before changing this item.":
+        "Entferne zuerst die Sichtbarkeitsregeln, die dieses Element verwenden.",
+    "Condition questions must stay before their dependent questions.":
+        "Bedingungsfragen müssen vor den davon abhängigen Fragen bleiben.",
     "Required": "Erforderlich",
     "Respondents must answer this question":
         "Befragte müssen diese Frage beantworten",
@@ -708,8 +718,17 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Visibility rule match": "Visibility rule match",
     "All rules": "All rules",
     "Any rule": "Any rule",
-    "Add conditions from Visibility rules → Add rule below this question. For a new survey, create it first. With no rules, this question is always visible.":
-        "Add conditions from Visibility rules → Add rule below this question. For a new survey, create it first. With no rules, this question is always visible.",
+    "The first question is always visible.":
+        "The first question is always visible.",
+    "When all conditions match": "When all conditions match",
+    "When any condition matches": "When any condition matches",
+    "Enter a value for each condition.": "Enter a value for each condition.",
+    "Edit conditions in Visibility rules on the question card.":
+        "Edit conditions in Visibility rules on the question card.",
+    "Remove dependent visibility rules before changing this item.":
+        "Remove dependent visibility rules before changing this item.",
+    "Condition questions must stay before their dependent questions.":
+        "Condition questions must stay before their dependent questions.",
     "Required": "Required",
     "Respondents must answer this question":
         "Respondents must answer this question",
@@ -1123,8 +1142,18 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Visibility rule match": "Coincidencia de reglas de visibilidad",
     "All rules": "Todas las reglas",
     "Any rule": "Cualquier regla",
-    "Add conditions from Visibility rules → Add rule below this question. For a new survey, create it first. With no rules, this question is always visible.":
-        "Añade condiciones debajo de esta pregunta en «Reglas de visibilidad» → «Añadir regla». Si la encuesta es nueva, créala primero y vuelve a abrirla para editarla. Sin reglas, esta pregunta siempre será visible.",
+    "The first question is always visible.":
+        "La primera pregunta siempre es visible.",
+    "When all conditions match": "Cuando se cumplen todas las condiciones",
+    "When any condition matches": "Cuando se cumple alguna condición",
+    "Enter a value for each condition.":
+        "Introduce un valor para cada condición.",
+    "Edit conditions in Visibility rules on the question card.":
+        "Edita las condiciones en Reglas de visibilidad de la tarjeta de la pregunta.",
+    "Remove dependent visibility rules before changing this item.":
+        "Elimina primero las reglas de visibilidad que dependen de este elemento.",
+    "Condition questions must stay before their dependent questions.":
+        "Las preguntas de condición deben ir antes de las que dependen de ellas.",
     "Required": "Obligatorio",
     "Respondents must answer this question":
         "Los encuestados deben responder esta pregunta",
@@ -1572,8 +1601,18 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Visibility rule match": "Correspondance des règles de visibilité",
     "All rules": "Toutes les règles",
     "Any rule": "N'importe quelle règle",
-    "Add conditions from Visibility rules → Add rule below this question. For a new survey, create it first. With no rules, this question is always visible.":
-        "Ajoutez des conditions sous cette question via « Règles de visibilité » → « Ajouter une règle ». Pour un nouveau questionnaire, créez-le d’abord puis ouvrez-le en modification. Sans règles, cette question reste toujours visible.",
+    "The first question is always visible.":
+        "La première question est toujours visible.",
+    "When all conditions match": "Si toutes les conditions sont remplies",
+    "When any condition matches": "Si une condition est remplie",
+    "Enter a value for each condition.":
+        "Saisissez une valeur pour chaque condition.",
+    "Edit conditions in Visibility rules on the question card.":
+        "Modifiez les conditions dans Règles de visibilité sur la carte de la question.",
+    "Remove dependent visibility rules before changing this item.":
+        "Supprimez d’abord les règles de visibilité qui utilisent cet élément.",
+    "Condition questions must stay before their dependent questions.":
+        "Les questions sources doivent précéder celles qui en dépendent.",
     "Required": "Obligatoire",
     "Respondents must answer this question":
         "Les répondants doivent répondre à cette question",
@@ -2035,8 +2074,18 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Visibility rule match": "Corrispondenza regole di visibilità",
     "All rules": "Tutte le regole",
     "Any rule": "Qualsiasi regola",
-    "Add conditions from Visibility rules → Add rule below this question. For a new survey, create it first. With no rules, this question is always visible.":
-        "Aggiungi condizioni sotto questa domanda da «Regole di visibilità» → «Aggiungi regola». Per un nuovo sondaggio, crealo prima e riaprilo in modifica. Senza regole, questa domanda è sempre visibile.",
+    "The first question is always visible.":
+        "La prima domanda è sempre visibile.",
+    "When all conditions match": "Quando tutte le condizioni sono soddisfatte",
+    "When any condition matches": "Quando una condizione è soddisfatta",
+    "Enter a value for each condition.":
+        "Inserisci un valore per ogni condizione.",
+    "Edit conditions in Visibility rules on the question card.":
+        "Modifica le condizioni in Regole di visibilità nella scheda della domanda.",
+    "Remove dependent visibility rules before changing this item.":
+        "Rimuovi prima le regole di visibilità che dipendono da questo elemento.",
+    "Condition questions must stay before their dependent questions.":
+        "Le domande di origine devono precedere quelle che ne dipendono.",
     "Required": "Obbligatorio",
     "Respondents must answer this question":
         "I rispondenti devono rispondere a questa domanda",
@@ -2502,8 +2551,16 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Visibility rule match": "表示ルールの一致条件",
     "All rules": "すべてのルール",
     "Any rule": "いずれかのルール",
-    "Add conditions from Visibility rules → Add rule below this question. For a new survey, create it first. With no rules, this question is always visible.":
-        "条件は各質問の下にある「表示ルール」→「ルールを追加」で設定します。新規アンケートは先に作成し、編集画面を開いてください。条件がなければ、この質問は常に表示されます。",
+    "The first question is always visible.": "最初の質問は常に表示されます。",
+    "When all conditions match": "すべての条件を満たすとき",
+    "When any condition matches": "いずれかの条件を満たすとき",
+    "Enter a value for each condition.": "各条件に値を入力してください。",
+    "Edit conditions in Visibility rules on the question card.":
+        "質問カードの「表示ルール」で条件を編集できます。",
+    "Remove dependent visibility rules before changing this item.":
+        "先に、この項目を参照する表示条件を削除してください。",
+    "Condition questions must stay before their dependent questions.":
+        "条件の参照元の質問は、条件付きの質問より前に置いてください。",
     "Required": "必須",
     "Respondents must answer this question": "回答者はこの質問に回答する必要があります",
     "Save": "保存",
@@ -2876,8 +2933,16 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Visibility rule match": "표시 규칙 일치 조건",
     "All rules": "모든 규칙",
     "Any rule": "규칙 중 하나",
-    "Add conditions from Visibility rules → Add rule below this question. For a new survey, create it first. With no rules, this question is always visible.":
-        "각 질문 아래의 ‘표시 규칙’ → ‘규칙 추가’에서 조건을 설정하세요. 새 설문은 먼저 만든 뒤 편집 화면을 여세요. 규칙이 없으면 이 질문은 항상 표시됩니다.",
+    "The first question is always visible.": "첫 번째 질문은 항상 표시됩니다.",
+    "When all conditions match": "모든 조건이 일치할 때",
+    "When any condition matches": "하나 이상의 조건이 일치할 때",
+    "Enter a value for each condition.": "각 조건의 값을 입력하세요.",
+    "Edit conditions in Visibility rules on the question card.":
+        "질문 카드의 표시 규칙에서 조건을 편집할 수 있습니다.",
+    "Remove dependent visibility rules before changing this item.":
+        "먼저 이 항목을 참조하는 표시 규칙을 삭제하세요.",
+    "Condition questions must stay before their dependent questions.":
+        "조건의 기준 질문은 해당 조건에 의존하는 질문보다 앞에 있어야 합니다.",
     "Required": "필수",
     "Respondents must answer this question": "응답자는 이 질문에 답해야 합니다",
     "Save": "저장",
@@ -3300,8 +3365,16 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Visibility rule match": "เงื่อนไขการแสดงผล",
     "All rules": "ทุกเงื่อนไข",
     "Any rule": "เงื่อนไขใดก็ได้",
-    "Add conditions from Visibility rules → Add rule below this question. For a new survey, create it first. With no rules, this question is always visible.":
-        "เพิ่มเงื่อนไขใต้คำถามนี้ผ่าน “เงื่อนไขการแสดงผล” → “เพิ่มเงื่อนไข” หากเป็นแบบสำรวจใหม่ ให้สร้างก่อนแล้วเปิดเพื่อแก้ไข หากไม่มีกฎ คำถามนี้จะแสดงเสมอ",
+    "The first question is always visible.": "คำถามแรกจะแสดงเสมอ",
+    "When all conditions match": "เมื่อตรงตามเงื่อนไขทั้งหมด",
+    "When any condition matches": "เมื่อตรงตามเงื่อนไขใดเงื่อนไขหนึ่ง",
+    "Enter a value for each condition.": "กรอกค่าสำหรับแต่ละเงื่อนไข",
+    "Edit conditions in Visibility rules on the question card.":
+        "แก้ไขเงื่อนไขในส่วนเงื่อนไขการแสดงผลบนการ์ดคำถาม",
+    "Remove dependent visibility rules before changing this item.":
+        "ลบเงื่อนไขการแสดงผลที่อ้างอิงรายการนี้ก่อน",
+    "Condition questions must stay before their dependent questions.":
+        "คำถามต้นทางต้องอยู่ก่อนคำถามที่ขึ้นอยู่กับเงื่อนไขนั้น",
     "Required": "จำเป็น",
     "Respondents must answer this question": "ผู้ตอบต้องตอบคำถามนี้",
     "Save": "บันทึก",
@@ -3731,8 +3804,16 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Visibility rule match": "Görünürlük kuralı eşleşmesi",
     "All rules": "Tüm kurallar",
     "Any rule": "Herhangi bir kural",
-    "Add conditions from Visibility rules → Add rule below this question. For a new survey, create it first. With no rules, this question is always visible.":
-        "Bu sorunun altındaki “Görünürlük kuralları” → “Kural ekle” bölümünden koşul ekleyin. Yeni bir anketi önce oluşturup düzenlemek için yeniden açın. Kural yoksa bu soru her zaman görünür.",
+    "The first question is always visible.": "İlk soru her zaman görünür.",
+    "When all conditions match": "Tüm koşullar eşleştiğinde",
+    "When any condition matches": "Herhangi bir koşul eşleştiğinde",
+    "Enter a value for each condition.": "Her koşul için bir değer girin.",
+    "Edit conditions in Visibility rules on the question card.":
+        "Koşulları soru kartındaki Görünürlük kuralları bölümünden düzenleyin.",
+    "Remove dependent visibility rules before changing this item.":
+        "Önce bu öğeyi kullanan görünürlük kurallarını kaldırın.",
+    "Condition questions must stay before their dependent questions.":
+        "Koşul soruları, onlara bağlı sorulardan önce gelmelidir.",
     "Required": "Zorunlu",
     "Respondents must answer this question":
         "Yanıtlayanlar bu soruyu cevaplamalıdır",
@@ -4155,8 +4236,16 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Visibility rule match": "可见性规则匹配",
     "All rules": "所有规则",
     "Any rule": "任一规则",
-    "Add conditions from Visibility rules → Add rule below this question. For a new survey, create it first. With no rules, this question is always visible.":
-        "请在各问题下方的“可见性规则”→“添加规则”中设置条件。新问卷请先创建，再打开编辑页面。没有规则时，此问题始终显示。",
+    "The first question is always visible.": "第一个问题始终显示。",
+    "When all conditions match": "满足全部条件时",
+    "When any condition matches": "满足任一条件时",
+    "Enter a value for each condition.": "请为每个条件输入值。",
+    "Edit conditions in Visibility rules on the question card.":
+        "可在问题卡片的“可见性规则”中编辑条件。",
+    "Remove dependent visibility rules before changing this item.":
+        "请先删除引用此项的显示条件。",
+    "Condition questions must stay before their dependent questions.":
+        "条件引用的问题必须排在依赖该条件的问题之前。",
     "Required": "必填",
     "Respondents must answer this question": "回答者必须回答此问题",
     "Save": "保存",
@@ -4553,8 +4642,16 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Visibility rule match": "可見性規則符合",
     "All rules": "所有規則",
     "Any rule": "任一規則",
-    "Add conditions from Visibility rules → Add rule below this question. For a new survey, create it first. With no rules, this question is always visible.":
-        "請在各問題下方的「可見性規則」→「新增規則」中設定條件。新問卷請先建立，再開啟編輯頁面。沒有規則時，此問題一律顯示。",
+    "The first question is always visible.": "第一個問題一律顯示。",
+    "When all conditions match": "符合全部條件時",
+    "When any condition matches": "符合任一條件時",
+    "Enter a value for each condition.": "請為每個條件輸入值。",
+    "Edit conditions in Visibility rules on the question card.":
+        "可在問題卡片的「可見性規則」中編輯條件。",
+    "Remove dependent visibility rules before changing this item.":
+        "請先刪除引用此項的顯示條件。",
+    "Condition questions must stay before their dependent questions.":
+        "條件引用的問題必須排在依賴該條件的問題之前。",
     "Required": "必填",
     "Respondents must answer this question": "回答者必須回答此問題",
     "Save": "儲存",

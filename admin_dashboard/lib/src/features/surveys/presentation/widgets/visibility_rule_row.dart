@@ -243,6 +243,12 @@ class _VisibilityRuleValueFieldState extends State<_VisibilityRuleValueField> {
 }
 
 List<VisibilityOperator> _operatorsFor(Question source) {
+  if (source.type == QuestionType.imageUpload) {
+    return const [
+      VisibilityOperator.isAnswered,
+      VisibilityOperator.isNotAnswered,
+    ];
+  }
   if (source.type.usesTextAnswer) {
     return const [
       VisibilityOperator.equals,

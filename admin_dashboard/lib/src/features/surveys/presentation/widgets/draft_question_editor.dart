@@ -197,6 +197,17 @@ class _DraftQuestionTileState extends State<_DraftQuestionTile> {
                           variant: HuxBadgeVariant.primary,
                           size: HuxBadgeSize.small,
                         ),
+                      if (widget.question.visibilityRules.isNotEmpty)
+                        HuxBadge(
+                          label: context.tr(
+                            widget.question.visibilityRules.length == 1
+                                ? '{count} rule'
+                                : '{count} rules',
+                            {'count': widget.question.visibilityRules.length},
+                          ),
+                          variant: HuxBadgeVariant.primary,
+                          size: HuxBadgeSize.small,
+                        ),
                     ],
                   ),
                 ],

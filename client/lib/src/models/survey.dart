@@ -823,6 +823,42 @@ class Choice {
   String get text => textFor(defaultFormContentLocale);
 }
 
+/// A visibility condition referencing positions in a new survey's question list.
+class SurveyVisibilityRuleInput {
+  /// The zero-based position of the question to show conditionally.
+  final int targetQuestionIndex;
+
+  /// The zero-based position of the earlier question to check.
+  final int sourceQuestionIndex;
+
+  /// The comparison applied to the earlier answer.
+  final VisibilityOperator operator;
+
+  /// The text to compare for a text question.
+  final String? textValue;
+
+  /// The zero-based position of the source choice to compare.
+  final int? choiceIndex;
+
+  /// Creates a condition for submission with a new survey.
+  const SurveyVisibilityRuleInput({
+    required this.targetQuestionIndex,
+    required this.sourceQuestionIndex,
+    required this.operator,
+    this.textValue,
+    this.choiceIndex,
+  });
+
+  /// Returns the JSON representation used by survey creation.
+  Map<String, dynamic> toJson() => _withoutNulls({
+    'targetQuestionIndex': targetQuestionIndex,
+    'sourceQuestionIndex': sourceQuestionIndex,
+    'operator': _enumName(operator),
+    'textValue': textValue,
+    'choiceIndex': choiceIndex,
+  });
+}
+
 /// A question definition and its choices for creation or AI generation.
 class QuestionWithChoices {
   /// Display text indexed by locale code.

@@ -7,6 +7,7 @@ import '../../../../core/localization/app_localizations.dart';
 import 'localized_text_field_group.dart';
 import 'localized_text_helpers.dart';
 import 'survey_form.dart';
+import 'question_visibility_fields.dart';
 
 /// Dialog for creating/editing a question.
 class QuestionFormDialog extends StatefulWidget {
@@ -28,6 +29,15 @@ class QuestionFormDialog extends StatefulWidget {
   /// Called when the user requests a translation of the displayed content.
   final SurveyLocalizedTranslate? onTranslate;
 
+  /// Earlier local questions when editing rules during survey creation.
+  final List<Question>? visibilitySourceQuestions;
+
+  /// Source choices available during survey creation.
+  final Map<int, List<Choice>> visibilityChoices;
+
+  /// Unsaved conditions to edit together with this question.
+  final List<QuestionVisibilityRule> visibilityRules;
+
   /// Called with the edited values when the user saves the form.
   final void Function({
     required LocalizedText textTranslations,
@@ -39,6 +49,7 @@ class QuestionFormDialog extends StatefulWidget {
     int? minSelected,
     int? maxSelected,
     required VisibilityConditionMode visibilityConditionMode,
+    required List<QuestionVisibilityRule> visibilityRules,
   })
   onSave;
 
@@ -51,6 +62,9 @@ class QuestionFormDialog extends StatefulWidget {
     this.aiTranslateEnabled = false,
     this.canChangeType = true,
     this.onTranslate,
+    this.visibilitySourceQuestions,
+    this.visibilityChoices = const {},
+    this.visibilityRules = const [],
     required this.onSave,
   });
 
@@ -63,6 +77,9 @@ class QuestionFormDialog extends StatefulWidget {
     bool aiTranslateEnabled = false,
     bool canChangeType = true,
     SurveyLocalizedTranslate? onTranslate,
+    List<Question>? visibilitySourceQuestions,
+    Map<int, List<Choice>> visibilityChoices = const {},
+    List<QuestionVisibilityRule> visibilityRules = const [],
     required void Function({
       required LocalizedText textTranslations,
       required QuestionType type,
@@ -73,6 +90,7 @@ class QuestionFormDialog extends StatefulWidget {
       int? minSelected,
       int? maxSelected,
       required VisibilityConditionMode visibilityConditionMode,
+      required List<QuestionVisibilityRule> visibilityRules,
     })
     onSave,
   }) {
@@ -85,6 +103,9 @@ class QuestionFormDialog extends StatefulWidget {
         aiTranslateEnabled: aiTranslateEnabled,
         canChangeType: canChangeType,
         onTranslate: onTranslate,
+        visibilitySourceQuestions: visibilitySourceQuestions,
+        visibilityChoices: visibilityChoices,
+        visibilityRules: visibilityRules,
         onSave: onSave,
       ),
     );
@@ -106,6 +127,8 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
   late QuestionType _type;
   late bool _isRequired;
   late VisibilityConditionMode _visibilityConditionMode;
+  late List<QuestionVisibilityRule> _visibilityRules;
+  String? _visibilityError;
 
   @override
   void initState() {
@@ -133,6 +156,11 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
     _visibilityConditionMode =
         widget.existingQuestion?.visibilityConditionMode ??
         VisibilityConditionMode.all;
+    _visibilityRules = List.of(widget.visibilityRules);
+    if (widget.visibilitySourceQuestions?.isEmpty ?? false) {
+      _visibilityRules = [];
+      _visibilityConditionMode = VisibilityConditionMode.all;
+    }
   }
 
   @override
@@ -297,36 +325,52 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
                       ],
                     ),
                   const SizedBox(height: 16),
-                  _SectionTitle(text: context.tr('Visibility rule match')),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    width: double.infinity,
-                    child: HuxDropdown<VisibilityConditionMode>(
-                      value: _visibilityConditionMode,
-                      useItemWidgetAsValue: true,
-                      items: [
-                        HuxDropdownItem(
-                          value: VisibilityConditionMode.all,
-                          child: Text(context.tr('All rules')),
-                        ),
-                        HuxDropdownItem(
-                          value: VisibilityConditionMode.any,
-                          child: Text(context.tr('Any rule')),
-                        ),
-                      ],
-                      onChanged: (value) =>
-                          setState(() => _visibilityConditionMode = value),
+                  if (widget.visibilitySourceQuestions != null) ...[
+                    _SectionTitle(text: context.tr('Visibility rules')),
+                    const SizedBox(height: 8),
+                    QuestionVisibilityFields(
+                      sourceQuestions: widget.visibilitySourceQuestions!,
+                      choicesByQuestion: widget.visibilityChoices,
+                      rules: _visibilityRules,
+                      mode: _visibilityConditionMode,
+                      primaryLocale: widget.primaryLocale,
+                      error: _visibilityError,
+                      onModeChanged: (mode) =>
+                          setState(() => _visibilityConditionMode = mode),
+                      onRulesChanged: (rules) => setState(() {
+                        _visibilityRules = rules;
+                        _visibilityError = null;
+                      }),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    context.tr(
-                      'Add conditions from Visibility rules → Add rule below this question. For a new survey, create it first. With no rules, this question is always visible.',
+                  ] else ...[
+                    _SectionTitle(text: context.tr('Visibility rule match')),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: HuxDropdown<VisibilityConditionMode>(
+                        value: _visibilityConditionMode,
+                        useItemWidgetAsValue: true,
+                        items: [
+                          HuxDropdownItem(
+                            value: VisibilityConditionMode.all,
+                            child: Text(context.tr('All rules')),
+                          ),
+                          HuxDropdownItem(
+                            value: VisibilityConditionMode.any,
+                            child: Text(context.tr('Any rule')),
+                          ),
+                        ],
+                        onChanged: (value) =>
+                            setState(() => _visibilityConditionMode = value),
+                      ),
                     ),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: HuxTokens.textSecondary(context),
+                    const SizedBox(height: 8),
+                    Text(
+                      context.tr(
+                        'Edit conditions in Visibility rules on the question card.',
+                      ),
                     ),
-                  ),
+                  ],
                   const SizedBox(height: 16),
                   HuxCard(
                     backgroundColor: HuxTokens.surfaceSecondary(context),
@@ -402,6 +446,10 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
 
   void _submit() {
     if (_formKey.currentState?.validate() ?? false) {
+      if (!_validVisibilityRules()) {
+        setState(() => _visibilityError = 'Enter a value for each condition.');
+        return;
+      }
       // Only send constraints for fields visible for the selected type.
       // Otherwise switching multipleChoice → singleChoice would keep stale
       // minSelected/maxSelected and make the published form unanswerable.
@@ -429,9 +477,39 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
             ? _parseInt(_maxSelectedController.text)
             : null,
         visibilityConditionMode: _visibilityConditionMode,
+        visibilityRules: _visibilityRules,
       );
       Navigator.pop(context);
     }
+  }
+
+  bool _validVisibilityRules() {
+    if (widget.visibilitySourceQuestions == null) return true;
+    for (final rule in _visibilityRules) {
+      final sources = widget.visibilitySourceQuestions!.where(
+        (question) => question.id == rule.sourceQuestionId,
+      );
+      if (sources.isEmpty) return false;
+      if (rule.operator == VisibilityOperator.isAnswered ||
+          rule.operator == VisibilityOperator.isNotAnswered) {
+        continue;
+      }
+      final source = sources.single;
+      if (source.type.usesTextAnswer) {
+        if (rule.value is! String || (rule.value as String).trim().isEmpty) {
+          return false;
+        }
+      } else if (source.type.usesChoices) {
+        if (!(widget.visibilityChoices[source.id] ?? const []).any(
+          (choice) => choice.id == rule.value,
+        )) {
+          return false;
+        }
+      } else {
+        return false;
+      }
+    }
+    return true;
   }
 
   int? _parseInt(String value) {

@@ -135,12 +135,18 @@ class DraftQuestionsSection extends StatelessWidget {
   }
 
   void _showAddDialog(BuildContext context) {
+    final visibility = DraftVisibilityContext(
+      formState.draftQuestions,
+      formState.draftQuestions.length,
+    );
     QuestionFormDialog.show(
       context,
       primaryLocale: primaryLocale,
       locales: locales,
       aiTranslateEnabled: aiTranslateEnabled,
       onTranslate: onTranslate,
+      visibilitySourceQuestions: visibility.sourceQuestions,
+      visibilityChoices: visibility.choicesByQuestion,
       onSave:
           ({
             required LocalizedText textTranslations,
@@ -152,6 +158,7 @@ class DraftQuestionsSection extends StatelessWidget {
             int? minSelected,
             int? maxSelected,
             required VisibilityConditionMode visibilityConditionMode,
+            required List<QuestionVisibilityRule> visibilityRules,
           }) {
             formManager.addDraftQuestion(
               textTranslations: textTranslations,
@@ -163,6 +170,7 @@ class DraftQuestionsSection extends StatelessWidget {
               minSelected: minSelected,
               maxSelected: maxSelected,
               visibilityConditionMode: visibilityConditionMode,
+              visibilityRules: visibility.fromEditorRules(visibilityRules),
               firstChoiceTranslations: _defaultChoiceTranslations(1, locales),
               secondChoiceTranslations: _defaultChoiceTranslations(2, locales),
             );
@@ -171,11 +179,16 @@ class DraftQuestionsSection extends StatelessWidget {
   }
 
   void _showEditDialog(BuildContext context, DraftQuestion question) {
+    final index = formState.draftQuestions.indexWhere(
+      (draft) => draft.tempId == question.tempId,
+    );
+    final visibility = DraftVisibilityContext(formState.draftQuestions, index);
     final tempQuestion = Question(
+      id: index + 1,
       surveyId: 0,
       textTranslations: question.textTranslations,
       type: question.type,
-      orderIndex: 0,
+      orderIndex: index,
       isRequired: question.isRequired,
       placeholderTranslations: question.placeholderTranslations,
       minLength: question.minLength,
@@ -192,6 +205,9 @@ class DraftQuestionsSection extends StatelessWidget {
       locales: locales,
       aiTranslateEnabled: aiTranslateEnabled,
       onTranslate: onTranslate,
+      visibilitySourceQuestions: visibility.sourceQuestions,
+      visibilityChoices: visibility.choicesByQuestion,
+      visibilityRules: visibility.toEditorRules(question.visibilityRules),
       onSave:
           ({
             required LocalizedText textTranslations,
@@ -203,6 +219,7 @@ class DraftQuestionsSection extends StatelessWidget {
             int? minSelected,
             int? maxSelected,
             required VisibilityConditionMode visibilityConditionMode,
+            required List<QuestionVisibilityRule> visibilityRules,
           }) {
             formManager.updateDraftQuestion(
               tempId: question.tempId,
@@ -215,6 +232,7 @@ class DraftQuestionsSection extends StatelessWidget {
               minSelected: minSelected,
               maxSelected: maxSelected,
               visibilityConditionMode: visibilityConditionMode,
+              visibilityRules: visibility.fromEditorRules(visibilityRules),
             );
           },
     );

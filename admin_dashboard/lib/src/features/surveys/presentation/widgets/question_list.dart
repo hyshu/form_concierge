@@ -246,6 +246,7 @@ class QuestionList extends StatelessWidget {
 
   void _showAddDialog(BuildContext context) => QuestionFormDialog.show(
     context,
+    visibilitySourceQuestions: questions.isEmpty ? const [] : null,
     primaryLocale: primaryLocale,
     locales: locales,
     aiTranslateEnabled: aiTranslateEnabled,
@@ -261,6 +262,7 @@ class QuestionList extends StatelessWidget {
           int? minSelected,
           int? maxSelected,
           required VisibilityConditionMode visibilityConditionMode,
+          required List<QuestionVisibilityRule> visibilityRules,
         }) {
           onAddQuestion(
             textTranslations: textTranslations,
@@ -280,6 +282,10 @@ class QuestionList extends StatelessWidget {
       QuestionFormDialog.show(
         context,
         existingQuestion: question,
+        visibilitySourceQuestions:
+            questions.any((source) => source.orderIndex < question.orderIndex)
+            ? null
+            : const [],
         canChangeType: canChangeQuestionType,
         primaryLocale: primaryLocale,
         locales: locales,
@@ -296,6 +302,7 @@ class QuestionList extends StatelessWidget {
               int? minSelected,
               int? maxSelected,
               required VisibilityConditionMode visibilityConditionMode,
+              required List<QuestionVisibilityRule> visibilityRules,
             }) {
               onEditQuestion(
                 question,

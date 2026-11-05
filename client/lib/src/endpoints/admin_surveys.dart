@@ -100,6 +100,7 @@ class SurveyAdminEndpoint {
     List<QuestionWithChoices> questions, {
     bool? notificationsEnabled,
     String? notificationRecipientEmail,
+    List<SurveyVisibilityRuleInput> visibilityRules = const [],
   }) async {
     final json = await _client.request(
       'POST',
@@ -107,6 +108,10 @@ class SurveyAdminEndpoint {
       body: {
         'survey': survey.toJson(),
         'questions': questions.map((question) => question.toJson()).toList(),
+        if (visibilityRules.isNotEmpty)
+          'visibilityRules': visibilityRules
+              .map((rule) => rule.toJson())
+              .toList(),
         if (notificationsEnabled != null)
           'notifications': {
             'enabled': notificationsEnabled,

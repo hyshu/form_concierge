@@ -173,6 +173,7 @@ class SurveyFormManager {
     int? minSelected,
     int? maxSelected,
     required VisibilityConditionMode visibilityConditionMode,
+    List<DraftVisibilityRule> visibilityRules = const [],
     required LocalizedText firstChoiceTranslations,
     required LocalizedText secondChoiceTranslations,
   }) {
@@ -186,6 +187,7 @@ class SurveyFormManager {
       minSelected: minSelected,
       maxSelected: maxSelected,
       visibilityConditionMode: visibilityConditionMode,
+      visibilityRules: visibilityRules,
       firstChoiceTranslations: firstChoiceTranslations,
       secondChoiceTranslations: secondChoiceTranslations,
     );
@@ -204,27 +206,48 @@ class SurveyFormManager {
     int? minSelected,
     int? maxSelected,
     required VisibilityConditionMode visibilityConditionMode,
-  }) => _updateDraftQuestion(
-    tempId,
-    (question) => DraftQuestion(
-      tempId: question.tempId,
-      textTranslations: textTranslations,
-      type: type,
-      isRequired: isRequired,
-      placeholderTranslations: placeholderTranslations,
-      minLength: minLength,
-      maxLength: maxLength,
-      minSelected: minSelected,
-      maxSelected: maxSelected,
-      visibilityConditionMode: visibilityConditionMode,
-      choices: question.choices,
-    ),
-  );
+    List<DraftVisibilityRule>? visibilityRules,
+  }) {
+    final question = getState(
+      null,
+    ).draftQuestions.firstWhere((q) => q.tempId == tempId);
+    if (question.type != type && _isVisibilitySource(tempId)) {
+      _draftRuleError(
+        'Remove dependent visibility rules before changing this item.',
+      );
+      return;
+    }
+    _updateDraftQuestion(
+      tempId,
+      (question) => DraftQuestion(
+        tempId: question.tempId,
+        textTranslations: textTranslations,
+        type: type,
+        isRequired: isRequired,
+        placeholderTranslations: placeholderTranslations,
+        minLength: minLength,
+        maxLength: maxLength,
+        minSelected: minSelected,
+        maxSelected: maxSelected,
+        visibilityConditionMode: visibilityConditionMode,
+        visibilityRules: visibilityRules ?? question.visibilityRules,
+        choices: question.choices,
+      ),
+    );
+  }
 
   /// Delete a draft question.
-  void deleteDraftQuestion(String tempId) => _setDraftQuestions(
-    (questions) => questions.where((q) => q.tempId != tempId).toList(),
-  );
+  void deleteDraftQuestion(String tempId) {
+    if (_isVisibilitySource(tempId)) {
+      _draftRuleError(
+        'Remove dependent visibility rules before changing this item.',
+      );
+      return;
+    }
+    _setDraftQuestions(
+      (questions) => questions.where((q) => q.tempId != tempId).toList(),
+    );
+  }
 
   /// Reorder draft questions.
   void reorderDraftQuestions(int oldIndex, int newIndex) {
@@ -232,6 +255,19 @@ class SurveyFormManager {
     final questions = List<DraftQuestion>.from(state.draftQuestions);
     final item = questions.removeAt(oldIndex);
     questions.insert(newIndex, item);
+    final indices = {
+      for (var i = 0; i < questions.length; i++) questions[i].tempId: i,
+    };
+    for (var i = 0; i < questions.length; i++) {
+      if (questions[i].visibilityRules.any(
+        (rule) => indices[rule.sourceQuestionTempId]! >= i,
+      )) {
+        _draftRuleError(
+          'Condition questions must stay before their dependent questions.',
+        );
+        return;
+      }
+    }
     _setState(null, state.copyWith(draftQuestions: questions));
   }
 
@@ -266,15 +302,37 @@ class SurveyFormManager {
   );
 
   /// Delete a choice from a draft question.
-  void deleteDraftChoice(String questionTempId, String choiceTempId) =>
-      _updateDraftQuestion(
-        questionTempId,
-        (question) => question.copyWith(
-          choices: question.choices
-              .where((choice) => choice.tempId != choiceTempId)
-              .toList(),
-        ),
+  void deleteDraftChoice(String questionTempId, String choiceTempId) {
+    if (getState(null).draftQuestions.any(
+      (question) => question.visibilityRules.any(
+        (rule) =>
+            rule.sourceQuestionTempId == questionTempId &&
+            rule.value == choiceTempId,
+      ),
+    )) {
+      _draftRuleError(
+        'Remove dependent visibility rules before changing this item.',
       );
+      return;
+    }
+    _updateDraftQuestion(
+      questionTempId,
+      (question) => question.copyWith(
+        choices: question.choices
+            .where((choice) => choice.tempId != choiceTempId)
+            .toList(),
+      ),
+    );
+  }
+
+  bool _isVisibilitySource(String tempId) => getState(null).draftQuestions.any(
+    (question) => question.visibilityRules.any(
+      (rule) => rule.sourceQuestionTempId == tempId,
+    ),
+  );
+
+  void _draftRuleError(String message) =>
+      _setState(null, getState(null).copyWith(error: message));
 
   /// Create a new survey with questions.
   Future<Survey?> createSurveyWithQuestions({
@@ -308,6 +366,13 @@ class SurveyFormManager {
         questions,
         notificationsEnabled: notificationsEnabled,
         notificationRecipientEmail: notificationRecipientEmail,
+        visibilityRules: [
+          for (var index = 0; index < state.draftQuestions.length; index++)
+            ...DraftVisibilityContext(
+              state.draftQuestions,
+              index,
+            ).toCreationRules(state.draftQuestions[index].visibilityRules),
+        ],
       );
       _setState(
         null,
