@@ -76,6 +76,7 @@ class SurveyFormManager {
         surveyId,
         getState(surveyId).copyWith(
           project: project?.project,
+          notificationRecipientEmail: project?.notificationRecipientEmail ?? '',
           isLoading: false,
         ),
       );
@@ -284,6 +285,8 @@ class SurveyFormManager {
     bool followUpEnabled = false,
     String? followUpPrompt,
     bool captchaEnabled = true,
+    bool notificationsEnabled = false,
+    String? notificationRecipientEmail,
   }) async {
     final state = getState(null);
     _setState(null, state.copyWith(isSaving: true, error: null));
@@ -303,6 +306,8 @@ class SurveyFormManager {
           captchaEnabled: captchaEnabled,
         ),
         questions,
+        notificationsEnabled: notificationsEnabled,
+        notificationRecipientEmail: notificationRecipientEmail,
       );
       _setState(
         null,

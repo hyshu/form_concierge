@@ -15,6 +15,7 @@ import { projectToJson, surveyToJson } from './serializers';
 import { mustProject } from './admin_records';
 import { requireDefaultLocale, requireSupportedLocales } from './localization';
 import { collectFileKeysForSurveys, deleteMediaKeys } from './media';
+import { PREVIOUS_NOTIFICATION_EMAIL_SQL } from './notification_settings';
 
 /**
  * Returns a paginated JSON list of projects and their surveys.
@@ -57,9 +58,13 @@ export async function getAdminProject(env: Env, projectId: number): Promise<Resp
   const surveys = await env.DB.prepare(`SELECT * FROM surveys WHERE project_id = ? ORDER BY updated_at DESC`)
     .bind(projectId)
     .all<SurveyRow>();
+  const notification = await env.DB.prepare(PREVIOUS_NOTIFICATION_EMAIL_SQL)
+    .bind(projectId)
+    .first<{ recipient_email: string }>();
   return json({
     project: projectToJson(project),
     surveys: surveys.results.map(surveyToJson),
+    notificationRecipientEmail: notification?.recipient_email ?? null,
   });
 }
 

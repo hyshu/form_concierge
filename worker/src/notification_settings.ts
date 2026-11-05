@@ -8,6 +8,7 @@ import {
   nowIso,
   readJson,
   requireEmail,
+  requireObject,
   requiredBoolean,
   requiredRow,
 } from './utils';
@@ -24,6 +25,50 @@ import type { ProjectRow, ResponseRow, SurveyRow } from './types';
 import { mustSurvey } from './admin_records';
 import { buildAnswersSummary, formatCompletedFollowUpSummary } from './follow_up';
 import { DEFAULT_QUOTA_LIMITS, quotaLimit, reserveQuota, utcDay } from './usage_quota';
+
+/** Prefers the project's most recently configured recipient, then any project's. */
+export const PREVIOUS_NOTIFICATION_EMAIL_SQL = `SELECT n.recipient_email
+  FROM notification_settings n JOIN surveys s ON s.id = n.survey_id
+  WHERE TRIM(n.recipient_email) <> ''
+  ORDER BY (s.project_id = ?) DESC, n.updated_at DESC, n.id DESC
+  LIMIT 1`;
+
+/** Notification preferences supplied while creating a survey. */
+export type SurveyNotificationInput = {
+  /** Whether response notifications should be sent. */
+  enabled: boolean;
+  /** The validated notification recipient. */
+  recipientEmail: string;
+};
+
+/** Validates optional creation preferences before any survey is written. */
+export function parseSurveyNotifications(value: unknown): SurveyNotificationInput | null {
+  if (value == null) return null;
+  const input = requireObject(value, 'notifications');
+  const enabled = requiredBoolean(input.enabled, 'notifications.enabled');
+  if (
+    !enabled &&
+    (input.recipientEmail == null || (typeof input.recipientEmail === 'string' && input.recipientEmail.trim() === ''))
+  )
+    return null;
+  return { enabled, recipientEmail: requireEmail(input.recipientEmail, 'notifications.recipientEmail') };
+}
+
+/** Persists the new survey's preferences in the survey creation request. */
+export async function createSurveyNotifications(
+  db: D1Database,
+  surveyId: number,
+  input: SurveyNotificationInput | null,
+): Promise<void> {
+  if (!input) return;
+  await db
+    .prepare(
+      `INSERT INTO notification_settings (survey_id, enabled, recipient_email, updated_at)
+     VALUES (?, ?, ?, ?)`,
+    )
+    .bind(surveyId, boolToInt(input.enabled), input.recipientEmail, nowIso())
+    .run();
+}
 
 /**
  * Handles reading, updating, toggling, testing, or deleting survey email settings.

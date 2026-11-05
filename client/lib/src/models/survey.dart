@@ -281,14 +281,23 @@ class ProjectWithSurveys {
   /// The surveys included in the project result.
   final List<Survey> surveys;
 
+  /// The most recent notification recipient, preferring this project's history.
+  final String? notificationRecipientEmail;
+
   /// Creates ProjectWithSurveys with the supplied values.
-  const ProjectWithSurveys({required this.project, required this.surveys});
+  const ProjectWithSurveys({
+    required this.project,
+    required this.surveys,
+    this.notificationRecipientEmail,
+  });
 
   /// Decodes ProjectWithSurveys from its JSON representation.
   factory ProjectWithSurveys.fromJson(Map<String, dynamic> json) =>
       ProjectWithSurveys(
         project: _object(json['project'], Project.fromJson),
         surveys: _objectList(json['surveys'], Survey.fromJson),
+        notificationRecipientEmail:
+            json['notificationRecipientEmail'] as String?,
       );
 }
 

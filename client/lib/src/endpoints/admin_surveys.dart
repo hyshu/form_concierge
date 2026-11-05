@@ -73,11 +73,22 @@ class SurveyAdminEndpoint {
   SurveyAdminEndpoint(this._client);
 
   /// Creates a survey and returns the saved record.
-  Future<Survey> create(Survey survey) async {
+  Future<Survey> create(
+    Survey survey, {
+    bool? notificationsEnabled,
+    String? notificationRecipientEmail,
+  }) async {
     final json = await _client.request(
       'POST',
       '/api/admin/surveys',
-      body: survey.toJson(),
+      body: {
+        ...survey.toJson(),
+        if (notificationsEnabled != null)
+          'notifications': {
+            'enabled': notificationsEnabled,
+            'recipientEmail': notificationRecipientEmail,
+          },
+      },
       authenticated: true,
     );
     return Survey.fromJson(json);
@@ -86,14 +97,21 @@ class SurveyAdminEndpoint {
   /// Creates a survey together with its initial questions and choices.
   Future<Survey> createWithQuestions(
     Survey survey,
-    List<QuestionWithChoices> questions,
-  ) async {
+    List<QuestionWithChoices> questions, {
+    bool? notificationsEnabled,
+    String? notificationRecipientEmail,
+  }) async {
     final json = await _client.request(
       'POST',
       '/api/admin/surveys/with-questions',
       body: {
         'survey': survey.toJson(),
         'questions': questions.map((question) => question.toJson()).toList(),
+        if (notificationsEnabled != null)
+          'notifications': {
+            'enabled': notificationsEnabled,
+            'recipientEmail': notificationRecipientEmail,
+          },
       },
       authenticated: true,
     );

@@ -10,6 +10,9 @@ class SurveyFormState {
   /// The project that contains the survey.
   final Project? project;
 
+  /// The suggested notification recipient for the new survey.
+  final String notificationRecipientEmail;
+
   /// Whether data is currently being loaded.
   final bool isLoading;
 
@@ -35,6 +38,7 @@ class SurveyFormState {
   const SurveyFormState({
     this.survey,
     this.project,
+    this.notificationRecipientEmail = '',
     this.isLoading = false,
     this.isSaving = false,
     this.error,
@@ -51,6 +55,7 @@ class SurveyFormState {
   SurveyFormState copyWith({
     Survey? survey,
     Project? project,
+    String? notificationRecipientEmail,
     bool? isLoading,
     bool? isSaving,
     String? error,
@@ -63,6 +68,8 @@ class SurveyFormState {
   }) => SurveyFormState(
     survey: survey ?? this.survey,
     project: project ?? this.project,
+    notificationRecipientEmail:
+        notificationRecipientEmail ?? this.notificationRecipientEmail,
     isLoading: isLoading ?? this.isLoading,
     isSaving: isSaving ?? this.isSaving,
     error: error,

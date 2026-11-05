@@ -70,6 +70,8 @@ void main() {
                     required bool followUpEnabled,
                     required String? followUpPrompt,
                     required bool captchaEnabled,
+                    required bool notificationsEnabled,
+                    required String? notificationRecipientEmail,
                   }) async {
                     saveWasCalled = true;
                     savedTitleTranslations = titleTranslations;
@@ -211,6 +213,8 @@ void main() {
                     required bool followUpEnabled,
                     required String? followUpPrompt,
                     required bool captchaEnabled,
+                    required bool notificationsEnabled,
+                    required String? notificationRecipientEmail,
                   }) async {},
             ),
           ),
@@ -288,6 +292,7 @@ void main() {
           findsNothing,
         );
 
+        await tester.ensureVisible(find.text('AI follow-up prompt (optional)'));
         await tester.tap(find.text('AI follow-up prompt (optional)'));
         await tester.pumpAndSettle();
         expect(

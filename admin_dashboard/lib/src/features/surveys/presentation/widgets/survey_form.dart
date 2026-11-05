@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:form_concierge_client/form_concierge_client.dart';
 import 'package:hux/hux.dart';
 
+import '../../../../core/forms/email_validation.dart';
 import '../../../../core/forms/slug_auto_fill.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../capsules/survey_form_capsule.dart';
@@ -52,6 +53,9 @@ class SurveyForm extends StatefulWidget {
   /// The configured CAPTCHA preference. Use captchaRequired for submission behavior.
   final bool captchaEnabled;
 
+  /// The previous recipient suggested when creating a survey.
+  final String? initialNotificationRecipientEmail;
+
   /// Called when adaptive follow-up generation is enabled or disabled.
   final ValueChanged<bool>? onFollowUpEnabledChanged;
 
@@ -66,6 +70,8 @@ class SurveyForm extends StatefulWidget {
     required bool followUpEnabled,
     required String? followUpPrompt,
     required bool captchaEnabled,
+    required bool notificationsEnabled,
+    required String? notificationRecipientEmail,
   })
   onSave;
 
@@ -83,6 +89,7 @@ class SurveyForm extends StatefulWidget {
     this.aiGenerationEnabled = false,
     this.followUpEnabled = false,
     this.captchaEnabled = true,
+    this.initialNotificationRecipientEmail,
     this.onFollowUpEnabledChanged,
     this.onTranslate,
     required this.onSave,
@@ -100,11 +107,18 @@ class SurveyFormWidgetState extends State<SurveyForm> {
   String? _listeningTitleLocale;
   late bool _followUpEnabled;
   late bool _captchaEnabled;
+  late final TextEditingController _notificationEmailController;
+  late bool _notificationsEnabled;
+  bool _notificationPreferencesEdited = false;
 
   /// Initializes controllers from the existing survey or empty form values.
   @override
   void initState() {
     super.initState();
+    _notificationEmailController = TextEditingController(
+      text: widget.initialNotificationRecipientEmail?.trim() ?? '',
+    );
+    _notificationsEnabled = _notificationEmailController.text.isNotEmpty;
     _followUpEnabled =
         widget.followUpEnabled ||
         (widget.existingSurvey?.followUpEnabled ?? false);
@@ -121,6 +135,13 @@ class SurveyFormWidgetState extends State<SurveyForm> {
   @override
   void didUpdateWidget(SurveyForm oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (!_notificationPreferencesEdited &&
+        oldWidget.initialNotificationRecipientEmail !=
+            widget.initialNotificationRecipientEmail) {
+      _notificationEmailController.text =
+          widget.initialNotificationRecipientEmail?.trim() ?? '';
+      _notificationsEnabled = _notificationEmailController.text.isNotEmpty;
+    }
     if (oldWidget.existingSurvey != widget.existingSurvey &&
         widget.existingSurvey != null) {
       widget.controllers.populateFrom(widget.existingSurvey!);
@@ -143,6 +164,7 @@ class SurveyFormWidgetState extends State<SurveyForm> {
   /// Releases the form's controllers before the widget is removed.
   @override
   void dispose() {
+    _notificationEmailController.dispose();
     widget.controllers.titleTranslations[_listeningTitleLocale]?.removeListener(
       _fillSlugFromTitleIfEmpty,
     );
@@ -212,6 +234,45 @@ class SurveyFormWidgetState extends State<SurveyForm> {
                     fieldKind: 'description',
                   ),
           ),
+          if (widget.existingSurvey == null) ...[
+            const SizedBox(height: 16),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(context.tr('Notifications')),
+              subtitle: Text(
+                context.tr(
+                  'Send an email every time a new response is submitted.',
+                ),
+              ),
+              value: _notificationsEnabled,
+              onChanged: widget.isSaving
+                  ? null
+                  : (value) => setState(() {
+                      _notificationsEnabled = value;
+                      _notificationPreferencesEdited = true;
+                    }),
+            ),
+            const SizedBox(height: 8),
+            HuxInput(
+              controller: _notificationEmailController,
+              label: context.tr('Recipient Email'),
+              hint: 'email@example.com',
+              keyboardType: TextInputType.emailAddress,
+              enabled: !widget.isSaving,
+              onChanged: (_) => _notificationPreferencesEdited = true,
+              validator: (value) {
+                final email = value?.trim() ?? '';
+                if (email.isEmpty) {
+                  return _notificationsEnabled
+                      ? context.tr('Email is required')
+                      : null;
+                }
+                return isValidEmailAddress(email)
+                    ? null
+                    : context.tr('Enter a valid email address');
+              },
+            ),
+          ],
           if (widget.aiGenerationEnabled) ...[
             const SizedBox(height: 16),
             SwitchListTile(
@@ -323,6 +384,11 @@ class SurveyFormWidgetState extends State<SurveyForm> {
       followUpEnabled: _followUpEnabled,
       followUpPrompt: prompt.isEmpty ? null : prompt,
       captchaEnabled: _captchaEnabled,
+      notificationsEnabled: _notificationsEnabled,
+      notificationRecipientEmail:
+          _notificationEmailController.text.trim().isEmpty
+          ? null
+          : _notificationEmailController.text.trim(),
     );
     return true;
   }

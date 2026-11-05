@@ -25,6 +25,7 @@ import { mustProject, mustSurvey, projectSupportedLocales } from './admin_record
 import { insertQuestion, normalizeQuestionValidation, normalizeVisibilityConditionMode } from './admin_questions';
 import { collectFileKeysForSurveys, deleteMediaKeys } from './media';
 import { DEFAULT_FORM_CONTENT_LOCALE, LocalizedText, localizedTextFor, requireLocalizedText } from './localization';
+import { createSurveyNotifications, parseSurveyNotifications } from './notification_settings';
 
 /**
  * Returns a paginated survey list, optionally restricted to one project.
@@ -58,7 +59,14 @@ export async function getAdminSurvey(env: Env, surveyId: number): Promise<Respon
  */
 export async function createSurvey(request: Request, env: Env, admin: AdminContext): Promise<Response> {
   const body = await readJson(request);
+  const notifications = parseSurveyNotifications(body.notifications);
   const row = await insertSurvey(env.DB, body, admin);
+  try {
+    await createSurveyNotifications(env.DB, row.id, notifications);
+  } catch (error) {
+    await env.DB.prepare(`DELETE FROM surveys WHERE id = ?`).bind(row.id).run();
+    throw error;
+  }
   return json(surveyToJson(row), 201);
 }
 
@@ -133,6 +141,7 @@ async function insertSurvey(
  */
 export async function createSurveyWithQuestions(request: Request, env: Env, admin: AdminContext): Promise<Response> {
   const body = await readJson(request);
+  const notifications = parseSurveyNotifications(body.notifications);
   const survey = requireObject(body.survey, 'survey');
   validateQuestionInputShape(body.questions);
   const projectId = requireProjectId(survey.projectId);
@@ -148,6 +157,7 @@ export async function createSurveyWithQuestions(request: Request, env: Env, admi
         orderIndex: i,
       });
     }
+    await createSurveyNotifications(env.DB, created.id, notifications);
   } catch (error) {
     // Cascade deletes questions/choices so a mid-loop failure leaves no half survey.
     await env.DB.prepare(`DELETE FROM surveys WHERE id = ?`).bind(created.id).run();
