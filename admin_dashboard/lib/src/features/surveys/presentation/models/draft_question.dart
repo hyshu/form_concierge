@@ -63,6 +63,9 @@ class DraftQuestion {
   /// The maximum number of choices or uploaded files allowed, if set.
   final int? maxSelected;
 
+  /// Whether all visibility rules or any one rule must match.
+  final VisibilityConditionMode visibilityConditionMode;
+
   /// The choices available for this question.
   final List<DraftChoice> choices;
 
@@ -77,6 +80,7 @@ class DraftQuestion {
     this.maxLength,
     this.minSelected,
     this.maxSelected,
+    this.visibilityConditionMode = VisibilityConditionMode.all,
     this.choices = const [],
   });
 
@@ -90,6 +94,8 @@ class DraftQuestion {
     int? maxLength,
     int? minSelected,
     int? maxSelected,
+    VisibilityConditionMode visibilityConditionMode =
+        VisibilityConditionMode.all,
     required LocalizedText firstChoiceTranslations,
     required LocalizedText secondChoiceTranslations,
   }) {
@@ -112,6 +118,7 @@ class DraftQuestion {
       maxLength: maxLength,
       minSelected: minSelected,
       maxSelected: maxSelected,
+      visibilityConditionMode: visibilityConditionMode,
       choices: choices,
     );
   }
@@ -128,6 +135,7 @@ class DraftQuestion {
         maxLength: q.maxLength,
         minSelected: q.minSelected,
         maxSelected: q.maxSelected,
+        visibilityConditionMode: q.visibilityConditionMode,
         choices: q.choiceTranslations
             .map((c) => DraftChoice.create(textTranslations: c))
             .toList(),
@@ -143,6 +151,7 @@ class DraftQuestion {
     int? maxLength,
     int? minSelected,
     int? maxSelected,
+    VisibilityConditionMode? visibilityConditionMode,
     List<DraftChoice>? choices,
   }) => DraftQuestion(
     tempId: tempId,
@@ -155,6 +164,8 @@ class DraftQuestion {
     maxLength: maxLength ?? this.maxLength,
     minSelected: minSelected ?? this.minSelected,
     maxSelected: maxSelected ?? this.maxSelected,
+    visibilityConditionMode:
+        visibilityConditionMode ?? this.visibilityConditionMode,
     choices: choices ?? this.choices,
   );
 
@@ -168,6 +179,7 @@ class DraftQuestion {
     maxLength: maxLength,
     minSelected: minSelected,
     maxSelected: maxSelected,
+    visibilityConditionMode: visibilityConditionMode,
     choiceTranslations: choices.map((c) => c.textTranslations).toList(),
   );
 

@@ -172,6 +172,7 @@
   "Visibility rule match": "可见性规则匹配",
   "All rules": "所有规则",
   "Any rule": "任一规则",
+  "Add conditions from Visibility rules → Add rule below this question. For a new survey, create it first. With no rules, this question is always visible.": "请在各问题下方的“可见性规则”→“添加规则”中设置条件。新问卷请先创建，再打开编辑页面。没有规则时，此问题始终显示。",
   "Required": "必填",
   "Respondents must answer this question": "回答者必须回答此问题",
   "Save": "保存",

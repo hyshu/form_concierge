@@ -200,6 +200,7 @@
   "Visibility rule match": "Visibility rule match",
   "All rules": "All rules",
   "Any rule": "Any rule",
+  "Add conditions from Visibility rules → Add rule below this question. For a new survey, create it first. With no rules, this question is always visible.": "Add conditions from Visibility rules → Add rule below this question. For a new survey, create it first. With no rules, this question is always visible.",
   "Required": "Required",
   "Respondents must answer this question": "Respondents must answer this question",
   "Save": "Save",

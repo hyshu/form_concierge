@@ -162,6 +162,7 @@ class DraftQuestionsSection extends StatelessWidget {
               maxLength: maxLength,
               minSelected: minSelected,
               maxSelected: maxSelected,
+              visibilityConditionMode: visibilityConditionMode,
               firstChoiceTranslations: _defaultChoiceTranslations(1, locales),
               secondChoiceTranslations: _defaultChoiceTranslations(2, locales),
             );
@@ -181,6 +182,7 @@ class DraftQuestionsSection extends StatelessWidget {
       maxLength: question.maxLength,
       minSelected: question.minSelected,
       maxSelected: question.maxSelected,
+      visibilityConditionMode: question.visibilityConditionMode,
     );
 
     QuestionFormDialog.show(
@@ -212,6 +214,7 @@ class DraftQuestionsSection extends StatelessWidget {
               maxLength: maxLength,
               minSelected: minSelected,
               maxSelected: maxSelected,
+              visibilityConditionMode: visibilityConditionMode,
             );
           },
     );

@@ -200,6 +200,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Visibility rule match": "Übereinstimmung der Sichtbarkeitsregeln",
     "All rules": "Alle Regeln",
     "Any rule": "Eine Regel",
+    "Add conditions from Visibility rules → Add rule below this question. For a new survey, create it first. With no rules, this question is always visible.":
+        "Füge Bedingungen unter dieser Frage über „Sichtbarkeitsregeln“ → „Regel hinzufügen“ hinzu. Erstelle eine neue Umfrage zuerst und öffne sie dann zum Bearbeiten. Ohne Regeln ist diese Frage immer sichtbar.",
     "Required": "Erforderlich",
     "Respondents must answer this question":
         "Befragte müssen diese Frage beantworten",
@@ -706,6 +708,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Visibility rule match": "Visibility rule match",
     "All rules": "All rules",
     "Any rule": "Any rule",
+    "Add conditions from Visibility rules → Add rule below this question. For a new survey, create it first. With no rules, this question is always visible.":
+        "Add conditions from Visibility rules → Add rule below this question. For a new survey, create it first. With no rules, this question is always visible.",
     "Required": "Required",
     "Respondents must answer this question":
         "Respondents must answer this question",
@@ -1119,6 +1123,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Visibility rule match": "Coincidencia de reglas de visibilidad",
     "All rules": "Todas las reglas",
     "Any rule": "Cualquier regla",
+    "Add conditions from Visibility rules → Add rule below this question. For a new survey, create it first. With no rules, this question is always visible.":
+        "Añade condiciones debajo de esta pregunta en «Reglas de visibilidad» → «Añadir regla». Si la encuesta es nueva, créala primero y vuelve a abrirla para editarla. Sin reglas, esta pregunta siempre será visible.",
     "Required": "Obligatorio",
     "Respondents must answer this question":
         "Los encuestados deben responder esta pregunta",
@@ -1565,6 +1571,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Visibility rule match": "Correspondance des règles de visibilité",
     "All rules": "Toutes les règles",
     "Any rule": "N'importe quelle règle",
+    "Add conditions from Visibility rules → Add rule below this question. For a new survey, create it first. With no rules, this question is always visible.":
+        "Ajoutez des conditions sous cette question via « Règles de visibilité » → « Ajouter une règle ». Pour un nouveau questionnaire, créez-le d’abord puis ouvrez-le en modification. Sans règles, cette question reste toujours visible.",
     "Required": "Obligatoire",
     "Respondents must answer this question":
         "Les répondants doivent répondre à cette question",
@@ -2025,6 +2033,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Visibility rule match": "Corrispondenza regole di visibilità",
     "All rules": "Tutte le regole",
     "Any rule": "Qualsiasi regola",
+    "Add conditions from Visibility rules → Add rule below this question. For a new survey, create it first. With no rules, this question is always visible.":
+        "Aggiungi condizioni sotto questa domanda da «Regole di visibilità» → «Aggiungi regola». Per un nuovo sondaggio, crealo prima e riaprilo in modifica. Senza regole, questa domanda è sempre visibile.",
     "Required": "Obbligatorio",
     "Respondents must answer this question":
         "I rispondenti devono rispondere a questa domanda",
@@ -2490,6 +2500,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Visibility rule match": "表示ルールの一致条件",
     "All rules": "すべてのルール",
     "Any rule": "いずれかのルール",
+    "Add conditions from Visibility rules → Add rule below this question. For a new survey, create it first. With no rules, this question is always visible.":
+        "条件は各質問の下にある「表示ルール」→「ルールを追加」で設定します。新規アンケートは先に作成し、編集画面を開いてください。条件がなければ、この質問は常に表示されます。",
     "Required": "必須",
     "Respondents must answer this question": "回答者はこの質問に回答する必要があります",
     "Save": "保存",
@@ -2862,6 +2874,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Visibility rule match": "표시 규칙 일치 조건",
     "All rules": "모든 규칙",
     "Any rule": "규칙 중 하나",
+    "Add conditions from Visibility rules → Add rule below this question. For a new survey, create it first. With no rules, this question is always visible.":
+        "각 질문 아래의 ‘표시 규칙’ → ‘규칙 추가’에서 조건을 설정하세요. 새 설문은 먼저 만든 뒤 편집 화면을 여세요. 규칙이 없으면 이 질문은 항상 표시됩니다.",
     "Required": "필수",
     "Respondents must answer this question": "응답자는 이 질문에 답해야 합니다",
     "Save": "저장",
@@ -3284,6 +3298,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Visibility rule match": "เงื่อนไขการแสดงผล",
     "All rules": "ทุกเงื่อนไข",
     "Any rule": "เงื่อนไขใดก็ได้",
+    "Add conditions from Visibility rules → Add rule below this question. For a new survey, create it first. With no rules, this question is always visible.":
+        "เพิ่มเงื่อนไขใต้คำถามนี้ผ่าน “เงื่อนไขการแสดงผล” → “เพิ่มเงื่อนไข” หากเป็นแบบสำรวจใหม่ ให้สร้างก่อนแล้วเปิดเพื่อแก้ไข หากไม่มีกฎ คำถามนี้จะแสดงเสมอ",
     "Required": "จำเป็น",
     "Respondents must answer this question": "ผู้ตอบต้องตอบคำถามนี้",
     "Save": "บันทึก",
@@ -3713,6 +3729,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Visibility rule match": "Görünürlük kuralı eşleşmesi",
     "All rules": "Tüm kurallar",
     "Any rule": "Herhangi bir kural",
+    "Add conditions from Visibility rules → Add rule below this question. For a new survey, create it first. With no rules, this question is always visible.":
+        "Bu sorunun altındaki “Görünürlük kuralları” → “Kural ekle” bölümünden koşul ekleyin. Yeni bir anketi önce oluşturup düzenlemek için yeniden açın. Kural yoksa bu soru her zaman görünür.",
     "Required": "Zorunlu",
     "Respondents must answer this question":
         "Yanıtlayanlar bu soruyu cevaplamalıdır",
@@ -4135,6 +4153,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Visibility rule match": "可见性规则匹配",
     "All rules": "所有规则",
     "Any rule": "任一规则",
+    "Add conditions from Visibility rules → Add rule below this question. For a new survey, create it first. With no rules, this question is always visible.":
+        "请在各问题下方的“可见性规则”→“添加规则”中设置条件。新问卷请先创建，再打开编辑页面。没有规则时，此问题始终显示。",
     "Required": "必填",
     "Respondents must answer this question": "回答者必须回答此问题",
     "Save": "保存",
@@ -4531,6 +4551,8 @@ const adminLocalizedValues = <String, Map<String, String>>{
     "Visibility rule match": "可見性規則符合",
     "All rules": "所有規則",
     "Any rule": "任一規則",
+    "Add conditions from Visibility rules → Add rule below this question. For a new survey, create it first. With no rules, this question is always visible.":
+        "請在各問題下方的「可見性規則」→「新增規則」中設定條件。新問卷請先建立，再開啟編輯頁面。沒有規則時，此問題一律顯示。",
     "Required": "必填",
     "Respondents must answer this question": "回答者必須回答此問題",
     "Save": "儲存",

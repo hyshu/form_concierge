@@ -176,6 +176,7 @@
   "Visibility rule match": "เงื่อนไขการแสดงผล",
   "All rules": "ทุกเงื่อนไข",
   "Any rule": "เงื่อนไขใดก็ได้",
+  "Add conditions from Visibility rules → Add rule below this question. For a new survey, create it first. With no rules, this question is always visible.": "เพิ่มเงื่อนไขใต้คำถามนี้ผ่าน “เงื่อนไขการแสดงผล” → “เพิ่มเงื่อนไข” หากเป็นแบบสำรวจใหม่ ให้สร้างก่อนแล้วเปิดเพื่อแก้ไข หากไม่มีกฎ คำถามนี้จะแสดงเสมอ",
   "Required": "จำเป็น",
   "Respondents must answer this question": "ผู้ตอบต้องตอบคำถามนี้",
   "Save": "บันทึก",

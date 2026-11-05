@@ -172,6 +172,7 @@
   "Visibility rule match": "Übereinstimmung der Sichtbarkeitsregeln",
   "All rules": "Alle Regeln",
   "Any rule": "Eine Regel",
+  "Add conditions from Visibility rules → Add rule below this question. For a new survey, create it first. With no rules, this question is always visible.": "Füge Bedingungen unter dieser Frage über „Sichtbarkeitsregeln“ → „Regel hinzufügen“ hinzu. Erstelle eine neue Umfrage zuerst und öffne sie dann zum Bearbeiten. Ohne Regeln ist diese Frage immer sichtbar.",
   "Required": "Erforderlich",
   "Respondents must answer this question": "Befragte müssen diese Frage beantworten",
   "Save": "Speichern",

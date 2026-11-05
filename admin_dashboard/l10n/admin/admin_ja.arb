@@ -200,6 +200,7 @@
   "Visibility rule match": "表示ルールの一致条件",
   "All rules": "すべてのルール",
   "Any rule": "いずれかのルール",
+  "Add conditions from Visibility rules → Add rule below this question. For a new survey, create it first. With no rules, this question is always visible.": "条件は各質問の下にある「表示ルール」→「ルールを追加」で設定します。新規アンケートは先に作成し、編集画面を開いてください。条件がなければ、この質問は常に表示されます。",
   "Required": "必須",
   "Respondents must answer this question": "回答者はこの質問に回答する必要があります",
   "Save": "保存",

@@ -193,6 +193,9 @@ class QuestionList extends StatelessWidget {
                           locales: locales,
                           visibilityRules: questionRules,
                           visibilityRuleEditor: VisibilityRuleEditor(
+                            key: ValueKey(
+                              'visibility_rules_${question.id}_${question.visibilityConditionMode.name}',
+                            ),
                             surveyId: surveyId,
                             targetQuestion: question,
                             primaryLocale: primaryLocale,

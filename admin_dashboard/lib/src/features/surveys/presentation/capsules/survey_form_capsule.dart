@@ -171,6 +171,7 @@ class SurveyFormManager {
     int? maxLength,
     int? minSelected,
     int? maxSelected,
+    required VisibilityConditionMode visibilityConditionMode,
     required LocalizedText firstChoiceTranslations,
     required LocalizedText secondChoiceTranslations,
   }) {
@@ -183,6 +184,7 @@ class SurveyFormManager {
       maxLength: maxLength,
       minSelected: minSelected,
       maxSelected: maxSelected,
+      visibilityConditionMode: visibilityConditionMode,
       firstChoiceTranslations: firstChoiceTranslations,
       secondChoiceTranslations: secondChoiceTranslations,
     );
@@ -200,6 +202,7 @@ class SurveyFormManager {
     int? maxLength,
     int? minSelected,
     int? maxSelected,
+    required VisibilityConditionMode visibilityConditionMode,
   }) => _updateDraftQuestion(
     tempId,
     (question) => DraftQuestion(
@@ -212,6 +215,7 @@ class SurveyFormManager {
       maxLength: maxLength,
       minSelected: minSelected,
       maxSelected: maxSelected,
+      visibilityConditionMode: visibilityConditionMode,
       choices: question.choices,
     ),
   );

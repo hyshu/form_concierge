@@ -172,6 +172,7 @@
   "Visibility rule match": "표시 규칙 일치 조건",
   "All rules": "모든 규칙",
   "Any rule": "규칙 중 하나",
+  "Add conditions from Visibility rules → Add rule below this question. For a new survey, create it first. With no rules, this question is always visible.": "각 질문 아래의 ‘표시 규칙’ → ‘규칙 추가’에서 조건을 설정하세요. 새 설문은 먼저 만든 뒤 편집 화면을 여세요. 규칙이 없으면 이 질문은 항상 표시됩니다.",
   "Required": "필수",
   "Respondents must answer this question": "응답자는 이 질문에 답해야 합니다",
   "Save": "저장",

@@ -318,6 +318,15 @@ class _QuestionFormDialogState extends State<QuestionFormDialog> {
                           setState(() => _visibilityConditionMode = value),
                     ),
                   ),
+                  const SizedBox(height: 8),
+                  Text(
+                    context.tr(
+                      'Add conditions from Visibility rules → Add rule below this question. For a new survey, create it first. With no rules, this question is always visible.',
+                    ),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: HuxTokens.textSecondary(context),
+                    ),
+                  ),
                   const SizedBox(height: 16),
                   HuxCard(
                     backgroundColor: HuxTokens.surfaceSecondary(context),

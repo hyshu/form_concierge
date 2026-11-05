@@ -176,6 +176,7 @@
   "Visibility rule match": "Görünürlük kuralı eşleşmesi",
   "All rules": "Tüm kurallar",
   "Any rule": "Herhangi bir kural",
+  "Add conditions from Visibility rules → Add rule below this question. For a new survey, create it first. With no rules, this question is always visible.": "Bu sorunun altındaki “Görünürlük kuralları” → “Kural ekle” bölümünden koşul ekleyin. Yeni bir anketi önce oluşturup düzenlemek için yeniden açın. Kural yoksa bu soru her zaman görünür.",
   "Required": "Zorunlu",
   "Respondents must answer this question": "Yanıtlayanlar bu soruyu cevaplamalıdır",
   "Save": "Kaydet",

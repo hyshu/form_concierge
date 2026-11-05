@@ -176,6 +176,7 @@
   "Visibility rule match": "Coincidencia de reglas de visibilidad",
   "All rules": "Todas las reglas",
   "Any rule": "Cualquier regla",
+  "Add conditions from Visibility rules → Add rule below this question. For a new survey, create it first. With no rules, this question is always visible.": "Añade condiciones debajo de esta pregunta en «Reglas de visibilidad» → «Añadir regla». Si la encuesta es nueva, créala primero y vuelve a abrirla para editarla. Sin reglas, esta pregunta siempre será visible.",
   "Required": "Obligatorio",
   "Respondents must answer this question": "Los encuestados deben responder esta pregunta",
   "Save": "Guardar",

@@ -78,6 +78,8 @@ class _VisibilityRuleEditorState extends State<VisibilityRuleEditor> {
 
   @override
   Widget build(context) => ExpansionTile(
+    initiallyExpanded:
+        widget.rules.isNotEmpty || _mode == VisibilityConditionMode.any,
     tilePadding: EdgeInsets.zero,
     childrenPadding: const EdgeInsets.only(top: 8),
     leading: Icon(LucideIcons.workflow, color: HuxTokens.primary(context)),
@@ -114,11 +116,11 @@ class _VisibilityRuleEditorState extends State<VisibilityRuleEditor> {
             items: [
               HuxDropdownItem(
                 value: VisibilityConditionMode.all,
-                child: Text(context.tr('All')),
+                child: Text(context.tr('All rules')),
               ),
               HuxDropdownItem(
                 value: VisibilityConditionMode.any,
-                child: Text(context.tr('Any')),
+                child: Text(context.tr('Any rule')),
               ),
             ],
             onChanged: (value) => setState(() => _mode = value),
