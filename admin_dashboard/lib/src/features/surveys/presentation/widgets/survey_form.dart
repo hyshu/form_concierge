@@ -252,26 +252,24 @@ class SurveyFormWidgetState extends State<SurveyForm> {
                       _notificationPreferencesEdited = true;
                     }),
             ),
-            const SizedBox(height: 8),
-            HuxInput(
-              controller: _notificationEmailController,
-              label: context.tr('Recipient Email'),
-              hint: 'email@example.com',
-              keyboardType: TextInputType.emailAddress,
-              enabled: !widget.isSaving,
-              onChanged: (_) => _notificationPreferencesEdited = true,
-              validator: (value) {
-                final email = value?.trim() ?? '';
-                if (email.isEmpty) {
-                  return _notificationsEnabled
-                      ? context.tr('Email is required')
-                      : null;
-                }
-                return isValidEmailAddress(email)
-                    ? null
-                    : context.tr('Enter a valid email address');
-              },
-            ),
+            if (_notificationsEnabled) ...[
+              const SizedBox(height: 8),
+              HuxInput(
+                controller: _notificationEmailController,
+                label: context.tr('Recipient Email'),
+                hint: 'email@example.com',
+                keyboardType: TextInputType.emailAddress,
+                enabled: !widget.isSaving,
+                onChanged: (_) => _notificationPreferencesEdited = true,
+                validator: (value) {
+                  final email = value?.trim() ?? '';
+                  if (email.isEmpty) return context.tr('Email is required');
+                  return isValidEmailAddress(email)
+                      ? null
+                      : context.tr('Enter a valid email address');
+                },
+              ),
+            ],
           ],
           if (widget.aiGenerationEnabled) ...[
             const SizedBox(height: 16),
@@ -385,10 +383,9 @@ class SurveyFormWidgetState extends State<SurveyForm> {
       followUpPrompt: prompt.isEmpty ? null : prompt,
       captchaEnabled: _captchaEnabled,
       notificationsEnabled: _notificationsEnabled,
-      notificationRecipientEmail:
-          _notificationEmailController.text.trim().isEmpty
-          ? null
-          : _notificationEmailController.text.trim(),
+      notificationRecipientEmail: _notificationsEnabled
+          ? _notificationEmailController.text.trim()
+          : null,
     );
     return true;
   }

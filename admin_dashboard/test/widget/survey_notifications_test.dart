@@ -61,12 +61,16 @@ void main() {
         tester.widget<SwitchListTile>(toggle).value,
         previousEmail != null,
       );
-      final input = tester.widget<HuxInput>(
-        find.byWidgetPredicate(
-          (widget) => widget is HuxInput && widget.label == 'Recipient Email',
-        ),
+      final emailInput = find.byWidgetPredicate(
+        (widget) => widget is HuxInput && widget.label == 'Recipient Email',
       );
-      expect(input.controller!.text, previousEmail ?? '');
+      expect(emailInput, previousEmail == null ? findsNothing : findsOneWidget);
+      if (previousEmail != null) {
+        expect(
+          tester.widget<HuxInput>(emailInput).controller!.text,
+          previousEmail,
+        );
+      }
       controllers.titleTranslations['en']!.text = 'Feedback';
       expect(await key.currentState!.submit(), isTrue);
       expect(savedEnabled, previousEmail != null);
@@ -81,6 +85,8 @@ void main() {
         previousEmail == null,
       );
       if (previousEmail == null) {
+        expect(emailInput, findsOneWidget);
+        final input = tester.widget<HuxInput>(emailInput);
         expect(await key.currentState!.submit(), isFalse);
         await tester.pump();
         expect(find.text('Email is required'), findsOneWidget);
@@ -88,10 +94,36 @@ void main() {
         expect(await key.currentState!.submit(), isFalse);
         await tester.pump();
         expect(find.text('Enter a valid email address'), findsOneWidget);
+
+        // Hidden invalid input must not prevent saving with notifications off.
+        await tester.ensureVisible(toggle);
+        await tester.tap(toggle);
+        await tester.pumpAndSettle();
+        expect(emailInput, findsNothing);
+        expect(find.text('Enter a valid email address'), findsNothing);
+        expect(await key.currentState!.submit(), isTrue);
+        expect(savedEnabled, isFalse);
+        expect(savedEmail, isNull);
+
+        await tester.tap(toggle);
+        await tester.pumpAndSettle();
+        expect(tester.widget<HuxInput>(emailInput).controller!.text, 'invalid');
         input.controller!.text = 'new@example.com';
+      } else {
+        expect(emailInput, findsNothing);
+        expect(await key.currentState!.submit(), isTrue);
+        expect(savedEnabled, isFalse);
+        expect(savedEmail, isNull);
+
+        await tester.tap(toggle);
+        await tester.pumpAndSettle();
+        expect(
+          tester.widget<HuxInput>(emailInput).controller!.text,
+          previousEmail,
+        );
       }
       expect(await key.currentState!.submit(), isTrue);
-      expect(savedEnabled, previousEmail == null);
+      expect(savedEnabled, isTrue);
       expect(savedEmail, previousEmail ?? 'new@example.com');
     });
   }
