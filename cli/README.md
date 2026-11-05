@@ -54,13 +54,13 @@ Common setup options include:
 
 ## Commands
 
-| Command | Description |
-|---|---|
-| `form_concierge doctor` | Check Dart, Flutter, Node.js, npm, Wrangler, and the monorepo layout |
-| `form_concierge setup cloudflare` | Create and configure a Cloudflare deployment |
-| `form_concierge update cloudflare` | Update an existing deployment using its saved settings |
-| `form_concierge destroy cloudflare` | Delete resources recorded in a saved deployment |
-| `form_concierge build admin-macos` | Build the macOS admin app and copy it to the selected destination |
+| Command                             | Description                                                          |
+| ----------------------------------- | -------------------------------------------------------------------- |
+| `form_concierge doctor`             | Check Dart, Flutter, Node.js, npm, Wrangler, and the monorepo layout |
+| `form_concierge setup cloudflare`   | Create and configure a Cloudflare deployment                         |
+| `form_concierge update cloudflare`  | Update an existing deployment using its saved settings               |
+| `form_concierge destroy cloudflare` | Delete resources recorded in a saved deployment                      |
+| `form_concierge build admin-macos`  | Build the macOS admin app and copy it to the selected destination    |
 
 ## Deployment Profiles
 
@@ -181,14 +181,14 @@ form_concierge destroy cloudflare
 
 D1, R2, and Secrets Store are retained by default.
 
-| Option | Description |
-|---|---|
-| `--deployment <name>` | Select the saved deployment to destroy |
-| `--dry-run` | Print the deletion plan without deleting resources |
-| `--include-data` | Also delete D1 and the R2 bucket when it is empty |
-| `--empty-r2` | Request R2 content deletion; currently stops with instructions for emptying it manually |
-| `--delete-secrets-store` | Delete the Secrets Store and all of its values |
-| `--yes`, `-y` | Skip interactive confirmation |
+| Option                   | Description                                                                             |
+| ------------------------ | --------------------------------------------------------------------------------------- |
+| `--deployment <name>`    | Select the saved deployment to destroy                                                  |
+| `--dry-run`              | Print the deletion plan without deleting resources                                      |
+| `--include-data`         | Also delete D1 and the R2 bucket when it is empty                                       |
+| `--empty-r2`             | Request R2 content deletion; currently stops with instructions for emptying it manually |
+| `--delete-secrets-store` | Delete the Secrets Store and all of its values                                          |
+| `--yes`, `-y`            | Skip interactive confirmation                                                           |
 
 A non-empty R2 bucket is retained with a warning.
 
@@ -207,13 +207,13 @@ local platform cache for reuse.
 
 Template options:
 
-| Option | Description |
-|---|---|
-| `--template-version` | Release version; defaults to the CLI version |
-| `--template-url` | Custom template archive URL |
-| `--template-sha256` | Expected SHA-256 checksum for a custom archive |
-| `--offline` | Require a local checkout or cached template |
-| `--refresh-template` | Replace the cached template |
+| Option               | Description                                    |
+| -------------------- | ---------------------------------------------- |
+| `--template-version` | Release version; defaults to the CLI version   |
+| `--template-url`     | Custom template archive URL                    |
+| `--template-sha256`  | Expected SHA-256 checksum for a custom archive |
+| `--offline`          | Require a local checkout or cached template    |
+| `--refresh-template` | Replace the cached template                    |
 
 ## Install from Source
 
@@ -246,6 +246,74 @@ form_concierge doctor
 form_concierge setup cloudflare
 ```
 
+## Cloudflare CLI lifecycle CI
+
+The **Cloudflare CLI E2E** workflow in
+`.github/workflows/cli-cloudflare-e2e.yml` runs the real CLI against the
+`mail.hayami@gmail.com` Cloudflare account. It is started manually with
+**Actions → Cloudflare CLI E2E → Run workflow**, using the `main` branch.
+It does not run on pull requests or ordinary pushes. The regular CI runs the
+orchestration's credential-free tests instead:
+
+```bash
+node --test tool/cloudflare/cli_e2e.test.mjs
+```
+
+Create a GitHub Environment named `cloudflare-cli-e2e` and register these
+environment secrets before the first live run:
+
+| Secret                        | Purpose                                                                                                                                       |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CF_CLI_E2E_API_TOKEN`        | User API token owned by `mail.hayami@gmail.com`, scoped to the Gmail account, for creating, updating, listing, and deleting test resources.   |
+| `CF_CLI_E2E_WORKER_API_TOKEN` | Secrets Store Edit token stored in the temporary Worker's `CF_API_TOKEN` secret. The token created during the manual test can be reused here. |
+
+For `CF_CLI_E2E_API_TOKEN`, grant the required permissions only on account
+`bf981465797159e6eb390ded4e51b479`:
+
+- Worker creation, deployment, secrets, and deletion: Workers Scripts Edit,
+  or Workers product Admin where the newer Workers role UI is used.
+- D1 Edit, Workers R2 Storage Edit, Cloudflare Pages Edit, Secrets Store Edit.
+- Account Settings Read, plus User Details Read and Memberships Read so
+  `wrangler whoami --json` can verify the email and account.
+
+The deployment token and Worker token serve different purposes. A token with
+only Secrets Store Edit cannot create all the test resources. Enter token values
+directly into GitHub's secret settings; do not put them in workflow inputs,
+command arguments, committed files, or issue comments. See Cloudflare's
+[GitHub Actions authentication](https://developers.cloudflare.com/workers/ci-cd/external-cicd/github-actions/),
+[Workers permissions](https://developers.cloudflare.com/workers/authorization/workers/),
+and [Secrets Store access control](https://developers.cloudflare.com/secrets-store/access-control/).
+
+The workflow performs these checks:
+
+1. Verify the exact Gmail email and account ID, and confirm that the names for
+   this run do not already exist. Refuse to run if any Secrets Store exists,
+   because the CLI can reuse an account's existing store.
+2. Create a uniquely named test store and supply the Worker token to Wrangler
+   through stdin. This is the same preparation performed during the manual test.
+3. Run `setup cloudflare` with a unique deployment, D1, R2, Worker, and both
+   Pages project names. Check API responses and the Pages API configuration.
+4. Run `update cloudflare` and verify that deployment IDs, data resource IDs,
+   and secret metadata are unchanged.
+5. Run `update cloudflare --force`, verify new Worker and Pages deployments,
+   and check that data resource IDs and secret metadata are preserved.
+6. Preview and run `destroy cloudflare --include-data --delete-secrets-store
+--yes`, then verify remote absence and removal of the deployment profile.
+
+Runs are serialized for the Gmail account. A separate `always()` cleanup step
+uses an ownership journal written before the first mutation. If setup stops
+before saving a complete profile, cleanup checks the exact names assigned to
+that run and deletes only those resources. It also deletes the empty test store,
+which the CLI normally retains. An unexpected identity, altered profile, or
+foreign secret stops deletion. Existing application resources and stores are
+not adopted for cleanup.
+
+The workflow reserves time for cleanup and uploads sanitized logs, snapshots,
+and the ownership journal as a 14-day artifact. A runner loss or forced workflow
+termination can still interrupt cleanup; use the artifact's exact resource names
+to inspect any leftovers before starting another live run. Do not run manual
+Form Concierge setup on the Gmail account concurrently with this workflow.
+
 ## Development Notes
 
 Local `worker/wrangler.jsonc` files are gitignored and generated from the
@@ -266,9 +334,9 @@ lib/src/cloudflare/cloudflare_release_manifest.dart
 This includes releases that do not require any deployment changes.
 
 | Version | Secrets | D1 migrations | Worker | Admin Pages | Web Pages |
-|---|---:|---:|---:|---:|---:|
-| 0.1.0 | Yes | Yes | Yes | Yes | Yes |
-| 0.1.1 | No | Yes | Yes | Yes | No |
-| 0.2.0 | Yes | Yes | Yes | Yes | Yes |
-| 0.2.1 | No | Yes | Yes | Yes | No |
-| 0.3.0 | Yes | Yes | Yes | Yes | Yes |
+| ------- | ------: | ------------: | -----: | ----------: | --------: |
+| 0.1.0   |     Yes |           Yes |    Yes |         Yes |       Yes |
+| 0.1.1   |      No |           Yes |    Yes |         Yes |        No |
+| 0.2.0   |     Yes |           Yes |    Yes |         Yes |       Yes |
+| 0.2.1   |      No |           Yes |    Yes |         Yes |        No |
+| 0.3.0   |     Yes |           Yes |    Yes |         Yes |       Yes |

@@ -34,6 +34,9 @@ jobs:
       - name: Run static checks and unit tests
         run: bash tool/ci/static_checks.sh
 
+      - name: Test Cloudflare CLI lifecycle orchestration without credentials
+        run: node --test tool/cloudflare/cli_e2e.test.mjs
+
   e2e:
     name: Docker localhost E2E
     runs-on: ubuntu-latest
